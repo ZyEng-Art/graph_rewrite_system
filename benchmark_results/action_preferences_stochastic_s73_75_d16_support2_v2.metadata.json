@@ -1,0 +1,156 @@
+{
+  "files": [
+    {
+      "circuit": "barenco_tof_3.qasm",
+      "completed_depth": 16,
+      "final_states": 351,
+      "groups_considered": 80,
+      "groups_with_signal": 50,
+      "initial_gate_count": 58,
+      "preferences": 74,
+      "skipped_short_horizon_groups": 431,
+      "split": "train"
+    },
+    {
+      "circuit": "mod5_4.qasm",
+      "completed_depth": 16,
+      "final_states": 447,
+      "groups_considered": 80,
+      "groups_with_signal": 45,
+      "initial_gate_count": 63,
+      "preferences": 81,
+      "skipped_short_horizon_groups": 510,
+      "split": "train"
+    },
+    {
+      "circuit": "tof_4.qasm",
+      "completed_depth": 16,
+      "final_states": 446,
+      "groups_considered": 93,
+      "groups_with_signal": 62,
+      "initial_gate_count": 75,
+      "preferences": 97,
+      "skipped_short_horizon_groups": 518,
+      "split": "train"
+    },
+    {
+      "circuit": "vbe_adder_3.qasm",
+      "completed_depth": 16,
+      "final_states": 503,
+      "groups_considered": 92,
+      "groups_with_signal": 58,
+      "initial_gate_count": 150,
+      "preferences": 99,
+      "skipped_short_horizon_groups": 555,
+      "split": "train"
+    },
+    {
+      "circuit": "barenco_tof_3.qasm",
+      "completed_depth": 16,
+      "final_states": 319,
+      "groups_considered": 61,
+      "groups_with_signal": 36,
+      "initial_gate_count": 58,
+      "preferences": 66,
+      "skipped_short_horizon_groups": 399,
+      "split": "train"
+    },
+    {
+      "circuit": "mod5_4.qasm",
+      "completed_depth": 16,
+      "final_states": 321,
+      "groups_considered": 70,
+      "groups_with_signal": 40,
+      "initial_gate_count": 63,
+      "preferences": 70,
+      "skipped_short_horizon_groups": 406,
+      "split": "train"
+    },
+    {
+      "circuit": "tof_4.qasm",
+      "completed_depth": 16,
+      "final_states": 398,
+      "groups_considered": 68,
+      "groups_with_signal": 44,
+      "initial_gate_count": 75,
+      "preferences": 78,
+      "skipped_short_horizon_groups": 444,
+      "split": "train"
+    },
+    {
+      "circuit": "vbe_adder_3.qasm",
+      "completed_depth": 16,
+      "final_states": 568,
+      "groups_considered": 111,
+      "groups_with_signal": 67,
+      "initial_gate_count": 150,
+      "preferences": 122,
+      "skipped_short_horizon_groups": 660,
+      "split": "train"
+    },
+    {
+      "circuit": "barenco_tof_3.qasm",
+      "completed_depth": 16,
+      "final_states": 271,
+      "groups_considered": 68,
+      "groups_with_signal": 42,
+      "initial_gate_count": 58,
+      "preferences": 63,
+      "skipped_short_horizon_groups": 361,
+      "split": "test"
+    },
+    {
+      "circuit": "mod5_4.qasm",
+      "completed_depth": 16,
+      "final_states": 422,
+      "groups_considered": 84,
+      "groups_with_signal": 53,
+      "initial_gate_count": 63,
+      "preferences": 82,
+      "skipped_short_horizon_groups": 473,
+      "split": "test"
+    },
+    {
+      "circuit": "tof_4.qasm",
+      "completed_depth": 16,
+      "final_states": 359,
+      "groups_considered": 81,
+      "groups_with_signal": 45,
+      "initial_gate_count": 75,
+      "preferences": 74,
+      "skipped_short_horizon_groups": 448,
+      "split": "test"
+    },
+    {
+      "circuit": "vbe_adder_3.qasm",
+      "completed_depth": 16,
+      "final_states": 615,
+      "groups_considered": 105,
+      "groups_with_signal": 71,
+      "initial_gate_count": 150,
+      "preferences": 123,
+      "skipped_short_horizon_groups": 666,
+      "split": "test"
+    }
+  ],
+  "history_files": [
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s73_b1000_d16_refresh8_barenco_tof_3_histories.json",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s73_b1000_d16_refresh8_mod5_4_histories.json",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s73_b1000_d16_refresh8_tof_4_histories.json",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s73_b1000_d16_refresh8_vbe_adder_3_histories.json",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s74_b1000_d16_refresh8_barenco_tof_3_histories.json",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s74_b1000_d16_refresh8_mod5_4_histories.json",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s74_b1000_d16_refresh8_tof_4_histories.json",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s74_b1000_d16_refresh8_vbe_adder_3_histories.json",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s75_b1000_d16_refresh8_barenco_tof_3_histories.json",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s75_b1000_d16_refresh8_mod5_4_histories.json",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s75_b1000_d16_refresh8_tof_4_histories.json",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/preference_train_stochastic_s75_b1000_d16_refresh8_vbe_adder_3_histories.json"
+  ],
+  "min_descendants": 2,
+  "min_remaining_depth": 3,
+  "objective": "minimum descendant final_gate - child_gate",
+  "test_preferences": 342,
+  "train_preferences": 687,
+  "validation_marker": "_s75_"
+}

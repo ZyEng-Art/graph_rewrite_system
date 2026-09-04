@@ -119,6 +119,7 @@ class PagedActionBindingModel(S0ActionBindingModel):
         readout_locality_features: bool = False,
         identity_readout_prefix: int = 0,
         readout_attention_backend: str = "sdpa",
+        action_value_head: bool = False,
         dropout: float = 0.05,
     ):
         super().__init__(
@@ -150,6 +151,7 @@ class PagedActionBindingModel(S0ActionBindingModel):
                 "'sdpa_live', or 'paged'"
             )
         self.readout_attention_backend = readout_attention_backend
+        self.has_action_value_head = action_value_head
         if not 0 <= identity_readout_prefix <= readout_graph_layers:
             raise ValueError("identity_readout_prefix exceeds readout graph depth")
         if readout_graph_input not in {"cached", "gate", "cached_gate"}:
@@ -198,6 +200,64 @@ class PagedActionBindingModel(S0ActionBindingModel):
         del self.current_graph_layers
         del self.current_fusion
         del self.current_norm
+        if action_value_head:
+            self.action_value_norm = nn.LayerNorm(4 * width)
+            self.action_value_mlp = nn.Sequential(
+                nn.Linear(4 * width, width),
+                nn.GELU(),
+                nn.Linear(width, 1),
+            )
+
+    def action_value_features(
+        self,
+        states: torch.Tensor,
+        live: torch.Tensor,
+        xfer_ids: torch.Tensor,
+        source_ids: torch.Tensor,
+        binding_slots: torch.Tensor,
+        batch_ids: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Build candidate features from the current causal graph state."""
+        if not self.has_action_value_head:
+            raise RuntimeError("model checkpoint has no action-value head")
+        if batch_ids is None:
+            batch_ids = torch.arange(states.shape[0], device=states.device)
+        binding_mask = binding_slots.ge(0)
+        safe_bindings = binding_slots.clamp_min(0)
+        num_slots = states.shape[1]
+        flat_indices = batch_ids.unsqueeze(1) * num_slots + safe_bindings
+        bound_states = states.reshape(-1, self.width)[flat_indices]
+        bound_states = bound_states.masked_fill(~binding_mask.unsqueeze(-1), 0)
+        bound_pool = bound_states.sum(1)
+        bound_pool = bound_pool / binding_mask.sum(1, keepdim=True).clamp_min(1)
+        live_states = states.masked_fill(~live.unsqueeze(-1), 0)
+        graph_pool = live_states.sum(1)
+        graph_pool = graph_pool / live.sum(1, keepdim=True).clamp_min(1)
+        graph_pool = graph_pool.index_select(0, batch_ids)
+        source_states = self.source_representations().index_select(0, source_ids)
+        xfer_states = self.xfer_embedding(xfer_ids)
+        return torch.cat(
+            (xfer_states, source_states, bound_pool, graph_pool), dim=-1
+        )
+
+    def action_values(
+        self,
+        states: torch.Tensor,
+        live: torch.Tensor,
+        xfer_ids: torch.Tensor,
+        source_ids: torch.Tensor,
+        binding_slots: torch.Tensor,
+        batch_ids: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        features = self.action_value_features(
+            states,
+            live,
+            xfer_ids,
+            source_ids,
+            binding_slots,
+            batch_ids,
+        )
+        return self.action_value_mlp(self.action_value_norm(features)).squeeze(-1)
 
     def _ordered_bound_states(
         self, bound_states: torch.Tensor, source_mask: torch.Tensor

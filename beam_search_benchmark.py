@@ -59,6 +59,7 @@ class Proposal:
     binding: tuple[int, ...] | None
     probability: float
     next_gate_count: int
+    value_score: float = 0.0
 
 
 def update_slots(graph, guid_to_slot: dict[int, int], next_slot: int, preferred=()):

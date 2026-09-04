@@ -112,7 +112,16 @@ def build_legacy_proposals(
     exploration_actions_per_parent: int,
     proposal_factor: int,
     max_gate_increase: int,
+    ranking_mode: str = "gate",
 ):
+    if ranking_mode not in {"gate", "probability"}:
+        raise ValueError(f"unknown proposal ranking mode: {ranking_mode}")
+
+    def rank_key(row: Proposal):
+        if ranking_mode == "probability":
+            return (-row.probability, row.next_gate_count, row.xfer_id)
+        return (row.next_gate_count, -row.probability, row.xfer_id)
+
     action_expand_started = time.perf_counter()
     action_rows = expand_action_rows(predicted, source_to_xfers)
     exploration_action_rows = (
@@ -149,13 +158,7 @@ def build_legacy_proposals(
                             next_gate_count=state.gate_count + delta,
                         )
                     )
-            result.sort(
-                key=lambda row: (
-                    row.next_gate_count,
-                    -row.probability,
-                    row.xfer_id,
-                )
-            )
+            result.sort(key=rank_key)
             return result
 
         primary_proposals = make_proposals(rows)
@@ -186,17 +189,24 @@ def build_legacy_proposals(
                 selected_keys.add(key)
                 if len(parent_proposals) >= effective_parent_cap:
                     break
-        parent_proposals.sort(
-            key=lambda row: (row.next_gate_count, -row.probability, row.xfer_id)
-        )
+        parent_proposals.sort(key=rank_key)
         proposals.extend(parent_proposals)
-    proposals.sort(
-        key=lambda row: (
-            row.next_gate_count,
-            -row.probability,
-            beam[row.parent].gate_count,
+    if ranking_mode == "probability":
+        proposals.sort(
+            key=lambda row: (
+                -row.probability,
+                row.next_gate_count,
+                beam[row.parent].gate_count,
+            )
         )
-    )
+    else:
+        proposals.sort(
+            key=lambda row: (
+                row.next_gate_count,
+                -row.probability,
+                beam[row.parent].gate_count,
+            )
+        )
     proposals = proposals[: beam_size * proposal_factor]
     proposal_seconds = time.perf_counter() - proposal_started
     return proposals, {
@@ -257,14 +267,17 @@ def paged_model_matches(
     max_candidates: int,
     state_batch_backend: str = "legacy",
     candidate_backend: str = "legacy",
+    return_encoded_states: bool = False,
     profile_stages: bool = False,
 ) -> tuple[
     list[list[tuple[int, int, tuple[int, ...], float]]] | CandidateTensors,
     float,
     dict[str, float],
+    torch.Tensor | None,
 ]:
     output = []
     candidate_chunks: list[CandidateTensors] = []
+    encoded_chunks = []
     timing: dict[str, float] = {}
 
     def finish_timing(name: str, stage_started: float) -> None:
@@ -340,6 +353,8 @@ def paged_model_matches(
                     action_mask,
                     batch,
                 )
+        if return_encoded_states:
+            encoded_chunks.append(encoded)
         finish_timing("incremental_graph_readout_seconds", stage_started)
 
         stage_started = time.perf_counter()
@@ -385,7 +400,8 @@ def paged_model_matches(
         if candidate_backend == "gpu"
         else output
     )
-    return candidates, elapsed, timing
+    encoded_states = torch.cat(encoded_chunks) if encoded_chunks else None
+    return candidates, elapsed, timing, encoded_states
 
 
 @torch.no_grad()
@@ -608,6 +624,27 @@ def main() -> None:
         default="legacy",
         help="rank and cap expanded actions on GPU before compact D2H",
     )
+    parser.add_argument(
+        "--proposal-ranking",
+        choices=("gate", "probability", "stochastic", "value"),
+        default="gate",
+        help=(
+            "rank by immediate gate count for search, or by matcher probability "
+            "to collect diverse offline trajectories"
+        ),
+    )
+    parser.add_argument(
+        "--action-value-weight",
+        type=float,
+        default=0.0,
+        help="gate-count units assigned to one standard deviation of action value",
+    )
+    parser.add_argument(
+        "--proposal-ranking-seed",
+        type=int,
+        default=73,
+        help="base seed for reproducible stochastic proposal ranking",
+    )
     parser.add_argument("--cache-pages", type=int)
     parser.add_argument("--max-source-matches", type=int, default=2048)
     parser.add_argument("--max-actions-per-parent", type=int, default=128)
@@ -694,6 +731,13 @@ def main() -> None:
         and args.readout_attention_backend == "sdpa_live"
     ):
         parser.error("tensorized state batches do not support sdpa_live")
+    if args.proposal_ranking == "stochastic" and args.proposal_backend != "gpu":
+        parser.error("stochastic proposal ranking requires --proposal-backend gpu")
+    if args.proposal_ranking == "value":
+        if args.proposal_backend != "gpu":
+            parser.error("value proposal ranking requires --proposal-backend gpu")
+        if args.action_value_weight <= 0:
+            parser.error("value proposal ranking requires --action-value-weight > 0")
 
     # Quartz imports these packages unconditionally for conversion and DGL
     # helpers, while this benchmark uses only its compiled graph API.  Supply
@@ -712,6 +756,8 @@ def main() -> None:
         raise ValueError("paged rollout requires a paged_action checkpoint")
     model = build_model(rules, len(rules.xfer_to_source), train_args).to(device)
     model.load_state_dict(checkpoint["model"])
+    if args.proposal_ranking == "value" and not model.has_action_value_head:
+        parser.error("value proposal ranking requires an action-value checkpoint")
     model.eval()
     model.readout_attention_backend = args.readout_attention_backend
     threshold_config = load_threshold_config(
@@ -922,7 +968,12 @@ def main() -> None:
         use_gpu_proposals = (
             args.proposal_backend == "gpu" and exploration_model is None
         )
-        predicted, model_seconds, model_timing = paged_model_matches(
+        (
+            predicted,
+            model_seconds,
+            model_timing,
+            action_value_states,
+        ) = paged_model_matches(
             beam,
             slot_states,
             live,
@@ -935,9 +986,10 @@ def main() -> None:
             source_vectors,
             args.microbatch,
             args.max_source_matches,
-            args.state_batch_backend,
-            "gpu" if use_gpu_proposals else "legacy",
-            args.profile_stages,
+            state_batch_backend=args.state_batch_backend,
+            candidate_backend="gpu" if use_gpu_proposals else "legacy",
+            return_encoded_states=args.proposal_ranking == "value",
+            profile_stages=args.profile_stages,
         )
         exploration_predicted = None
         exploration_model_seconds = 0.0
@@ -947,6 +999,7 @@ def main() -> None:
                 exploration_predicted,
                 exploration_model_seconds,
                 exploration_model_timing,
+                _,
             ) = paged_model_matches(
                 beam,
                 exploration_slot_states,
@@ -960,9 +1013,10 @@ def main() -> None:
                 exploration_source_vectors,
                 args.microbatch,
                 args.max_source_matches,
-                args.state_batch_backend,
-                "legacy",
-                args.profile_stages,
+                state_batch_backend=args.state_batch_backend,
+                candidate_backend="legacy",
+                return_encoded_states=False,
+                profile_stages=args.profile_stages,
             )
 
         effective_parent_cap = max(
@@ -977,6 +1031,14 @@ def main() -> None:
                 gpu_rule_index,
                 per_parent_cap=effective_parent_cap,
                 global_cap=args.beam_size * args.proposal_factor,
+                ranking_mode=args.proposal_ranking,
+                ranking_seed=args.proposal_ranking_seed + step,
+                action_value_model=(
+                    model if args.proposal_ranking == "value" else None
+                ),
+                action_value_states=action_value_states,
+                action_value_live=live,
+                action_value_weight=args.action_value_weight,
                 profile_stages=args.profile_stages,
             )
             predicted_action_count = proposal_metrics["predicted_actions"]
@@ -984,6 +1046,15 @@ def main() -> None:
             exploration_predicted_action_count = 0
             exploration_eligible_actions = 0
             selected_exploration_proposals = 0
+            action_value_candidates = int(
+                proposal_metrics.get("action_value_candidates", 0)
+            )
+            selected_action_value_mean = float(
+                proposal_metrics.get("selected_action_value_mean", 0.0)
+            )
+            selected_action_value_std = float(
+                proposal_metrics.get("selected_action_value_std", 0.0)
+            )
             action_expand_seconds = gpu_proposal_timing.get(
                 "gpu_action_expansion_seconds", 0.0
             )
@@ -1000,6 +1071,11 @@ def main() -> None:
                 exploration_actions_per_parent=args.exploration_actions_per_parent,
                 proposal_factor=args.proposal_factor,
                 max_gate_increase=args.max_gate_increase,
+                ranking_mode=(
+                    "gate"
+                    if args.proposal_ranking == "value"
+                    else args.proposal_ranking
+                ),
             )
             predicted_action_count = proposal_metrics["predicted_actions"]
             exploration_predicted_action_count = proposal_metrics[
@@ -1012,6 +1088,9 @@ def main() -> None:
             selected_exploration_proposals = proposal_metrics[
                 "selected_exploration_proposals"
             ]
+            action_value_candidates = 0
+            selected_action_value_mean = 0.0
+            selected_action_value_std = 0.0
             action_expand_seconds = proposal_metrics["action_expansion_seconds"]
             proposal_seconds = proposal_metrics["proposal_seconds"]
 
@@ -1047,7 +1126,16 @@ def main() -> None:
         lazy_update_seconds = time.perf_counter() - update_started
         if not records:
             break
-        records.sort(key=lambda row: (row[0].gate_count, len(row[0].history)))
+        if args.proposal_ranking == "probability":
+            records.sort(
+                key=lambda row: (
+                    -row[1].probability,
+                    row[0].gate_count,
+                    len(row[0].history),
+                )
+            )
+        elif args.proposal_ranking == "gate" or not use_gpu_proposals:
+            records.sort(key=lambda row: (row[0].gate_count, len(row[0].history)))
         records = records[:accepted_target]
         cache_result = advance_selected(
             slot_states,
@@ -1276,7 +1364,9 @@ def main() -> None:
             "step": step + 1,
             "input_states": input_state_count,
             "output_states": len(beam),
-            "best_speculative_gate_count": beam[0].gate_count,
+            "best_speculative_gate_count": min(
+                state.gate_count for state in beam
+            ),
             "predicted_actions": predicted_action_count,
             "eligible_actions_before_parent_cap": eligible_actions,
             "proposals_after_caps": len(proposals),
@@ -1295,6 +1385,9 @@ def main() -> None:
                 exploration_eligible_actions
             ),
             "selected_exploration_proposals": selected_exploration_proposals,
+            "action_value_candidates": action_value_candidates,
+            "selected_action_value_mean": selected_action_value_mean,
+            "selected_action_value_std": selected_action_value_std,
             "exact_refresh_seconds": refresh_seconds,
             "exact_refresh_candidates": refresh_candidates,
             "exact_refresh_attempted": refresh_attempted,
@@ -1419,6 +1512,9 @@ def main() -> None:
         "readout_attention_backend": args.readout_attention_backend,
         "state_batch_backend": args.state_batch_backend,
         "proposal_backend": args.proposal_backend,
+        "proposal_ranking": args.proposal_ranking,
+        "proposal_ranking_seed": args.proposal_ranking_seed,
+        "action_value_weight": args.action_value_weight,
         "allocated_cache_pages": arena.allocated_pages,
         "cache_capacity_pages": arena.capacity,
         "exploration_checkpoint": (

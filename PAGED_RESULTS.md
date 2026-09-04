@@ -664,3 +664,65 @@ replays every trajectory from the input circuit through the legacy anchor
 binding path.  All 1000 trajectories are valid and all 1000 reconstructed
 topologies match; this independent audit takes 11.708 seconds.  The profile and
 audit are retained in `current_gpu6_*_lazygraph*.json`.
+
+## Offline action-value pilot
+
+The matcher is trained to recover legal source-pattern bindings, not to choose
+the rewrite with the best long-term optimization return.  An offline
+preference pilot tested whether a small value head could fill that gap without
+target-circuit PPO or changing matcher recall.
+
+Training data was collected on the four training circuits only:
+`barenco_tof_3`, `mod5_4`, `tof_4`, and `vbe_adder_3`.  Three reproducible
+stochastic beam runs (seeds 73--75, beam 1000, depth 16, refresh every 8)
+provided sibling actions from common prefixes.  The target subtracts the
+current rewrite delta and compares only future return:
+`minimum descendant final_gate - child_gate`.  Prefixes require at least three
+remaining actions and both preferred/rejected children require at least two
+surviving descendants.  Seeds 73/74 produce 687 training pairs; seed 75 is
+held out as 342 validation pairs.
+
+The value head concatenates xfer, source-pattern, bound-node, and whole-graph
+features.  It has 149,377 trainable parameters.  All 147 tensors from the
+6.9M-parameter matcher checkpoint remain byte-for-byte unchanged.  Prefixes
+are bucketed by length during frozen feature encoding to avoid inactive-action
+padding in the causal attention path.  Feature encoding takes 3.160 seconds on
+H100; the selected checkpoint is epoch 5 at learning rate `5e-5`.
+
+| preference validation | accuracy |
+|---|---:|
+| random baseline | 50.00% |
+| unfiltered single-descendant labels | 57.82% |
+| support-2 value head | **61.70%** |
+
+At inference, every parent is first capped to 128 proposals with the existing
+gate-first rule.  The retained actions are scored in GPU microbatches, globally
+standardized, and ranked by
+`next_gate_count - action_value_weight * standardized_value`.  The first-step
+exploration matcher and quota are identical in the gate/value A/B.
+
+The learned preference accuracy did **not** improve zero-shot circuit quality:
+
+| held-out search | gate-first | value weights 0.1/0.25/0.5/1.0 | result |
+|---|---:|---:|---|
+| `hwb6`, beam 1000, depth 16 | 253 gates, 10.807 s | 253 gates, 11.655--12.217 s | no quality gain |
+| `hwb6`, beam 1000, depth 64 | 253 gates, 48.94 s | 253 gates, 51.44--57.36 s | no quality gain |
+| `gf2^4_mult`, beam 1000, depth 16 | 219 gates, 10.03 s | 219 gates, 9.62--10.94 s | no quality gain |
+
+Every reported configuration has 64/64 valid independent Quartz replays and
+64/64 exact topology matches.  Because quality is unchanged and value scoring
+adds work, `gate` remains the default proposal ranking.  `value` is retained as
+an explicit research mode, not a production optimization.  The result suggests
+that minimum outcomes from stochastic descendants remain too noisy; the next
+training data should evaluate each sibling with a shared continuation policy
+and multiple short rollouts or a stronger teacher, then aggregate returns
+before fitting the value head.
+
+Reproducibility artifacts:
+
+- `run_preference_beams.sh` and `collect_action_preferences.py`;
+- `preference_dataset.py` and `train_action_preferences.py`;
+- `run_action_value_ab.sh`;
+- `benchmark_results/action_preferences_stochastic_s73_75_d16_support2_v2.metadata.json`;
+- `benchmark_results/action_value_d16_support2_v2_lr5e5.training.json`;
+- `benchmark_results/action_value_v2_ab_*`.

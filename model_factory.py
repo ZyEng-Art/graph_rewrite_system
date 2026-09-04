@@ -26,6 +26,7 @@ def build_model(rules, num_xfers: int, args: dict):
             readout_attention_backend=args.get(
                 "readout_attention_backend", "sdpa"
             ),
+            action_value_head=args.get("action_value_head", False),
         )
     if architecture != "legacy":
         raise ValueError(f"unknown architecture: {architecture}")

@@ -24,6 +24,13 @@ def _beam(gate_count: int) -> BeamState:
     )
 
 
+class _XferValueModel:
+    def action_values(
+        self, states, live, xfer_ids, source_ids, bindings, batch_ids
+    ):
+        return xfer_ids.float()
+
+
 def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     beam = [_beam(20), _beam(18), _beam(21)]
@@ -88,6 +95,50 @@ def main() -> None:
     )
     assert list(map(simplify, actual)) == list(map(simplify, legacy))
     assert metrics == {"predicted_actions": 10, "eligible_actions": 8}
+
+    probability_legacy, _ = build_legacy_proposals(
+        beam,
+        rows,
+        None,
+        source_to_xfers,
+        gate_deltas,
+        beam_size=2,
+        max_actions_per_parent=2,
+        exploration_actions_per_parent=0,
+        proposal_factor=2,
+        max_gate_increase=1,
+        ranking_mode="probability",
+    )
+    probability_actual, _, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=2,
+        global_cap=4,
+        ranking_mode="probability",
+    )
+    assert list(map(simplify, probability_actual)) == list(
+        map(simplify, probability_legacy)
+    )
+    assert [row.probability for row in probability_actual] == sorted(
+        (row.probability for row in probability_actual), reverse=True
+    )
+
+    value_actual, value_metrics, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=8,
+        global_cap=4,
+        ranking_mode="value",
+        action_value_model=_XferValueModel(),
+        action_value_states=torch.zeros((3, 9, 1), device=device),
+        action_value_live=torch.ones((3, 9), dtype=torch.bool, device=device),
+        action_value_weight=10.0,
+    )
+    assert value_actual[0].xfer_id == 4
+    assert value_metrics["action_value_candidates"] == 8
+    assert value_actual[0].value_score > value_actual[-1].value_score
     print("GPU proposal expansion/ranking matches legacy semantics")
 
 
