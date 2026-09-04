@@ -1,0 +1,109 @@
+{
+  "prediction_hardware": "h100-gpu1 GPU4",
+  "cpu_baseline_note": "vbe_adder_3, gf2^5_mult, and grover_5 rerun on h100-gpu1; gf2^4_mult uses the preserved original Quartz result",
+  "prediction_policy": "v15 primary plus four v5 exploration proposals at depth 1",
+  "depth8_beam256": [
+    {
+      "circuit": "vbe_adder_3",
+      "training_relation": "train circuit",
+      "initial_gates": 150,
+      "best_valid_gates": 146,
+      "search_seconds": 1.4242845438420773,
+      "valid_trajectories": 256,
+      "audited_trajectories": 256,
+      "exact_topology_matches": 256
+    },
+    {
+      "circuit": "gf2^4_mult",
+      "training_relation": "held-out test circuit",
+      "initial_gates": 225,
+      "best_valid_gates": 219,
+      "search_seconds": 1.81233659083955,
+      "valid_trajectories": 256,
+      "audited_trajectories": 256,
+      "exact_topology_matches": 256
+    },
+    {
+      "circuit": "gf2^5_mult",
+      "training_relation": "unseen larger circuit",
+      "initial_gates": 347,
+      "best_valid_gates": 339,
+      "search_seconds": 1.7595978791359812,
+      "valid_trajectories": 256,
+      "audited_trajectories": 256,
+      "exact_topology_matches": 256
+    },
+    {
+      "circuit": "adder_8",
+      "training_relation": "unseen larger circuit",
+      "initial_gates": 900,
+      "best_valid_gates": 900,
+      "search_seconds": 3.0312986210919917,
+      "valid_trajectories": 256,
+      "audited_trajectories": 256,
+      "exact_topology_matches": 256
+    },
+    {
+      "circuit": "grover_5",
+      "training_relation": "unseen larger circuit",
+      "initial_gates": 831,
+      "best_valid_gates": 825,
+      "search_seconds": 2.8794279529247433,
+      "valid_trajectories": 256,
+      "audited_trajectories": 256,
+      "exact_topology_matches": 256
+    }
+  ],
+  "depth3_cpu_quartz_comparison": [
+    {
+      "circuit": "vbe_adder_3",
+      "predicted_seconds": 0.9790926710702479,
+      "cpu_quartz_seconds": 23.964025994064286,
+      "end_to_end_speedup": 24.475748519156177,
+      "accepted_candidate_throughput_ratio": 25.51254270756219,
+      "matcher_throughput_ratio": 366.9979143763166
+    },
+    {
+      "circuit": "gf2^4_mult",
+      "predicted_seconds": 1.1290501372423023,
+      "cpu_quartz_seconds": 42.89740791544318,
+      "end_to_end_speedup": 37.99424533991008,
+      "accepted_candidate_throughput_ratio": 34.71977549529404,
+      "matcher_throughput_ratio": 428.1771723880797
+    },
+    {
+      "circuit": "gf2^5_mult",
+      "predicted_seconds": 1.1082919910550117,
+      "cpu_quartz_seconds": 62.09323332295753,
+      "end_to_end_speedup": 56.02605976052338,
+      "accepted_candidate_throughput_ratio": 58.39796594016598,
+      "matcher_throughput_ratio": 427.2997033054976
+    },
+    {
+      "circuit": "grover_5",
+      "predicted_seconds": 1.5197747508063912,
+      "cpu_quartz_seconds": 191.13308481290005,
+      "end_to_end_speedup": 125.76408754750334,
+      "accepted_candidate_throughput_ratio": 120.88167986493627,
+      "matcher_throughput_ratio": 514.9030454096024
+    }
+  ],
+  "depth16_refresh8": [
+    {
+      "circuit": "gf2^4_mult",
+      "search_seconds": 8.85208753682673,
+      "exact_refresh_seconds": 6.3550724079832435,
+      "exact_refresh_percent": 71.79179353508056,
+      "depth8_valid_overgenerated": "512/512",
+      "depth16_valid_overgenerated": "512/512"
+    },
+    {
+      "circuit": "gf2^5_mult",
+      "search_seconds": 12.921147804008797,
+      "exact_refresh_seconds": 9.811246244003996,
+      "exact_refresh_percent": 75.93169270117048,
+      "depth8_valid_overgenerated": "512/512",
+      "depth16_valid_overgenerated": "512/512"
+    }
+  ]
+}

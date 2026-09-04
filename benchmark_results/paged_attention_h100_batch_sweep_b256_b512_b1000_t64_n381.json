@@ -1,0 +1,88 @@
+{
+  "causal_append": [
+    {
+      "batch_size": 256,
+      "contiguous_gather_sdpa_ms": 0.15371982008218765,
+      "contiguous_peak_bytes": 25560064,
+      "contiguous_tokens_per_second": 1665367.548980524,
+      "direct_paged_ms": 0.022184480912983418,
+      "direct_peak_bytes": 196608,
+      "direct_tokens_per_second": 11539598.379792452,
+      "history_length": 64,
+      "max_abs_error": 0.0078125,
+      "speedup": 6.929160104540624
+    },
+    {
+      "batch_size": 512,
+      "contiguous_gather_sdpa_ms": 0.25172518100589514,
+      "contiguous_peak_bytes": 51119104,
+      "contiguous_tokens_per_second": 2033964.174557529,
+      "direct_paged_ms": 0.022664382122457027,
+      "direct_peak_bytes": 393216,
+      "direct_tokens_per_second": 22590512.16281269,
+      "history_length": 64,
+      "max_abs_error": 0.0078125,
+      "speedup": 11.106642115624805
+    },
+    {
+      "batch_size": 1000,
+      "contiguous_gather_sdpa_ms": 0.4269805597141385,
+      "contiguous_peak_bytes": 100842496,
+      "contiguous_tokens_per_second": 2342027.0015794053,
+      "direct_paged_ms": 0.040288716554641724,
+      "direct_peak_bytes": 768000,
+      "direct_tokens_per_second": 24820845.276710324,
+      "history_length": 64,
+      "max_abs_error": 0.0078125,
+      "speedup": 10.598018408827805
+    }
+  ],
+  "device": "NVIDIA H100 80GB HBM3",
+  "head_width": 32,
+  "heads": 6,
+  "page_size": 8,
+  "readout": [
+    {
+      "batch_size": 256,
+      "contiguous_gather_sdpa_ms": 0.1708981627598405,
+      "contiguous_peak_bytes": 88081920,
+      "contiguous_query_vectors_per_second": 570725854.6545362,
+      "direct_paged_ms": 0.10589456185698509,
+      "direct_peak_bytes": 75498496,
+      "direct_query_vectors_per_second": 921067128.3736584,
+      "history_length": 64,
+      "max_abs_error": 0.015625,
+      "query_length": 381,
+      "speedup": 1.613852116321567
+    },
+    {
+      "batch_size": 512,
+      "contiguous_gather_sdpa_ms": 0.27963127940893173,
+      "contiguous_peak_bytes": 174982656,
+      "contiguous_query_vectors_per_second": 697604361.044057,
+      "direct_paged_ms": 0.21191626321524382,
+      "direct_peak_bytes": 149816320,
+      "direct_query_vectors_per_second": 920514532.675885,
+      "history_length": 64,
+      "max_abs_error": 0.015625,
+      "query_length": 381,
+      "speedup": 1.3195366658806624
+    },
+    {
+      "batch_size": 1000,
+      "contiguous_gather_sdpa_ms": 0.48945728223770857,
+      "contiguous_peak_bytes": 342754816,
+      "contiguous_query_vectors_per_second": 778413180.938157,
+      "direct_paged_ms": 0.4153450205922127,
+      "direct_peak_bytes": 293602304,
+      "direct_query_vectors_per_second": 917309660.9097602,
+      "history_length": 64,
+      "max_abs_error": 0.015625,
+      "query_length": 381,
+      "speedup": 1.17843541627109
+    }
+  ],
+  "repeats": 50,
+  "torch": "2.12.0+cu130",
+  "warmup": 20
+}

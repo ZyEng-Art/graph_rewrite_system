@@ -1,0 +1,157 @@
+{
+  "affected_core_definition": "live destination slots plus live endpoints of the previous rewrite's changed edges",
+  "anchor_distance": {
+    "0": {
+      "hits": 88305,
+      "precision": 0.7786007141912445,
+      "predicted": 113415,
+      "recall": 0.9365852106401935,
+      "true": 94284
+    },
+    "1": {
+      "hits": 50532,
+      "precision": 0.776973107615665,
+      "predicted": 65037,
+      "recall": 0.8770784878675322,
+      "true": 57614
+    },
+    "2": {
+      "hits": 60497,
+      "precision": 0.8236823832151074,
+      "predicted": 73447,
+      "recall": 0.8637369540697591,
+      "true": 70041
+    },
+    "3_plus": {
+      "hits": 1689611,
+      "precision": 0.9151012936228752,
+      "predicted": 1846365,
+      "recall": 0.899509627767494,
+      "true": 1878369
+    }
+  },
+  "binding_distance": {
+    "0": {
+      "hits": 112964,
+      "precision": 0.7668194006041475,
+      "predicted": 147315,
+      "recall": 0.915837691029227,
+      "true": 123345
+    },
+    "1": {
+      "hits": 55649,
+      "precision": 0.8048159664473209,
+      "predicted": 69145,
+      "recall": 0.8618131697949576,
+      "true": 64572
+    },
+    "2": {
+      "hits": 72225,
+      "precision": 0.8544809228039042,
+      "predicted": 84525,
+      "recall": 0.8574328655887171,
+      "true": 84234
+    },
+    "3_plus": {
+      "hits": 1648107,
+      "precision": 0.9170012001475564,
+      "predicted": 1797279,
+      "recall": 0.9015128350573829,
+      "true": 1828157
+    }
+  },
+  "binding_within_2_by_prefix": {
+    "0_15": {
+      "hits": 83767,
+      "precision": 0.8181729388668041,
+      "predicted": 102383,
+      "recall": 0.8890952704423877,
+      "true": 94216
+    },
+    "16_31": {
+      "hits": 93538,
+      "precision": 0.8116517996598521,
+      "predicted": 115244,
+      "recall": 0.8756108063580027,
+      "true": 106826
+    },
+    "32_63": {
+      "hits": 61780,
+      "precision": 0.7627913868036349,
+      "predicted": 80992,
+      "recall": 0.8936268695576706,
+      "true": 69134
+    },
+    "64_plus": {
+      "hits": 1753,
+      "precision": 0.7409129332206256,
+      "predicted": 2366,
+      "recall": 0.8875949367088608,
+      "true": 1975
+    }
+  },
+  "binding_within_2_by_previous_local_streak": {
+    "0": {
+      "hits": 30514,
+      "precision": 0.8673431681873739,
+      "predicted": 35181,
+      "recall": 0.8730008869052728,
+      "true": 34953
+    },
+    "1": {
+      "hits": 25246,
+      "precision": 0.8545509934671496,
+      "predicted": 29543,
+      "recall": 0.8815559745792304,
+      "true": 28638
+    },
+    "2_3": {
+      "hits": 38423,
+      "precision": 0.8296016409370615,
+      "predicted": 46315,
+      "recall": 0.8809987847660101,
+      "true": 43613
+    },
+    "4_plus": {
+      "hits": 146655,
+      "precision": 0.7720878565487033,
+      "predicted": 189946,
+      "recall": 0.8891037727269971,
+      "true": 164947
+    },
+    "ge_2": {
+      "hits": 185078,
+      "precision": 0.783362467779278,
+      "predicted": 236261,
+      "recall": 0.8874088991177599,
+      "true": 208560
+    },
+    "ge_4": {
+      "hits": 146655,
+      "precision": 0.7720878565487033,
+      "predicted": 189946,
+      "recall": 0.8891037727269971,
+      "true": 164947
+    }
+  },
+  "candidate_multiplier": 2,
+  "derived_streak_vs_collector_label_disagreements": 23,
+  "overlap": {
+    "affected_core": {
+      "hits": 112964,
+      "precision": 0.7668194006041475,
+      "predicted": 147315,
+      "recall": 0.915837691029227,
+      "true": 123345
+    },
+    "new_nodes": {
+      "hits": 63013,
+      "precision": 0.7554700332098455,
+      "predicted": 83409,
+      "recall": 0.9395389753682829,
+      "true": 67068
+    }
+  },
+  "processed_states": 2048,
+  "skipped_initial_states": 48
+}

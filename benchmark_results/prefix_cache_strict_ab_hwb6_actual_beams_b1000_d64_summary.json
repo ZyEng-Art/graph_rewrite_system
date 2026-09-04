@@ -1,0 +1,90 @@
+{
+  "source_result": "prefix_cache_strict_ab_hwb6_actual_beams_b1000_d64_nograd_mb512.json",
+  "protocol": {
+    "checkpoint": "paged_action_onpolicy_v13_r8_lr5e5_epoch1.pt",
+    "circuit": "hwb6",
+    "beam_size": 1000,
+    "microbatch": 512,
+    "page_size": 8,
+    "target_recall": 0.95,
+    "inference_mode": "torch.no_grad",
+    "workload": "actual beam retained at every depth",
+    "normalization": "use the mean of full and paged match/decode time as the common downstream cost"
+  },
+  "milestones": [
+    {
+      "depth": 8,
+      "state_prefix_predictions": 6328,
+      "full_prefix_seconds": 0.9666597710456699,
+      "paged_prefix_seconds": 1.2574890544638038,
+      "prefix_speedup": 0.7687222148091427,
+      "common_match_decode_seconds": 5.800817410927266,
+      "normalized_full_total_seconds": 6.767477181972936,
+      "normalized_paged_total_seconds": 7.05830646539107,
+      "normalized_speedup": 0.958796166637967,
+      "candidate_key_jaccard": 0.9999891460858875,
+      "candidate_set_agreement": 0.9892541087231352,
+      "page_sharing_ratio": 1.0
+    },
+    {
+      "depth": 16,
+      "state_prefix_predictions": 14328,
+      "full_prefix_seconds": 3.7094923176337034,
+      "paged_prefix_seconds": 2.931418840540573,
+      "prefix_speedup": 1.2654255565027508,
+      "common_match_decode_seconds": 15.58408280252479,
+      "normalized_full_total_seconds": 19.293575120158494,
+      "normalized_paged_total_seconds": 18.515501643065363,
+      "normalized_speedup": 1.0420228137531744,
+      "candidate_key_jaccard": 0.9999818349993062,
+      "candidate_set_agreement": 0.9821328866554997,
+      "page_sharing_ratio": 1.833180568285976
+    },
+    {
+      "depth": 32,
+      "state_prefix_predictions": 30328,
+      "full_prefix_seconds": 12.063373582204804,
+      "paged_prefix_seconds": 7.444612838095054,
+      "prefix_speedup": 1.6204165138682496,
+      "common_match_decode_seconds": 33.8272205007961,
+      "normalized_full_total_seconds": 45.890594083000906,
+      "normalized_paged_total_seconds": 41.271833338891156,
+      "normalized_speedup": 1.1119107238630326,
+      "candidate_key_jaccard": 0.9999692055048239,
+      "candidate_set_agreement": 0.971082827749934,
+      "page_sharing_ratio": 3.937007874015748
+    },
+    {
+      "depth": 64,
+      "state_prefix_predictions": 62328,
+      "full_prefix_seconds": 34.56974754831754,
+      "paged_prefix_seconds": 21.093557422515005,
+      "prefix_speedup": 1.6388770682852296,
+      "common_match_decode_seconds": 77.47514471563045,
+      "normalized_full_total_seconds": 112.04489226394799,
+      "normalized_paged_total_seconds": 98.56870213814545,
+      "normalized_speedup": 1.13671875385876,
+      "candidate_key_jaccard": 0.9999469269396472,
+      "candidate_set_agreement": 0.9530868951354127,
+      "page_sharing_ratio": 7.011393514460999
+    }
+  ],
+  "correctness": {
+    "live_type_mismatches": 0,
+    "max_state_abs_error": 0.01562511920928955,
+    "max_logit_abs_error": 0.5,
+    "depth64_candidate_symmetric_difference": 3364,
+    "depth64_candidate_union": 63384323
+  },
+  "memory": {
+    "measurement_scope": "peak incremental allocation for prefix computation; common model, batch, matching and structural-decode allocations are excluded",
+    "full_recompute_max_transient_bytes_microbatch_512": 1647508992,
+    "paged_readout_max_transient_bytes_microbatch_512": 1347304448,
+    "preallocated_paged_cache_bytes": 304128000,
+    "paged_readout_plus_cache_bytes": 1651432448
+  },
+  "supersedes": {
+    "result": "prefix_cache_strict_ab_hwb6_actual_beams_b1000_d64_mb256_gcfix.json",
+    "reason": "the old benchmark omitted torch.no_grad and retained autograd activations during inference"
+  }
+}

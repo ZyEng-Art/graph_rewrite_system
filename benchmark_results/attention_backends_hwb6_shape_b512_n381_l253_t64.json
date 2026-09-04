@@ -1,0 +1,34 @@
+{
+  "backends": [
+    {
+      "backend": "eager",
+      "max_abs_error_vs_eager": 0.0,
+      "mean_abs_error_vs_eager": 0.0,
+      "milliseconds_per_call": 3.097512247040868,
+      "peak_incremental_bytes": 1000563200
+    },
+    {
+      "backend": "sdpa",
+      "max_abs_error_vs_eager": 0.0021255016326904297,
+      "mean_abs_error_vs_eager": 2.2002370315021835e-05,
+      "milliseconds_per_call": 3.088046202901751,
+      "peak_incremental_bytes": 627462656
+    },
+    {
+      "backend": "sdpa_live",
+      "max_abs_error_vs_eager": 0.0021255016326904297,
+      "mean_abs_error_vs_eager": 2.2002370315021835e-05,
+      "milliseconds_per_call": 3.592132846824825,
+      "peak_incremental_bytes": 675630080
+    }
+  ],
+  "batch_size": 512,
+  "device": "cuda",
+  "heads": 6,
+  "history": 64,
+  "live_slots": 253,
+  "repeats": 20,
+  "slots": 381,
+  "warmup": 5,
+  "width": 192
+}

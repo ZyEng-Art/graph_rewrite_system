@@ -1,0 +1,51 @@
+{
+  "batch_size": 512,
+  "device": "cuda",
+  "history": 64,
+  "page_size": 8,
+  "physical_pages": 1141,
+  "rows": [
+    {
+      "backend": "loop",
+      "max_abs_error_vs_loop": 0.0,
+      "milliseconds_per_call": 55.05791490431875,
+      "operation": "actions",
+      "peak_incremental_bytes": 25231360
+    },
+    {
+      "backend": "loop",
+      "max_abs_error_vs_loop": 0.0,
+      "milliseconds_per_call": 137.36405784729868,
+      "operation": "full_kv_actions",
+      "peak_incremental_bytes": 226557952
+    },
+    {
+      "backend": "vectorized",
+      "max_abs_error_vs_loop": 0.0,
+      "milliseconds_per_call": 7.650899654254317,
+      "operation": "actions",
+      "peak_incremental_bytes": 38109184
+    },
+    {
+      "backend": "vectorized",
+      "max_abs_error_vs_loop": 0.0,
+      "milliseconds_per_call": 2.2276007453911006,
+      "operation": "full_kv_actions",
+      "peak_incremental_bytes": 264601600
+    },
+    {
+      "backend": "loop",
+      "max_abs_error_vs_loop": 0.0,
+      "milliseconds_per_call": 15.15713509870693,
+      "operation": "cow_append",
+      "peak_incremental_bytes": 794624
+    },
+    {
+      "backend": "vectorized",
+      "max_abs_error_vs_loop": 0.0,
+      "milliseconds_per_call": 0.9002134087495506,
+      "operation": "cow_append",
+      "peak_incremental_bytes": 6299648
+    }
+  ]
+}

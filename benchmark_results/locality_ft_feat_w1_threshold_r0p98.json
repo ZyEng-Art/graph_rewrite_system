@@ -1,0 +1,16 @@
+{
+  "candidate_cap": 2048,
+  "hits": 1612005,
+  "max_candidates_per_state_observed": 1358,
+  "mean_candidates_per_state": 1076.3155216284988,
+  "median_candidates_per_state": 1076.0,
+  "model_ms_per_state": 0.8663501917519643,
+  "precision_before_quartz_verification": 0.9527396499224572,
+  "predicted_matches": 1691968,
+  "recall": 0.9775835688845576,
+  "states": 1572,
+  "target_recall": 0.98,
+  "threshold_and_decode_ms_per_state": 7.3486343452721155,
+  "total_ms_per_state": 8.21498453702408,
+  "true_matches": 1648969
+}

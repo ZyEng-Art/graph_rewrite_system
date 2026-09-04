@@ -1,0 +1,193 @@
+{
+  "accepted_actions": 1319,
+  "accepted_actions_per_search_second": 326.83104506846195,
+  "batch_sweep": [
+    {
+      "microbatch": 1,
+      "seconds_all": [
+        8.946687933057547,
+        8.958143431693316
+      ],
+      "seconds_best": 8.946687933057547,
+      "source_matches": 990969,
+      "source_matches_per_second": 110763.78291215692,
+      "states": 1000,
+      "states_per_second": 111.77320674224615
+    },
+    {
+      "microbatch": 2,
+      "seconds_all": [
+        5.864353217184544,
+        5.687335914000869
+      ],
+      "seconds_best": 5.687335914000869,
+      "source_matches": 990968,
+      "source_matches_per_second": 174241.1587753191,
+      "states": 1000,
+      "states_per_second": 175.82924854820652
+    },
+    {
+      "microbatch": 4,
+      "seconds_all": [
+        4.085953650996089,
+        4.080094840377569
+      ],
+      "seconds_best": 4.080094840377569,
+      "source_matches": 990970,
+      "source_matches_per_second": 242879.1581492494,
+      "states": 1000,
+      "states_per_second": 245.09234199748667
+    },
+    {
+      "microbatch": 8,
+      "seconds_all": [
+        3.288529146462679,
+        3.2882144916802645
+      ],
+      "seconds_best": 3.2882144916802645,
+      "source_matches": 990972,
+      "source_matches_per_second": 301370.8511130663,
+      "states": 1000,
+      "states_per_second": 304.1164140995571
+    },
+    {
+      "microbatch": 16,
+      "seconds_all": [
+        2.898321133106947,
+        2.8982546441257
+      ],
+      "seconds_best": 2.8982546441257,
+      "source_matches": 990972,
+      "source_matches_per_second": 341920.2663949982,
+      "states": 1000,
+      "states_per_second": 345.03524458309437
+    },
+    {
+      "microbatch": 32,
+      "seconds_all": [
+        2.6989739891141653,
+        2.703107465058565
+      ],
+      "seconds_best": 2.6989739891141653,
+      "source_matches": 990972,
+      "source_matches_per_second": 367166.19129969773,
+      "states": 1000,
+      "states_per_second": 370.5111661073146
+    },
+    {
+      "microbatch": 64,
+      "seconds_all": [
+        2.5942151192575693,
+        2.5894171707332134
+      ],
+      "seconds_best": 2.5894171707332134,
+      "source_matches": 990967,
+      "source_matches_per_second": 382698.86026877625,
+      "states": 1000,
+      "states_per_second": 386.18729005988723
+    },
+    {
+      "microbatch": 128,
+      "seconds_all": [
+        2.5389573872089386,
+        2.5621297378093004
+      ],
+      "seconds_best": 2.5389573872089386,
+      "source_matches": 990971,
+      "source_matches_per_second": 390306.2749270356,
+      "states": 1000,
+      "states_per_second": 393.86245906997846
+    },
+    {
+      "microbatch": 256,
+      "seconds_all": [
+        2.5257522147148848,
+        2.5222383718937635
+      ],
+      "seconds_best": 2.5222383718937635,
+      "source_matches": 990971,
+      "source_matches_per_second": 392893.47551078314,
+      "states": 1000,
+      "states_per_second": 396.47323232544966
+    },
+    {
+      "microbatch": 512,
+      "seconds_all": [
+        2.5353688709437847,
+        2.4959841426461935
+      ],
+      "seconds_best": 2.4959841426461935,
+      "source_matches": 990969,
+      "source_matches_per_second": 397025.35888284695,
+      "states": 1000,
+      "states_per_second": 400.64357097229777
+    }
+  ],
+  "beam_size": 1000,
+  "best_speculative_gate_count": 255,
+  "completed_depth": 2,
+  "dedup_mode": "raw",
+  "final_beam_size": 1000,
+  "initial_gate_count": 259,
+  "microbatch": 128,
+  "mode": "lazy_model",
+  "qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/hwb6.qasm",
+  "quartz_replay_audit": {
+    "audit_seconds": 2.4840235710144043e-05,
+    "audited_states": 0,
+    "best_valid_gate_count": null,
+    "exact_topology_matches": 0,
+    "failure_steps": {},
+    "unique_exact_graph_hashes": 0,
+    "valid_trajectories": 0,
+    "valid_trajectory_rate": 0.0
+  },
+  "requested_depth": 2,
+  "search_seconds_excluding_audit_and_sweep": 4.035724328830838,
+  "speculative_graphs_seen": 1320,
+  "steps": [
+    {
+      "accepted_actions": 319,
+      "accepted_actions_per_second": 502.588825615913,
+      "attempted_actions": 949,
+      "best_speculative_gate_count": 257,
+      "duplicate_speculative_successors": 630,
+      "eligible_actions_before_parent_cap": 949,
+      "input_states": 1,
+      "invalid_structural_actions": 0,
+      "lazy_attempts_per_second": 1522.848858932573,
+      "lazy_update_and_hash_seconds": 0.6231741216033697,
+      "match_states_per_second": 99.7026793784411,
+      "model_match_seconds": 0.01002982072532177,
+      "output_states": 319,
+      "predicted_actions": 1410,
+      "predicted_actions_per_second": 140580.77792360194,
+      "proposal_seconds": 0.0010758787393569946,
+      "proposals_after_caps": 949,
+      "step": 1,
+      "total_seconds": 0.6347136739641428
+    },
+    {
+      "accepted_actions": 1000,
+      "accepted_actions_per_second": 294.0556692932444,
+      "attempted_actions": 3326,
+      "best_speculative_gate_count": 255,
+      "duplicate_speculative_successors": 2326,
+      "eligible_actions_before_parent_cap": 306972,
+      "input_states": 319,
+      "invalid_structural_actions": 0,
+      "lazy_attempts_per_second": 1610.9735960229398,
+      "lazy_update_and_hash_seconds": 2.0645900145173073,
+      "match_states_per_second": 356.06838420411367,
+      "model_match_seconds": 0.8958953227847815,
+      "output_states": 1000,
+      "predicted_actions": 454424,
+      "predicted_actions_per_second": 507228.9010143265,
+      "proposal_seconds": 0.32108057476580143,
+      "proposals_after_caps": 16000,
+      "step": 2,
+      "total_seconds": 3.4007166139781475
+    }
+  ],
+  "target_recall": 0.97
+}

@@ -1,0 +1,14 @@
+{
+  "candidate_multiplier": 1,
+  "class_topn": 0.8927544689919056,
+  "full_binding_topn": 0.8927544689919056,
+  "matches": 486631,
+  "model_ms_per_state": 6.57078490985441,
+  "model_plus_decode_ms_per_state": 9.30764959048247,
+  "neural_pointer_topn": null,
+  "oracle_pair_binding_accuracy": null,
+  "states": 512,
+  "streak_ge_2_full_binding_topn": 0.8913497319643563,
+  "streak_ge_4_full_binding_topn": 0.889826947651123,
+  "structural_decode_ms_per_state": 2.7368646806280594
+}

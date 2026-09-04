@@ -1,0 +1,22 @@
+{
+  "candidate_multiplier": 2,
+  "class_topn": 0.9478952269169119,
+  "full_binding_topn": 0.9662493632219383,
+  "matches": 2143604,
+  "model_ms_per_state": 0.7368022440897144,
+  "model_plus_decode_ms_per_state": 6.45545095237299,
+  "neural_pointer_topn": null,
+  "oracle_pair_binding_accuracy": null,
+  "prefix_0_15_full_binding_topn": 0.9704133521193743,
+  "prefix_0_15_matches": 731749,
+  "prefix_16_31_full_binding_topn": 0.9649320044919996,
+  "prefix_16_31_matches": 796082,
+  "prefix_32_63_full_binding_topn": 0.96303787633972,
+  "prefix_32_63_matches": 597233,
+  "prefix_64_plus_full_binding_topn": 0.9619201725997842,
+  "prefix_64_plus_matches": 18540,
+  "states": 2096,
+  "streak_ge_2_full_binding_topn": 0.9657947637806855,
+  "streak_ge_4_full_binding_topn": 0.9654732929815784,
+  "structural_decode_ms_per_state": 5.7186487082832755
+}

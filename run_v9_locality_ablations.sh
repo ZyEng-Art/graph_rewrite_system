@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root=/SharedData/dengzy/quarl_matchformer_fresh_20260902
+workdir="$root/experiment/s0_binding_paged_worldmodel_20260903"
+python_bin=/SharedData/dengzy/micromamba/envs/quarl-torch212/bin/python
+data="$root/data/binding_longmix_16384_2048_v2.pt"
+initial="$root/runs/paged_action_localgraph4_v5_cont_epoch2.pt"
+
+launch() {
+    local gpu="$1"
+    local name="$2"
+    shift 2
+    nohup env CUDA_VISIBLE_DEVICES="$gpu" "$python_bin" "$workdir/train.py" \
+        --data "$data" \
+        --output "$root/runs/$name.pt" \
+        --epochs 3 --batch-size 128 --eval-batch-size 32 \
+        --width 192 --retrieval-width 128 --graph-layers 2 \
+        --architecture paged_action --action-layers 4 --action-heads 6 \
+        --max-sequence-length 64 --readout-graph-layers 4 \
+        --readout-graph-input cached --readout-locality-features \
+        --learning-rate 5e-5 --weight-decay 1e-2 --binding-weight 0 \
+        --structural-hard-negatives --eval-every 1 \
+        --init-checkpoint "$initial" "$@" \
+        > "$root/runs/$name.log" 2>&1 &
+    printf '%s gpu=%s pid=%s\n' "$name" "$gpu" "$!"
+}
+
+launch 5 paged_action_localityreadout_v9 \
+    --selection-metric full_binding_topn
+launch 6 paged_action_localityreadout_v9_local1 \
+    --locality-positive-weight 1.0 --selection-metric near_full_binding_topn
+launch 7 paged_action_localityreadout_v9_boundary025 \
+    --topn-boundary-weight 0.25 --selection-metric full_binding_topn

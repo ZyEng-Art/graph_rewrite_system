@@ -1,0 +1,94 @@
+{
+  "default_backends": {
+    "cache_gather": "vectorized",
+    "readout_attention": "sdpa",
+    "experimental_direct_attention": "paged"
+  },
+  "depth64_prefix": {
+    "previous_paged_seconds": 21.093557422515005,
+    "optimized_full_seconds": 21.15237867855467,
+    "optimized_paged_seconds": 6.314598929602653,
+    "optimized_cache_speedup_over_full": 3.349758062921929,
+    "paged_runtime_speedup": 3.3404429414557164,
+    "normalized_total_speedup": 1.165106104960072
+  },
+  "depth64_search": {
+    "previous_seconds": 331.1099466779269,
+    "optimized_seconds": 308.22108788299374,
+    "speedup": 1.0742611706166654,
+    "previous_cache_advance_seconds": 15.903722980292514,
+    "optimized_cache_advance_seconds": 4.6484265516046435,
+    "cache_advance_speedup": 3.4213131698945585,
+    "previous_model_match_seconds": 178.97672382649034,
+    "optimized_model_match_seconds": 166.73079674132168,
+    "model_match_speedup": 1.0734473014254702,
+    "previous_best_gates": 253,
+    "optimized_best_gates": 253
+  },
+  "depth64_vectorized_eager_search": {
+    "seconds": 315.27794718998484,
+    "speedup_over_previous": 1.0502160066349386,
+    "cache_advance_seconds": 4.497370833763853,
+    "cache_advance_speedup": 3.5362267351617693,
+    "best_gates": 253
+  },
+  "depth8_quartz_audit": {
+    "previous_search_seconds": 28.564185007009655,
+    "optimized_search_seconds": 27.694164867978543,
+    "previous_valid_trajectories": 962,
+    "optimized_valid_trajectories": 960,
+    "audited_trajectories": 1000,
+    "previous_best_valid_gates": 253,
+    "optimized_best_valid_gates": 253
+  },
+  "depth8_vectorized_eager_audit": {
+    "search_seconds": 28.64973668102175,
+    "valid_trajectories": 962,
+    "audited_trajectories": 1000,
+    "best_valid_gates": 253
+  },
+  "isolated_attention": {
+    "eager_milliseconds": 3.097512247040868,
+    "sdpa_milliseconds": 3.088046202901751,
+    "sdpa_live_milliseconds": 3.592132846824825,
+    "eager_peak_bytes": 1000563200,
+    "sdpa_peak_bytes": 627462656,
+    "sdpa_live_peak_bytes": 675630080,
+    "sdpa_peak_reduction": 0.3728905320523481,
+    "sdpa_max_abs_error": 0.0021255016326904297
+  },
+  "isolated_cache_kernels": {
+    "action_gather_speedup": 7.1962667650076355,
+    "full_gather_speedup": 61.66457707087076,
+    "cow_append_speedup": 16.837268753595975,
+    "max_abs_error": 0.0
+  },
+  "direct_paged_attention": {
+    "depth64_full_prefix_seconds": 21.13351911632344,
+    "depth64_readout_seconds": 1.7381883959751576,
+    "depth64_advance_seconds": 4.308442798443139,
+    "depth64_prefix_seconds": 6.046631194418296,
+    "speedup_over_vectorized_sdpa_prefix": 1.0443168644768215,
+    "speedup_over_full_prefix": 3.4950898172575826,
+    "cache_storage_bytes": 371712000,
+    "max_paged_transient_bytes": 1335723520,
+    "depth8_candidate_key_jaccard": 0.9994785416527845,
+    "depth8_valid_trajectories": 959,
+    "depth8_audited_trajectories": 1000,
+    "depth8_best_valid_gates": 253,
+    "depth64_search_seconds": 310.6000169820618,
+    "depth64_search_best_gates": 253
+  },
+  "direct_paged_batch_sweep": {
+    "depth8_search_seconds": {
+      "256": 28.260833448031917,
+      "512": 28.592133296187967,
+      "1000": 29.146424370119348
+    },
+    "recommended_microbatch_range": [
+      256,
+      512
+    ],
+    "conclusion": "readout is effectively saturated by 256; larger neural batches do not accelerate downstream binding decode/proposal/hash"
+  }
+}

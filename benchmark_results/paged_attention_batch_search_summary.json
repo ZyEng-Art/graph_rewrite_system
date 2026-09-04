@@ -1,0 +1,56 @@
+{
+  "device": "NVIDIA H100 80GB HBM3",
+  "workload": "hwb6, beam 1000, depth 8, direct paged attention",
+  "kernel_shape": {
+    "history_length": 64,
+    "node_query_length": 381,
+    "heads": 6,
+    "head_width": 32,
+    "page_size": 8
+  },
+  "kernel_time_for_1000_sequences_ms": {
+    "256": {
+      "readout": 0.42357824742794037,
+      "causal_append": 0.08873792365193367
+    },
+    "512": {
+      "readout": 0.42383252643048763,
+      "causal_append": 0.045328764244914055
+    },
+    "1000": {
+      "readout": 0.4153450205922127,
+      "causal_append": 0.040288716554641724
+    }
+  },
+  "search": {
+    "256": {
+      "total_seconds": 28.260833448031917,
+      "model_match_seconds": 14.071349086239934,
+      "cache_advance_seconds_including_compile": 0.9340481949038804,
+      "cache_advance_seconds_excluding_first_step_compile": 0.5182337118312716,
+      "proposal_seconds": 5.6723975371569395,
+      "lazy_update_and_hash_seconds": 5.153815255034715,
+      "best_gates": 253
+    },
+    "512": {
+      "total_seconds": 28.592133296187967,
+      "model_match_seconds": 14.555866147624329,
+      "cache_advance_seconds_including_compile": 0.976119227707386,
+      "cache_advance_seconds_excluding_first_step_compile": 0.4819836807437241,
+      "proposal_seconds": 5.654107206733897,
+      "lazy_update_and_hash_seconds": 5.13197771506384,
+      "best_gates": 253
+    },
+    "1000": {
+      "total_seconds": 29.146424370119348,
+      "model_match_seconds": 15.071664116578177,
+      "cache_advance_seconds_including_compile": 1.0809070710092783,
+      "cache_advance_seconds_excluding_first_step_compile": 0.45118620293214917,
+      "proposal_seconds": 5.562339544296265,
+      "lazy_update_and_hash_seconds": 5.150747534818947,
+      "best_gates": 253
+    }
+  },
+  "recommended_microbatch": 256,
+  "conclusion": "larger batches improve steady-state causal append but not total search; node readout is already saturated and downstream matching/binding plus CPU work dominates"
+}
