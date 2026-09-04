@@ -31,10 +31,12 @@ from beam_search_benchmark import (
 from dataset import RuleMetadata
 from incremental_graph import parse_pattern
 from lazy_rollout_benchmark import (
+    ExactReplayCacheEntry,
     indexed_topology,
     lazy_child,
     raw_topology_hash,
     replay_state,
+    shared_replay_prefixes,
     snapshot_signature,
     topology_digest,
 )
@@ -1109,6 +1111,15 @@ def main() -> None:
             refresh_candidates = len(beam)
             valid_indices = []
             refresh_checkpoints = {}
+            refresh_replay_cache: dict[
+                tuple, ExactReplayCacheEntry
+            ] | None = None
+            refresh_shared_prefixes = shared_replay_prefixes(beam)
+            if refresh_shared_prefixes:
+                refresh_replay_cache = {}
+                refresh_profile_counts["replay_cache_shared_prefixes"] = len(
+                    refresh_shared_prefixes
+                )
             for state_index, state in enumerate(beam):
                 refresh_attempted += 1
                 (
@@ -1129,6 +1140,8 @@ def main() -> None:
                     profile_counts=(
                         refresh_profile_counts if args.profile_stages else None
                     ),
+                    replay_cache=refresh_replay_cache,
+                    replay_cache_prefixes=refresh_shared_prefixes,
                 )
                 if (
                     checkpoint_audited < args.checkpoint_audit_count

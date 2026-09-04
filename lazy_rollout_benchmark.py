@@ -44,6 +44,13 @@ class LazyAction:
 
 
 @dataclass(frozen=True)
+class ExactReplayCacheEntry:
+    graph: Any | None
+    guid_to_slot: dict[int, int] | None
+    failure_step: int | None
+
+
+@dataclass(frozen=True)
 class IndexedTopology:
     nodes: dict[int, int]
     edges: frozenset[tuple[int, int, int, int]]
@@ -368,6 +375,21 @@ def graph_topology_signature(graph, guid_to_slot: dict[int, int]) -> tuple:
             )
         ),
     )
+
+
+def shared_replay_prefixes(states: list[BeamState]) -> set[tuple[LazyAction, ...]]:
+    counts: dict[tuple[LazyAction, ...], int] = defaultdict(int)
+    for state in states:
+        checkpoint_depth = (
+            state.exact_checkpoint_depth
+            if state.exact_graph_checkpoint is not None
+            else 0
+        )
+        if checkpoint_depth > len(state.history):
+            raise RuntimeError("exact checkpoint is ahead of speculative history")
+        for depth in range(checkpoint_depth + 1, len(state.history) + 1):
+            counts[state.history[:depth]] += 1
+    return {prefix for prefix, count in counts.items() if count > 1}
 
 
 def raw_topology_hash(row: dict) -> int:
@@ -706,6 +728,8 @@ def replay_state(
     ignore_checkpoint: bool = False,
     profile_timing: dict[str, float] | None = None,
     profile_counts: dict[str, int] | None = None,
+    replay_cache: dict[tuple[LazyAction, ...], ExactReplayCacheEntry] | None = None,
+    replay_cache_prefixes: set[tuple[LazyAction, ...]] | None = None,
 ):
     """Materialize one speculative trajectory in Quartz for an out-of-band audit."""
     def now() -> float:
@@ -738,11 +762,36 @@ def replay_state(
             raise RuntimeError("exact checkpoint is ahead of speculative history")
         add_seconds("init_from_checkpoint_seconds", init_started)
         add_count("init_from_checkpoint_states")
-    add_count("actions_planned", len(state.history) - checkpoint_depth)
+    history = state.history
+    add_count("actions_planned", len(history) - checkpoint_depth)
     failure_step = None
-    for step, action in enumerate(
-        state.history[checkpoint_depth:], start=checkpoint_depth + 1
-    ):
+    step = checkpoint_depth + 1
+    while step <= len(history):
+        if replay_cache is not None:
+            cache_lookup_started = now()
+            cached_depth = None
+            cached_entry = None
+            for candidate_depth in range(len(history), step - 1, -1):
+                entry = replay_cache.get(history[:candidate_depth])
+                if entry is not None:
+                    cached_depth = candidate_depth
+                    cached_entry = entry
+                    break
+            add_seconds("replay_cache_lookup_seconds", cache_lookup_started)
+            if cached_entry is not None:
+                add_count("replay_cache_hits")
+                add_count("actions_reused_from_cache", cached_depth - step + 1)
+                if cached_entry.failure_step is not None:
+                    failure_step = cached_entry.failure_step
+                    break
+                if cached_entry.graph is None or cached_entry.guid_to_slot is None:
+                    raise RuntimeError("corrupt exact replay cache entry")
+                graph = cached_entry.graph
+                guid_to_slot = dict(cached_entry.guid_to_slot)
+                step = cached_depth + 1
+                continue
+            add_count("replay_cache_misses")
+        action = history[step - 1]
         add_count("actions_attempted")
         anchor = action.source_slots[0]
         lookup_started = now()
@@ -755,6 +804,15 @@ def replay_state(
             add_seconds("anchor_node_lookup_seconds", lookup_started)
             add_count("anchor_missing_failures")
             failure_step = step
+            if (
+                replay_cache is not None
+                and replay_cache_prefixes is not None
+                and history[:step] in replay_cache_prefixes
+            ):
+                replay_cache[history[:step]] = ExactReplayCacheEntry(
+                    None, None, failure_step
+                )
+                add_count("replay_cache_entries")
             break
         node = graph.get_node_from_id(id=anchor_node_id)
         add_seconds("anchor_node_lookup_seconds", lookup_started)
@@ -770,6 +828,15 @@ def replay_state(
         if result is None or result[0] is None:
             add_count("quartz_apply_failures")
             failure_step = step
+            if (
+                replay_cache is not None
+                and replay_cache_prefixes is not None
+                and history[:step] in replay_cache_prefixes
+            ):
+                replay_cache[history[:step]] = ExactReplayCacheEntry(
+                    None, None, failure_step
+                )
+                add_count("replay_cache_entries")
             break
         validation_started = now()
         next_graph, _, source_guids, destination_guids = result
@@ -780,6 +847,15 @@ def replay_state(
             add_seconds("binding_validation_seconds", validation_started)
             add_count("binding_mismatch_failures")
             failure_step = step
+            if (
+                replay_cache is not None
+                and replay_cache_prefixes is not None
+                and history[:step] in replay_cache_prefixes
+            ):
+                replay_cache[history[:step]] = ExactReplayCacheEntry(
+                    None, None, failure_step
+                )
+                add_count("replay_cache_entries")
             break
         add_seconds("binding_validation_seconds", validation_started)
         update_started = now()
@@ -788,6 +864,16 @@ def replay_state(
         graph = next_graph
         add_seconds("slot_update_and_graph_swap_seconds", update_started)
         add_count("actions_applied")
+        if (
+            replay_cache is not None
+            and replay_cache_prefixes is not None
+            and history[:step] in replay_cache_prefixes
+        ):
+            replay_cache[history[:step]] = ExactReplayCacheEntry(
+                graph, dict(guid_to_slot), None
+            )
+            add_count("replay_cache_entries")
+        step += 1
     if failure_step is not None:
         add_count("failed_states")
         result = (None, failure_step, False)
