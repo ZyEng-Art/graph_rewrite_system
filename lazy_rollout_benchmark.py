@@ -347,6 +347,29 @@ def snapshot_signature(row: dict) -> tuple:
     )
 
 
+def graph_topology_signature(graph, guid_to_slot: dict[int, int]) -> tuple:
+    nodes = list(graph.nodes)
+    return (
+        tuple(
+            sorted(
+                (guid_to_slot[int(node.guid)], int(node.gate_tp))
+                for node in nodes
+            )
+        ),
+        tuple(
+            sorted(
+                (
+                    guid_to_slot[int(nodes[int(src)].guid)],
+                    guid_to_slot[int(nodes[int(dst)].guid)],
+                    int(src_port),
+                    int(dst_port),
+                )
+                for src, dst, src_port, dst_port in graph.all_edges()
+            )
+        ),
+    )
+
+
 def raw_topology_hash(row: dict) -> int:
     """Cheap process-local hash; catches duplicates with the same persistent slots."""
     return raw_topology_hash_components(
@@ -769,17 +792,15 @@ def replay_state(
         add_count("failed_states")
         result = (None, failure_step, False)
         return (*result, None) if return_checkpoint else result
-    snapshot_started = now()
-    exact_snapshot = snapshot(graph, guid_to_slot)
-    add_seconds("snapshot_seconds", snapshot_started)
     signature_started = now()
+    exact_signature = graph_topology_signature(graph, guid_to_slot)
     expected_signature = (
         indexed_topology_signature(state.topology_index)
         if state.topology_index is not None
         else snapshot_signature(state.snapshot)
     )
-    topology_matches = snapshot_signature(exact_snapshot) == expected_signature
-    add_seconds("signature_compare_seconds", signature_started)
+    topology_matches = exact_signature == expected_signature
+    add_seconds("topology_signature_compare_seconds", signature_started)
     add_count("valid_states")
     if not topology_matches:
         add_count("topology_mismatch_states")
