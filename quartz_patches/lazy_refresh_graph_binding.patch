@@ -1,0 +1,167 @@
+diff --git a/python/quartz/_cython/CCore.pxd b/python/quartz/_cython/CCore.pxd
+index cdd1f4b..74b4d79 100644
+--- a/python/quartz/_cython/CCore.pxd
++++ b/python/quartz/_cython/CCore.pxd
+@@ -115,6 +115,7 @@ cdef extern from "tasograph/tasograph.h" namespace "quartz":
+         pair[shared_ptr[Graph], vector[int]] apply_xfer_and_track_node(GraphXfer *, Op, bool, int) const
+         pair[shared_ptr[Graph], vector[int]] apply_xfer_and_track_node_with_bindings(GraphXfer *, Op, bool, int, vector[size_t] &, vector[size_t] &) const
+         shared_ptr[Graph] apply_xfer_with_op_binding_and_bindings(GraphXfer *, vector[Op], bool, vector[size_t] &, vector[size_t] &) const
++        shared_ptr[Graph] apply_xfer_with_guid_binding_and_bindings(GraphXfer *, vector[size_t], bool, vector[size_t] &) const
+         vector[size_t] appliable_xfers(Op, const vector[GraphXfer *] &) const
+         vector[size_t] appliable_xfers_parallel(Op, const vector[GraphXfer *] &) const
+         vector[vector[size_t]] appliable_xfer_bindings_parallel(Op, const vector[GraphXfer *] &) const
+diff --git a/python/quartz/_cython/core.pyx b/python/quartz/_cython/core.pyx
+index b0983b7..1cc797f 100644
+--- a/python/quartz/_cython/core.pyx
++++ b/python/quartz/_cython/core.pyx
+@@ -398,13 +398,18 @@ cdef class PyGraph:
+     cdef shared_ptr[Graph] graph
+     cdef object _nodes
+     cdef size_t _hash
++    cdef bool _nodes_valid
++    cdef bool _hash_valid
+ 
+     property nodes:
+         def __get__(self):
++            if not self._nodes_valid and self.graph.get() != NULL:
++                self.get_nodes()
+             return self._nodes
+ 
+         def __set__(self, nodes):
+             self._nodes = nodes
++            self._nodes_valid = True
+ 
+     property _hash:
+         def __get__(self):
+@@ -414,11 +419,14 @@ cdef class PyGraph:
+             self._hash = _hash
+ 
+     def __cinit__(self, *, QuartzContext context = None, PyDAG dag = None):
++        self._nodes_valid = False
++        self._hash_valid = False
+         self.nodes = []
+         if context != None and dag != None:
+             self.graph = make_shared[Graph](context.context, dag.dag)
+             self.get_nodes()
+             self._hash = deref(self.graph).hash()
++            self._hash_valid = True
+         else:
+             self.graph = shared_ptr[Graph](NULL)
+             self._hash = 0
+@@ -428,7 +436,7 @@ cdef class PyGraph:
+         self.graph.reset()
+ 
+     def __hash__(self):
+-        return self._hash
++        return self.hash()
+ 
+     def get_nodes(self):
+         gate_count = self.gate_count
+@@ -447,6 +455,15 @@ cdef class PyGraph:
+         self.graph = graph_
+         self.get_nodes()
+         self._hash = deref(self.graph).hash()
++        self._hash_valid = True
++        return self
++
++    cdef set_this_deferred(self, shared_ptr[Graph] graph_):
++        self.graph = graph_
++        self._nodes = []
++        self._nodes_valid = False
++        self._hash = 0
++        self._hash_valid = False
+         return self
+ 
+     # TODO: deprecate this function
+@@ -594,6 +611,29 @@ cdef class PyGraph:
+             [src_guids[i] for i in range(src_guids.size())],
+             [dst_guids[i] for i in range(dst_guids.size())],
+         )
++
++    def apply_xfer_with_guid_binding(self, *, PyXfer xfer, source_node_guids, eliminate_rotation:bool = False):
++        """Apply a known binding without eagerly materializing graph metadata."""
++        cdef vector[size_t] source_guids
++        cdef vector[size_t] dst_guids
++        if xfer.is_nop:
++            return self, []
++        source_guids.reserve(len(source_node_guids))
++        for value in source_node_guids:
++            source_guids.push_back(value)
++        ret = deref(self.graph).apply_xfer_with_guid_binding_and_bindings(
++            xfer.graphXfer,
++            source_guids,
++            eliminate_rotation,
++            dst_guids,
++        )
++        if ret.get() == NULL:
++            return None, []
++        return (
++            PyGraph().set_this_deferred(ret),
++            [dst_guids[i] for i in range(dst_guids.size())],
++        )
++
+     def all_nodes(self):
+         return self.nodes
+ 
+@@ -614,6 +654,9 @@ cdef class PyGraph:
+         return self.nodes[id]
+ 
+     def hash(self):
++        if not self._hash_valid:
++            self._hash = deref(self.graph).hash()
++            self._hash_valid = True
+         return self._hash
+ 
+     def all_edges(self):
+diff --git a/src/quartz/tasograph/tasograph.cpp b/src/quartz/tasograph/tasograph.cpp
+index 92bb793..7d5b202 100644
+--- a/src/quartz/tasograph/tasograph.cpp
++++ b/src/quartz/tasograph/tasograph.cpp
+@@ -2741,6 +2741,32 @@ Graph::apply_xfer_with_op_binding_and_bindings(
+   return new_graph;
+ }
+ 
++std::shared_ptr<Graph>
++Graph::apply_xfer_with_guid_binding_and_bindings(
++    GraphXfer *xfer, std::vector<size_t> source_guids,
++    bool eliminate_rotation, std::vector<size_t> &dst_guids) const {
++  std::vector<Op> source_ops;
++  source_ops.reserve(source_guids.size());
++  for (const auto guid : source_guids) {
++    bool found = false;
++    for (auto it = inEdges.cbegin(); it != inEdges.cend(); ++it) {
++      if (it->first.guid == guid) {
++        source_ops.emplace_back(it->first);
++        found = true;
++        break;
++      }
++    }
++    if (!found) {
++      dst_guids.clear();
++      return std::shared_ptr<Graph>(nullptr);
++    }
++  }
++  std::vector<size_t> matched_src_guids;
++  return apply_xfer_with_op_binding_and_bindings(
++      xfer, std::move(source_ops), eliminate_rotation, matched_src_guids,
++      dst_guids);
++}
++
+ std::vector<size_t>
+ Graph::appliable_xfers(Op op, const std::vector<GraphXfer *> &xfer_v) const {
+   std::vector<size_t> appliable_xfer_v;
+diff --git a/src/quartz/tasograph/tasograph.h b/src/quartz/tasograph/tasograph.h
+index 990608d..c24051b 100644
+--- a/src/quartz/tasograph/tasograph.h
++++ b/src/quartz/tasograph/tasograph.h
+@@ -309,6 +309,10 @@ class Graph {
+   apply_xfer_with_op_binding_and_bindings(
+       GraphXfer *xfer, std::vector<Op> source_ops, bool eliminate_rotation,
+       std::vector<size_t> &src_guids, std::vector<size_t> &dst_guids) const;
++  std::shared_ptr<Graph>
++  apply_xfer_with_guid_binding_and_bindings(
++      GraphXfer *xfer, std::vector<size_t> source_guids,
++      bool eliminate_rotation, std::vector<size_t> &dst_guids) const;
+   void all_ops(std::vector<Op> &ops);
+   void all_edges(std::vector<Edge> &edges);
+   void topology_order_ops(std::vector<Op> &ops) const;

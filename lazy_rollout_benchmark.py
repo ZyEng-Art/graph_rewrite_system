@@ -47,6 +47,7 @@ class LazyAction:
 class ExactReplayCacheEntry:
     graph: Any | None
     guid_to_slot: dict[int, int] | None
+    slot_to_guid: dict[int, int] | None
     failure_step: int | None
 
 
@@ -746,6 +747,12 @@ def replay_state(
             return None
         return [node_id_by_slot[slot] for slot in action.source_slots]
 
+    def lookup_source_guids(action: LazyAction) -> list[int] | None:
+        source_guids = [slot_to_guid.get(slot) for slot in action.source_slots]
+        if any(guid is None for guid in source_guids):
+            return None
+        return [int(guid) for guid in source_guids]
+
     def now() -> float:
         return time.perf_counter() if profile_timing is not None else 0.0
 
@@ -765,12 +772,14 @@ def replay_state(
         graph = pygraph_cls.from_qasm_str(context=context, qasm_str=initial_qasm)
         guid_to_slot: dict[int, int] = {}
         update_slots(graph, guid_to_slot, 0)
+        slot_to_guid = {slot: guid for guid, slot in guid_to_slot.items()}
         checkpoint_depth = 0
         add_seconds("init_from_qasm_seconds", init_started)
         add_count("init_from_qasm_states")
     else:
         graph = state.exact_graph_checkpoint
         guid_to_slot = dict(state.exact_slot_checkpoint)
+        slot_to_guid = {slot: guid for guid, slot in guid_to_slot.items()}
         checkpoint_depth = state.exact_checkpoint_depth
         if checkpoint_depth > len(state.history):
             raise RuntimeError("exact checkpoint is ahead of speculative history")
@@ -781,7 +790,9 @@ def replay_state(
     failure_step = None
     direct_binding_method = None
     if prefer_direct_binding:
-        if hasattr(graph, "apply_xfer_with_node_id_binding"):
+        if hasattr(graph, "apply_xfer_with_guid_binding"):
+            direct_binding_method = "apply_xfer_with_guid_binding"
+        elif hasattr(graph, "apply_xfer_with_node_id_binding"):
             direct_binding_method = "apply_xfer_with_node_id_binding"
         elif hasattr(graph, "apply_xfer_with_node_id_binding_trace"):
             direct_binding_method = "apply_xfer_with_node_id_binding_trace"
@@ -804,17 +815,47 @@ def replay_state(
                 if cached_entry.failure_step is not None:
                     failure_step = cached_entry.failure_step
                     break
-                if cached_entry.graph is None or cached_entry.guid_to_slot is None:
+                if (
+                    cached_entry.graph is None
+                    or cached_entry.guid_to_slot is None
+                    or cached_entry.slot_to_guid is None
+                ):
                     raise RuntimeError("corrupt exact replay cache entry")
                 graph = cached_entry.graph
                 guid_to_slot = dict(cached_entry.guid_to_slot)
+                slot_to_guid = dict(cached_entry.slot_to_guid)
                 step = cached_depth + 1
                 continue
             add_count("replay_cache_misses")
         action = history[step - 1]
         add_count("actions_attempted")
         lookup_started = now()
-        if direct_binding_method is not None:
+        if direct_binding_method == "apply_xfer_with_guid_binding":
+            source_guids = lookup_source_guids(action)
+            add_seconds("source_guid_lookup_seconds", lookup_started)
+            if source_guids is None:
+                add_count("source_guid_missing_failures")
+                failure_step = step
+                if (
+                    replay_cache is not None
+                    and replay_cache_prefixes is not None
+                    and history[:step] in replay_cache_prefixes
+                ):
+                    replay_cache[history[:step]] = ExactReplayCacheEntry(
+                        None, None, None, failure_step
+                    )
+                    add_count("replay_cache_entries")
+                break
+            apply_started = now()
+            result = graph.apply_xfer_with_guid_binding(
+                xfer=xfers[action.xfer_id],
+                source_node_guids=source_guids,
+                eliminate_rotation=False,
+            )
+            add_seconds("quartz_apply_seconds", apply_started)
+            add_count("quartz_apply_calls")
+            add_count("quartz_direct_guid_apply_calls")
+        elif direct_binding_method is not None:
             source_node_ids = lookup_source_node_ids(action)
             add_seconds("source_node_lookup_seconds", lookup_started)
             if source_node_ids is None:
@@ -826,7 +867,7 @@ def replay_state(
                     and history[:step] in replay_cache_prefixes
                 ):
                     replay_cache[history[:step]] = ExactReplayCacheEntry(
-                        None, None, failure_step
+                        None, None, None, failure_step
                     )
                     add_count("replay_cache_entries")
                 break
@@ -864,7 +905,7 @@ def replay_state(
                     and history[:step] in replay_cache_prefixes
                 ):
                     replay_cache[history[:step]] = ExactReplayCacheEntry(
-                        None, None, failure_step
+                        None, None, None, failure_step
                     )
                     add_count("replay_cache_entries")
                 break
@@ -889,12 +930,15 @@ def replay_state(
                 and history[:step] in replay_cache_prefixes
             ):
                 replay_cache[history[:step]] = ExactReplayCacheEntry(
-                    None, None, failure_step
+                    None, None, None, failure_step
                 )
                 add_count("replay_cache_entries")
             break
         validation_started = now()
-        next_graph, _, source_guids, destination_guids = result
+        if direct_binding_method == "apply_xfer_with_guid_binding":
+            next_graph, destination_guids = result
+        else:
+            next_graph, _, source_guids, destination_guids = result
         actual_binding = tuple(guid_to_slot[int(guid)] for guid in source_guids)
         if actual_binding != action.source_slots or len(destination_guids) != len(
             action.destination_slots
@@ -908,7 +952,7 @@ def replay_state(
                 and history[:step] in replay_cache_prefixes
             ):
                 replay_cache[history[:step]] = ExactReplayCacheEntry(
-                    None, None, failure_step
+                    None, None, None, failure_step
                 )
                 add_count("replay_cache_entries")
             break
@@ -916,6 +960,7 @@ def replay_state(
         update_started = now()
         for guid, slot in zip(destination_guids, action.destination_slots):
             guid_to_slot[int(guid)] = int(slot)
+            slot_to_guid[int(slot)] = int(guid)
         graph = next_graph
         add_seconds("slot_update_and_graph_swap_seconds", update_started)
         add_count("actions_applied")
@@ -925,7 +970,7 @@ def replay_state(
             and history[:step] in replay_cache_prefixes
         ):
             replay_cache[history[:step]] = ExactReplayCacheEntry(
-                graph, dict(guid_to_slot), None
+                graph, dict(guid_to_slot), dict(slot_to_guid), None
             )
             add_count("replay_cache_entries")
         step += 1

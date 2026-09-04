@@ -640,3 +640,27 @@ The machine-readable aggregate is
 `benchmark_results/cross_circuit_final_summary.json`; the individual
 `cross_circuit_final_*`, `cross_circuit_cpu_quartz_*`, and
 `cross_circuit_refresh8_*` JSON files retain all per-step counters.
+
+## Deferred Quartz graph materialization
+
+Exact refresh previously materialized every intermediate `PyGraph` node list
+and computed its whole-graph Quartz hash after each replayed action.  Refresh
+only needs stable source identities and destination GUIDs between actions, so
+the direct binding now accepts source GUIDs and defers node topology and hash
+materialization until a caller actually requests them.
+
+On `h100-gpu5` GPU 6 with `hwb6`, beam 1000, depth 16, and refresh interval 8,
+the same profiled search changed as follows:
+
+| metric | eager node/hash binding | deferred GUID binding | change |
+|---|---:|---:|---:|
+| search excluding audit | 13.153 s | 11.148 s | -15.2% |
+| exact refresh | 4.051 s | 2.547 s | -37.1% |
+| Quartz apply wrapper | 3.058 s | 1.383 s | -54.8% |
+| best gate count | 253 | 253 | unchanged |
+
+The final audit now explicitly ignores refresh checkpoints and independently
+replays every trajectory from the input circuit through the legacy anchor
+binding path.  All 1000 trajectories are valid and all 1000 reconstructed
+topologies match; this independent audit takes 11.708 seconds.  The profile and
+audit are retained in `current_gpu6_*_lazygraph*.json`.

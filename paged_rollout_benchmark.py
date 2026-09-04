@@ -1380,6 +1380,7 @@ def main() -> None:
             quartz.PyGraph,
             xfers,
             initial_qasm,
+            ignore_checkpoint=True,
             prefer_direct_binding=False,
         )
         if exact_graph is None:
