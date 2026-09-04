@@ -1375,7 +1375,12 @@ def main() -> None:
     best_valid_graph = None
     for state in beam[:audited]:
         exact_graph, failure_step, topology_ok = replay_state(
-            state, context, quartz.PyGraph, xfers, initial_qasm
+            state,
+            context,
+            quartz.PyGraph,
+            xfers,
+            initial_qasm,
+            prefer_direct_binding=False,
         )
         if exact_graph is None:
             failure_steps[int(failure_step)] += 1

@@ -730,8 +730,22 @@ def replay_state(
     profile_counts: dict[str, int] | None = None,
     replay_cache: dict[tuple[LazyAction, ...], ExactReplayCacheEntry] | None = None,
     replay_cache_prefixes: set[tuple[LazyAction, ...]] | None = None,
+    prefer_direct_binding: bool = True,
 ):
     """Materialize one speculative trajectory in Quartz for an out-of-band audit."""
+    def lookup_source_node_ids(action: LazyAction) -> list[int] | None:
+        needed = set(action.source_slots)
+        node_id_by_slot: dict[int, int] = {}
+        for index, graph_node in enumerate(graph.nodes):
+            slot = guid_to_slot.get(int(graph_node.guid))
+            if slot in needed:
+                node_id_by_slot[slot] = index
+                if len(node_id_by_slot) == len(needed):
+                    break
+        if len(node_id_by_slot) != len(needed):
+            return None
+        return [node_id_by_slot[slot] for slot in action.source_slots]
+
     def now() -> float:
         return time.perf_counter() if profile_timing is not None else 0.0
 
@@ -765,6 +779,12 @@ def replay_state(
     history = state.history
     add_count("actions_planned", len(history) - checkpoint_depth)
     failure_step = None
+    direct_binding_method = None
+    if prefer_direct_binding:
+        if hasattr(graph, "apply_xfer_with_node_id_binding"):
+            direct_binding_method = "apply_xfer_with_node_id_binding"
+        elif hasattr(graph, "apply_xfer_with_node_id_binding_trace"):
+            direct_binding_method = "apply_xfer_with_node_id_binding_trace"
     step = checkpoint_depth + 1
     while step <= len(history):
         if replay_cache is not None:
@@ -793,38 +813,73 @@ def replay_state(
             add_count("replay_cache_misses")
         action = history[step - 1]
         add_count("actions_attempted")
-        anchor = action.source_slots[0]
         lookup_started = now()
-        anchor_node_id = None
-        for index, graph_node in enumerate(graph.nodes):
-            if guid_to_slot.get(int(graph_node.guid)) == anchor:
-                anchor_node_id = index
+        if direct_binding_method is not None:
+            source_node_ids = lookup_source_node_ids(action)
+            add_seconds("source_node_lookup_seconds", lookup_started)
+            if source_node_ids is None:
+                add_count("source_node_missing_failures")
+                failure_step = step
+                if (
+                    replay_cache is not None
+                    and replay_cache_prefixes is not None
+                    and history[:step] in replay_cache_prefixes
+                ):
+                    replay_cache[history[:step]] = ExactReplayCacheEntry(
+                        None, None, failure_step
+                    )
+                    add_count("replay_cache_entries")
                 break
-        if anchor_node_id is None:
-            add_seconds("anchor_node_lookup_seconds", lookup_started)
-            add_count("anchor_missing_failures")
-            failure_step = step
-            if (
-                replay_cache is not None
-                and replay_cache_prefixes is not None
-                and history[:step] in replay_cache_prefixes
-            ):
-                replay_cache[history[:step]] = ExactReplayCacheEntry(
-                    None, None, failure_step
+            apply_started = now()
+            if direct_binding_method == "apply_xfer_with_node_id_binding":
+                result = graph.apply_xfer_with_node_id_binding(
+                    xfer=xfers[action.xfer_id],
+                    source_node_ids=source_node_ids,
+                    eliminate_rotation=False,
                 )
-                add_count("replay_cache_entries")
-            break
-        node = graph.get_node_from_id(id=anchor_node_id)
-        add_seconds("anchor_node_lookup_seconds", lookup_started)
-        apply_started = now()
-        result = graph.apply_xfer_with_binding_trace(
-            xfer=xfers[action.xfer_id],
-            node=node,
-            eliminate_rotation=False,
-            predecessor_layers=1,
-        )
-        add_seconds("quartz_apply_seconds", apply_started)
-        add_count("quartz_apply_calls")
+            else:
+                result = graph.apply_xfer_with_node_id_binding_trace(
+                    xfer=xfers[action.xfer_id],
+                    source_node_ids=source_node_ids,
+                    eliminate_rotation=False,
+                    predecessor_layers=1,
+                )
+            add_seconds("quartz_apply_seconds", apply_started)
+            add_count("quartz_apply_calls")
+            add_count("quartz_direct_apply_calls")
+        else:
+            anchor = action.source_slots[0]
+            anchor_node_id = None
+            for index, graph_node in enumerate(graph.nodes):
+                if guid_to_slot.get(int(graph_node.guid)) == anchor:
+                    anchor_node_id = index
+                    break
+            if anchor_node_id is None:
+                add_seconds("anchor_node_lookup_seconds", lookup_started)
+                add_count("anchor_missing_failures")
+                failure_step = step
+                if (
+                    replay_cache is not None
+                    and replay_cache_prefixes is not None
+                    and history[:step] in replay_cache_prefixes
+                ):
+                    replay_cache[history[:step]] = ExactReplayCacheEntry(
+                        None, None, failure_step
+                    )
+                    add_count("replay_cache_entries")
+                break
+            node = graph.get_node_from_id(id=anchor_node_id)
+            add_seconds("anchor_node_lookup_seconds", lookup_started)
+            apply_started = now()
+            result = graph.apply_xfer_with_binding_trace(
+                xfer=xfers[action.xfer_id],
+                node=node,
+                eliminate_rotation=False,
+                predecessor_layers=1,
+            )
+            add_seconds("quartz_apply_seconds", apply_started)
+            add_count("quartz_apply_calls")
+            add_count("quartz_anchor_apply_calls")
         if result is None or result[0] is None:
             add_count("quartz_apply_failures")
             failure_step = step

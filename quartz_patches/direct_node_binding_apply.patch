@@ -1,0 +1,185 @@
+diff --git a/src/quartz/tasograph/tasograph.h b/src/quartz/tasograph/tasograph.h
+--- a/src/quartz/tasograph/tasograph.h
++++ b/src/quartz/tasograph/tasograph.h
+@@ -304,7 +304,11 @@
+   std::pair<std::shared_ptr<Graph>, std::vector<int>>
+   apply_xfer_and_track_node_with_bindings(
+       GraphXfer *xfer, Op op, bool eliminate_rotation, int predecessor_layers,
+       std::vector<size_t> &src_guids, std::vector<size_t> &dst_guids) const;
++  std::shared_ptr<Graph>
++  apply_xfer_with_op_binding_and_bindings(
++      GraphXfer *xfer, std::vector<Op> source_ops, bool eliminate_rotation,
++      std::vector<size_t> &src_guids, std::vector<size_t> &dst_guids) const;
+   void all_ops(std::vector<Op> &ops);
+   void all_edges(std::vector<Edge> &edges);
+   void topology_order_ops(std::vector<Op> &ops) const;
+diff --git a/src/quartz/tasograph/tasograph.cpp b/src/quartz/tasograph/tasograph.cpp
+--- a/src/quartz/tasograph/tasograph.cpp
++++ b/src/quartz/tasograph/tasograph.cpp
+@@ -2625,6 +2625,122 @@
+   return std::make_pair(new_graph, node_trace);
+ }
+-
++
++std::shared_ptr<Graph>
++Graph::apply_xfer_with_op_binding_and_bindings(
++    GraphXfer *xfer, std::vector<Op> source_ops, bool eliminate_rotation,
++    std::vector<size_t> &src_guids, std::vector<size_t> &dst_guids) const {
++  src_guids.clear();
++  dst_guids.clear();
++  std::shared_ptr<Graph> new_graph(nullptr);
++  bool success = source_ops.size() == xfer->srcOps.size();
++  std::deque<std::pair<OpX *, Op>> matched_opx_op_pairs_dq;
++  std::unordered_set<Op, OpHash> seen_ops;
++
++  if (success) {
++    for (size_t i = 0; i < source_ops.size(); ++i) {
++      OpX *src_opx = xfer->srcOps[i];
++      Op op = source_ops[i];
++      if (seen_ops.find(op) != seen_ops.end() ||
++          xfer->mappedOps.find(op) != xfer->mappedOps.end() ||
++          !xfer->can_match(src_opx, op, this)) {
++        success = false;
++        break;
++      }
++      xfer->match(src_opx, op, this);
++      seen_ops.insert(op);
++      matched_opx_op_pairs_dq.push_back(std::make_pair(src_opx, op));
++    }
++  }
++
++  if (success) {
++    std::set<int> qubits;
++    for (auto it = xfer->mappedInputs.cbegin();
++         it != xfer->mappedInputs.cend(); ++it) {
++      if (it->second.first.ptr->is_quantum_gate() ||
++          it->second.first.ptr->tp == GateType::input_qubit) {
++        Pos p = Pos(it->second.first, it->second.second);
++        auto q = pos_2_logical_qubit.find(p)->second;
++        if (qubits.find(q) != qubits.end()) {
++          success = false;
++          break;
++        } else {
++          qubits.insert(q);
++        }
++      }
++    }
++  }
++
++  if (success) {
++    for (auto dst_it = xfer->dstOps.cbegin();
++         dst_it != xfer->dstOps.cend(); ++dst_it) {
++      OpX *dst_op = *dst_it;
++      if (!xfer->create_new_operator(dst_op, dst_op->mapOp)) {
++        success = false;
++        break;
++      }
++    }
++  }
++
++  if (success) {
++    for (auto mapped_ops_it = xfer->mappedOps.cbegin();
++         mapped_ops_it != xfer->mappedOps.cend() && success;
++         ++mapped_ops_it) {
++      if (outEdges.find(mapped_ops_it->first) != outEdges.end()) {
++        const std::set<Edge, EdgeCompare> &list =
++            outEdges.find(mapped_ops_it->first)->second;
++        for (auto edge_it = list.cbegin(); edge_it != list.cend() && success;
++             ++edge_it) {
++          if (xfer->mappedOps.find(edge_it->dstOp) ==
++              xfer->mappedOps.end()) {
++            TensorX src_ten;
++            src_ten.op = mapped_ops_it->second;
++            src_ten.idx = edge_it->srcIdx;
++            if (xfer->mappedOutputs.find(src_ten) ==
++                xfer->mappedOutputs.end()) {
++              success = false;
++            }
++          }
++        }
++      }
++    }
++  }
++
++  if (success) {
++    assert(seen_ops.size() == xfer->srcOps.size());
++    new_graph = xfer->create_new_graph(this);
++    if (new_graph->has_loop()) {
++      new_graph.reset();
++      success = false;
++    }
++  }
++
++  if (success) {
++    src_guids.reserve(xfer->srcOps.size());
++    for (const auto *opx : xfer->srcOps) {
++      src_guids.emplace_back(opx->mapOp.guid);
++    }
++    dst_guids.reserve(xfer->dstOps.size());
++    for (const auto *opx : xfer->dstOps) {
++      dst_guids.emplace_back(opx->mapOp.guid);
++    }
++  }
++
++  if (success && eliminate_rotation) {
++    new_graph->constant_and_rotation_elimination();
++  }
++
++  while (!matched_opx_op_pairs_dq.empty()) {
++    auto opx_op_pair = matched_opx_op_pairs_dq.back();
++    matched_opx_op_pairs_dq.pop_back();
++    xfer->unmatch(opx_op_pair.first, opx_op_pair.second, this);
++  }
++  if (!success) {
++    src_guids.clear();
++    dst_guids.clear();
++  }
++  return new_graph;
++}
++
+ std::vector<size_t>
+ Graph::appliable_xfers(Op op, const std::vector<GraphXfer *> &xfer_v) const {
+   std::vector<size_t> appliable_xfer_v;
+diff --git a/python/quartz/_cython/CCore.pxd b/python/quartz/_cython/CCore.pxd
+--- a/python/quartz/_cython/CCore.pxd
++++ b/python/quartz/_cython/CCore.pxd
+@@ -115,5 +115,6 @@
+         pair[shared_ptr[Graph], vector[int]] apply_xfer_and_track_node(GraphXfer *, Op, bool, int) const
+         pair[shared_ptr[Graph], vector[int]] apply_xfer_and_track_node_with_bindings(GraphXfer *, Op, bool, int, vector[size_t] &, vector[size_t] &) const
++        shared_ptr[Graph] apply_xfer_with_op_binding_and_bindings(GraphXfer *, vector[Op], bool, vector[size_t] &, vector[size_t] &) const
+         vector[size_t] appliable_xfers(Op, const vector[GraphXfer *] &) const
+         vector[size_t] appliable_xfers_parallel(Op, const vector[GraphXfer *] &) const
+         vector[vector[size_t]] appliable_xfer_bindings_parallel(Op, const vector[GraphXfer *] &) const
+diff --git a/python/quartz/_cython/core.pyx b/python/quartz/_cython/core.pyx
+--- a/python/quartz/_cython/core.pyx
++++ b/python/quartz/_cython/core.pyx
+@@ -567,0 +568,29 @@
++    def apply_xfer_with_node_id_binding(self, *, PyXfer xfer, source_node_ids, eliminate_rotation:bool = False):
++        """Apply one rewrite using an already-known ordered source-node binding."""
++        cdef vector[Op] source_ops
++        cdef vector[size_t] src_guids
++        cdef vector[size_t] dst_guids
++        cdef Py_ssize_t node_id
++        if xfer.is_nop:
++            return self, [], [], []
++        source_ops.reserve(len(source_node_ids))
++        for value in source_node_ids:
++            node_id = value
++            if node_id < 0 or node_id >= len(self.nodes):
++                raise IndexError(f"source node id {node_id} is outside the graph")
++            source_ops.push_back((<PyNode>self.nodes[node_id]).node)
++        ret = deref(self.graph).apply_xfer_with_op_binding_and_bindings(
++            xfer.graphXfer,
++            source_ops,
++            eliminate_rotation,
++            src_guids,
++            dst_guids,
++        )
++        if ret.get() == NULL:
++            return None, [], [], []
++        return (
++            PyGraph().set_this(ret),
++            [],
++            [src_guids[i] for i in range(src_guids.size())],
++            [dst_guids[i] for i in range(dst_guids.size())],
++        )
