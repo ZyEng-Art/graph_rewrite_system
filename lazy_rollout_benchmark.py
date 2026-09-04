@@ -884,6 +884,9 @@ def main() -> None:
             gate_count=initial_gate_count,
             depth=0,
             history=(),
+            exact_graph_checkpoint=graph,
+            exact_slot_checkpoint=dict(guid_to_slot),
+            exact_checkpoint_depth=0,
         )
     ]
     model_matches(

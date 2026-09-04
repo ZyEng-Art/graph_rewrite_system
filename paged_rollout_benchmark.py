@@ -816,6 +816,9 @@ def main() -> None:
                 if args.lazy_topology_backend == "indexed"
                 else None
             ),
+            exact_graph_checkpoint=graph,
+            exact_slot_checkpoint=dict(guid_to_slot),
+            exact_checkpoint_depth=0,
         )
     ]
     if args.dump_beam_levels is not None:
