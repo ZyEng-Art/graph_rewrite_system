@@ -1095,6 +1095,8 @@ def main() -> None:
         refresh_attempted = 0
         refresh_valid = 0
         refresh_failures: dict[int, int] = defaultdict(int)
+        refresh_profile_seconds: dict[str, float] = {}
+        refresh_profile_counts: dict[str, int] = {}
         checkpoint_audited = 0
         checkpoint_mismatches = 0
         if refresh_due:
@@ -1115,6 +1117,12 @@ def main() -> None:
                     xfers,
                     initial_qasm,
                     return_checkpoint=True,
+                    profile_timing=(
+                        refresh_profile_seconds if args.profile_stages else None
+                    ),
+                    profile_counts=(
+                        refresh_profile_counts if args.profile_stages else None
+                    ),
                 )
                 if (
                     checkpoint_audited < args.checkpoint_audit_count
@@ -1133,6 +1141,12 @@ def main() -> None:
                         initial_qasm,
                         return_checkpoint=True,
                         ignore_checkpoint=True,
+                        profile_timing=(
+                            refresh_profile_seconds if args.profile_stages else None
+                        ),
+                        profile_counts=(
+                            refresh_profile_counts if args.profile_stages else None
+                        ),
                     )
                     checkpoint_audited += 1
                     checkpoint_result = (
@@ -1272,6 +1286,31 @@ def main() -> None:
         }
         if args.profile_stages:
             row["stage_seconds"] = stage_seconds
+            if refresh_due:
+                refresh_profile_percent = {
+                    name: 100.0 * value / max(refresh_seconds, 1e-12)
+                    for name, value in refresh_profile_seconds.items()
+                }
+                row["exact_refresh_profile"] = {
+                    "scope": "exact_refresh_seconds",
+                    "seconds": dict(
+                        sorted(
+                            refresh_profile_seconds.items(),
+                            key=lambda item: item[1],
+                            reverse=True,
+                        )
+                    ),
+                    "percent": dict(
+                        sorted(
+                            refresh_profile_percent.items(),
+                            key=lambda item: item[1],
+                            reverse=True,
+                        )
+                    ),
+                    "counts": dict(sorted(refresh_profile_counts.items())),
+                    "accounted_seconds": sum(refresh_profile_seconds.values()),
+                    "accounted_percent": sum(refresh_profile_percent.values()),
+                }
         step_rows.append(row)
         print(json.dumps(row, sort_keys=True), flush=True)
         if args.dump_beam_levels is not None:
@@ -1280,10 +1319,22 @@ def main() -> None:
     search_seconds = time.perf_counter() - total_started
     stage_totals: dict[str, float] = {}
     stage_percentages: dict[str, float] = {}
+    refresh_profile_totals: dict[str, float] = {}
+    refresh_profile_counts: dict[str, int] = {}
     if args.profile_stages:
         for row in step_rows:
             for name, value in row["stage_seconds"].items():
                 stage_totals[name] = stage_totals.get(name, 0.0) + value
+            refresh_profile = row.get("exact_refresh_profile")
+            if refresh_profile is not None:
+                for name, value in refresh_profile["seconds"].items():
+                    refresh_profile_totals[name] = (
+                        refresh_profile_totals.get(name, 0.0) + value
+                    )
+                for name, value in refresh_profile["counts"].items():
+                    refresh_profile_counts[name] = (
+                        refresh_profile_counts.get(name, 0) + int(value)
+                    )
         profiled_steps_seconds = sum(row["total_seconds"] for row in step_rows)
         loop_boundary_seconds = max(0.0, search_seconds - profiled_steps_seconds)
         stage_totals["search_loop_boundary_seconds"] = loop_boundary_seconds
@@ -1380,6 +1431,32 @@ def main() -> None:
             "accounted_seconds": sum(stage_totals.values()),
             "accounted_percent": sum(stage_percentages.values()),
         }
+        if refresh_profile_totals:
+            refresh_seconds_total = stage_totals.get("exact_quartz_refresh_seconds", 0.0)
+            refresh_profile_percent = {
+                name: 100.0 * value / max(refresh_seconds_total, 1e-12)
+                for name, value in refresh_profile_totals.items()
+            }
+            total["exact_refresh_profile"] = {
+                "scope": "exact_quartz_refresh_seconds",
+                "seconds": dict(
+                    sorted(
+                        refresh_profile_totals.items(),
+                        key=lambda item: item[1],
+                        reverse=True,
+                    )
+                ),
+                "percent": dict(
+                    sorted(
+                        refresh_profile_percent.items(),
+                        key=lambda item: item[1],
+                        reverse=True,
+                    )
+                ),
+                "counts": dict(sorted(refresh_profile_counts.items())),
+                "accounted_seconds": sum(refresh_profile_totals.values()),
+                "accounted_percent": sum(refresh_profile_percent.values()),
+            }
     rendered = json.dumps(total, indent=2, sort_keys=True) + "\n"
     print(rendered, end="")
     args.output.parent.mkdir(parents=True, exist_ok=True)

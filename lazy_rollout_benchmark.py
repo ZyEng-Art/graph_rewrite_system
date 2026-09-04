@@ -681,61 +681,108 @@ def replay_state(
     *,
     return_checkpoint: bool = False,
     ignore_checkpoint: bool = False,
+    profile_timing: dict[str, float] | None = None,
+    profile_counts: dict[str, int] | None = None,
 ):
     """Materialize one speculative trajectory in Quartz for an out-of-band audit."""
+    def now() -> float:
+        return time.perf_counter() if profile_timing is not None else 0.0
+
+    def add_seconds(name: str, started: float) -> None:
+        if profile_timing is not None:
+            profile_timing[name] = (
+                profile_timing.get(name, 0.0) + time.perf_counter() - started
+            )
+
+    def add_count(name: str, amount: int = 1) -> None:
+        if profile_counts is not None:
+            profile_counts[name] = profile_counts.get(name, 0) + amount
+
+    add_count("replay_states_total")
+    init_started = now()
     if ignore_checkpoint or state.exact_graph_checkpoint is None:
         graph = pygraph_cls.from_qasm_str(context=context, qasm_str=initial_qasm)
         guid_to_slot: dict[int, int] = {}
         update_slots(graph, guid_to_slot, 0)
         checkpoint_depth = 0
+        add_seconds("init_from_qasm_seconds", init_started)
+        add_count("init_from_qasm_states")
     else:
         graph = state.exact_graph_checkpoint
         guid_to_slot = dict(state.exact_slot_checkpoint)
         checkpoint_depth = state.exact_checkpoint_depth
         if checkpoint_depth > len(state.history):
             raise RuntimeError("exact checkpoint is ahead of speculative history")
+        add_seconds("init_from_checkpoint_seconds", init_started)
+        add_count("init_from_checkpoint_states")
+    add_count("actions_planned", len(state.history) - checkpoint_depth)
     failure_step = None
     for step, action in enumerate(
         state.history[checkpoint_depth:], start=checkpoint_depth + 1
     ):
+        add_count("actions_attempted")
+        slot_map_started = now()
         slot_to_guid = {
             guid_to_slot[int(node.guid)]: int(node.guid) for node in graph.nodes
         }
+        add_seconds("slot_to_guid_scan_seconds", slot_map_started)
         anchor = action.source_slots[0]
         if anchor not in slot_to_guid:
+            add_count("anchor_missing_failures")
             failure_step = step
             break
+        lookup_started = now()
         guid_to_id = {int(node.guid): index for index, node in enumerate(graph.nodes)}
         node = graph.get_node_from_id(id=guid_to_id[slot_to_guid[anchor]])
+        add_seconds("guid_to_id_and_node_lookup_seconds", lookup_started)
+        apply_started = now()
         result = graph.apply_xfer_with_binding_trace(
             xfer=xfers[action.xfer_id],
             node=node,
             eliminate_rotation=False,
             predecessor_layers=1,
         )
+        add_seconds("quartz_apply_seconds", apply_started)
+        add_count("quartz_apply_calls")
         if result is None or result[0] is None:
+            add_count("quartz_apply_failures")
             failure_step = step
             break
+        validation_started = now()
         next_graph, _, source_guids, destination_guids = result
         actual_binding = tuple(guid_to_slot[int(guid)] for guid in source_guids)
         if actual_binding != action.source_slots or len(destination_guids) != len(
             action.destination_slots
         ):
+            add_seconds("binding_validation_seconds", validation_started)
+            add_count("binding_mismatch_failures")
             failure_step = step
             break
+        add_seconds("binding_validation_seconds", validation_started)
+        update_started = now()
         for guid, slot in zip(destination_guids, action.destination_slots):
             guid_to_slot[int(guid)] = int(slot)
         graph = next_graph
+        add_seconds("slot_update_and_graph_swap_seconds", update_started)
+        add_count("actions_applied")
     if failure_step is not None:
+        add_count("failed_states")
         result = (None, failure_step, False)
         return (*result, None) if return_checkpoint else result
+    snapshot_started = now()
     exact_snapshot = snapshot(graph, guid_to_slot)
+    add_seconds("snapshot_seconds", snapshot_started)
+    signature_started = now()
     expected_signature = (
         indexed_topology_signature(state.topology_index)
         if state.topology_index is not None
         else snapshot_signature(state.snapshot)
     )
     topology_matches = snapshot_signature(exact_snapshot) == expected_signature
+    add_seconds("signature_compare_seconds", signature_started)
+    add_count("valid_states")
+    if not topology_matches:
+        add_count("topology_mismatch_states")
     result = (graph, None, topology_matches)
     return (*result, guid_to_slot) if return_checkpoint else result
 
