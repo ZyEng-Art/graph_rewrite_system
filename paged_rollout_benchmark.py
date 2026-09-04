@@ -1095,8 +1095,10 @@ def main() -> None:
         beam = [record[0] for record in records]
 
         refresh_seconds = 0.0
+        refresh_candidates = 0
         refresh_attempted = 0
         refresh_valid = 0
+        refresh_early_stopped = False
         refresh_failures: dict[int, int] = defaultdict(int)
         refresh_profile_seconds: dict[str, float] = {}
         refresh_profile_counts: dict[str, int] = {}
@@ -1104,10 +1106,11 @@ def main() -> None:
         checkpoint_mismatches = 0
         if refresh_due:
             refresh_started = time.perf_counter()
-            refresh_attempted = len(beam)
+            refresh_candidates = len(beam)
             valid_indices = []
             refresh_checkpoints = {}
             for state_index, state in enumerate(beam):
+                refresh_attempted += 1
                 (
                     exact_graph,
                     failure_step,
@@ -1181,6 +1184,9 @@ def main() -> None:
                     continue
                 valid_indices.append(state_index)
                 refresh_checkpoints[state_index] = (exact_graph, exact_slots)
+                if len(valid_indices) >= args.beam_size:
+                    refresh_early_stopped = state_index + 1 < len(beam)
+                    break
             refresh_valid = len(valid_indices)
             keep_indices = valid_indices[: args.beam_size]
             for state_index in keep_indices:
@@ -1277,8 +1283,10 @@ def main() -> None:
             ),
             "selected_exploration_proposals": selected_exploration_proposals,
             "exact_refresh_seconds": refresh_seconds,
+            "exact_refresh_candidates": refresh_candidates,
             "exact_refresh_attempted": refresh_attempted,
             "exact_refresh_valid": refresh_valid,
+            "exact_refresh_early_stopped": refresh_early_stopped,
             "exact_refresh_failures": dict(sorted(refresh_failures.items())),
             "checkpoint_audited": checkpoint_audited,
             "checkpoint_mismatches": checkpoint_mismatches,
