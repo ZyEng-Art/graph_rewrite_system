@@ -721,20 +721,20 @@ def replay_state(
         state.history[checkpoint_depth:], start=checkpoint_depth + 1
     ):
         add_count("actions_attempted")
-        slot_map_started = now()
-        slot_to_guid = {
-            guid_to_slot[int(node.guid)]: int(node.guid) for node in graph.nodes
-        }
-        add_seconds("slot_to_guid_scan_seconds", slot_map_started)
         anchor = action.source_slots[0]
-        if anchor not in slot_to_guid:
+        lookup_started = now()
+        anchor_node_id = None
+        for index, graph_node in enumerate(graph.nodes):
+            if guid_to_slot.get(int(graph_node.guid)) == anchor:
+                anchor_node_id = index
+                break
+        if anchor_node_id is None:
+            add_seconds("anchor_node_lookup_seconds", lookup_started)
             add_count("anchor_missing_failures")
             failure_step = step
             break
-        lookup_started = now()
-        guid_to_id = {int(node.guid): index for index, node in enumerate(graph.nodes)}
-        node = graph.get_node_from_id(id=guid_to_id[slot_to_guid[anchor]])
-        add_seconds("guid_to_id_and_node_lookup_seconds", lookup_started)
+        node = graph.get_node_from_id(id=anchor_node_id)
+        add_seconds("anchor_node_lookup_seconds", lookup_started)
         apply_started = now()
         result = graph.apply_xfer_with_binding_trace(
             xfer=xfers[action.xfer_id],
