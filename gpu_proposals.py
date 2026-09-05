@@ -70,6 +70,16 @@ class GpuRuleIndex:
         )
 
 
+@dataclass(frozen=True)
+class SelectedProposalTensors:
+    parent_ids: torch.Tensor
+    xfer_ids: torch.Tensor
+    source_ids: torch.Tensor
+    bindings: torch.Tensor
+    probabilities: torch.Tensor
+    gate_deltas: torch.Tensor
+
+
 def _stable_lexsort(
     tensors: list[tuple[torch.Tensor, bool]],
 ) -> torch.Tensor:
@@ -231,8 +241,14 @@ def build_gpu_proposals(
     ppo_initial_gate_bias: float = 1.0,
     ppo_policy_weight: float = 0.25,
     preselect_matches: bool = False,
+    return_selected_tensors: bool = False,
     profile_stages: bool = False,
-) -> tuple[list[Proposal], dict[str, float | int], dict[str, float]]:
+) -> tuple[
+    list[Proposal],
+    dict[str, float | int],
+    dict[str, float],
+    SelectedProposalTensors | None,
+]:
     """Expand, cap, and globally rank actions before one compact D2H copy."""
     if ranking_mode not in {"gate", "probability", "stochastic", "value", "ppo"}:
         raise ValueError(f"unknown proposal ranking mode: {ranking_mode}")
@@ -285,10 +301,15 @@ def build_gpu_proposals(
     )
     if not expanded_count:
         finish_timing("gpu_action_expansion_seconds", stage_started)
-        return [], {
-            "predicted_actions": predicted_actions,
-            "eligible_actions": 0,
-        }, timing
+        return (
+            [],
+            {
+                "predicted_actions": predicted_actions,
+                "eligible_actions": 0,
+            },
+            timing,
+            None,
+        )
     parent_gate_counts = torch.tensor(
         [state.gate_count for state in beam], device=device
     )
@@ -561,6 +582,17 @@ def build_gpu_proposals(
         selected_value_scores = policy_scores[ppo_order]
         finish_timing("gpu_ppo_policy_seconds", stage_started)
 
+    selected_tensors = None
+    if return_selected_tensors:
+        selected_tensors = SelectedProposalTensors(
+            parent_ids=parents[selected],
+            xfer_ids=xfer_ids[selected],
+            source_ids=source_ids[selected],
+            bindings=bindings[selected],
+            probabilities=probabilities[selected],
+            gate_deltas=rule_index.gate_deltas[xfer_ids[selected]],
+        )
+
     stage_started = time.perf_counter()
     metadata = torch.stack(
         (
@@ -634,4 +666,4 @@ def build_gpu_proposals(
                 "ppo_policy_score_std": float(policy_std.item()),
             }
         )
-    return proposals, metrics, timing
+    return proposals, metrics, timing, selected_tensors

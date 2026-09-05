@@ -1129,3 +1129,27 @@ The training launcher now selects the batched backend; the rowwise backend is
 retained for regression comparison. Raw logs and a compact summary are in
 `benchmark_results/ppo_training_transfer_ab_*_h100.json` and
 `benchmark_results/ppo_training_transfer_summary_20260905.json`.
+
+## Reusing selected GPU proposal tensors
+
+After GPU proposal ranking, the collector previously converted selected
+actions into Python `Proposal` objects and then immediately rebuilt parent,
+xfer, source, binding, probability, and gate-delta tensors on the GPU for PPO
+candidate features. The binding path was especially expensive because it
+issued one Python-side tensor construction per proposal. The proposal builder
+can now return a `SelectedProposalTensors` payload in the exact selected order,
+and `--proposal-tensor-backend reuse` feeds it directly into candidate feature
+construction. Python proposals are still retained for indexed lazy rewrites.
+
+Two reversed-order H100 A/B pairs used the 14-circuit, 224-episode protocol,
+unchunked first-gate matching, full proposal expansion, and batched transition
+transfer. Averaged across seeds 906 and 907, policy preparation fell from
+5.154 to 1.091 seconds (-78.8%), collection time fell from 12.254 to 7.678
+seconds (-37.3%), and throughput rose from 275.5 to 440.3 transitions/s
+(+59.8%). Selected-action legality remained within 0.06 percentage points in
+each stochastic pair. A GPU test verifies that every returned parent, xfer,
+source, binding, probability, and gate delta agrees with the corresponding
+Python proposal. The launcher now enables tensor reuse by default. Raw logs
+and the compact summary are
+`benchmark_results/ppo_training_tensor_reuse_ab_*_h100.json` and
+`benchmark_results/ppo_training_tensor_reuse_summary_20260905.json`.

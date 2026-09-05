@@ -1549,7 +1549,7 @@ def main() -> None:
                         [state.gate_count for state in beam], device=device
                     ),
                 )
-            proposals, proposal_metrics, gpu_proposal_timing = build_gpu_proposals(
+            proposals, proposal_metrics, gpu_proposal_timing, _ = build_gpu_proposals(
                 predicted,
                 beam,
                 gpu_rule_index,

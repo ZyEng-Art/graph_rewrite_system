@@ -33,6 +33,7 @@ circuit_dir="$root/quarl/experiment/circs/nam_circs"
     --source-microbatch "${PPO_SOURCE_MICROBATCH:-0}" \
     --source-grouping "${PPO_SOURCE_GROUPING:-first_gate}" \
     --transition-transfer-backend "${PPO_TRANSITION_TRANSFER:-batched}" \
+    --proposal-tensor-backend "${PPO_PROPOSAL_TENSORS:-reuse}" \
     --max-actions "${PPO_MAX_ACTIONS:-64}" \
     --collector-batch-size "${PPO_COLLECTOR_BATCH_SIZE:-64}" \
     --refresh-interval "${PPO_REFRESH_INTERVAL:-8}" \

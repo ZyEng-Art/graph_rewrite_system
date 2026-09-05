@@ -23,7 +23,11 @@ import torch.nn.functional as F
 
 from beam_search_benchmark import BeamState, Proposal, snapshot, update_slots
 from dataset import RuleMetadata
-from gpu_proposals import GpuRuleIndex, build_gpu_proposals
+from gpu_proposals import (
+    GpuRuleIndex,
+    SelectedProposalTensors,
+    build_gpu_proposals,
+)
 from incremental_graph import parse_pattern
 from lazy_rollout_benchmark import (
     ExactReplayCacheEntry,
@@ -442,24 +446,46 @@ def batched_proposal_features(
     device: torch.device,
     initial_gate_bias: float,
     ordered_roles: bool = False,
+    proposal_tensors: SelectedProposalTensors | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     count = len(proposals)
-    parent_ids = torch.tensor(
-        [proposal.parent for proposal in proposals], device=device
-    )
-    xfer_ids = torch.tensor(
-        [proposal.xfer_id for proposal in proposals], device=device
-    )
-    source_ids = torch.tensor(
-        [rules.xfer_to_source[proposal.xfer_id] for proposal in proposals],
-        device=device,
-    )
-    bindings = torch.full(
-        (count, model.max_pattern), -1, dtype=torch.long, device=device
-    )
-    for index, proposal in enumerate(proposals):
-        binding = proposal.binding or ()
-        bindings[index, : len(binding)] = torch.tensor(binding, device=device)
+    if proposal_tensors is not None:
+        if proposal_tensors.parent_ids.numel() != count:
+            raise ValueError("selected proposal tensor count differs from proposals")
+        parent_ids = proposal_tensors.parent_ids
+        xfer_ids = proposal_tensors.xfer_ids
+        source_ids = proposal_tensors.source_ids
+        bindings = proposal_tensors.bindings
+        probabilities = proposal_tensors.probabilities
+        gate_deltas = proposal_tensors.gate_deltas
+    else:
+        parent_ids = torch.tensor(
+            [proposal.parent for proposal in proposals], device=device
+        )
+        xfer_ids = torch.tensor(
+            [proposal.xfer_id for proposal in proposals], device=device
+        )
+        source_ids = torch.tensor(
+            [rules.xfer_to_source[proposal.xfer_id] for proposal in proposals],
+            device=device,
+        )
+        bindings = torch.full(
+            (count, model.max_pattern), -1, dtype=torch.long, device=device
+        )
+        for index, proposal in enumerate(proposals):
+            binding = proposal.binding or ()
+            bindings[index, : len(binding)] = torch.tensor(binding, device=device)
+        probabilities = torch.tensor(
+            [proposal.probability for proposal in proposals], device=device
+        )
+        gate_deltas = torch.tensor(
+            [
+                proposal.next_gate_count
+                - states[proposal.parent].gate_count
+                for proposal in proposals
+            ],
+            device=device,
+        )
     base = model.candidate_features(
         encoded,
         live,
@@ -468,16 +494,6 @@ def batched_proposal_features(
         bindings,
         parent_ids,
         ordered_roles=ordered_roles,
-    )
-    probabilities = torch.tensor(
-        [proposal.probability for proposal in proposals], device=device
-    )
-    gate_deltas = torch.tensor(
-        [
-            proposal.next_gate_count - states[proposal.parent].gate_count
-            for proposal in proposals
-        ],
-        device=device,
     )
     features, logits = build_policy_features(
         base,
@@ -574,6 +590,7 @@ def collect_episode(
     source_grouping: str,
     proposal_expansion: str,
     transition_transfer_backend: str,
+    proposal_tensor_backend: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -653,7 +670,7 @@ def collect_episode(
         if collector_timing is not None:
             collector_timing["model_match_seconds"] += model_match_seconds
         proposal_started = time.perf_counter()
-        proposals, proposal_metrics, _ = build_gpu_proposals(
+        proposals, proposal_metrics, _, _ = build_gpu_proposals(
             candidates,
             [state],
             rule_index,
@@ -1007,6 +1024,7 @@ def collect_episode_batch(
     source_grouping: str,
     proposal_expansion: str,
     transition_transfer_backend: str,
+    proposal_tensor_backend: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -1079,14 +1097,17 @@ def collect_episode_batch(
         if collector_timing is not None:
             collector_timing["model_match_seconds"] += model_match_seconds
         proposal_started = time.perf_counter()
-        proposals, proposal_metrics, _ = build_gpu_proposals(
-            candidates,
-            current_states,
-            rule_index,
-            per_parent_cap=max_actions,
-            global_cap=max_actions * len(active),
-            ranking_mode="gate",
-            preselect_matches=proposal_expansion == "preselect",
+        proposals, proposal_metrics, _, selected_proposal_tensors = (
+            build_gpu_proposals(
+                candidates,
+                current_states,
+                rule_index,
+                per_parent_cap=max_actions,
+                global_cap=max_actions * len(active),
+                ranking_mode="gate",
+                preselect_matches=proposal_expansion == "preselect",
+                return_selected_tensors=proposal_tensor_backend == "reuse",
+            )
         )
         if collector_timing is not None:
             collector_timing["proposal_seconds"] += (
@@ -1097,6 +1118,7 @@ def collect_episode_batch(
             collector_timing["materialized_actions"] += int(
                 proposal_metrics.get("materialized_actions", eligible_actions)
             )
+        policy_preparation_started = time.perf_counter()
         if proposals:
             flat_features, flat_logits, _ = batched_proposal_features(
                 model,
@@ -1108,6 +1130,7 @@ def collect_episode_batch(
                 device,
                 initial_gate_bias,
                 ordered_roles=actor_critic.match_set_aware,
+                proposal_tensors=selected_proposal_tensors,
             )
             (
                 policy_features,
@@ -1169,6 +1192,10 @@ def collect_episode_batch(
                 collector_timing["transition_transfer_seconds"] += (
                     time.perf_counter() - transfer_started
                 )
+        if collector_timing is not None:
+            collector_timing["policy_preparation_seconds"] += (
+                time.perf_counter() - policy_preparation_started
+            )
 
         advance_records: dict[int, tuple[BeamState, Proposal]] = {}
         refresh_indices = set()
@@ -1785,6 +1812,12 @@ def main() -> None:
         default="rowwise",
         help="batch PPO transition tensor copies from GPU to CPU",
     )
+    parser.add_argument(
+        "--proposal-tensor-backend",
+        choices=("rebuild", "reuse"),
+        default="rebuild",
+        help="reuse selected GPU proposal tensors for PPO candidate features",
+    )
     parser.add_argument("--max-actions", type=int, default=128)
     parser.add_argument("--max-gate-increase", type=int, default=3)
     parser.add_argument("--page-size", type=int, default=8)
@@ -2031,6 +2064,7 @@ def main() -> None:
         "source_grouping": args.source_grouping,
         "proposal_expansion": args.proposal_expansion,
         "transition_transfer_backend": args.transition_transfer_backend,
+        "proposal_tensor_backend": args.proposal_tensor_backend,
         "max_actions": args.max_actions,
         "invalid_reward": args.invalid_reward,
         "cycle_reward": args.cycle_reward,
@@ -2067,6 +2101,7 @@ def main() -> None:
             "model_match_seconds": 0.0,
             "proposal_seconds": 0.0,
             "transition_transfer_seconds": 0.0,
+            "policy_preparation_seconds": 0.0,
             "eligible_actions": 0,
             "materialized_actions": 0,
         }

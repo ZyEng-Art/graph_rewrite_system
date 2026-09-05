@@ -180,12 +180,13 @@ def main() -> None:
         max_gate_increase=1,
         device=device,
     )
-    actual, metrics, _ = build_gpu_proposals(
+    actual, metrics, _, selected_tensors = build_gpu_proposals(
         candidates,
         beam,
         rule_index,
         per_parent_cap=2,
         global_cap=4,
+        return_selected_tensors=True,
     )
     simplify = lambda proposal: (
         proposal.parent,
@@ -196,20 +197,40 @@ def main() -> None:
         proposal.next_gate_count,
     )
     assert list(map(simplify, actual)) == list(map(simplify, legacy))
+    assert selected_tensors is not None
+    assert selected_tensors.parent_ids.tolist() == [row.parent for row in actual]
+    assert selected_tensors.xfer_ids.tolist() == [row.xfer_id for row in actual]
+    xfer_to_source = {
+        xfer: source
+        for source, source_xfers in source_to_xfers.items()
+        for xfer in source_xfers
+    }
+    assert selected_tensors.source_ids.tolist() == [
+        xfer_to_source[row.xfer_id] for row in actual
+    ]
+    assert selected_tensors.gate_deltas.tolist() == [
+        row.next_gate_count - beam[row.parent].gate_count for row in actual
+    ]
+    for binding, row in zip(selected_tensors.bindings.tolist(), actual):
+        assert tuple(slot for slot in binding if slot >= 0) == row.binding
+    torch.testing.assert_close(
+        selected_tensors.probabilities.cpu(),
+        torch.tensor([row.probability for row in actual]),
+    )
     assert metrics == {
         "predicted_actions": 10,
         "eligible_actions": 8,
         "value_increase_candidates_after_parent_cap": 0,
         "selected_value_exploration_proposals": 0,
     }
-    full_cap_one, _, _ = build_gpu_proposals(
+    full_cap_one, _, _, _ = build_gpu_proposals(
         candidates,
         beam,
         rule_index,
         per_parent_cap=1,
         global_cap=3,
     )
-    preselected, preselected_metrics, _ = build_gpu_proposals(
+    preselected, preselected_metrics, _, _ = build_gpu_proposals(
         candidates,
         beam,
         rule_index,
@@ -234,7 +255,7 @@ def main() -> None:
         max_gate_increase=1,
         ranking_mode="probability",
     )
-    probability_actual, _, _ = build_gpu_proposals(
+    probability_actual, _, _, _ = build_gpu_proposals(
         candidates,
         beam,
         rule_index,
@@ -248,7 +269,7 @@ def main() -> None:
     assert [row.probability for row in probability_actual] == sorted(
         (row.probability for row in probability_actual), reverse=True
     )
-    probability_preselected, _, _ = build_gpu_proposals(
+    probability_preselected, _, _, _ = build_gpu_proposals(
         candidates,
         beam,
         rule_index,
@@ -261,7 +282,7 @@ def main() -> None:
         map(simplify, probability_legacy)
     )
 
-    value_actual, value_metrics, _ = build_gpu_proposals(
+    value_actual, value_metrics, _, _ = build_gpu_proposals(
         candidates,
         beam,
         rule_index,
@@ -277,7 +298,7 @@ def main() -> None:
     assert value_metrics["action_value_candidates"] == 8
     assert value_actual[0].value_score > value_actual[-1].value_score
 
-    ppo_actual, ppo_metrics, _ = build_gpu_proposals(
+    ppo_actual, ppo_metrics, _, _ = build_gpu_proposals(
         candidates,
         beam,
         rule_index,
@@ -300,7 +321,7 @@ def main() -> None:
         assert abs(probability_sum - 1.0) < 1e-5
 
     match_set_actor = _MatchSetPPOActor()
-    match_set_actual, match_set_metrics, _ = build_gpu_proposals(
+    match_set_actual, match_set_metrics, _, _ = build_gpu_proposals(
         candidates,
         beam,
         rule_index,
@@ -320,7 +341,7 @@ def main() -> None:
     assert list(map(simplify, match_set_actual)) == list(
         map(simplify, ppo_actual)
     )
-    match_set_preselected, _, _ = build_gpu_proposals(
+    match_set_preselected, _, _, _ = build_gpu_proposals(
         candidates,
         beam,
         rule_index,
@@ -359,7 +380,7 @@ def main() -> None:
     )
     for ranking_mode in ("gate", "probability"):
         for cap in (1, 3, 8, 24):
-            full, _, _ = build_gpu_proposals(
+            full, _, _, _ = build_gpu_proposals(
                 random_candidates,
                 beam,
                 rule_index,
@@ -367,7 +388,7 @@ def main() -> None:
                 global_cap=3 * cap,
                 ranking_mode=ranking_mode,
             )
-            compact, _, _ = build_gpu_proposals(
+            compact, _, _, _ = build_gpu_proposals(
                 random_candidates,
                 beam,
                 rule_index,
@@ -385,7 +406,7 @@ def main() -> None:
         max_gate_increase=2,
         device=device,
     )
-    increasing_actual, increasing_metrics, _ = build_gpu_proposals(
+    increasing_actual, increasing_metrics, _, _ = build_gpu_proposals(
         candidates,
         beam,
         increasing_rule_index,
@@ -402,7 +423,7 @@ def main() -> None:
     assert all(gate_deltas[row.xfer_id] > 0 for row in increasing_actual)
     assert increasing_metrics["value_increase_candidates_after_parent_cap"] == 3
 
-    mixed_actual, mixed_metrics, _ = build_gpu_proposals(
+    mixed_actual, mixed_metrics, _, _ = build_gpu_proposals(
         candidates,
         beam,
         rule_index,
@@ -416,7 +437,7 @@ def main() -> None:
         action_value_weight=10.0,
         value_exploration_fraction=0.5,
     )
-    mixed_repeat, _, _ = build_gpu_proposals(
+    mixed_repeat, _, _, _ = build_gpu_proposals(
         candidates,
         beam,
         rule_index,

@@ -1,0 +1,67 @@
+{
+  "format": "ppo-training-selected-tensor-reuse-ab-v1",
+  "machine": "h100-gpu5",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "protocol": {
+    "circuits": 14,
+    "episodes": 224,
+    "episodes_per_circuit": 16,
+    "max_steps": 16,
+    "refresh_interval": 8,
+    "max_actions": 64,
+    "source_grouping": "first_gate",
+    "source_microbatch": 0,
+    "proposal_expansion": "full",
+    "transition_transfer_backend": "batched",
+    "ppo_epochs": 1
+  },
+  "seed_906_rebuild_first": {
+    "rebuild": {
+      "collection_seconds": 12.51788237504661,
+      "transitions": 3370,
+      "transitions_per_second": 269.21486390683964,
+      "policy_preparation_seconds": 5.155449423007667,
+      "selected_action_legality": 0.9940652818991098
+    },
+    "reuse": {
+      "collection_seconds": 7.913018163060769,
+      "transitions": 3373,
+      "transitions_per_second": 426.25960543673483,
+      "policy_preparation_seconds": 1.1243263431824744,
+      "selected_action_legality": 0.9940705603320487
+    },
+    "collection_time_reduction_percent": 36.7862876005711,
+    "throughput_increase_percent": 58.3343502104102,
+    "policy_preparation_reduction_percent": 78.1914969786175
+  },
+  "seed_907_reuse_first": {
+    "rebuild": {
+      "collection_seconds": 11.990222258958966,
+      "transitions": 3379,
+      "transitions_per_second": 281.8129578436503,
+      "policy_preparation_seconds": 5.151785636553541,
+      "selected_action_legality": 0.9946729801716484
+    },
+    "reuse": {
+      "collection_seconds": 7.442611790029332,
+      "transitions": 3381,
+      "transitions_per_second": 454.27601161858735,
+      "policy_preparation_seconds": 1.0583219772670418,
+      "selected_action_legality": 0.9952676722863059
+    },
+    "collection_time_reduction_percent": 37.9276578091095,
+    "throughput_increase_percent": 61.1977018709762,
+    "policy_preparation_reduction_percent": 79.4571814138012
+  },
+  "mean": {
+    "rebuild_collection_seconds": 12.2540523170028,
+    "reuse_collection_seconds": 7.67781497654505,
+    "collection_time_reduction_percent": 37.3446858400311,
+    "rebuild_transitions_per_second": 275.513910875245,
+    "reuse_transitions_per_second": 440.267808527661,
+    "throughput_increase_percent": 59.7987583019059,
+    "rebuild_policy_preparation_seconds": 5.1536175297806,
+    "reuse_policy_preparation_seconds": 1.09132416022476,
+    "policy_preparation_reduction_percent": 78.8241142475465
+  }
+}
