@@ -347,6 +347,10 @@ def collect_hierarchical_episode_batch(
     max_steps: int,
     node_k: int,
     pattern_k: int,
+    fallback_threshold_config: dict | None,
+    fallback_node_k: int | None,
+    fallback_pattern_k: int | None,
+    fallback_min_candidates: int,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -412,8 +416,23 @@ def collect_hierarchical_episode_batch(
             microbatch=len(active),
             node_k=node_k,
             pattern_k=pattern_k,
+            fallback_threshold_config=fallback_threshold_config,
+            fallback_node_k=fallback_node_k,
+            fallback_pattern_k=fallback_pattern_k,
+            fallback_min_candidates=fallback_min_candidates,
+            force_fallback_mask=torch.tensor(
+                [runtime.wide_candidates for runtime in active],
+                dtype=torch.bool,
+                device=device,
+            ),
         )
         timing["hierarchical_match_seconds"] += matched.elapsed_seconds
+        timing["candidate_fallback_states"] += matched.fallback_state_count
+        if matched.fallback_state_mask is not None:
+            for runtime, used_fallback in zip(
+                active, matched.fallback_state_mask.tolist()
+            ):
+                runtime.wide_candidates |= bool(used_fallback)
 
         stage_started = time.perf_counter()
         _, proposal_metrics, _, proposal_tensors = build_gpu_proposals(

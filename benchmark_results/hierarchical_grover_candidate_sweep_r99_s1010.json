@@ -1,0 +1,146 @@
+{
+  "circuit": {
+    "gate_count": 831,
+    "path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/grover_5.qasm",
+    "slots": 831
+  },
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-matching-benchmark-v1",
+  "full_match": {
+    "mean_exact_candidates_per_state": 2386.0,
+    "milliseconds_per_batch": 14.721797391151389,
+    "peak_cuda_allocated_gib": 0.2512521743774414,
+    "profiled_single_batch_seconds": {
+      "batch_collate_and_pad_seconds": 0.004981331992894411,
+      "batch_host_to_device_seconds": 0.00017274287529289722,
+      "candidate_device_to_host_seconds": 0.0,
+      "candidate_gpu_pack_seconds": 0.00023233192041516304,
+      "candidate_python_pack_seconds": 0.0,
+      "candidate_selection_and_ranking_seconds": 0.0016304261516779661,
+      "incremental_graph_readout_seconds": 0.0023772199638187885,
+      "match_group_compaction_seconds": 0.0010025156661868095,
+      "match_logits_seconds": 0.0005688848905265331,
+      "model_match_unattributed_seconds": 0.000343832653015852,
+      "readout_cache_metadata_or_gather_seconds": 7.798406295478344e-05,
+      "structural_binding_decode_seconds": 0.0023378669284284115
+    },
+    "seconds": 0.044165392173454165,
+    "states_per_second": 1086.8238147073591
+  },
+  "hierarchical": {
+    "128": {
+      "mean_exact_candidates_per_state": 187.0,
+      "milliseconds_per_batch": 12.965735358496508,
+      "peak_cuda_allocated_gib": 0.17037105560302734,
+      "profiled_single_batch_seconds": {
+        "batch_collate_seconds": 0.005008762935176492,
+        "batch_host_to_device_seconds": 0.00017761904746294022,
+        "hierarchical_match_unattributed_seconds": 0.00042469287291169167,
+        "incremental_graph_readout_seconds": 0.0023784020449966192,
+        "node_policy_seconds": 0.0006287740543484688,
+        "node_topk_and_projection_seconds": 0.00013303407467901707,
+        "readout_cache_metadata_seconds": 7.88539182394743e-05,
+        "selected_candidate_pack_seconds": 1.4448072761297226e-05,
+        "selected_group_compaction_seconds": 0.0004104720428586006,
+        "selected_match_logits_seconds": 0.00027507427148520947,
+        "selected_structural_decode_seconds": 0.0023985509760677814,
+        "selected_threshold_and_topn_seconds": 0.0012359926477074623
+      },
+      "seconds": 0.03889720607548952,
+      "speedup_over_full_match": 1.135438676179992,
+      "states_per_second": 1234.021793412213
+    },
+    "16": {
+      "mean_exact_candidates_per_state": 1.0,
+      "milliseconds_per_batch": 12.516004033386707,
+      "peak_cuda_allocated_gib": 0.17037105560302734,
+      "profiled_single_batch_seconds": {
+        "batch_collate_seconds": 0.005032878136262298,
+        "batch_host_to_device_seconds": 0.00017374102026224136,
+        "hierarchical_match_unattributed_seconds": 0.00041365716606378555,
+        "incremental_graph_readout_seconds": 0.0023805699311196804,
+        "node_policy_seconds": 0.000613427022472024,
+        "node_topk_and_projection_seconds": 0.00013802596367895603,
+        "readout_cache_metadata_seconds": 7.846811786293983e-05,
+        "selected_candidate_pack_seconds": 1.4086952432990074e-05,
+        "selected_group_compaction_seconds": 0.00037625664845108986,
+        "selected_match_logits_seconds": 0.00019564200192689896,
+        "selected_structural_decode_seconds": 0.0023835161700844765,
+        "selected_threshold_and_topn_seconds": 0.0007081509102135897
+      },
+      "seconds": 0.03754801210016012,
+      "speedup_over_full_match": 1.1762378273353604,
+      "states_per_second": 1278.3632825077125
+    },
+    "32": {
+      "mean_exact_candidates_per_state": 2.0,
+      "milliseconds_per_batch": 12.557680330549678,
+      "peak_cuda_allocated_gib": 0.17037105560302734,
+      "profiled_single_batch_seconds": {
+        "batch_collate_seconds": 0.00497413007542491,
+        "batch_host_to_device_seconds": 0.00018248497508466244,
+        "hierarchical_match_unattributed_seconds": 0.0004112999886274338,
+        "incremental_graph_readout_seconds": 0.0023810730781406164,
+        "node_policy_seconds": 0.000601460924372077,
+        "node_topk_and_projection_seconds": 0.00013708695769309998,
+        "readout_cache_metadata_seconds": 7.702899165451527e-05,
+        "selected_candidate_pack_seconds": 1.4133984223008156e-05,
+        "selected_group_compaction_seconds": 0.0003794850781559944,
+        "selected_match_logits_seconds": 0.00019974703900516033,
+        "selected_structural_decode_seconds": 0.0023818640038371086,
+        "selected_threshold_and_topn_seconds": 0.0007458420004695654
+      },
+      "seconds": 0.03767304099164903,
+      "speedup_over_full_match": 1.17233414162781,
+      "states_per_second": 1274.120663915614
+    },
+    "64": {
+      "mean_exact_candidates_per_state": 47.0,
+      "milliseconds_per_batch": 12.392618615801135,
+      "peak_cuda_allocated_gib": 0.17037105560302734,
+      "profiled_single_batch_seconds": {
+        "batch_collate_seconds": 0.004958899924531579,
+        "batch_host_to_device_seconds": 0.00017465907149016857,
+        "hierarchical_match_unattributed_seconds": 0.0004039537161588669,
+        "incremental_graph_readout_seconds": 0.0023860090877860785,
+        "node_policy_seconds": 0.0006149059627205133,
+        "node_topk_and_projection_seconds": 0.0001328759826719761,
+        "readout_cache_metadata_seconds": 7.681804709136486e-05,
+        "selected_candidate_pack_seconds": 1.3937940821051598e-05,
+        "selected_group_compaction_seconds": 0.00037461635656654835,
+        "selected_match_logits_seconds": 0.0001933579333126545,
+        "selected_structural_decode_seconds": 0.0024057449772953987,
+        "selected_threshold_and_topn_seconds": 0.0007496450562030077
+      },
+      "seconds": 0.03717785584740341,
+      "speedup_over_full_match": 1.1879488788899262,
+      "states_per_second": 1291.0911322324803
+    }
+  },
+  "protocol": {
+    "baseline": "all live nodes, first-gate grouped source matcher",
+    "hierarchical": "trained node head Top-K, then first-gate-compatible sources and per-node Top-N",
+    "iterations": 3,
+    "node_checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/hierarchical_multicircuit_ppo_i20_b64_s16_s1002.pt",
+    "shared": "paged readout, calibrated threshold, exact structural decoder",
+    "warmup": 1,
+    "warning": "This benchmark measures compute-path speed, not policy quality."
+  },
+  "shape": {
+    "batch_size": 16,
+    "microbatch": 16,
+    "node_ks": [
+      16,
+      32,
+      64,
+      128
+    ],
+    "pattern_k": 32,
+    "sources": 3855,
+    "width": 192
+  }
+}

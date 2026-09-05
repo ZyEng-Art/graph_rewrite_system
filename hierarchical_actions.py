@@ -25,6 +25,8 @@ class HierarchicalMatchResult:
     selected_node_mask: torch.Tensor
     elapsed_seconds: float
     timing: dict[str, float]
+    fallback_state_count: int = 0
+    fallback_state_mask: torch.Tensor | None = None
 
 
 def _empty_candidates(model, device: torch.device) -> CandidateTensors:
@@ -36,6 +38,18 @@ def _empty_candidates(model, device: torch.device) -> CandidateTensors:
             (0, model.max_pattern), dtype=torch.long, device=device
         ),
         probabilities=torch.empty(0, device=device),
+    )
+
+
+def _select_candidates(
+    candidates: CandidateTensors, selected: torch.Tensor
+) -> CandidateTensors:
+    return CandidateTensors(
+        batch_ids=candidates.batch_ids[selected],
+        sources=candidates.sources[selected],
+        anchors=candidates.anchors[selected],
+        bindings=candidates.bindings[selected],
+        probabilities=candidates.probabilities[selected],
     )
 
 
@@ -270,6 +284,11 @@ def hierarchical_paged_matches(
     microbatch: int,
     node_k: int,
     pattern_k: int,
+    fallback_threshold_config: dict | None = None,
+    fallback_node_k: int | None = None,
+    fallback_pattern_k: int | None = None,
+    fallback_min_candidates: int = 1,
+    force_fallback_mask: torch.Tensor | None = None,
     profile_stages: bool = False,
 ) -> HierarchicalMatchResult:
     """Generate exact rewrite candidates with a node-first policy."""
@@ -277,6 +296,22 @@ def hierarchical_paged_matches(
         raise ValueError("beam must contain at least one state")
     if node_k <= 0:
         raise ValueError("node_k must be positive")
+    if fallback_node_k is not None and fallback_node_k < node_k:
+        raise ValueError("fallback node K cannot be smaller than primary node K")
+    if fallback_pattern_k is not None and fallback_pattern_k < 1:
+        raise ValueError("fallback pattern K must be positive")
+    if fallback_min_candidates < 1:
+        raise ValueError("fallback minimum candidates must be positive")
+    fallback_enabled = (
+        fallback_threshold_config is not None
+        and fallback_node_k is not None
+        and fallback_pattern_k is not None
+    )
+    if force_fallback_mask is not None:
+        if not fallback_enabled:
+            raise ValueError("forced fallback requires a fallback configuration")
+        if force_fallback_mask.shape != (len(beam),):
+            raise ValueError("forced fallback mask must align with the beam")
     if microbatch <= 0:
         raise ValueError("microbatch must be positive")
     if len(beam) != slot_states.shape[0] or len(handles) != len(beam):
@@ -291,6 +326,8 @@ def hierarchical_paged_matches(
     selected_node_chunks = []
     selected_feature_chunks = []
     selected_mask_chunks = []
+    fallback_mask_chunks = []
+    fallback_state_count = 0
     started = time.perf_counter()
 
     for begin in range(0, len(beam), microbatch):
@@ -362,7 +399,10 @@ def hierarchical_paged_matches(
         _finish_timing(timing, "node_policy_seconds", stage_started, device)
 
         stage_started = time.perf_counter()
-        retained_nodes = min(node_k, node_logits.shape[1])
+        retained_nodes = min(
+            fallback_node_k if fallback_enabled else node_k,
+            node_logits.shape[1],
+        )
         node_scores, selected_nodes = node_logits.topk(retained_nodes, dim=1)
         selected_node_mask = node_scores.isfinite()
         feature_indices = selected_nodes.unsqueeze(-1).expand(
@@ -374,13 +414,22 @@ def hierarchical_paged_matches(
             node_vectors = model.match_node_vectors(selected_node_features)
         _finish_timing(timing, "node_topk_and_projection_seconds", stage_started, device)
 
+        primary_node_count = min(node_k, retained_nodes)
+        forced_fallback = (
+            force_fallback_mask[begin:end].to(device=device, dtype=torch.bool)
+            if force_fallback_mask is not None
+            else torch.zeros(end - begin, dtype=torch.bool, device=device)
+        )
+        primary_node_mask = selected_node_mask[:, :primary_node_count]
+        if bool(forced_fallback.any()):
+            primary_node_mask = primary_node_mask & ~forced_fallback.unsqueeze(1)
         candidates, candidate_node_positions = candidates_for_selected_nodes(
             model,
             batch,
-            node_vectors,
-            selected_nodes,
-            selected_node_mask,
-            selected_gate_types,
+            node_vectors[:, :primary_node_count],
+            selected_nodes[:, :primary_node_count],
+            primary_node_mask,
+            selected_gate_types[:, :primary_node_count],
             source_vectors,
             threshold_config,
             pattern_k=pattern_k,
@@ -388,6 +437,49 @@ def hierarchical_paged_matches(
             batch_offset=begin,
             timing=timing,
         )
+        policy_node_mask = selected_node_mask
+        if fallback_enabled:
+            candidate_counts = torch.bincount(
+                candidates.batch_ids - begin, minlength=end - begin
+            )
+            fallback_states = forced_fallback | candidate_counts.lt(
+                fallback_min_candidates
+            )
+            fallback_state_count += int(fallback_states.sum().item())
+            if candidates.batch_ids.numel():
+                primary_kept = ~fallback_states[candidates.batch_ids - begin]
+                candidates = _select_candidates(candidates, primary_kept)
+                candidate_node_positions = candidate_node_positions[primary_kept]
+            policy_node_mask = selected_node_mask.clone()
+            policy_node_mask[~fallback_states, primary_node_count:] = False
+            if bool(fallback_states.any()):
+                fallback_mask = selected_node_mask & fallback_states.unsqueeze(1)
+                (
+                    fallback_candidates,
+                    fallback_node_positions,
+                ) = candidates_for_selected_nodes(
+                    model,
+                    batch,
+                    node_vectors,
+                    selected_nodes,
+                    fallback_mask,
+                    selected_gate_types,
+                    source_vectors,
+                    fallback_threshold_config,
+                    pattern_k=fallback_pattern_k,
+                    source_grouping="first_gate",
+                    batch_offset=begin,
+                    timing=timing,
+                )
+                candidates = CandidateTensors.cat(
+                    [candidates, fallback_candidates]
+                )
+                candidate_node_positions = torch.cat(
+                    [candidate_node_positions, fallback_node_positions]
+                )
+        else:
+            fallback_states = forced_fallback
+        fallback_mask_chunks.append(fallback_states)
         candidate_chunks.append(candidates)
         candidate_node_chunks.append(candidate_node_positions)
         encoded_chunks.append(encoded)
@@ -395,7 +487,7 @@ def hierarchical_paged_matches(
         prefix_chunks.append(prefix_states)
         selected_node_chunks.append(selected_nodes)
         selected_feature_chunks.append(selected_node_features)
-        selected_mask_chunks.append(selected_node_mask)
+        selected_mask_chunks.append(policy_node_mask)
 
     if device.type == "cuda":
         torch.cuda.synchronize(device)
@@ -416,4 +508,6 @@ def hierarchical_paged_matches(
         selected_node_mask=torch.cat(selected_mask_chunks),
         elapsed_seconds=elapsed,
         timing=final_timing,
+        fallback_state_count=fallback_state_count,
+        fallback_state_mask=torch.cat(fallback_mask_chunks),
     )

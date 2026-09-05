@@ -122,6 +122,7 @@ class EpisodeRuntime:
     exact_refreshes: int = 0
     exact_replay_actions: int = 0
     exact_refresh_seconds: float = 0.0
+    wide_candidates: bool = False
 
 
 def make_replay_bucket(graph) -> dict:

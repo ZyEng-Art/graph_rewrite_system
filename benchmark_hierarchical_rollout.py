@@ -153,6 +153,11 @@ def main() -> None:
     parser.add_argument("--warmup-steps", type=int, default=2)
     parser.add_argument("--node-k", type=int, default=16)
     parser.add_argument("--pattern-k", type=int, default=16)
+    parser.add_argument("--fallback-target-recall", type=float, default=0.99)
+    parser.add_argument("--fallback-node-k", type=int, default=64)
+    parser.add_argument("--fallback-pattern-k", type=int, default=32)
+    parser.add_argument("--fallback-min-candidates", type=int, default=16)
+    parser.add_argument("--disable-candidate-fallback", action="store_true")
     parser.add_argument("--max-actions", type=int, default=256)
     parser.add_argument("--refresh-interval", type=int, default=8)
     parser.add_argument("--topology-audit-interval", type=int, default=1)
@@ -226,6 +231,11 @@ def main() -> None:
     actor.eval()
     threshold_config = load_threshold_config(
         args.calibration, args.target_recall
+    )
+    fallback_threshold_config = (
+        None
+        if args.disable_candidate_fallback
+        else load_threshold_config(args.calibration, args.fallback_target_recall)
     )
     with torch.no_grad(), autocast_context(device):
         source_representations = model.source_representations()
@@ -321,6 +331,14 @@ def main() -> None:
             max_steps=run_max_steps,
             node_k=args.node_k,
             pattern_k=args.pattern_k,
+            fallback_threshold_config=fallback_threshold_config,
+            fallback_node_k=(
+                None if args.disable_candidate_fallback else args.fallback_node_k
+            ),
+            fallback_pattern_k=(
+                None if args.disable_candidate_fallback else args.fallback_pattern_k
+            ),
+            fallback_min_candidates=args.fallback_min_candidates,
             max_actions=args.max_actions,
             invalid_reward=args.invalid_reward,
             cycle_reward=args.cycle_reward,
