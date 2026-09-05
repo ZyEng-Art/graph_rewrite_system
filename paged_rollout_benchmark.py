@@ -730,6 +730,7 @@ def advance_selected(
     device,
     microbatch: int,
     profile_stages: bool = False,
+    trusted_paged_inputs: bool = False,
 ) -> tuple[
     torch.Tensor,
     torch.Tensor,
@@ -837,6 +838,7 @@ def advance_selected(
                 paged_value_cache=arena.values if use_paged_attention else None,
                 block_table=block_table if use_paged_attention else None,
                 past_lengths=past_lengths if use_paged_attention else None,
+                trusted_paged_inputs=trusted_paged_inputs,
             )
         finish_timing("causal_model_advance_seconds", stage_started)
 

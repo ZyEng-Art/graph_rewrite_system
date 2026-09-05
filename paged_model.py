@@ -543,6 +543,7 @@ class PagedActionBindingModel(S0ActionBindingModel):
         paged_value_cache: torch.Tensor | None = None,
         block_table: torch.Tensor | None = None,
         past_lengths: torch.Tensor | None = None,
+        trusted_paged_inputs: bool = False,
     ) -> tuple[
         torch.Tensor,
         torch.Tensor,
@@ -568,19 +569,26 @@ class PagedActionBindingModel(S0ActionBindingModel):
         use_paged_attention = any(value is not None for value in paged_inputs)
         if use_paged_attention and not all(value is not None for value in paged_inputs):
             raise ValueError("all paged attention inputs must be supplied together")
+        if trusted_paged_inputs and not use_paged_attention:
+            raise ValueError("trusted inputs require direct paged attention")
         next_position = (
             past_lengths.long() if use_paged_attention else past_mask.sum(1)
         )
-        if bool(next_position.ge(self.max_sequence_length).any()):
+        if not trusted_paged_inputs and bool(
+            next_position.ge(self.max_sequence_length).any()
+        ):
             raise ValueError("incremental prefix exceeds max_sequence_length")
 
-        referenced = torch.cat((source_slots, destination_slots), dim=1)
-        max_referenced = int(referenced.max().item()) if referenced.numel() else -1
-        if max_referenced >= states.shape[1]:
-            extra = max_referenced + 1 - states.shape[1]
-            states = F.pad(states, (0, 0, 0, extra))
-            live = F.pad(live, (0, extra), value=False)
-            gate_types = F.pad(gate_types, (0, extra), value=-1)
+        if not trusted_paged_inputs:
+            referenced = torch.cat((source_slots, destination_slots), dim=1)
+            max_referenced = (
+                int(referenced.max().item()) if referenced.numel() else -1
+            )
+            if max_referenced >= states.shape[1]:
+                extra = max_referenced + 1 - states.shape[1]
+                states = F.pad(states, (0, 0, 0, extra))
+                live = F.pad(live, (0, extra), value=False)
+                gate_types = F.pad(gate_types, (0, extra), value=-1)
 
         source_ids = source_ids.clamp_min(0)
         source_mask = source_slots.ge(0) & active.unsqueeze(-1)
@@ -607,10 +615,13 @@ class PagedActionBindingModel(S0ActionBindingModel):
         token = raw_context + self.action_position(next_position)
         token = token * active.unsqueeze(-1)
         if use_paged_attention:
-            max_past = int(past_lengths.max().item()) if batch_size else 0
-            positions = torch.arange(max_past, device=states.device)
-            history_mask = positions.unsqueeze(0) < past_lengths.unsqueeze(1)
-            next_mask = torch.cat((history_mask, active.unsqueeze(1)), dim=1)
+            if trusted_paged_inputs:
+                next_mask = past_mask
+            else:
+                max_past = int(past_lengths.max().item()) if batch_size else 0
+                positions = torch.arange(max_past, device=states.device)
+                history_mask = positions.unsqueeze(0) < past_lengths.unsqueeze(1)
+                next_mask = torch.cat((history_mask, active.unsqueeze(1)), dim=1)
         else:
             next_mask = torch.cat((past_mask, active.unsqueeze(1)), dim=1)
         new_keys = []
@@ -655,16 +666,17 @@ class PagedActionBindingModel(S0ActionBindingModel):
         batch_ids = torch.arange(batch_size, device=states.device)
         for position in range(source_slots.shape[1]):
             valid = source_mask[:, position]
-            if bool(valid.any()):
-                rows = batch_ids[valid]
-                slots = source_slots[valid, position]
-                next_live[rows, slots] = False
-                next_gate_types[rows, slots] = -1
-                next_states[rows, slots] = 0
+            if not trusted_paged_inputs and not bool(valid.any()):
+                continue
+            rows = batch_ids[valid]
+            slots = source_slots[valid, position]
+            next_live[rows, slots] = False
+            next_gate_types[rows, slots] = -1
+            next_states[rows, slots] = 0
         destination_mask = destination_slots.ge(0) & active.unsqueeze(-1)
         for position in range(destination_slots.shape[1]):
             valid = destination_mask[:, position]
-            if not bool(valid.any()):
+            if not trusted_paged_inputs and not bool(valid.any()):
                 continue
             rows = batch_ids[valid]
             slots = destination_slots[valid, position]

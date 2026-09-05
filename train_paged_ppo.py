@@ -686,6 +686,7 @@ def collect_episode(
     proposal_tensor_backend: str,
     policy_padding_backend: str,
     episode_initialization_backend: str,
+    advance_input_backend: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -940,7 +941,14 @@ def collect_episode(
                 stop_episode = True
                 break
 
-            states, live, gate_types, handles, _, _ = advance_selected(
+            (
+                states,
+                live,
+                gate_types,
+                handles,
+                advance_seconds,
+                _,
+            ) = advance_selected(
                 states,
                 live,
                 gate_types,
@@ -951,7 +959,10 @@ def collect_episode(
                 model,
                 device,
                 microbatch=1,
+                trusted_paged_inputs=advance_input_backend == "trusted",
             )
+            if collector_timing is not None:
+                collector_timing["cache_advance_seconds"] += advance_seconds
             state = child
             break
         if stop_episode:
@@ -1122,6 +1133,7 @@ def collect_episode_batch(
     proposal_tensor_backend: str,
     policy_padding_backend: str,
     episode_initialization_backend: str,
+    advance_input_backend: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -1508,7 +1520,14 @@ def collect_episode_batch(
             for handle in handles:
                 arena.release(handle)
             break
-        states, live, gate_types, handles, _, _ = advance_selected(
+        (
+            states,
+            live,
+            gate_types,
+            handles,
+            advance_seconds,
+            _,
+        ) = advance_selected(
             states,
             live,
             gate_types,
@@ -1519,7 +1538,10 @@ def collect_episode_batch(
             model,
             device,
             microbatch=len(continuing_records),
+            trusted_paged_inputs=advance_input_backend == "trusted",
         )
+        if collector_timing is not None:
+            collector_timing["cache_advance_seconds"] += advance_seconds
         active = continuing_runtimes
 
     transitions = []
@@ -1934,6 +1956,12 @@ def main() -> None:
         default="duplicated",
         help="share parsing, topology, and initial encoding across equal starts",
     )
+    parser.add_argument(
+        "--advance-input-backend",
+        choices=("checked", "trusted"),
+        default="checked",
+        help="skip per-step GPU syncs for caller-validated paged inputs",
+    )
     parser.add_argument("--max-actions", type=int, default=128)
     parser.add_argument("--max-gate-increase", type=int, default=3)
     parser.add_argument("--page-size", type=int, default=8)
@@ -2045,6 +2073,8 @@ def main() -> None:
     model = build_model(rules, len(rules.xfer_to_source), model_args).to(device)
     model.load_state_dict(checkpoint["model"])
     model.readout_attention_backend = "paged"
+    if args.max_steps > model.max_sequence_length:
+        parser.error("max steps exceed the base model sequence length")
     model.eval()
     for parameter in model.parameters():
         parameter.requires_grad = False
@@ -2183,6 +2213,7 @@ def main() -> None:
         "proposal_tensor_backend": args.proposal_tensor_backend,
         "policy_padding_backend": args.policy_padding_backend,
         "episode_initialization_backend": args.episode_initialization_backend,
+        "advance_input_backend": args.advance_input_backend,
         "max_actions": args.max_actions,
         "invalid_reward": args.invalid_reward,
         "cycle_reward": args.cycle_reward,
@@ -2220,6 +2251,7 @@ def main() -> None:
             "proposal_seconds": 0.0,
             "transition_transfer_seconds": 0.0,
             "policy_preparation_seconds": 0.0,
+            "cache_advance_seconds": 0.0,
             "eligible_actions": 0,
             "materialized_actions": 0,
         }

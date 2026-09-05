@@ -1238,3 +1238,33 @@ for regression tests. Raw and summarized results are in
 `benchmark_results/ppo_training_init_ab_*_h100.json`,
 `benchmark_results/ppo_episode_initialization_microbenchmark_h100.json`, and
 `benchmark_results/ppo_training_episode_initialization_summary_20260905.json`.
+
+## Trusted paged-model advance
+
+The general incremental model validates sequence bounds and referenced slot
+capacity with GPU scalar reads, reconstructs a contiguous history mask from
+paged lengths, and checks every padded source/destination column with
+`bool(valid.any())`. These checks synchronize the CPU with the GPU repeatedly
+on every action. PPO already bounds its horizon by the checkpoint's maximum
+sequence length, `advance_selected` pads states to every selected child's
+`next_slot`, direct paged attention does not consume a contiguous history mask,
+and padded tensor operations are valid on empty rows.
+
+`--advance-input-backend trusted` uses those caller guarantees to remove the
+redundant scalar reads and returns an empty unused history mask. The checked
+backend retains all validation. A focused GPU regression advanced the same
+trajectory through both paths for eight steps and matched states, live masks,
+gate types, causal keys/values, and action states at every step. The paged-cache
+share, copy-on-write, gather, and reclaim test also passes.
+
+Two reversed-order H100 A/B pairs used the 14-circuit, 224-episode optimized
+collector. The directly measured cache/model advance stage improved in both
+pairs: 1.370 to 1.044 seconds (-23.8%) and 1.011 to 0.952 seconds (-5.9%). The
+two-pair mean fell from 1.191 to 0.998 seconds (-16.2%). End-to-end collection
+was inconclusive: matcher variation exceeded the saved advance time, giving a
+7.314-second checked mean and a 7.359-second trusted mean. All paired runs
+retained the same best gate counts, and peak CUDA allocation was unchanged.
+The launcher enables trusted inputs, while checked remains the diagnostic
+fallback. Raw logs and exact stage accounting are in
+`benchmark_results/ppo_training_advance_ab_*_h100.json` and
+`benchmark_results/ppo_training_trusted_advance_summary_20260905.json`.

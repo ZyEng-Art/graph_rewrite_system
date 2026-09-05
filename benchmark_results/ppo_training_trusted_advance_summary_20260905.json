@@ -1,0 +1,86 @@
+{
+  "format": "ppo-training-trusted-paged-advance-ab-v1",
+  "machine": "h100-gpu5",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "protocol": {
+    "circuits": 14,
+    "episodes": 224,
+    "episodes_per_circuit": 16,
+    "max_steps": 16,
+    "refresh_interval": 8,
+    "max_actions": 64,
+    "source_grouping": "first_gate",
+    "proposal_tensor_backend": "reuse",
+    "policy_padding_backend": "tensorized",
+    "episode_initialization_backend": "deduplicated",
+    "transition_transfer_backend": "batched",
+    "ppo_epochs": 1
+  },
+  "seed_913_checked_first": {
+    "checked": {
+      "collection_seconds": 7.668946970021352,
+      "transitions": 3388,
+      "transitions_per_second": 441.781643978504,
+      "cache_advance_seconds": 1.370256264694035,
+      "model_match_seconds": 2.6611129057127982,
+      "selected_action_legality": 0.9935064935064936,
+      "peak_cuda_allocated_gib": 0.21216058731079102
+    },
+    "trusted": {
+      "collection_seconds": 7.770863583078608,
+      "transitions": 3388,
+      "transitions_per_second": 435.98757895808603,
+      "cache_advance_seconds": 1.0437049334868789,
+      "model_match_seconds": 2.9377944273874164,
+      "selected_action_legality": 0.9935064935064936,
+      "peak_cuda_allocated_gib": 0.21216249465942383
+    },
+    "cache_advance_reduction_percent": 23.833041094451618
+  },
+  "seed_914_trusted_first": {
+    "checked": {
+      "collection_seconds": 6.959100423147902,
+      "transitions": 3364,
+      "transitions_per_second": 483.3958120234048,
+      "cache_advance_seconds": 1.0110237847547978,
+      "model_match_seconds": 2.3829157766886055,
+      "selected_action_legality": 0.9931629013079667,
+      "peak_cuda_allocated_gib": 0.21222639083862305
+    },
+    "trusted": {
+      "collection_seconds": 6.946410729084164,
+      "transitions": 3371,
+      "transitions_per_second": 485.28659353323945,
+      "cache_advance_seconds": 0.9515429674647748,
+      "model_match_seconds": 2.4162246712949127,
+      "selected_action_legality": 0.9934737466627114,
+      "peak_cuda_allocated_gib": 0.21222782135009766
+    },
+    "cache_advance_reduction_percent": 5.883229102572673
+  },
+  "mean": {
+    "checked_cache_advance_seconds": 1.1906400247244164,
+    "trusted_cache_advance_seconds": 0.9976239504758269,
+    "cache_advance_reduction_percent": 16.211119250191906,
+    "checked_collection_seconds": 7.314023696584627,
+    "trusted_collection_seconds": 7.358637156081386,
+    "collection_time_reduction_percent": -0.6099714924028943,
+    "checked_transitions_per_second": 462.5887280009544,
+    "trusted_transitions_per_second": 460.6370862456628,
+    "throughput_increase_percent": -0.4218956574505217
+  },
+  "correctness": {
+    "unit_test_equal_steps": 8,
+    "unit_test_equal_outputs": [
+      "states",
+      "live",
+      "gate_types",
+      "causal_keys",
+      "causal_values",
+      "action_state"
+    ],
+    "best_gate_counts_equal_within_each_seed": true,
+    "paged_cache_share_cow_reclaim_test": "passed",
+    "note": "The targeted stage improved in both orders. End-to-end process timing was inconclusive because matcher variation was larger than the saved advance time."
+  }
+}
