@@ -1,0 +1,509 @@
+{
+  "artifacts": {
+    "checkpoint": "../../runs/paged_action_onpolicy_v13_r8_lr5e5_epoch1.pt",
+    "checkpoint_sha256": "fcd3a7a63ac020dbfced3038de1e681169b8575337f1a55a724315c209435a3a",
+    "data": "../../data/binding_longmix_16384_2048_v2.pt",
+    "data_sha256": "ea7d5ccc4d2a30e60efd702f988d7d8c8aba6e7901b88525f10aea99d17efb3f"
+  },
+  "elapsed_seconds": 44.82100980402902,
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "peak_cuda_allocated_gib": 0.7648935317993164,
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-action-audit-v1",
+  "node_scorers": {
+    "logsumexp": {
+      "1": {
+        "best_gate_reduction_anchor_recall": 0.00048828125,
+        "compatible_pair_fraction": 0.001012401854502637,
+        "pattern": {
+          "1": {
+            "exact_match_recall": 0.0009799019619570288,
+            "mean_structurally_valid_candidates_per_state": 1.0,
+            "structurally_valid_candidates": 2048,
+            "target_action_recall": 0.0
+          },
+          "16": {
+            "exact_match_recall": 0.002546883859129524,
+            "mean_structurally_valid_candidates_per_state": 2.90771484375,
+            "structurally_valid_candidates": 5955,
+            "target_action_recall": 0.00146484375
+          },
+          "32": {
+            "exact_match_recall": 0.0025554962787170364,
+            "mean_structurally_valid_candidates_per_state": 2.94970703125,
+            "structurally_valid_candidates": 6041,
+            "target_action_recall": 0.00146484375
+          },
+          "4": {
+            "exact_match_recall": 0.00234209966004866,
+            "mean_structurally_valid_candidates_per_state": 2.5771484375,
+            "structurally_valid_candidates": 5278,
+            "target_action_recall": 0.0
+          },
+          "64": {
+            "exact_match_recall": 0.0025578886174913457,
+            "mean_structurally_valid_candidates_per_state": 3.04150390625,
+            "structurally_valid_candidates": 6229,
+            "target_action_recall": 0.00146484375
+          },
+          "8": {
+            "exact_match_recall": 0.0025325298264836688,
+            "mean_structurally_valid_candidates_per_state": 2.8720703125,
+            "structurally_valid_candidates": 5882,
+            "target_action_recall": 0.00146484375
+          }
+        },
+        "positive_anchor_recall": 0.0025588455530010695,
+        "states_with_any_positive_anchor_recall": 1.0,
+        "target_action_anchor_recall": 0.00146484375
+      },
+      "16": {
+        "best_gate_reduction_anchor_recall": 0.02783203125,
+        "compatible_pair_fraction": 0.014978346519484013,
+        "pattern": {
+          "1": {
+            "exact_match_recall": 0.01567843139131246,
+            "mean_structurally_valid_candidates_per_state": 16.0,
+            "structurally_valid_candidates": 32768,
+            "target_action_recall": 0.001953125
+          },
+          "16": {
+            "exact_match_recall": 0.03761139327417877,
+            "mean_structurally_valid_candidates_per_state": 48.31201171875,
+            "structurally_valid_candidates": 98943,
+            "target_action_recall": 0.01220703125
+          },
+          "32": {
+            "exact_match_recall": 0.037820005215298526,
+            "mean_structurally_valid_candidates_per_state": 49.396484375,
+            "structurally_valid_candidates": 101164,
+            "target_action_recall": 0.01220703125
+          },
+          "4": {
+            "exact_match_recall": 0.03637072638582204,
+            "mean_structurally_valid_candidates_per_state": 44.12939453125,
+            "structurally_valid_candidates": 90377,
+            "target_action_recall": 0.0087890625
+          },
+          "64": {
+            "exact_match_recall": 0.038083640948227394,
+            "mean_structurally_valid_candidates_per_state": 51.83447265625,
+            "structurally_valid_candidates": 106157,
+            "target_action_recall": 0.01220703125
+          },
+          "8": {
+            "exact_match_recall": 0.03733483891186863,
+            "mean_structurally_valid_candidates_per_state": 47.60205078125,
+            "structurally_valid_candidates": 97489,
+            "target_action_recall": 0.01220703125
+          }
+        },
+        "positive_anchor_recall": 0.03809129643230519,
+        "states_with_any_positive_anchor_recall": 1.0,
+        "target_action_anchor_recall": 0.01220703125
+      },
+      "2": {
+        "best_gate_reduction_anchor_recall": 0.0009765625,
+        "compatible_pair_fraction": 0.0020280766924299014,
+        "pattern": {
+          "1": {
+            "exact_match_recall": 0.0019598039239140577,
+            "mean_structurally_valid_candidates_per_state": 2.0,
+            "structurally_valid_candidates": 4096,
+            "target_action_recall": 0.0
+          },
+          "16": {
+            "exact_match_recall": 0.004940658036703262,
+            "mean_structurally_valid_candidates_per_state": 5.7587890625,
+            "structurally_valid_candidates": 11794,
+            "target_action_recall": 0.0029296875
+          },
+          "32": {
+            "exact_match_recall": 0.004951662795065084,
+            "mean_structurally_valid_candidates_per_state": 5.8583984375,
+            "structurally_valid_candidates": 11998,
+            "target_action_recall": 0.0029296875
+          },
+          "4": {
+            "exact_match_recall": 0.004559319236078383,
+            "mean_structurally_valid_candidates_per_state": 5.1240234375,
+            "structurally_valid_candidates": 10494,
+            "target_action_recall": 0.0009765625
+          },
+          "64": {
+            "exact_match_recall": 0.0049540551338393924,
+            "mean_structurally_valid_candidates_per_state": 6.0390625,
+            "structurally_valid_candidates": 12368,
+            "target_action_recall": 0.0029296875
+          },
+          "8": {
+            "exact_match_recall": 0.004922476262018512,
+            "mean_structurally_valid_candidates_per_state": 5.6865234375,
+            "structurally_valid_candidates": 11646,
+            "target_action_recall": 0.0029296875
+          }
+        },
+        "positive_anchor_recall": 0.004955490537103978,
+        "states_with_any_positive_anchor_recall": 1.0,
+        "target_action_anchor_recall": 0.0029296875
+      },
+      "4": {
+        "best_gate_reduction_anchor_recall": 0.0029296875,
+        "compatible_pair_fraction": 0.004089403525829486,
+        "pattern": {
+          "1": {
+            "exact_match_recall": 0.003919607847828115,
+            "mean_structurally_valid_candidates_per_state": 4.0,
+            "structurally_valid_candidates": 8192,
+            "target_action_recall": 0.0
+          },
+          "16": {
+            "exact_match_recall": 0.009514331305427498,
+            "mean_structurally_valid_candidates_per_state": 11.41552734375,
+            "structurally_valid_candidates": 23379,
+            "target_action_recall": 0.0029296875
+          },
+          "32": {
+            "exact_match_recall": 0.00953586235439628,
+            "mean_structurally_valid_candidates_per_state": 11.62744140625,
+            "structurally_valid_candidates": 23813,
+            "target_action_recall": 0.0029296875
+          },
+          "4": {
+            "exact_match_recall": 0.008949260886935676,
+            "mean_structurally_valid_candidates_per_state": 10.3134765625,
+            "structurally_valid_candidates": 21122,
+            "target_action_recall": 0.0009765625
+          },
+          "64": {
+            "exact_match_recall": 0.009538733160925452,
+            "mean_structurally_valid_candidates_per_state": 12.1044921875,
+            "structurally_valid_candidates": 24790,
+            "target_action_recall": 0.0029296875
+          },
+          "8": {
+            "exact_match_recall": 0.009492800256458716,
+            "mean_structurally_valid_candidates_per_state": 11.2626953125,
+            "structurally_valid_candidates": 23066,
+            "target_action_recall": 0.0029296875
+          }
+        },
+        "positive_anchor_recall": 0.009541603967454623,
+        "states_with_any_positive_anchor_recall": 1.0,
+        "target_action_anchor_recall": 0.0029296875
+      },
+      "8": {
+        "best_gate_reduction_anchor_recall": 0.01171875,
+        "compatible_pair_fraction": 0.007823536538228003,
+        "pattern": {
+          "1": {
+            "exact_match_recall": 0.00783921569565623,
+            "mean_structurally_valid_candidates_per_state": 8.0,
+            "structurally_valid_candidates": 16384,
+            "target_action_recall": 0.00048828125
+          },
+          "16": {
+            "exact_match_recall": 0.01876263453915182,
+            "mean_structurally_valid_candidates_per_state": 23.29296875,
+            "structurally_valid_candidates": 47704,
+            "target_action_recall": 0.005859375
+          },
+          "32": {
+            "exact_match_recall": 0.018837275508910265,
+            "mean_structurally_valid_candidates_per_state": 23.79052734375,
+            "structurally_valid_candidates": 48723,
+            "target_action_recall": 0.005859375
+          },
+          "4": {
+            "exact_match_recall": 0.01795737330771936,
+            "mean_structurally_valid_candidates_per_state": 21.28125,
+            "structurally_valid_candidates": 43584,
+            "target_action_recall": 0.0029296875
+          },
+          "64": {
+            "exact_match_recall": 0.018910481075404127,
+            "mean_structurally_valid_candidates_per_state": 24.80419921875,
+            "structurally_valid_candidates": 50799,
+            "target_action_recall": 0.005859375
+          },
+          "8": {
+            "exact_match_recall": 0.018663591713895422,
+            "mean_structurally_valid_candidates_per_state": 22.97802734375,
+            "structurally_valid_candidates": 47059,
+            "target_action_recall": 0.005859375
+          }
+        },
+        "positive_anchor_recall": 0.01891383034968816,
+        "states_with_any_positive_anchor_recall": 1.0,
+        "target_action_anchor_recall": 0.005859375
+      }
+    },
+    "max": {
+      "1": {
+        "best_gate_reduction_anchor_recall": 0.00048828125,
+        "compatible_pair_fraction": 0.0009814536360804747,
+        "pattern": {
+          "1": {
+            "exact_match_recall": 0.0009799019619570288,
+            "mean_structurally_valid_candidates_per_state": 1.0,
+            "structurally_valid_candidates": 2048,
+            "target_action_recall": 0.0
+          },
+          "16": {
+            "exact_match_recall": 0.002543056117090629,
+            "mean_structurally_valid_candidates_per_state": 2.9345703125,
+            "structurally_valid_candidates": 6010,
+            "target_action_recall": 0.00146484375
+          },
+          "32": {
+            "exact_match_recall": 0.0025531039399427275,
+            "mean_structurally_valid_candidates_per_state": 2.97900390625,
+            "structurally_valid_candidates": 6101,
+            "target_action_recall": 0.00146484375
+          },
+          "4": {
+            "exact_match_recall": 0.002348319740861864,
+            "mean_structurally_valid_candidates_per_state": 2.61376953125,
+            "structurally_valid_candidates": 5353,
+            "target_action_recall": 0.0
+          },
+          "64": {
+            "exact_match_recall": 0.0025554962787170364,
+            "mean_structurally_valid_candidates_per_state": 3.0712890625,
+            "structurally_valid_candidates": 6290,
+            "target_action_recall": 0.00146484375
+          },
+          "8": {
+            "exact_match_recall": 0.002529180552199636,
+            "mean_structurally_valid_candidates_per_state": 2.90283203125,
+            "structurally_valid_candidates": 5945,
+            "target_action_recall": 0.00146484375
+          }
+        },
+        "positive_anchor_recall": 0.002556931681981622,
+        "states_with_any_positive_anchor_recall": 1.0,
+        "target_action_anchor_recall": 0.00146484375
+      },
+      "16": {
+        "best_gate_reduction_anchor_recall": 0.0263671875,
+        "compatible_pair_fraction": 0.014554449020539848,
+        "pattern": {
+          "1": {
+            "exact_match_recall": 0.01567843139131246,
+            "mean_structurally_valid_candidates_per_state": 16.0,
+            "structurally_valid_candidates": 32768,
+            "target_action_recall": 0.001953125
+          },
+          "16": {
+            "exact_match_recall": 0.03761665641948225,
+            "mean_structurally_valid_candidates_per_state": 48.4794921875,
+            "structurally_valid_candidates": 99286,
+            "target_action_recall": 0.01123046875
+          },
+          "32": {
+            "exact_match_recall": 0.03781665594101449,
+            "mean_structurally_valid_candidates_per_state": 49.52880859375,
+            "structurally_valid_candidates": 101435,
+            "target_action_recall": 0.01123046875
+          },
+          "4": {
+            "exact_match_recall": 0.036441061145786734,
+            "mean_structurally_valid_candidates_per_state": 44.35693359375,
+            "structurally_valid_candidates": 90843,
+            "target_action_recall": 0.0078125
+          },
+          "64": {
+            "exact_match_recall": 0.038062109899258616,
+            "mean_structurally_valid_candidates_per_state": 51.89892578125,
+            "structurally_valid_candidates": 106289,
+            "target_action_recall": 0.01123046875
+          },
+          "8": {
+            "exact_match_recall": 0.037366417783689515,
+            "mean_structurally_valid_candidates_per_state": 47.83056640625,
+            "structurally_valid_candidates": 97957,
+            "target_action_recall": 0.01123046875
+          }
+        },
+        "positive_anchor_recall": 0.038070243851091264,
+        "states_with_any_positive_anchor_recall": 1.0,
+        "target_action_anchor_recall": 0.01123046875
+      },
+      "2": {
+        "best_gate_reduction_anchor_recall": 0.00048828125,
+        "compatible_pair_fraction": 0.00197285061453066,
+        "pattern": {
+          "1": {
+            "exact_match_recall": 0.0019598039239140577,
+            "mean_structurally_valid_candidates_per_state": 2.0,
+            "structurally_valid_candidates": 4096,
+            "target_action_recall": 0.0
+          },
+          "16": {
+            "exact_match_recall": 0.004915777713450446,
+            "mean_structurally_valid_candidates_per_state": 5.77099609375,
+            "structurally_valid_candidates": 11819,
+            "target_action_recall": 0.00244140625
+          },
+          "32": {
+            "exact_match_recall": 0.004928217875076854,
+            "mean_structurally_valid_candidates_per_state": 5.8759765625,
+            "structurally_valid_candidates": 12034,
+            "target_action_recall": 0.00244140625
+          },
+          "4": {
+            "exact_match_recall": 0.004566017784646448,
+            "mean_structurally_valid_candidates_per_state": 5.1689453125,
+            "structurally_valid_candidates": 10586,
+            "target_action_recall": 0.0009765625
+          },
+          "64": {
+            "exact_match_recall": 0.004930610213851163,
+            "mean_structurally_valid_candidates_per_state": 6.04833984375,
+            "structurally_valid_candidates": 12387,
+            "target_action_recall": 0.00244140625
+          },
+          "8": {
+            "exact_match_recall": 0.0048975959387656965,
+            "mean_structurally_valid_candidates_per_state": 5.70703125,
+            "structurally_valid_candidates": 11688,
+            "target_action_recall": 0.00244140625
+          }
+        },
+        "positive_anchor_recall": 0.00493252408487061,
+        "states_with_any_positive_anchor_recall": 1.0,
+        "target_action_anchor_recall": 0.00244140625
+      },
+      "4": {
+        "best_gate_reduction_anchor_recall": 0.00634765625,
+        "compatible_pair_fraction": 0.003945530022735879,
+        "pattern": {
+          "1": {
+            "exact_match_recall": 0.003919607847828115,
+            "mean_structurally_valid_candidates_per_state": 4.0,
+            "structurally_valid_candidates": 8192,
+            "target_action_recall": 0.0
+          },
+          "16": {
+            "exact_match_recall": 0.009528685338073354,
+            "mean_structurally_valid_candidates_per_state": 11.525390625,
+            "structurally_valid_candidates": 23604,
+            "target_action_recall": 0.00341796875
+          },
+          "32": {
+            "exact_match_recall": 0.009557871871119925,
+            "mean_structurally_valid_candidates_per_state": 11.74658203125,
+            "structurally_valid_candidates": 24057,
+            "target_action_recall": 0.00341796875
+          },
+          "4": {
+            "exact_match_recall": 0.00896074411305236,
+            "mean_structurally_valid_candidates_per_state": 10.43408203125,
+            "structurally_valid_candidates": 21369,
+            "target_action_recall": 0.00146484375
+          },
+          "64": {
+            "exact_match_recall": 0.009560742677649097,
+            "mean_structurally_valid_candidates_per_state": 12.1767578125,
+            "structurally_valid_candidates": 24938,
+            "target_action_recall": 0.00341796875
+          },
+          "8": {
+            "exact_match_recall": 0.00949902033727192,
+            "mean_structurally_valid_candidates_per_state": 11.38330078125,
+            "structurally_valid_candidates": 23313,
+            "target_action_recall": 0.00341796875
+          }
+        },
+        "positive_anchor_recall": 0.009563613484178267,
+        "states_with_any_positive_anchor_recall": 1.0,
+        "target_action_anchor_recall": 0.00341796875
+      },
+      "8": {
+        "best_gate_reduction_anchor_recall": 0.01171875,
+        "compatible_pair_fraction": 0.007654787291067692,
+        "pattern": {
+          "1": {
+            "exact_match_recall": 0.00783921569565623,
+            "mean_structurally_valid_candidates_per_state": 8.0,
+            "structurally_valid_candidates": 16384,
+            "target_action_recall": 0.00048828125
+          },
+          "16": {
+            "exact_match_recall": 0.018806175104844246,
+            "mean_structurally_valid_candidates_per_state": 23.43994140625,
+            "structurally_valid_candidates": 48005,
+            "target_action_recall": 0.0048828125
+          },
+          "32": {
+            "exact_match_recall": 0.018881773010112415,
+            "mean_structurally_valid_candidates_per_state": 23.92138671875,
+            "structurally_valid_candidates": 48991,
+            "target_action_recall": 0.0048828125
+          },
+          "4": {
+            "exact_match_recall": 0.017999956937902063,
+            "mean_structurally_valid_candidates_per_state": 21.42724609375,
+            "structurally_valid_candidates": 43883,
+            "target_action_recall": 0.00244140625
+          },
+          "64": {
+            "exact_match_recall": 0.018959284786400032,
+            "mean_structurally_valid_candidates_per_state": 24.90625,
+            "structurally_valid_candidates": 51008,
+            "target_action_recall": 0.0048828125
+          },
+          "8": {
+            "exact_match_recall": 0.018698041392245474,
+            "mean_structurally_valid_candidates_per_state": 23.14013671875,
+            "structurally_valid_candidates": 47391,
+            "target_action_recall": 0.0048828125
+          }
+        },
+        "positive_anchor_recall": 0.018962634060684064,
+        "states_with_any_positive_anchor_recall": 1.0,
+        "target_action_anchor_recall": 0.0048828125
+      }
+    }
+  },
+  "scope": {
+    "node_k": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "note": "Teacher node scores aggregate the full matcher and measure the factorization ceiling; they are not a deployable cheap node head.",
+    "pattern_k": [
+      1,
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "split": "test",
+    "states": 2048,
+    "teacher_node_scores": [
+      "max",
+      "logsumexp"
+    ]
+  },
+  "timing": {
+    "audit_structural_decode_seconds": 1.214572737691924,
+    "full_matcher_seconds": 22.57875475427136,
+    "states_per_second_full_matcher": 90.70473647855037
+  },
+  "totals": {
+    "compatible_node_source_pairs": 747635928,
+    "exact_matches": 2090005,
+    "states": 2048,
+    "states_with_best_gate_reduction": 2048,
+    "states_with_positives": 2048,
+    "target_actions": 2048
+  }
+}
