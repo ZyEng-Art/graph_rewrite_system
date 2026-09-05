@@ -1,0 +1,139 @@
+{
+  "circuit": {
+    "gate_count": 450,
+    "path": "../../quarl/experiment/circs/nam_circs/barenco_tof_10.qasm",
+    "slots": 450
+  },
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-matching-benchmark-v1",
+  "full_match": {
+    "mean_exact_candidates_per_state": 512.0,
+    "milliseconds_per_batch": 64.4472493417561,
+    "peak_cuda_allocated_gib": 1.7606053352355957,
+    "profiled_single_batch_seconds": {
+      "batch_collate_and_pad_seconds": 0.03985018911771476,
+      "batch_host_to_device_seconds": 0.0008982610888779163,
+      "candidate_device_to_host_seconds": 0.0,
+      "candidate_gpu_pack_seconds": 0.0002374409232288599,
+      "candidate_python_pack_seconds": 0.0,
+      "candidate_selection_and_ranking_seconds": 0.005001910030841827,
+      "incremental_graph_readout_seconds": 0.012269044993445277,
+      "match_group_compaction_seconds": 0.0009723908733576536,
+      "match_logits_seconds": 0.0018698370549827814,
+      "model_match_unattributed_seconds": 0.0003418847918510437,
+      "readout_cache_metadata_or_gather_seconds": 0.0001868510153144598,
+      "structural_binding_decode_seconds": 0.002388030057772994
+    },
+    "seconds": 3.2223624670878053,
+    "states_per_second": 3475.710791195364
+  },
+  "hierarchical": {
+    "16": {
+      "mean_exact_candidates_per_state": 0.0,
+      "milliseconds_per_batch": 58.356082676909864,
+      "peak_cuda_allocated_gib": 0.8669576644897461,
+      "profiled_single_batch_seconds": {
+        "batch_collate_seconds": 0.05219662492163479,
+        "batch_host_to_device_seconds": 0.0007988349534571171,
+        "hierarchical_match_unattributed_seconds": 0.00013815797865390778,
+        "incremental_graph_readout_seconds": 0.012286108918488026,
+        "node_policy_seconds": 0.0012378268875181675,
+        "node_topk_and_projection_seconds": 0.00017129909247159958,
+        "readout_cache_metadata_seconds": 0.00018713902682065964,
+        "selected_group_compaction_seconds": 0.00042948429472744465,
+        "selected_match_logits_seconds": 0.00012504099868237972,
+        "selected_threshold_and_topn_seconds": 0.0004473309963941574
+      },
+      "seconds": 2.917804133845493,
+      "speedup_over_full_match": 1.1043792932190148,
+      "states_per_second": 3838.5030270140383
+    },
+    "32": {
+      "mean_exact_candidates_per_state": 30.0,
+      "milliseconds_per_batch": 58.72858177870512,
+      "peak_cuda_allocated_gib": 0.8669576644897461,
+      "profiled_single_batch_seconds": {
+        "batch_collate_seconds": 0.040112155955284834,
+        "batch_host_to_device_seconds": 0.0009347689338028431,
+        "hierarchical_match_unattributed_seconds": 0.0003886742051690817,
+        "incremental_graph_readout_seconds": 0.012236851966008544,
+        "node_policy_seconds": 0.0012107910588383675,
+        "node_topk_and_projection_seconds": 0.00014716596342623234,
+        "readout_cache_metadata_seconds": 0.004880569875240326,
+        "selected_candidate_pack_seconds": 1.416192390024662e-05,
+        "selected_group_compaction_seconds": 0.00042220507748425007,
+        "selected_match_logits_seconds": 0.00010943901725113392,
+        "selected_structural_decode_seconds": 0.002383623970672488,
+        "selected_threshold_and_topn_seconds": 0.0005814060568809509
+      },
+      "seconds": 2.936429088935256,
+      "speedup_over_full_match": 1.0973745217379753,
+      "states_per_second": 3814.156467187532
+    },
+    "4": {
+      "mean_exact_candidates_per_state": 0.0,
+      "milliseconds_per_batch": 55.6589379766956,
+      "peak_cuda_allocated_gib": 0.8669576644897461,
+      "profiled_single_batch_seconds": {
+        "batch_collate_seconds": 0.04053171304985881,
+        "batch_host_to_device_seconds": 0.0009266331326216459,
+        "hierarchical_match_unattributed_seconds": 0.00013430090621113777,
+        "incremental_graph_readout_seconds": 0.012276879046112299,
+        "node_policy_seconds": 0.0012154961004853249,
+        "node_topk_and_projection_seconds": 0.0001408369280397892,
+        "readout_cache_metadata_seconds": 0.00018919305875897408,
+        "selected_group_compaction_seconds": 0.00038138474337756634,
+        "selected_match_logits_seconds": 0.00010791607201099396,
+        "selected_threshold_and_topn_seconds": 0.0003437008708715439
+      },
+      "seconds": 2.78294689883478,
+      "speedup_over_full_match": 1.1578957789086843,
+      "states_per_second": 4024.5108538324757
+    },
+    "8": {
+      "mean_exact_candidates_per_state": 0.0,
+      "milliseconds_per_batch": 55.80555921886116,
+      "peak_cuda_allocated_gib": 0.8669576644897461,
+      "profiled_single_batch_seconds": {
+        "batch_collate_seconds": 0.040288687916472554,
+        "batch_host_to_device_seconds": 0.0009149650577455759,
+        "hierarchical_match_unattributed_seconds": 0.00011852569878101349,
+        "incremental_graph_readout_seconds": 0.01227303920313716,
+        "node_policy_seconds": 0.00121202296577394,
+        "node_topk_and_projection_seconds": 0.0001421780325472355,
+        "readout_cache_metadata_seconds": 0.0001884030643850565,
+        "selected_group_compaction_seconds": 0.0003778019454330206,
+        "selected_match_logits_seconds": 0.00010909000411629677,
+        "selected_threshold_and_topn_seconds": 0.0003448419738560915
+      },
+      "seconds": 2.790277960943058,
+      "speedup_over_full_match": 1.154853570931948,
+      "states_per_second": 4013.937018738672
+    }
+  },
+  "protocol": {
+    "baseline": "all live nodes, first-gate grouped source matcher",
+    "hierarchical": "untrained node head Top-K, then first-gate-compatible sources and per-node Top-N",
+    "iterations": 50,
+    "shared": "paged readout, calibrated threshold, exact structural decoder",
+    "warmup": 5,
+    "warning": "This benchmark measures compute-path speed, not policy quality."
+  },
+  "shape": {
+    "batch_size": 224,
+    "microbatch": 224,
+    "node_ks": [
+      4,
+      8,
+      16,
+      32
+    ],
+    "pattern_k": 16,
+    "sources": 3855,
+    "width": 192
+  }
+}
