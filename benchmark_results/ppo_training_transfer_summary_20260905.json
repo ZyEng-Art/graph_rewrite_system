@@ -1,0 +1,68 @@
+{
+  "format": "ppo-training-transition-transfer-ab-v1",
+  "machine": "h100-gpu5",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "protocol": {
+    "circuits": 14,
+    "episodes": 224,
+    "episodes_per_circuit": 16,
+    "max_steps": 16,
+    "refresh_interval": 8,
+    "max_actions": 64,
+    "source_grouping": "first_gate",
+    "source_microbatch": 0,
+    "proposal_expansion": "full",
+    "ppo_epochs": 1
+  },
+  "seed_904_rowwise_first": {
+    "rowwise": {
+      "collection_seconds": 12.234873028006405,
+      "transitions": 3381,
+      "transitions_per_second": 276.3412413239333,
+      "transition_transfer_seconds": 0.8675393362063915,
+      "selected_action_legality": 0.992309967465247
+    },
+    "batched": {
+      "collection_seconds": 11.521129361120984,
+      "transitions": 3374,
+      "transitions_per_second": 292.8532346304387,
+      "transition_transfer_seconds": 0.41338969743810594,
+      "selected_action_legality": 0.9919976289270895
+    },
+    "collection_time_reduction_percent": 5.83368266472088,
+    "throughput_increase_percent": 5.97521862006465,
+    "transition_transfer_reduction_percent": 52.3491696358355,
+    "identical_best_gate_counts": true
+  },
+  "seed_905_batched_first": {
+    "rowwise": {
+      "collection_seconds": 12.686033122939989,
+      "transitions": 3444,
+      "transitions_per_second": 271.4796632347002,
+      "transition_transfer_seconds": 0.8709698552265763,
+      "selected_action_legality": 0.9962253193960511
+    },
+    "batched": {
+      "collection_seconds": 11.85492444015108,
+      "transitions": 3446,
+      "transitions_per_second": 290.6808910842863,
+      "transition_transfer_seconds": 0.413516151253134,
+      "selected_action_legality": 0.9965177016831108
+    },
+    "collection_time_reduction_percent": 6.55136775014426,
+    "throughput_increase_percent": 7.07280524102694,
+    "transition_transfer_reduction_percent": 52.5223348693784,
+    "identical_best_gate_counts": true
+  },
+  "mean": {
+    "rowwise_collection_seconds": 12.4604530754732,
+    "batched_collection_seconds": 11.688026900636,
+    "collection_time_reduction_percent": 6.19902157777542,
+    "rowwise_transitions_per_second": 273.910452279317,
+    "batched_transitions_per_second": 291.767062857362,
+    "throughput_increase_percent": 6.51914172294408,
+    "rowwise_transition_transfer_seconds": 0.869254595716484,
+    "batched_transition_transfer_seconds": 0.41345292434562,
+    "transition_transfer_reduction_percent": 52.4359231020423
+  }
+}

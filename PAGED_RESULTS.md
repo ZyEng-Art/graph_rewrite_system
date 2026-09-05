@@ -1106,3 +1106,26 @@ preselect` remains useful for much wider beam search, where the measured
 materialization reduction was 35.1x. PPO A/B logs and the decision are in
 `benchmark_results/ppo_training_proposal_ab_*_h100.json` and
 `benchmark_results/ppo_training_proposal_preselection_summary_20260905.json`.
+
+## Batched PPO transition transfer
+
+The batched collector previously copied state features, all 64 candidate
+features and logits, the candidate mask, prefix state, value, sampled action,
+log probability, and entropy from GPU to CPU separately for every transition.
+This preserved batching for inference but introduced thousands of small CUDA
+synchronizations. `--transition-transfer-backend batched` copies immutable
+transition tensors once per active collector batch and transfers actor outputs
+once per retry round. Candidate masks are cloned on CPU before a rejected
+action is removed, preserving the exact PPO observation stored at each retry.
+
+Two H100 A/B pairs used the same 14-circuit, 224-episode protocol as the
+matcher experiment, with seed 904 in rowwise-first order and seed 905 in
+batched-first order. Averaged over both pairs, transition transfer fell from
+0.869 to 0.413 seconds (-52.4%), collection time fell from 12.460 to 11.688
+seconds (-6.2%), and throughput rose from 273.9 to 291.8 transitions/s (+6.5%).
+Each seed produced identical per-circuit best gate counts across its A/B pair,
+and selected-action legality differed by less than 0.04 percentage points.
+The training launcher now selects the batched backend; the rowwise backend is
+retained for regression comparison. Raw logs and a compact summary are in
+`benchmark_results/ppo_training_transfer_ab_*_h100.json` and
+`benchmark_results/ppo_training_transfer_summary_20260905.json`.

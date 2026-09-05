@@ -573,6 +573,7 @@ def collect_episode(
     source_microbatch: int,
     source_grouping: str,
     proposal_expansion: str,
+    transition_transfer_backend: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -1005,6 +1006,7 @@ def collect_episode_batch(
     source_microbatch: int,
     source_grouping: str,
     proposal_expansion: str,
+    transition_transfer_backend: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -1149,6 +1151,25 @@ def collect_episode_batch(
             else:
                 old_values = state_features.new_zeros(len(active))
 
+        transition_state_features = None
+        transition_policy_features = None
+        transition_matcher_logits = None
+        transition_candidate_mask = None
+        transition_prefix_states = None
+        transition_old_values = None
+        if transition_transfer_backend == "batched":
+            transfer_started = time.perf_counter()
+            transition_state_features = state_features.float().cpu()
+            transition_policy_features = policy_features.float().cpu()
+            transition_matcher_logits = matcher_logits.float().cpu()
+            transition_candidate_mask = candidate_mask.cpu()
+            transition_prefix_states = prefix_states.float().cpu()
+            transition_old_values = old_values.float().cpu().tolist()
+            if collector_timing is not None:
+                collector_timing["transition_transfer_seconds"] += (
+                    time.perf_counter() - transfer_started
+                )
+
         advance_records: dict[int, tuple[BeamState, Proposal]] = {}
         refresh_indices = set()
         for parent_index, runtime in enumerate(active):
@@ -1185,16 +1206,55 @@ def collect_episode_batch(
                 )
                 log_probs = distribution.log_prob(actions)
                 entropies = distribution.entropy()
+            transfer_started = time.perf_counter()
+            if transition_transfer_backend == "batched":
+                actor_outputs = torch.stack(
+                    (actions.float(), log_probs, entropies), dim=1
+                ).cpu().tolist()
+            else:
+                actor_outputs = [
+                    (
+                        int(actions[index].item()),
+                        float(log_probs[index].item()),
+                        float(entropies[index].item()),
+                    )
+                    for index in range(len(unresolved))
+                ]
+            if collector_timing is not None:
+                collector_timing["transition_transfer_seconds"] += (
+                    time.perf_counter() - transfer_started
+                )
             retry = []
             for row_index, parent_index in enumerate(unresolved):
                 runtime = active[parent_index]
                 rows = grouped_proposals[parent_index]
-                action_index = int(actions[row_index].item())
+                action_index = int(actor_outputs[row_index][0])
                 proposal = rows[action_index]
-                old_log_prob = float(log_probs[row_index].item())
-                entropy = float(entropies[row_index].item())
+                old_log_prob = float(actor_outputs[row_index][1])
+                entropy = float(actor_outputs[row_index][2])
                 local_mask = candidate_mask[parent_index]
-                candidate_count = int(local_mask.sum().item())
+                transfer_started = time.perf_counter()
+                if transition_transfer_backend == "batched":
+                    local_transition_mask = transition_candidate_mask[parent_index]
+                    candidate_count = int(local_transition_mask.sum().item())
+                    saved_state_features = transition_state_features[parent_index]
+                    saved_policy_features = transition_policy_features[parent_index]
+                    saved_matcher_logits = transition_matcher_logits[parent_index]
+                    saved_candidate_mask = local_transition_mask.clone()
+                    saved_prefix_state = transition_prefix_states[parent_index]
+                    saved_old_value = float(transition_old_values[parent_index])
+                else:
+                    candidate_count = int(local_mask.sum().item())
+                    saved_state_features = state_features[parent_index].float().cpu()
+                    saved_policy_features = policy_features[parent_index].float().cpu()
+                    saved_matcher_logits = matcher_logits[parent_index].float().cpu()
+                    saved_candidate_mask = local_mask.cpu().clone()
+                    saved_prefix_state = prefix_states[parent_index].float().cpu()
+                    saved_old_value = float(old_values[parent_index].item())
+                if collector_timing is not None:
+                    collector_timing["transition_transfer_seconds"] += (
+                        time.perf_counter() - transfer_started
+                    )
                 child, fingerprint, duplicate = lazy_child(
                     runtime.state,
                     proposal,
@@ -1228,19 +1288,19 @@ def collect_episode_batch(
                     child.gate_count if child is not None else runtime.state.gate_count
                 )
                 transition = PPOTransition(
-                    state_features=state_features[parent_index].float().cpu(),
-                    candidate_features=policy_features[parent_index].float().cpu(),
-                    matcher_logits=matcher_logits[parent_index].float().cpu(),
-                    candidate_mask=local_mask.cpu().clone(),
+                    state_features=saved_state_features,
+                    candidate_features=saved_policy_features,
+                    matcher_logits=saved_matcher_logits,
+                    candidate_mask=saved_candidate_mask,
                     action_index=action_index,
                     old_log_prob=old_log_prob,
-                    old_value=float(old_values[parent_index].item()),
+                    old_value=saved_old_value,
                     reward=reward,
                     done=rejected and not can_retry,
                     legal=legal,
                     xfer_id=proposal.xfer_id,
                     matcher_probability=proposal.probability,
-                    prefix_state=prefix_states[parent_index].float().cpu(),
+                    prefix_state=saved_prefix_state,
                     history_depth=runtime.state.depth + 1,
                     committed_action=child is not None,
                     repeated_state=bool(duplicate),
@@ -1252,6 +1312,8 @@ def collect_episode_batch(
                 runtime.transitions.append(transition)
                 if rejected:
                     candidate_mask[parent_index, action_index] = False
+                    if transition_candidate_mask is not None:
+                        transition_candidate_mask[parent_index, action_index] = False
                     if can_retry:
                         rejected_counts[parent_index] += 1
                         retry.append(parent_index)
@@ -1717,6 +1779,12 @@ def main() -> None:
         default="full",
         help="preselect top matches before materializing their xfers",
     )
+    parser.add_argument(
+        "--transition-transfer-backend",
+        choices=("rowwise", "batched"),
+        default="rowwise",
+        help="batch PPO transition tensor copies from GPU to CPU",
+    )
     parser.add_argument("--max-actions", type=int, default=128)
     parser.add_argument("--max-gate-increase", type=int, default=3)
     parser.add_argument("--page-size", type=int, default=8)
@@ -1962,6 +2030,7 @@ def main() -> None:
         "source_microbatch": args.source_microbatch,
         "source_grouping": args.source_grouping,
         "proposal_expansion": args.proposal_expansion,
+        "transition_transfer_backend": args.transition_transfer_backend,
         "max_actions": args.max_actions,
         "invalid_reward": args.invalid_reward,
         "cycle_reward": args.cycle_reward,
@@ -1997,6 +2066,7 @@ def main() -> None:
         collection_timing = {
             "model_match_seconds": 0.0,
             "proposal_seconds": 0.0,
+            "transition_transfer_seconds": 0.0,
             "eligible_actions": 0,
             "materialized_actions": 0,
         }
@@ -2037,13 +2107,18 @@ def main() -> None:
             0.0,
             collection_seconds
             - collection_timing["model_match_seconds"]
-            - collection_timing["proposal_seconds"],
+            - collection_timing["proposal_seconds"]
+            - collection_timing["transition_transfer_seconds"],
         )
         collection_timing["model_match_fraction"] = (
             collection_timing["model_match_seconds"] / collection_seconds
         )
         collection_timing["proposal_fraction"] = (
             collection_timing["proposal_seconds"] / collection_seconds
+        )
+        collection_timing["transition_transfer_fraction"] = (
+            collection_timing["transition_transfer_seconds"]
+            / collection_seconds
         )
         collection_peak_cuda_allocated_gib = (
             torch.cuda.max_memory_allocated(device) / (1024**3)
