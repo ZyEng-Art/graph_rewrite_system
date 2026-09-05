@@ -1,0 +1,116 @@
+{
+  "args": {
+    "batch_size": 1024,
+    "calibration": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "checkpoint": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "data": "../../data/quarl_all_action_preferences_pathsplit_n16_s995.pt",
+    "encode_batch_size": 64,
+    "epochs": 1,
+    "gradient_clip": 1.0,
+    "initial_gate_bias": 1.0,
+    "learning_rate": 0.0003,
+    "max_sample_weight": 4.0,
+    "max_test_pairs": null,
+    "max_train_pairs": null,
+    "metrics_output": "benchmark_results/hierarchical_action_dedup_encode_benchmark_s996.training.json",
+    "node_checkpoint": "../../runs/hierarchical_node_allpaths_rtg025_e4_s940.pt",
+    "output": "../../runs/hierarchical_action_dedup_encode_benchmark_s996.pt",
+    "rank_margin": 2.0,
+    "return_weight": 0.25,
+    "same_anchor_weight": 2.0,
+    "score_l2": 0.001,
+    "seed": 996,
+    "target_recall": 0.95,
+    "weight_decay": 0.0001
+  },
+  "artifacts": {
+    "base_checkpoint": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "base_checkpoint_sha256": "6a684c1db6baa3988914b98e7df205ade33444456d70edffcfd76c4b323d1b55",
+    "calibration": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "data": "../../data/quarl_all_action_preferences_pathsplit_n16_s995.pt",
+    "data_sha256": "951baa4736971fa9a07960be69d06c1fd0444a727dbe0e2a44e30a9ba98d846f",
+    "node_checkpoint": "../../runs/hierarchical_node_allpaths_rtg025_e4_s940.pt",
+    "node_checkpoint_sha256": "2b4a9f602f0fe2c5e2bc50b265a37c456fb54c4ccb4ccf1e990cbff452a59e63"
+  },
+  "encode_seconds": {
+    "test": 14.998937851982191,
+    "train": 64.89566566189751
+  },
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-action-training-v1",
+  "hidden_size": 192,
+  "history": [
+    {
+      "epoch": 1,
+      "test": {
+        "accuracy": 0.7338749766349792,
+        "accuracy_by_circuit": {
+          "barenco_tof_3": 0.5403481012658228,
+          "gf2^6_mult": 0.7701900237529691
+        },
+        "loss": 1.479198694229126,
+        "mean_margin": 1.5279978513717651,
+        "pairs": 8000,
+        "same_anchor_accuracy": 0.6423357725143433,
+        "same_anchor_pairs": 685,
+        "same_source_accuracy": 0.6768010854721069,
+        "same_source_pairs": 3026,
+        "uphill_preferred_accuracy": 0.611851155757904,
+        "uphill_preferred_pairs": 2177
+      },
+      "train_loss": 1.9950690935639774,
+      "train_rank_loss": 1.993623221621794,
+      "train_residual_l2": 1.4458825944412264
+    }
+  ],
+  "initial_test": {
+    "accuracy": 0.4546250104904175,
+    "accuracy_by_circuit": {
+      "barenco_tof_3": 0.4430379746835443,
+      "gf2^6_mult": 0.45679928741092635
+    },
+    "loss": 2.3509104251861572,
+    "mean_margin": -0.16771200299263,
+    "pairs": 8000,
+    "same_anchor_accuracy": 0.5284671783447266,
+    "same_anchor_pairs": 685,
+    "same_source_accuracy": 0.5251156687736511,
+    "same_source_pairs": 3026,
+    "uphill_preferred_accuracy": 0.12723931670188904,
+    "uphill_preferred_pairs": 2177
+  },
+  "selection": {
+    "best_accuracy": 0.7338749766349792,
+    "best_epoch": 1,
+    "best_metrics": {
+      "accuracy": 0.7338749766349792,
+      "accuracy_by_circuit": {
+        "barenco_tof_3": 0.5403481012658228,
+        "gf2^6_mult": 0.7701900237529691
+      },
+      "loss": 1.479198694229126,
+      "mean_margin": 1.5279978513717651,
+      "pairs": 8000,
+      "same_anchor_accuracy": 0.6423357725143433,
+      "same_anchor_pairs": 685,
+      "same_source_accuracy": 0.6768010854721069,
+      "same_source_pairs": 3026,
+      "uphill_preferred_accuracy": 0.611851155757904,
+      "uphill_preferred_pairs": 2177
+    },
+    "metric": "test_pair_accuracy"
+  },
+  "test_pairs": 8000,
+  "train_pairs": 34160,
+  "trainable_parameters": 149765,
+  "training_seconds": 1.4074788349680603,
+  "unique_state_encodes": {
+    "test": 500,
+    "train": 2135
+  },
+  "width": 192
+}

@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from collect_teacher_action_preferences import (
+    base_trajectory_path,
     collect_preferences,
     hard_negative_actions,
     split_bucket,
@@ -11,6 +12,16 @@ from dataset import RuleMetadata
 
 
 class TeacherActionPreferenceTest(unittest.TestCase):
+    def test_windows_share_one_path_split(self):
+        self.assertEqual(
+            base_trajectory_path("/tmp/gf/370_2#window=64:128"),
+            "/tmp/gf/370_2",
+        )
+        self.assertEqual(
+            base_trajectory_path("/tmp/gf/370_2#segment=2#window=0:64"),
+            "/tmp/gf/370_2",
+        )
+
     def test_prefers_immediate_reduction_hard_negatives(self):
         rules = RuleMetadata(
             source_patterns=("", ""),
@@ -96,6 +107,8 @@ class TeacherActionPreferenceTest(unittest.TestCase):
         self.assertEqual(len(train), 3)
         self.assertEqual(test, [])
         self.assertEqual(metadata["train_preferences"], 3)
+        self.assertEqual(train[0]["teacher_action_gate_delta"], 1)
+        self.assertEqual(train[0]["future_best_reduction"], -1)
         self.assertEqual(
             metadata["paths"]["/tmp/barenco_tof_3/38_3"]["split"],
             "train",

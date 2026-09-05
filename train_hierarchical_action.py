@@ -64,6 +64,10 @@ class WeightedActionPreferenceDataset(Dataset):
     def __getitem__(self, index: int) -> dict:
         sample = self.base[index]
         row = self.rows[index]
+        sample["preference_state_key"] = (
+            str(row.get("source_history", row.get("circuit", "unknown"))),
+            int(row.get("prefix_length", len(row["actions"]))),
+        )
         future_reduction = max(
             0.0,
             float(
@@ -81,11 +85,47 @@ class WeightedActionPreferenceDataset(Dataset):
 
 
 def collate_action_preferences(samples: list[dict], rules: RuleMetadata) -> dict:
-    batch = collate_preferences(samples, rules)
+    unique_samples = []
+    unique_by_key = {}
+    inverse = []
+    for sample in samples:
+        key = sample["preference_state_key"]
+        if key not in unique_by_key:
+            unique_by_key[key] = len(unique_samples)
+            unique_samples.append(sample)
+        inverse.append(unique_by_key[key])
+    batch = collate_preferences(unique_samples, rules)
+
+    max_pattern = max(
+        max(map(len, rules.source_gate_types)),
+        max(map(len, rules.destination_gate_types)),
+    )
+
+    def action_tensors(key: str):
+        xfers = torch.tensor(
+            [int(sample[key]["xfer_id"]) for sample in samples], dtype=torch.long
+        )
+        sources = torch.tensor(
+            [int(sample[key]["source_id"]) for sample in samples], dtype=torch.long
+        )
+        bindings = torch.full((len(samples), max_pattern), -1, dtype=torch.long)
+        for index, sample in enumerate(samples):
+            slots = tuple(map(int, sample[key]["binding_slots"]))
+            bindings[index, : len(slots)] = torch.tensor(slots)
+        return xfers, sources, bindings
+
+    for action in ("preferred", "rejected"):
+        (
+            batch[f"{action}_xfers"],
+            batch[f"{action}_sources"],
+            batch[f"{action}_bindings"],
+        ) = action_tensors(action)
+    batch["preference_state_inverse"] = torch.tensor(inverse, dtype=torch.long)
     batch["action_sample_weight"] = torch.tensor(
         [sample["action_sample_weight"] for sample in samples],
         dtype=torch.float,
     )
+    batch["preference_circuits"] = [sample["circuit"] for sample in samples]
     return batch
 
 
@@ -184,11 +224,21 @@ def encode_preferences(
         "same_source": [],
         "circuits": [],
     }
+    unique_state_count = 0
     started = time.perf_counter()
     for cpu_batch in loader:
         batch = move_batch(cpu_batch, device)
         states, live, _, prefix_states = encode_with_prefix_state(model, batch)
         state_features = build_state_features(states, live, live.sum(1))
+        inverse = batch["preference_state_inverse"]
+        unique_state_count += int(states.shape[0])
+        states = states.index_select(0, inverse)
+        live = live.index_select(0, inverse)
+        prefix_states = prefix_states.index_select(0, inverse)
+        state_features = state_features.index_select(0, inverse)
+        batch["current_rewrite_distance"] = batch[
+            "current_rewrite_distance"
+        ].index_select(0, inverse)
         for action in ("preferred", "rejected"):
             features, base_logits, deltas = action_policy_inputs(
                 model,
@@ -219,6 +269,7 @@ def encode_preferences(
     for key in tuple(encoded):
         if key != "circuits":
             encoded[key] = torch.cat(encoded[key])
+    encoded["unique_state_encodes"] = unique_state_count
     encoded["encode_seconds"] = time.perf_counter() - started
     return encoded
 
@@ -540,6 +591,10 @@ def main() -> None:
         "encode_seconds": {
             "train": encoded_train["encode_seconds"],
             "test": encoded_test["encode_seconds"],
+        },
+        "unique_state_encodes": {
+            "train": encoded_train["unique_state_encodes"],
+            "test": encoded_test["unique_state_encodes"],
         },
         "initial_test": asdict(initial_test),
         "history": history,
