@@ -1,0 +1,235 @@
+{
+  "best_gate_count": 140,
+  "best_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/exact_archive/best_g140_round_0010.qasm",
+  "best_round": 10,
+  "config": {
+    "action_value_weight": 0.25,
+    "beam_size": 1000,
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/action_value_d16_support2_v2_lr5e5.pt",
+    "depth_per_round": 16,
+    "max_gate_increase": 3,
+    "proposal_ranking": "stochastic",
+    "refresh_factor": 2,
+    "refresh_interval": 8,
+    "rounds_per_invocation": 3,
+    "value_increase_actions_per_parent": 16
+  },
+  "copied_input_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/roots/vbe_adder_3.qasm",
+  "format": "accelerated-self-improve-v1",
+  "improvements": [
+    {
+      "gate_count": 144,
+      "qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/exact_archive/best_g144_round_0008.qasm",
+      "round": 8
+    },
+    {
+      "gate_count": 140,
+      "qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/exact_archive/best_g140_round_0010.qasm",
+      "round": 10
+    }
+  ],
+  "initial_gate_count": 150,
+  "input_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/vbe_adder_3.qasm",
+  "next_round": 12,
+  "rounds": [
+    {
+      "best_gate_count_so_far": 150,
+      "improved": false,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0000/refresh_histories/segment_0000_depth_0016.json",
+      "restarted_from_best": true,
+      "root_gate_count": 150,
+      "round": 0,
+      "round_best_exact_gate_count": 150,
+      "search_step": 16,
+      "stale_refreshes": 2
+    },
+    {
+      "best_gate_count_so_far": 150,
+      "improved": false,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0000/refresh_histories/segment_0001_depth_0032.json",
+      "restarted_from_best": true,
+      "root_gate_count": 150,
+      "round": 1,
+      "round_best_exact_gate_count": 150,
+      "search_step": 32,
+      "stale_refreshes": 4
+    },
+    {
+      "best_gate_count_so_far": 150,
+      "improved": false,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0000/refresh_histories/segment_0002_depth_0048.json",
+      "restarted_from_best": false,
+      "root_gate_count": 150,
+      "round": 2,
+      "round_best_exact_gate_count": 150,
+      "search_step": 48,
+      "stale_refreshes": 6
+    },
+    {
+      "best_gate_count_so_far": 150,
+      "improved": false,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0001/refresh_histories/segment_0000_depth_0016.json",
+      "restarted_from_best": true,
+      "root_gate_count": 150,
+      "round": 3,
+      "round_best_exact_gate_count": 150,
+      "search_step": 16,
+      "stale_refreshes": 2
+    },
+    {
+      "best_gate_count_so_far": 150,
+      "improved": false,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0001/refresh_histories/segment_0001_depth_0032.json",
+      "restarted_from_best": true,
+      "root_gate_count": 150,
+      "round": 4,
+      "round_best_exact_gate_count": 150,
+      "search_step": 32,
+      "stale_refreshes": 4
+    },
+    {
+      "best_gate_count_so_far": 150,
+      "improved": false,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0001/refresh_histories/segment_0002_depth_0048.json",
+      "restarted_from_best": false,
+      "root_gate_count": 150,
+      "round": 5,
+      "round_best_exact_gate_count": 150,
+      "search_step": 48,
+      "stale_refreshes": 6
+    },
+    {
+      "best_gate_count_so_far": 148,
+      "improved": true,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0002/refresh_histories/segment_0000_depth_0016.json",
+      "restarted_from_best": true,
+      "root_gate_count": 150,
+      "round": 6,
+      "round_best_exact_gate_count": 148,
+      "search_step": 16,
+      "stale_refreshes": 1
+    },
+    {
+      "best_gate_count_so_far": 146,
+      "improved": true,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0002/refresh_histories/segment_0001_depth_0032.json",
+      "restarted_from_best": true,
+      "root_gate_count": 148,
+      "round": 7,
+      "round_best_exact_gate_count": 146,
+      "search_step": 32,
+      "stale_refreshes": 1
+    },
+    {
+      "best_gate_count_so_far": 144,
+      "improved": true,
+      "refresh_history": null,
+      "restarted_from_best": false,
+      "root_gate_count": 146,
+      "round": 8,
+      "round_best_exact_gate_count": 144,
+      "search_step": 48,
+      "stale_refreshes": 1
+    },
+    {
+      "best_gate_count_so_far": 141,
+      "improved": true,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0003/refresh_histories/segment_0000_depth_0016.json",
+      "restarted_from_best": true,
+      "root_gate_count": 144,
+      "round": 9,
+      "round_best_exact_gate_count": 141,
+      "search_step": 16,
+      "stale_refreshes": 0
+    },
+    {
+      "best_gate_count_so_far": 140,
+      "improved": true,
+      "refresh_history": null,
+      "restarted_from_best": true,
+      "root_gate_count": 141,
+      "round": 10,
+      "round_best_exact_gate_count": 140,
+      "search_step": 32,
+      "stale_refreshes": 1
+    },
+    {
+      "best_gate_count_so_far": 140,
+      "improved": false,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0003/refresh_histories/segment_0002_depth_0048.json",
+      "restarted_from_best": false,
+      "root_gate_count": 140,
+      "round": 11,
+      "round_best_exact_gate_count": 140,
+      "search_step": 48,
+      "stale_refreshes": 3
+    }
+  ],
+  "runs": [
+    {
+      "best_gate_count": 150,
+      "best_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0000/best_exact.qasm",
+      "completed_rounds": 3,
+      "final_histories": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0000/final_beam_histories.json",
+      "improved": false,
+      "log": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0000/rollout.log",
+      "model_loads": 1,
+      "refresh_histories_dir": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0000/refresh_histories",
+      "result": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0000/rollout.json",
+      "root_gate_count": 150,
+      "run": 0,
+      "search_seconds": 24.69992439704947,
+      "start_round": 0,
+      "wall_seconds": 64.44048193399794
+    },
+    {
+      "best_gate_count": 150,
+      "best_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0001/best_exact.qasm",
+      "completed_rounds": 3,
+      "final_histories": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0001/final_beam_histories.json",
+      "improved": false,
+      "log": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0001/rollout.log",
+      "model_loads": 1,
+      "refresh_histories_dir": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0001/refresh_histories",
+      "result": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0001/rollout.json",
+      "root_gate_count": 150,
+      "run": 1,
+      "search_seconds": 25.14292687503621,
+      "start_round": 3,
+      "wall_seconds": 65.02164244605228
+    },
+    {
+      "best_gate_count": 144,
+      "best_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0002/best_exact.qasm",
+      "completed_rounds": 3,
+      "final_histories": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0002/final_beam_histories.json",
+      "improved": true,
+      "log": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0002/rollout.log",
+      "model_loads": 1,
+      "refresh_histories_dir": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0002/refresh_histories",
+      "result": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0002/rollout.json",
+      "root_gate_count": 150,
+      "run": 2,
+      "search_seconds": 19.062506663845852,
+      "start_round": 6,
+      "wall_seconds": 56.08678030385636
+    },
+    {
+      "best_gate_count": 140,
+      "best_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0003/best_exact.qasm",
+      "completed_rounds": 3,
+      "final_histories": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0003/final_beam_histories.json",
+      "improved": true,
+      "log": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0003/rollout.log",
+      "model_loads": 1,
+      "refresh_histories_dir": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0003/refresh_histories",
+      "result": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/accelerated_online_v1/vbe_adder_3/runs/run_0003/rollout.json",
+      "root_gate_count": 144,
+      "run": 3,
+      "search_seconds": 17.0644161591772,
+      "start_round": 9,
+      "wall_seconds": 55.028504508081824
+    }
+  ],
+  "stale_refreshes": 3
+}

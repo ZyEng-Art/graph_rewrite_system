@@ -786,3 +786,62 @@ and model startup.  The artifacts are:
 - `benchmark_results/resident_best_archive_mod5_b256_r2d16.json`;
 - `benchmark_results/resident_best_archive_mod5_b256_r2d16_rollout.json`;
 - `benchmark_results/resident_best_archive_mod5_b256_r2d16_best.qasm`.
+
+## Accelerated online self-improvement
+
+The resident archive is now connected to a self-contained online training
+loop in `run_accelerated_online_iteration.sh`; it does not invoke Quarl or PPO.
+Four training circuits search concurrently on four H100s.  Each process keeps
+the matcher, Quartz context, and CUDA state resident for three 16-action
+segments, archives only Quartz-confirmed best circuits, then contributes valid
+refresh trajectories to the next action-value update.  Completion markers make
+an iteration resumable per circuit, so one failed worker does not repeat the
+other three searches.
+
+The preference target was changed from final trajectory residual to the best
+future prefix residual.  This avoids teaching a good early action that it is
+bad merely because forced later actions regress before the fixed depth.  The
+collector reads resident archives directly and keeps seed-75 histories as a
+fixed validation set.  Preference magnitude can weight the pairwise loss, and
+epoch 0 is now a checkpoint candidate: an online update cannot overwrite the
+input policy unless it improves fixed validation accuracy.
+
+The first best-prefix model uses 1,011 training and 155 fixed validation pairs.
+Validation accuracy rises from 44.52% for the old head under the new target to
+69.68% at epoch 16.  Two subsequent online fits do not exceed 69.68%, so the
+epoch-0 guard correctly retains the existing policy.  This also shows why pair
+accuracy alone is insufficient: pure value search can concentrate the whole
+beam into model false positives and produce no Quartz-valid final leaf.
+
+Value proposal pre-capping now reserves 16 of 128 per-parent positions for
+matcher-ranked gate-increasing actions, allowing short-term regressions that
+may unlock a lower circuit.  At global ranking, 25% of proposals can be
+reserved for deterministic stochastic exploration and interleaved with value
+proposals.  The selected exploration count is reported per step.  If every
+leaf fails a Quartz refresh, resident search records the empty refresh and
+restarts from the verified best at the next available step; an empty final beam
+still exports that exact best instead of crashing.
+
+A controlled H100 A/B uses the same original circuit, checkpoint, seed, beam
+1000, depth 16, refresh interval 8, and maximum single-action gate increase 3:
+
+| circuit | pure value best | 25% mixed best | final valid leaves, pure -> mixed | search, pure -> mixed |
+|---|---:|---:|---:|---:|
+| `barenco_tof_3` | 58 | 58 | 0 -> 145 | 5.305 -> 5.134 s |
+| `mod5_4` | 62 | 62 | 8 -> 15 | 5.416 -> 4.682 s |
+| `tof_4` | 75 | **74** | 1000 -> 435 | 5.686 -> 6.113 s |
+| `vbe_adder_3` | 148 | **144** | 1000 -> 1000 | 8.063 -> 7.190 s |
+
+The mixed policy improves two of four best circuits, restores a usable final
+beam on `barenco_tof_3`, and reduces aggregate search time from 24.47 to 23.12
+seconds in this run.  Independently parsing every exported QASM with Quartz
+reproduces the reported gate count.
+
+Across 12 archived self-improvement segments per circuit, the monotonic exact
+best values are now 58 -> 56 for `barenco_tof_3`, 63 -> 62 for `mod5_4`,
+75 -> 71 for `tof_4`, and 150 -> 140 for `vbe_adder_3`.  These are verified
+search results, not model-predicted counts.  The archives and exact best QASM
+files are retained as `benchmark_results/online_self_improve_*`; controlled
+A/B outputs are `benchmark_results/*_mix_*.json`, and dataset/training logs are
+`benchmark_results/action_preferences_online_v1_iter*` and
+`benchmark_results/action_value_online_v1_iter*`.

@@ -16,7 +16,7 @@ circuit="$1"
 depth=${2:-16}
 circuit_stem=${circuit%.qasm}
 base_checkpoint="$root/runs/paged_action_onpolicy_v13_r8_lr5e5_epoch1.pt"
-value_checkpoint="$root/runs/action_value_d16_support2_v2_lr5e5.pt"
+value_checkpoint=${VALUE_CHECKPOINT:-$root/runs/action_value_d16_support2_v2_lr5e5.pt}
 calibration="$root/runs/paged_action_onpolicy_v13_r8_lr5e5_epoch1_calibration.json"
 exploration_checkpoint="$root/runs/paged_action_localgraph4_v5_cont_epoch2.pt"
 exploration_calibration="$root/runs/paged_action_localgraph4_v5_cont_epoch2_calibration.json"
@@ -25,16 +25,24 @@ rankings=(gate value value value value)
 weights=(0 0.10 0.25 0.50 1.00)
 gpus=(3 4 5 6 7)
 pids=()
+value_increase_cap=${VALUE_INCREASE_CAP:-0}
+value_exploration_fraction=${VALUE_EXPLORATION_FRACTION:-0}
+max_gate_increase=${MAX_GATE_INCREASE:-1}
+output_tag=${OUTPUT_TAG:-action_value_v2_ab}
 
 for index in "${!labels[@]}"; do
     checkpoint="$value_checkpoint"
     if [[ "${rankings[$index]}" == gate ]]; then
         checkpoint="$base_checkpoint"
     fi
-    output_stem="action_value_v2_ab_${circuit_stem}_b1000_d${depth}_${labels[$index]}"
+    output_stem="${output_tag}_${circuit_stem}_b1000_d${depth}_${labels[$index]}"
     value_args=()
     if [[ "${rankings[$index]}" == value ]]; then
-        value_args=(--action-value-weight "${weights[$index]}")
+        value_args=(
+            --action-value-weight "${weights[$index]}"
+            --value-increase-actions-per-parent "$value_increase_cap"
+            --value-exploration-fraction "$value_exploration_fraction"
+        )
     fi
     env CUDA_VISIBLE_DEVICES="${gpus[$index]}" "$python_bin" \
         "$workdir/paged_rollout_benchmark.py" \
@@ -57,6 +65,7 @@ for index in "${!labels[@]}"; do
         --proposal-backend gpu \
         --proposal-ranking "${rankings[$index]}" \
         "${value_args[@]}" \
+        --max-gate-increase "$max_gate_increase" \
         --lazy-topology-backend indexed \
         --refresh-interval 8 \
         --refresh-factor 2 \

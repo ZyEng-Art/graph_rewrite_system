@@ -4,7 +4,7 @@ import torch
 
 from beam_search_benchmark import BeamState
 from gpu_proposals import GpuRuleIndex, build_gpu_proposals
-from paged_rollout_benchmark import build_legacy_proposals
+from paged_rollout_benchmark import build_legacy_proposals, should_restart_best_root
 from threshold_inference import CandidateTensors
 
 
@@ -32,6 +32,20 @@ class _XferValueModel:
 
 
 def main() -> None:
+    assert should_restart_best_root(
+        scheduled=False,
+        beam_exhausted=True,
+        enabled=True,
+        has_remaining_steps=True,
+        stopped_for_staleness=False,
+    )
+    assert not should_restart_best_root(
+        scheduled=False,
+        beam_exhausted=True,
+        enabled=True,
+        has_remaining_steps=False,
+        stopped_for_staleness=False,
+    )
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     beam = [_beam(20), _beam(18), _beam(21)]
     source_to_xfers = {0: [0, 1], 1: [2], 2: [3, 4]}
@@ -94,7 +108,12 @@ def main() -> None:
         proposal.next_gate_count,
     )
     assert list(map(simplify, actual)) == list(map(simplify, legacy))
-    assert metrics == {"predicted_actions": 10, "eligible_actions": 8}
+    assert metrics == {
+        "predicted_actions": 10,
+        "eligible_actions": 8,
+        "value_increase_candidates_after_parent_cap": 0,
+        "selected_value_exploration_proposals": 0,
+    }
 
     probability_legacy, _ = build_legacy_proposals(
         beam,
@@ -139,6 +158,61 @@ def main() -> None:
     assert value_actual[0].xfer_id == 4
     assert value_metrics["action_value_candidates"] == 8
     assert value_actual[0].value_score > value_actual[-1].value_score
+
+    increasing_rule_index = GpuRuleIndex.build(
+        source_to_xfers,
+        gate_deltas,
+        num_sources=3,
+        max_gate_increase=2,
+        device=device,
+    )
+    increasing_actual, increasing_metrics, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        increasing_rule_index,
+        per_parent_cap=1,
+        global_cap=3,
+        ranking_mode="value",
+        action_value_model=_XferValueModel(),
+        action_value_states=torch.zeros((3, 9, 1), device=device),
+        action_value_live=torch.ones((3, 9), dtype=torch.bool, device=device),
+        action_value_weight=1.0,
+        value_increase_cap=1,
+    )
+    assert len(increasing_actual) == 3
+    assert all(gate_deltas[row.xfer_id] > 0 for row in increasing_actual)
+    assert increasing_metrics["value_increase_candidates_after_parent_cap"] == 3
+
+    mixed_actual, mixed_metrics, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=8,
+        global_cap=4,
+        ranking_mode="value",
+        ranking_seed=73,
+        action_value_model=_XferValueModel(),
+        action_value_states=torch.zeros((3, 9, 1), device=device),
+        action_value_live=torch.ones((3, 9), dtype=torch.bool, device=device),
+        action_value_weight=10.0,
+        value_exploration_fraction=0.5,
+    )
+    mixed_repeat, _, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=8,
+        global_cap=4,
+        ranking_mode="value",
+        ranking_seed=73,
+        action_value_model=_XferValueModel(),
+        action_value_states=torch.zeros((3, 9, 1), device=device),
+        action_value_live=torch.ones((3, 9), dtype=torch.bool, device=device),
+        action_value_weight=10.0,
+        value_exploration_fraction=0.5,
+    )
+    assert mixed_metrics["selected_value_exploration_proposals"] == 2
+    assert list(map(simplify, mixed_actual)) == list(map(simplify, mixed_repeat))
     print("GPU proposal expansion/ranking matches legacy semantics")
 
 

@@ -126,7 +126,16 @@ def build_rollout_command(
             ]
         )
     if args.proposal_ranking == "value":
-        command.extend(["--action-value-weight", str(args.action_value_weight)])
+        command.extend(
+            [
+                "--action-value-weight",
+                str(args.action_value_weight),
+                "--value-increase-actions-per-parent",
+                str(args.value_increase_actions_per_parent),
+                "--value-exploration-fraction",
+                str(args.value_exploration_fraction),
+            ]
+        )
     if args.exploration_checkpoint is not None:
         command.extend(
             [
@@ -162,6 +171,10 @@ def new_archive(args: argparse.Namespace, copied_input: Path) -> dict:
             "checkpoint": str(Path(args.checkpoint).resolve()),
             "proposal_ranking": args.proposal_ranking,
             "action_value_weight": args.action_value_weight,
+            "value_increase_actions_per_parent": (
+                args.value_increase_actions_per_parent
+            ),
+            "value_exploration_fraction": args.value_exploration_fraction,
             "beam_size": args.beam_size,
             "depth_per_round": args.depth,
             "rounds_per_invocation": args.rounds,
@@ -220,6 +233,8 @@ def parse_args() -> argparse.Namespace:
         default="stochastic",
     )
     parser.add_argument("--action-value-weight", type=float, default=0.25)
+    parser.add_argument("--value-increase-actions-per-parent", type=int, default=16)
+    parser.add_argument("--value-exploration-fraction", type=float, default=0.0)
     parser.add_argument("--proposal-ranking-seed", type=int, default=73)
     parser.add_argument("--max-source-matches", type=int, default=2048)
     parser.add_argument("--max-actions-per-parent", type=int, default=128)
@@ -241,6 +256,12 @@ def parse_args() -> argparse.Namespace:
         parser.error("--depth must end on a Quartz refresh boundary")
     if args.proposal_ranking == "value" and args.action_value_weight <= 0:
         parser.error("value ranking requires --action-value-weight > 0")
+    if not 0 <= args.value_increase_actions_per_parent <= args.max_actions_per_parent:
+        parser.error("value increase action quota must be within the parent cap")
+    if not 0.0 <= args.value_exploration_fraction <= 1.0:
+        parser.error("value exploration fraction must be within [0, 1]")
+    if args.value_exploration_fraction and args.proposal_ranking != "value":
+        parser.error("value exploration fraction requires value ranking")
     if (args.exploration_checkpoint is None) != (
         args.exploration_calibration is None
     ):
@@ -374,6 +395,14 @@ def main() -> None:
         "search_seconds": float(result["search_seconds_excluding_audit"]),
         "wall_seconds": wall_seconds,
         "model_loads": 1,
+        "checkpoint": str(Path(args.checkpoint).resolve()),
+        "proposal_ranking": args.proposal_ranking,
+        "proposal_ranking_seed": args.proposal_ranking_seed,
+        "action_value_weight": args.action_value_weight,
+        "value_increase_actions_per_parent": args.value_increase_actions_per_parent,
+        "value_exploration_fraction": args.value_exploration_fraction,
+        "max_gate_increase": args.max_gate_increase,
+        "command": command,
     }
     archive["runs"].append(run_record)
     atomic_write_json(archive_path, archive)

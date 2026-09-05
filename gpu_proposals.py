@@ -79,6 +79,8 @@ def build_gpu_proposals(
     action_value_states: torch.Tensor | None = None,
     action_value_live: torch.Tensor | None = None,
     action_value_weight: float = 0.0,
+    value_increase_cap: int = 0,
+    value_exploration_fraction: float = 0.0,
     action_value_microbatch: int = 16384,
     profile_stages: bool = False,
 ) -> tuple[list[Proposal], dict[str, float | int], dict[str, float]]:
@@ -92,6 +94,14 @@ def build_gpu_proposals(
         or action_value_weight <= 0
     ):
         raise ValueError("value ranking requires model states and a positive weight")
+    if value_increase_cap < 0 or value_increase_cap > per_parent_cap:
+        raise ValueError("value increase cap must be within the per-parent cap")
+    if value_increase_cap and ranking_mode != "value":
+        raise ValueError("value increase cap is only valid for value ranking")
+    if not 0.0 <= value_exploration_fraction <= 1.0:
+        raise ValueError("value exploration fraction must be within [0, 1]")
+    if value_exploration_fraction and ranking_mode != "value":
+        raise ValueError("value exploration is only valid for value ranking")
     device = candidates.sources.device
     timing: dict[str, float] = {}
 
@@ -139,7 +149,7 @@ def build_gpu_proposals(
         parent_gate_counts[parents] + rule_index.gate_deltas[xfer_ids]
     )
     random_priorities = None
-    if ranking_mode == "stochastic":
+    if ranking_mode == "stochastic" or value_exploration_fraction:
         generator = torch.Generator(device=device)
         generator.manual_seed(ranking_seed)
         random_priorities = torch.rand(
@@ -164,7 +174,49 @@ def build_gpu_proposals(
     group_start_positions = torch.where(new_parent, positions, 0)
     group_start_positions = torch.cummax(group_start_positions, dim=0).values
     parent_rank = positions - group_start_positions
-    parent_order = parent_order[parent_rank < per_parent_cap]
+    if ranking_mode == "value" and value_increase_cap:
+        base_cap = per_parent_cap - value_increase_cap
+        base_rows = parent_order[parent_rank < base_cap]
+        increasing_rows = torch.where(rule_index.gate_deltas[xfer_ids] > 0)[0]
+        if increasing_rows.numel():
+            increase_order = increasing_rows[
+                _stable_lexsort(
+                    [
+                        (parents[increasing_rows], False),
+                        (probabilities[increasing_rows], True),
+                        (next_gate_counts[increasing_rows], False),
+                        (xfer_ids[increasing_rows], False),
+                    ]
+                )
+            ]
+            ordered_increase_parents = parents[increase_order]
+            increase_positions = torch.arange(
+                increase_order.numel(), device=device
+            )
+            new_increase_parent = torch.ones(
+                increase_order.numel(), dtype=torch.bool, device=device
+            )
+            new_increase_parent[1:] = (
+                ordered_increase_parents[1:] != ordered_increase_parents[:-1]
+            )
+            increase_group_starts = torch.where(
+                new_increase_parent, increase_positions, 0
+            )
+            increase_group_starts = torch.cummax(
+                increase_group_starts, dim=0
+            ).values
+            increase_rank = increase_positions - increase_group_starts
+            increase_rows = increase_order[increase_rank < value_increase_cap]
+            selected_mask = torch.zeros(
+                expanded_count, dtype=torch.bool, device=device
+            )
+            selected_mask[base_rows] = True
+            selected_mask[increase_rows] = True
+            parent_order = torch.where(selected_mask)[0]
+        else:
+            parent_order = base_rows
+    else:
+        parent_order = parent_order[parent_rank < per_parent_cap]
     finish_timing("gpu_per_parent_rank_seconds", stage_started)
 
     action_values = None
@@ -221,11 +273,50 @@ def build_gpu_proposals(
             (parent_gate_counts[parents[parent_order]], False),
         ]
     )
-    selected = parent_order[global_order[:global_cap]]
+    selection_count = min(global_cap, global_order.numel())
+    selected_value_exploration = 0
+    if value_exploration_fraction and selection_count > 1:
+        selected_value_exploration = min(
+            selection_count - 1,
+            max(1, round(selection_count * value_exploration_fraction)),
+        )
+        selected_value_count = selection_count - selected_value_exploration
+        value_indices = global_order[:selected_value_count]
+        remaining = torch.ones(
+            parent_order.numel(), dtype=torch.bool, device=device
+        )
+        remaining[value_indices] = False
+        exploration_candidates = torch.where(remaining)[0]
+        exploration_order = torch.argsort(
+            random_priorities[parent_order[exploration_candidates]],
+            descending=True,
+            stable=True,
+        )
+        exploration_indices = exploration_candidates[
+            exploration_order[:selected_value_exploration]
+        ]
+        selected_indices = torch.empty(
+            selection_count, dtype=torch.long, device=device
+        )
+        exploration_positions = torch.div(
+            (torch.arange(selected_value_exploration, device=device) * 2 + 1)
+            * selection_count,
+            2 * selected_value_exploration,
+            rounding_mode="floor",
+        )
+        exploration_mask = torch.zeros(
+            selection_count, dtype=torch.bool, device=device
+        )
+        exploration_mask[exploration_positions] = True
+        selected_indices[exploration_mask] = exploration_indices
+        selected_indices[~exploration_mask] = value_indices
+    else:
+        selected_indices = global_order[:selection_count]
+    selected = parent_order[selected_indices]
     selected_value_scores = (
-        action_values[global_order[:global_cap]]
+        action_values[selected_indices]
         if action_values is not None
-        else torch.zeros(min(global_cap, len(global_order)), device=device)
+        else torch.zeros(selection_count, device=device)
     )
     finish_timing("gpu_global_proposal_rank_seconds", stage_started)
 
@@ -267,6 +358,16 @@ def build_gpu_proposals(
     metrics: dict[str, float | int] = {
         "predicted_actions": predicted_actions,
         "eligible_actions": expanded_count,
+        "value_increase_candidates_after_parent_cap": (
+            int(
+                (rule_index.gate_deltas[xfer_ids[parent_order]] > 0)
+                .sum()
+                .item()
+            )
+            if ranking_mode == "value"
+            else 0
+        ),
+        "selected_value_exploration_proposals": selected_value_exploration,
     }
     if action_values is not None:
         metrics.update(

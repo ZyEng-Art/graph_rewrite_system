@@ -275,6 +275,22 @@ def write_beam_histories(
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 
+def should_restart_best_root(
+    *,
+    scheduled: bool,
+    beam_exhausted: bool,
+    enabled: bool,
+    has_remaining_steps: bool,
+    stopped_for_staleness: bool,
+) -> bool:
+    return bool(
+        (scheduled or beam_exhausted)
+        and enabled
+        and has_remaining_steps
+        and not stopped_for_staleness
+    )
+
+
 @torch.no_grad()
 def paged_model_matches(
     beam: list[BeamState],
@@ -664,6 +680,24 @@ def main() -> None:
         help="gate-count units assigned to one standard deviation of action value",
     )
     parser.add_argument(
+        "--value-increase-actions-per-parent",
+        type=int,
+        default=0,
+        help=(
+            "reserve this many value pre-cap slots for matcher-ranked actions "
+            "whose immediate gate delta is positive"
+        ),
+    )
+    parser.add_argument(
+        "--value-exploration-fraction",
+        type=float,
+        default=0.0,
+        help=(
+            "fraction of globally selected value proposals reserved for "
+            "reproducible random exploration"
+        ),
+    )
+    parser.add_argument(
         "--proposal-ranking-seed",
         type=int,
         default=73,
@@ -790,6 +824,16 @@ def main() -> None:
             parser.error("value proposal ranking requires --proposal-backend gpu")
         if args.action_value_weight <= 0:
             parser.error("value proposal ranking requires --action-value-weight > 0")
+    if args.value_increase_actions_per_parent < 0:
+        parser.error("value increase action quota must be nonnegative")
+    if args.value_increase_actions_per_parent > args.max_actions_per_parent:
+        parser.error("value increase action quota exceeds the per-parent cap")
+    if args.value_increase_actions_per_parent and args.proposal_ranking != "value":
+        parser.error("value increase action quota requires value ranking")
+    if not 0.0 <= args.value_exploration_fraction <= 1.0:
+        parser.error("value exploration fraction must be within [0, 1]")
+    if args.value_exploration_fraction and args.proposal_ranking != "value":
+        parser.error("value exploration fraction requires value ranking")
     if args.restart_from_best_at_refresh and not args.refresh_interval:
         parser.error("best-root restart requires a positive refresh interval")
     if args.restart_from_best_at_refresh and args.exploration_checkpoint is not None:
@@ -1117,6 +1161,8 @@ def main() -> None:
                 action_value_states=action_value_states,
                 action_value_live=live,
                 action_value_weight=args.action_value_weight,
+                value_increase_cap=args.value_increase_actions_per_parent,
+                value_exploration_fraction=args.value_exploration_fraction,
                 profile_stages=args.profile_stages,
             )
             predicted_action_count = proposal_metrics["predicted_actions"]
@@ -1126,6 +1172,14 @@ def main() -> None:
             selected_exploration_proposals = 0
             action_value_candidates = int(
                 proposal_metrics.get("action_value_candidates", 0)
+            )
+            value_increase_candidates = int(
+                proposal_metrics.get(
+                    "value_increase_candidates_after_parent_cap", 0
+                )
+            )
+            selected_value_exploration_proposals = int(
+                proposal_metrics.get("selected_value_exploration_proposals", 0)
             )
             selected_action_value_mean = float(
                 proposal_metrics.get("selected_action_value_mean", 0.0)
@@ -1167,6 +1221,8 @@ def main() -> None:
                 "selected_exploration_proposals"
             ]
             action_value_candidates = 0
+            value_increase_candidates = 0
+            selected_value_exploration_proposals = 0
             selected_action_value_mean = 0.0
             selected_action_value_std = 0.0
             action_expand_seconds = proposal_metrics["action_expansion_seconds"]
@@ -1395,23 +1451,26 @@ def main() -> None:
             for state_index, handle in enumerate(exploration_handles):
                 if state_index not in keep_set:
                     exploration_arena.release(handle)
-        if not keep_indices:
+        if keep_indices:
+            index = torch.tensor(keep_indices, dtype=torch.long, device=device)
+            slot_states = slot_states.index_select(0, index)
+            live = live.index_select(0, index)
+            gate_types = gate_types.index_select(0, index)
+            handles = [handles[state_index] for state_index in keep_indices]
+            if exploration_model is not None:
+                exploration_slot_states = exploration_slot_states.index_select(0, index)
+                exploration_live = exploration_live.index_select(0, index)
+                exploration_gate_types = exploration_gate_types.index_select(0, index)
+                exploration_handles = [
+                    exploration_handles[state_index] for state_index in keep_indices
+                ]
+            beam = [beam[state_index] for state_index in keep_indices]
+        else:
+            # A speculative segment can contain no Quartz-valid leaf. Keep the
+            # verified global best alive so a resident search can start its next
+            # segment instead of losing all progress at the refresh boundary.
             beam = []
             handles = []
-            break
-        index = torch.tensor(keep_indices, dtype=torch.long, device=device)
-        slot_states = slot_states.index_select(0, index)
-        live = live.index_select(0, index)
-        gate_types = gate_types.index_select(0, index)
-        handles = [handles[state_index] for state_index in keep_indices]
-        if exploration_model is not None:
-            exploration_slot_states = exploration_slot_states.index_select(0, index)
-            exploration_live = exploration_live.index_select(0, index)
-            exploration_gate_types = exploration_gate_types.index_select(0, index)
-            exploration_handles = [
-                exploration_handles[state_index] for state_index in keep_indices
-            ]
-        beam = [beam[state_index] for state_index in keep_indices]
         if args.profile_stages and device.type == "cuda":
             torch.cuda.synchronize(device)
         beam_prune_seconds = time.perf_counter() - beam_prune_started
@@ -1419,9 +1478,12 @@ def main() -> None:
         searched_segment_start_depth = segment_start_depth
         searched_segment_root_gate_count = segment_root_gate_count
         accepted_beam_size = len(beam)
-        accepted_best_gate_count = min(state.gate_count for state in beam)
+        beam_exhausted_at_refresh = bool(refresh_due and not beam)
+        accepted_best_gate_count = min(
+            (state.gate_count for state in beam), default=None
+        )
         refresh_history_path = None
-        if refresh_due and args.dump_refresh_histories_dir is not None:
+        if refresh_due and beam and args.dump_refresh_histories_dir is not None:
             refresh_history_path = args.dump_refresh_histories_dir / (
                 f"segment_{segment_index:04d}_depth_{step + 1:04d}.json"
             )
@@ -1450,11 +1512,12 @@ def main() -> None:
             and args.stop_after_stale_refreshes
             and stale_refreshes >= args.stop_after_stale_refreshes
         )
-        restarted_from_best = bool(
-            best_root_restart_due
-            and args.restart_from_best_at_refresh
-            and step + 1 < args.depth
-            and not stopped_for_stale_refreshes
+        restarted_from_best = should_restart_best_root(
+            scheduled=best_root_restart_due,
+            beam_exhausted=beam_exhausted_at_refresh,
+            enabled=args.restart_from_best_at_refresh,
+            has_remaining_steps=step + 1 < args.depth,
+            stopped_for_staleness=stopped_for_stale_refreshes,
         )
         segment_completed = bool(
             refresh_due
@@ -1562,6 +1625,10 @@ def main() -> None:
             "stale_refreshes": stale_refreshes,
             "stopped_for_stale_refreshes": stopped_for_stale_refreshes,
             "best_root_restart_due": best_root_restart_due,
+            "beam_exhausted_at_refresh": beam_exhausted_at_refresh,
+            "emergency_best_root_restart": bool(
+                restarted_from_best and beam_exhausted_at_refresh
+            ),
             "segment_completed": segment_completed,
             "restarted_from_best": restarted_from_best,
             "restart_seconds": restart_seconds,
@@ -1587,6 +1654,12 @@ def main() -> None:
             ),
             "selected_exploration_proposals": selected_exploration_proposals,
             "action_value_candidates": action_value_candidates,
+            "value_increase_candidates_after_parent_cap": (
+                value_increase_candidates
+            ),
+            "selected_value_exploration_proposals": (
+                selected_value_exploration_proposals
+            ),
             "selected_action_value_mean": selected_action_value_mean,
             "selected_action_value_std": selected_action_value_std,
             "exact_refresh_seconds": refresh_seconds,
@@ -1710,7 +1783,9 @@ def main() -> None:
         "requested_depth": args.depth,
         "completed_depth": len(step_rows),
         "initial_gate_count": initial_gate_count,
-        "best_speculative_gate_count": min(state.gate_count for state in beam),
+        "best_speculative_gate_count": min(
+            (state.gate_count for state in beam), default=best_exact_gate_count
+        ),
         "best_exact_gate_count": best_exact_gate_count,
         "best_exact_depth": best_exact_depth,
         "restart_from_best_at_refresh": args.restart_from_best_at_refresh,
@@ -1732,6 +1807,10 @@ def main() -> None:
         "proposal_ranking": args.proposal_ranking,
         "proposal_ranking_seed": args.proposal_ranking_seed,
         "action_value_weight": args.action_value_weight,
+        "value_increase_actions_per_parent": (
+            args.value_increase_actions_per_parent
+        ),
+        "value_exploration_fraction": args.value_exploration_fraction,
         "allocated_cache_pages": arena.allocated_pages,
         "cache_capacity_pages": arena.capacity,
         "exploration_checkpoint": (

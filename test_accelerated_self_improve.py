@@ -87,6 +87,20 @@ def test_resident_rounds_share_one_rollout_process() -> None:
     assert command[restart_index] == "16"
     assert command.count("--stop-after-stale-refreshes") == 1
 
+    args.proposal_ranking = "value"
+    args.value_exploration_fraction = 0.25
+    value_command = build_rollout_command(
+        args,
+        Path("root.qasm"),
+        Path("result.json"),
+        Path("best.qasm"),
+        Path("final_histories.json"),
+        Path("refresh_histories"),
+        4,
+    )
+    fraction_index = value_command.index("--value-exploration-fraction") + 1
+    assert value_command[fraction_index] == "0.25"
+
 
 def test_archive_exposes_completed_segment_histories() -> None:
     with tempfile.TemporaryDirectory() as directory:
