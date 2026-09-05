@@ -46,6 +46,7 @@ for ranking in "${rankings[@]}"; do
             --source-grouping "${PPO_SOURCE_GROUPING:-first_gate}" \
             --state-batch-backend tensorized \
             --proposal-backend gpu \
+            --proposal-expansion "${PPO_PROPOSAL_EXPANSION:-preselect}" \
             --proposal-ranking "$ranking" \
             "${extra[@]}" \
             --ppo-policy-weight "${PPO_POLICY_WEIGHT:-0.25}" \

@@ -202,6 +202,24 @@ def main() -> None:
         "value_increase_candidates_after_parent_cap": 0,
         "selected_value_exploration_proposals": 0,
     }
+    full_cap_one, _, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=1,
+        global_cap=3,
+    )
+    preselected, preselected_metrics, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=1,
+        global_cap=3,
+        preselect_matches=True,
+    )
+    assert list(map(simplify, preselected)) == list(map(simplify, full_cap_one))
+    assert preselected_metrics["eligible_actions"] == 8
+    assert preselected_metrics["materialized_actions"] < 8
 
     probability_legacy, _ = build_legacy_proposals(
         beam,
@@ -229,6 +247,18 @@ def main() -> None:
     )
     assert [row.probability for row in probability_actual] == sorted(
         (row.probability for row in probability_actual), reverse=True
+    )
+    probability_preselected, _, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=2,
+        global_cap=4,
+        ranking_mode="probability",
+        preselect_matches=True,
+    )
+    assert list(map(simplify, probability_preselected)) == list(
+        map(simplify, probability_legacy)
     )
 
     value_actual, value_metrics, _ = build_gpu_proposals(
@@ -290,6 +320,63 @@ def main() -> None:
     assert list(map(simplify, match_set_actual)) == list(
         map(simplify, ppo_actual)
     )
+    match_set_preselected, _, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=8,
+        global_cap=8,
+        ranking_mode="ppo",
+        ppo_actor_critic=match_set_actor,
+        ppo_model=_PPOFeatureModel(),
+        ppo_states=torch.zeros((3, 9, 1), device=device),
+        ppo_live=torch.ones((3, 9), dtype=torch.bool, device=device),
+        ppo_prefix_states=torch.zeros((3, 1), device=device),
+        ppo_state_features=torch.zeros((3, 3), device=device),
+        ppo_initial_gate_bias=0.0,
+        preselect_matches=True,
+    )
+    assert list(map(simplify, match_set_preselected)) == list(
+        map(simplify, match_set_actual)
+    )
+
+    generator = torch.Generator(device=device).manual_seed(193)
+    random_parents = torch.arange(3, device=device).repeat_interleave(24)
+    random_sources = torch.randint(
+        0, 3, (random_parents.numel(),), generator=generator, device=device
+    )
+    random_anchors = torch.arange(random_parents.numel(), device=device).remainder(9)
+    random_bindings = torch.stack((random_anchors, random_anchors), dim=1)
+    random_probabilities = torch.randint(
+        1, 8, (random_parents.numel(),), generator=generator, device=device
+    ).float() / 10.0
+    random_candidates = CandidateTensors(
+        batch_ids=random_parents,
+        sources=random_sources,
+        anchors=random_anchors,
+        bindings=random_bindings,
+        probabilities=random_probabilities,
+    )
+    for ranking_mode in ("gate", "probability"):
+        for cap in (1, 3, 8, 24):
+            full, _, _ = build_gpu_proposals(
+                random_candidates,
+                beam,
+                rule_index,
+                per_parent_cap=cap,
+                global_cap=3 * cap,
+                ranking_mode=ranking_mode,
+            )
+            compact, _, _ = build_gpu_proposals(
+                random_candidates,
+                beam,
+                rule_index,
+                per_parent_cap=cap,
+                global_cap=3 * cap,
+                ranking_mode=ranking_mode,
+                preselect_matches=True,
+            )
+            assert list(map(simplify, compact)) == list(map(simplify, full))
 
     increasing_rule_index = GpuRuleIndex.build(
         source_to_xfers,

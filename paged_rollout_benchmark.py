@@ -948,6 +948,12 @@ def main() -> None:
         help="rank and cap expanded actions on GPU before compact D2H",
     )
     parser.add_argument(
+        "--proposal-expansion",
+        choices=("full", "preselect"),
+        default="full",
+        help="preselect top matches per parent before materializing their xfers",
+    )
+    parser.add_argument(
         "--proposal-ranking",
         choices=("gate", "probability", "stochastic", "value", "ppo"),
         default="gate",
@@ -1104,6 +1110,14 @@ def main() -> None:
         parser.error("--source-microbatch requires --proposal-backend gpu")
     if args.source_grouping != "none" and not args.source_microbatch:
         parser.error("--source-grouping requires a positive --source-microbatch")
+    if args.proposal_expansion == "preselect" and args.proposal_backend != "gpu":
+        parser.error("preselected proposal expansion requires --proposal-backend gpu")
+    if args.proposal_expansion == "preselect" and args.proposal_ranking not in {
+        "gate",
+        "probability",
+        "ppo",
+    }:
+        parser.error("preselected proposal expansion supports gate/probability/PPO")
     if args.refresh_factor < 1:
         parser.error("--refresh-factor must be at least one")
     if args.checkpoint_audit_count < 0:
@@ -1508,6 +1522,7 @@ def main() -> None:
             args.max_actions_per_parent,
             math.ceil(args.beam_size / max(1, len(beam))) * 2,
         )
+        proposal_started = time.perf_counter()
         gpu_proposal_timing: dict[str, float] = {}
         if use_gpu_proposals:
             ppo_prefix_states = None
@@ -1561,10 +1576,14 @@ def main() -> None:
                     else 1.0
                 ),
                 ppo_policy_weight=args.ppo_policy_weight,
+                preselect_matches=args.proposal_expansion == "preselect",
                 profile_stages=args.profile_stages,
             )
             predicted_action_count = proposal_metrics["predicted_actions"]
             eligible_actions = proposal_metrics["eligible_actions"]
+            materialized_actions = int(
+                proposal_metrics.get("materialized_actions", eligible_actions)
+            )
             exploration_predicted_action_count = 0
             exploration_eligible_actions = 0
             selected_exploration_proposals = 0
@@ -1612,6 +1631,7 @@ def main() -> None:
                 "exploration_predicted_actions"
             ]
             eligible_actions = proposal_metrics["eligible_actions"]
+            materialized_actions = eligible_actions
             exploration_eligible_actions = proposal_metrics[
                 "exploration_eligible_actions"
             ]
@@ -1625,6 +1645,7 @@ def main() -> None:
             selected_action_value_std = 0.0
             action_expand_seconds = proposal_metrics["action_expansion_seconds"]
             proposal_seconds = proposal_metrics["proposal_seconds"]
+        proposal_seconds = time.perf_counter() - proposal_started
 
         proposal_legality_audit = None
         if args.audit_proposal_topn:
@@ -2060,6 +2081,7 @@ def main() -> None:
             ),
             "predicted_actions": predicted_action_count,
             "eligible_actions_before_parent_cap": eligible_actions,
+            "materialized_actions_before_parent_cap": materialized_actions,
             "proposals_after_caps": len(proposals),
             "proposal_legality_audit": proposal_legality_audit,
             "attempted_actions": attempted,
@@ -2235,6 +2257,7 @@ def main() -> None:
         "readout_attention_backend": args.readout_attention_backend,
         "state_batch_backend": args.state_batch_backend,
         "proposal_backend": args.proposal_backend,
+        "proposal_expansion": args.proposal_expansion,
         "proposal_ranking": args.proposal_ranking,
         "ppo_checkpoint": (
             str(args.ppo_checkpoint) if args.ppo_checkpoint is not None else None

@@ -1,0 +1,44 @@
+{
+  "format": "match-preselection-before-xfer-expansion-ab-v1",
+  "circuit": "grover_5.qasm",
+  "beam_size": 1000,
+  "depth": 16,
+  "state_microbatch": 128,
+  "source_microbatch": 256,
+  "source_grouping": "first_gate",
+  "gate_ranking_ab": {
+    "full": {
+      "search_seconds": 21.606778031913564,
+      "proposal_seconds": 0.5820966504979879,
+      "eligible_actions": 40707322,
+      "materialized_actions": 40707322,
+      "peak_cuda_allocated_gib": 4.640288829803467,
+      "best_exact_gate_count": 817,
+      "quartz_valid_replays": "64/64",
+      "exact_topology_matches": "64/64"
+    },
+    "preselect": {
+      "search_seconds": 21.92824903409928,
+      "proposal_seconds": 0.5478675432968885,
+      "eligible_actions": 40707380,
+      "materialized_actions": 1160108,
+      "materialization_reduction": 35.08925203515535,
+      "proposal_time_reduction_percent": 5.88031337610621,
+      "peak_cuda_allocated_gib": 4.640288829803467,
+      "best_exact_gate_count": 817,
+      "quartz_valid_replays": "64/64",
+      "exact_topology_matches": "64/64"
+    }
+  },
+  "trained_ppo_preselect": {
+    "search_seconds": 23.14664412010461,
+    "proposal_seconds": 0.8625677363015711,
+    "eligible_actions": 40788395,
+    "materialized_actions": 1313543,
+    "materialization_reduction": 31.052196227378164,
+    "peak_cuda_allocated_gib": 5.237916946411133,
+    "best_exact_gate_count": 811,
+    "quartz_valid_replays": "64/64",
+    "exact_topology_matches": "64/64"
+  }
+}

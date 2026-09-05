@@ -1046,3 +1046,23 @@ was unchanged because source chunking had already bounded the dense matcher
 activation; first-gate grouping is a compute optimization. The raw A/B logs
 are `benchmark_results/source_group_*_h100.json` and the existing
 `source_chunk_grover5_chunk256_b128_h100.json` baseline.
+
+## Match preselection before xfer expansion
+
+The GPU proposal path previously expanded every retained structural match into
+all compatible xfers before applying the per-parent action cap. For gate,
+probability, and PPO ranking, only the top `K` matches ranked by their best
+xfer can possibly contribute to the top `K` actions: every later match already
+has `K` better best actions ahead of it. `--proposal-expansion preselect` uses
+that bound, packs the existing lexicographic keys into one signed 64-bit key,
+selects matches with a row-wise GPU Top-K, and expands only those matches.
+
+On `grover_5`, beam 1000, depth 16, first-gate source grouping, and state batch
+128, the number of materialized action rows fell from 40,707,322 to 1,160,108
+(35.1x fewer). The measured proposal stage fell from 0.582 to 0.548 seconds
+(5.8%), while end-to-end time was within run noise and slightly higher (21.607
+versus 21.928 seconds); matcher and refresh variation dominate this small
+stage. Both searches found the same exact 817-gate best and passed all 64
+Quartz audits. A trained-PPO run retained its 811-gate best and passed 64/64
+audits while materializing 1,313,543 of 40,788,395 eligible actions. The raw
+logs are `benchmark_results/proposal_*_grover5_b128_h100.json`.

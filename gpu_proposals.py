@@ -17,6 +17,11 @@ class GpuRuleIndex:
     xfer_ids: torch.Tensor
     gate_deltas: torch.Tensor
     all_xfer_counts: torch.Tensor
+    best_xfer_ids: torch.Tensor
+    best_gate_deltas: torch.Tensor
+    min_gate_delta: int
+    max_gate_delta: int
+    num_xfers: int
 
     @classmethod
     def build(
@@ -31,6 +36,8 @@ class GpuRuleIndex:
         offsets = [0]
         counts = []
         all_counts = []
+        best_xfers = []
+        best_deltas = []
         for source in range(num_sources):
             source_xfers = source_to_xfers.get(source, [])
             selected = [
@@ -41,6 +48,13 @@ class GpuRuleIndex:
             allowed.extend(selected)
             counts.append(len(selected))
             all_counts.append(len(source_xfers))
+            if selected:
+                best_xfer = min(selected, key=lambda xfer: (gate_deltas[xfer], xfer))
+                best_xfers.append(best_xfer)
+                best_deltas.append(gate_deltas[best_xfer])
+            else:
+                best_xfers.append(-1)
+                best_deltas.append(torch.iinfo(torch.int64).max)
             offsets.append(len(allowed))
         return cls(
             xfer_offsets=torch.tensor(offsets[:-1], device=device),
@@ -48,6 +62,11 @@ class GpuRuleIndex:
             xfer_ids=torch.tensor(allowed, device=device),
             gate_deltas=torch.tensor(gate_deltas, device=device),
             all_xfer_counts=torch.tensor(all_counts, device=device),
+            best_xfer_ids=torch.tensor(best_xfers, device=device),
+            best_gate_deltas=torch.tensor(best_deltas, device=device),
+            min_gate_delta=min(gate_deltas),
+            max_gate_delta=max(gate_deltas),
+            num_xfers=len(gate_deltas),
         )
 
 
@@ -64,6 +83,74 @@ def _stable_lexsort(
         )
         order = order[local]
     return order
+
+
+def _preselect_match_rows(
+    candidates: CandidateTensors,
+    candidate_rows: torch.Tensor,
+    rule_index: GpuRuleIndex,
+    parent_gate_counts: torch.Tensor,
+    per_parent_cap: int,
+    ranking_mode: str,
+) -> torch.Tensor:
+    """Return every match that can still contribute a per-parent top action."""
+    parents = candidates.batch_ids[candidate_rows]
+    sources = candidates.sources[candidate_rows]
+    probabilities = candidates.probabilities[candidate_rows]
+    counts = torch.bincount(parents, minlength=parent_gate_counts.numel())
+    max_matches = int(counts.max().item())
+    positions = torch.arange(parents.numel(), device=parents.device)
+    new_parent = torch.ones(parents.numel(), dtype=torch.bool, device=parents.device)
+    new_parent[1:] = parents[1:] != parents[:-1]
+    group_starts = torch.where(new_parent, positions, 0)
+    group_starts = torch.cummax(group_starts, dim=0).values
+    offsets = positions - group_starts
+    padded_rows = torch.full(
+        (parent_gate_counts.numel(), max_matches),
+        -1,
+        dtype=torch.long,
+        device=parents.device,
+    )
+    padded_rows[parents, offsets] = candidate_rows
+    valid = padded_rows.ge(0)
+    safe_rows = padded_rows.clamp_min(0)
+    padded_sources = candidates.sources[safe_rows]
+    best_next_gate_counts = (
+        parent_gate_counts.unsqueeze(1)
+        + rule_index.best_gate_deltas[padded_sources]
+    )
+    best_xfer_ids = rule_index.best_xfer_ids[padded_sources]
+    padded_probabilities = candidates.probabilities[safe_rows]
+    probability_rank = (
+        padded_probabilities.float().contiguous().view(torch.int32).to(torch.int64)
+    )
+    delta_rank = rule_index.max_gate_delta - (
+        best_next_gate_counts - parent_gate_counts.unsqueeze(1)
+    )
+    xfer_rank = rule_index.num_xfers - 1 - best_xfer_ids
+    local_rank = max_matches - 1 - torch.arange(
+        max_matches, device=parents.device
+    ).unsqueeze(0)
+    probability_bits = 31
+    delta_bits = max(
+        1, (rule_index.max_gate_delta - rule_index.min_gate_delta).bit_length()
+    )
+    xfer_bits = max(1, (rule_index.num_xfers - 1).bit_length())
+    local_bits = max(1, (max_matches - 1).bit_length())
+    required_bits = probability_bits + delta_bits + xfer_bits + local_bits
+    if required_bits > 62:
+        raise RuntimeError("packed match ranking exceeds signed int64 capacity")
+    if ranking_mode in {"gate", "ppo"}:
+        rank_score = (delta_rank << probability_bits) | probability_rank
+    else:
+        rank_score = (probability_rank << delta_bits) | delta_rank
+    rank_score = (rank_score << xfer_bits) | xfer_rank
+    rank_score = (rank_score << local_bits) | local_rank
+    rank_score = rank_score.masked_fill(~valid, -1)
+    count = min(per_parent_cap, max_matches)
+    _, order = rank_score.topk(count, dim=1, largest=True, sorted=True)
+    selected = padded_rows.gather(1, order)
+    return selected[selected.ge(0)]
 
 
 def _match_set_policy_logits(
@@ -143,6 +230,7 @@ def build_gpu_proposals(
     ppo_state_features: torch.Tensor | None = None,
     ppo_initial_gate_bias: float = 1.0,
     ppo_policy_weight: float = 0.25,
+    preselect_matches: bool = False,
     profile_stages: bool = False,
 ) -> tuple[list[Proposal], dict[str, float | int], dict[str, float]]:
     """Expand, cap, and globally rank actions before one compact D2H copy."""
@@ -201,14 +289,40 @@ def build_gpu_proposals(
             "predicted_actions": predicted_actions,
             "eligible_actions": 0,
         }, timing
-    candidate_rows = torch.repeat_interleave(
-        torch.arange(candidate_count, device=device),
-        source_counts,
-        output_size=expanded_count,
+    parent_gate_counts = torch.tensor(
+        [state.gate_count for state in beam], device=device
     )
-    group_starts = torch.cumsum(source_counts, dim=0) - source_counts
-    within_source = torch.arange(expanded_count, device=device) - torch.repeat_interleave(
-        group_starts, source_counts, output_size=expanded_count
+    candidate_rows_to_expand = torch.arange(candidate_count, device=device)
+    if preselect_matches and ranking_mode in {"gate", "probability", "ppo"}:
+        eligible_matches = source_counts.gt(0)
+        candidate_rows_to_expand = candidate_rows_to_expand[eligible_matches]
+        candidate_rows_to_expand = _preselect_match_rows(
+            candidates,
+            candidate_rows_to_expand,
+            rule_index,
+            parent_gate_counts,
+            per_parent_cap,
+            ranking_mode,
+        )
+    finish_timing("gpu_match_preselection_seconds", stage_started)
+
+    stage_started = time.perf_counter()
+    materialized_source_counts = source_counts[candidate_rows_to_expand]
+    materialized_count = int(materialized_source_counts.sum().item())
+    candidate_rows = torch.repeat_interleave(
+        candidate_rows_to_expand,
+        materialized_source_counts,
+        output_size=materialized_count,
+    )
+    group_starts = (
+        torch.cumsum(materialized_source_counts, dim=0) - materialized_source_counts
+    )
+    within_source = torch.arange(
+        materialized_count, device=device
+    ) - torch.repeat_interleave(
+        group_starts,
+        materialized_source_counts,
+        output_size=materialized_count,
     )
     source_ids = candidates.sources[candidate_rows]
     xfer_ids = rule_index.xfer_ids[
@@ -218,9 +332,6 @@ def build_gpu_proposals(
     anchors = candidates.anchors[candidate_rows]
     bindings = candidates.bindings[candidate_rows]
     probabilities = candidates.probabilities[candidate_rows]
-    parent_gate_counts = torch.tensor(
-        [state.gate_count for state in beam], device=device
-    )
     next_gate_counts = (
         parent_gate_counts[parents] + rule_index.gate_deltas[xfer_ids]
     )
@@ -229,7 +340,7 @@ def build_gpu_proposals(
         generator = torch.Generator(device=device)
         generator.manual_seed(ranking_seed)
         random_priorities = torch.rand(
-            expanded_count, device=device, generator=generator
+            materialized_count, device=device, generator=generator
         )
     finish_timing("gpu_action_expansion_seconds", stage_started)
 
@@ -244,8 +355,8 @@ def build_gpu_proposals(
         [(parents, False), *rank_keys, (xfer_ids, False)]
     )
     ordered_parents = parents[parent_order]
-    positions = torch.arange(expanded_count, device=device)
-    new_parent = torch.ones(expanded_count, dtype=torch.bool, device=device)
+    positions = torch.arange(materialized_count, device=device)
+    new_parent = torch.ones(materialized_count, dtype=torch.bool, device=device)
     new_parent[1:] = ordered_parents[1:] != ordered_parents[:-1]
     group_start_positions = torch.where(new_parent, positions, 0)
     group_start_positions = torch.cummax(group_start_positions, dim=0).values
@@ -284,7 +395,7 @@ def build_gpu_proposals(
             increase_rank = increase_positions - increase_group_starts
             increase_rows = increase_order[increase_rank < value_increase_cap]
             selected_mask = torch.zeros(
-                expanded_count, dtype=torch.bool, device=device
+                materialized_count, dtype=torch.bool, device=device
             )
             selected_mask[base_rows] = True
             selected_mask[increase_rows] = True
@@ -499,6 +610,8 @@ def build_gpu_proposals(
         ),
         "selected_value_exploration_proposals": selected_value_exploration,
     }
+    if preselect_matches:
+        metrics["materialized_actions"] = materialized_count
     if action_values is not None:
         metrics.update(
             {
