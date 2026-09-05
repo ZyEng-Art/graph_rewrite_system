@@ -1,0 +1,226 @@
+{
+  "args": {
+    "batch_size": 32,
+    "checkpoint": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "data": "../../data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "epochs": 4,
+    "gradient_clip": 1.0,
+    "hidden_size": null,
+    "learning_rate": 0.0003,
+    "max_sample_weight": 4.0,
+    "max_test_states": null,
+    "max_train_states": null,
+    "metrics_output": "benchmark_results/hierarchical_node_allpaths_rtg025_e4_s940.training.json",
+    "node_k": "1,4,8,16,32",
+    "output": "../../runs/hierarchical_node_allpaths_rtg025_e4_s940.pt",
+    "return_weight": 0.25,
+    "seed": 940
+  },
+  "artifacts": {
+    "base_checkpoint": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "base_checkpoint_sha256": "6a684c1db6baa3988914b98e7df205ade33444456d70edffcfd76c4b323d1b55",
+    "data": "../../data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "data_sha256": "2d897893adbb5eaac7b8263c47c1173cd07828a0be425ca573bf45e49658f319"
+  },
+  "elapsed_seconds": 1555.3234571819194,
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-node-training-v1",
+  "hidden_size": 192,
+  "history": [
+    {
+      "epoch": 1,
+      "test": {
+        "any_exact_anchor_recall": {
+          "1": 0.99853515625,
+          "16": 1.0,
+          "32": 1.0,
+          "4": 1.0,
+          "8": 1.0
+        },
+        "loss": 3.1607747804373503,
+        "mean_future_best_reduction": 0.17529296875,
+        "states": 2048,
+        "target_anchor_recall": {
+          "1": 0.22802734375,
+          "16": 0.80322265625,
+          "32": 0.8505859375,
+          "4": 0.64306640625,
+          "8": 0.7578125
+        }
+      },
+      "train": {
+        "any_exact_anchor_recall": {
+          "1": 0.9961372752934186,
+          "16": 1.0,
+          "32": 1.0,
+          "4": 1.0,
+          "8": 1.0
+        },
+        "loss": 3.7322221061234453,
+        "mean_future_best_reduction": 0.8061580745803001,
+        "states": 26924,
+        "target_anchor_recall": {
+          "1": 0.24996285841628288,
+          "16": 0.7829074431733769,
+          "32": 0.8563363541821424,
+          "4": 0.5799286881592631,
+          "8": 0.6966646857822018
+        }
+      }
+    },
+    {
+      "epoch": 2,
+      "test": {
+        "any_exact_anchor_recall": {
+          "1": 0.99560546875,
+          "16": 1.0,
+          "32": 1.0,
+          "4": 1.0,
+          "8": 1.0
+        },
+        "loss": 3.0948928836733103,
+        "mean_future_best_reduction": 0.17529296875,
+        "states": 2048,
+        "target_anchor_recall": {
+          "1": 0.23583984375,
+          "16": 0.8154296875,
+          "32": 0.8583984375,
+          "4": 0.6513671875,
+          "8": 0.7724609375
+        }
+      },
+      "train": {
+        "any_exact_anchor_recall": {
+          "1": 0.9975115138909523,
+          "16": 1.0,
+          "32": 1.0,
+          "4": 1.0,
+          "8": 1.0
+        },
+        "loss": 3.3759036111966263,
+        "mean_future_best_reduction": 0.8061580745803001,
+        "states": 26924,
+        "target_anchor_recall": {
+          "1": 0.28480166394295053,
+          "16": 0.8187490714604071,
+          "32": 0.8805155251819937,
+          "4": 0.6285470212449858,
+          "8": 0.7426459664240084
+        }
+      }
+    },
+    {
+      "epoch": 3,
+      "test": {
+        "any_exact_anchor_recall": {
+          "1": 0.9970703125,
+          "16": 1.0,
+          "32": 1.0,
+          "4": 1.0,
+          "8": 1.0
+        },
+        "loss": 3.0979840867221355,
+        "mean_future_best_reduction": 0.17529296875,
+        "states": 2048,
+        "target_anchor_recall": {
+          "1": 0.22607421875,
+          "16": 0.8232421875,
+          "32": 0.8662109375,
+          "4": 0.65673828125,
+          "8": 0.77392578125
+        }
+      },
+      "train": {
+        "any_exact_anchor_recall": {
+          "1": 0.9974000891398009,
+          "16": 1.0,
+          "32": 1.0,
+          "4": 1.0,
+          "8": 1.0
+        },
+        "loss": 3.2132104340359033,
+        "mean_future_best_reduction": 0.8061580745803001,
+        "states": 26924,
+        "target_anchor_recall": {
+          "1": 0.2993983063437825,
+          "16": 0.8353885009656812,
+          "32": 0.8922894072203239,
+          "4": 0.6476006536918735,
+          "8": 0.7631481206358639
+        }
+      }
+    },
+    {
+      "epoch": 4,
+      "test": {
+        "any_exact_anchor_recall": {
+          "1": 0.9970703125,
+          "16": 1.0,
+          "32": 1.0,
+          "4": 1.0,
+          "8": 1.0
+        },
+        "loss": 3.2298770546913147,
+        "mean_future_best_reduction": 0.17529296875,
+        "states": 2048,
+        "target_anchor_recall": {
+          "1": 0.21142578125,
+          "16": 0.82568359375,
+          "32": 0.87060546875,
+          "4": 0.60498046875,
+          "8": 0.75537109375
+        }
+      },
+      "train": {
+        "any_exact_anchor_recall": {
+          "1": 0.9970286733026297,
+          "16": 1.0,
+          "32": 1.0,
+          "4": 1.0,
+          "8": 1.0
+        },
+        "loss": 3.0890730430459645,
+        "mean_future_best_reduction": 0.8061580745803001,
+        "states": 26924,
+        "target_anchor_recall": {
+          "1": 0.3169291338582677,
+          "16": 0.845379586985589,
+          "32": 0.9006462635566781,
+          "4": 0.6621972960927054,
+          "8": 0.7761476749368593
+        }
+      }
+    }
+  ],
+  "initial_test": {
+    "any_exact_anchor_recall": {
+      "1": 0.92724609375,
+      "16": 1.0,
+      "32": 1.0,
+      "4": 1.0,
+      "8": 1.0
+    },
+    "loss": 5.784863285720348,
+    "mean_future_best_reduction": 0.17529296875,
+    "states": 2048,
+    "target_anchor_recall": {
+      "1": 0.01318359375,
+      "16": 0.109375,
+      "32": 0.1640625,
+      "4": 0.04052734375,
+      "8": 0.0693359375
+    }
+  },
+  "node_ks": [
+    1,
+    4,
+    8,
+    16,
+    32
+  ],
+  "width": 192
+}

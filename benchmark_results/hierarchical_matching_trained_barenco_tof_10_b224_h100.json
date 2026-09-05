@@ -1,0 +1,123 @@
+{
+  "circuit": {
+    "gate_count": 450,
+    "path": "../../quarl/experiment/circs/nam_circs/barenco_tof_10.qasm",
+    "slots": 450
+  },
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-matching-benchmark-v1",
+  "full_match": {
+    "mean_exact_candidates_per_state": 512.0,
+    "milliseconds_per_batch": 64.55442646984011,
+    "peak_cuda_allocated_gib": 1.7606053352355957,
+    "profiled_single_batch_seconds": {
+      "batch_collate_and_pad_seconds": 0.039706516079604626,
+      "batch_host_to_device_seconds": 0.0009568920359015465,
+      "candidate_device_to_host_seconds": 0.0,
+      "candidate_gpu_pack_seconds": 0.00023990892805159092,
+      "candidate_python_pack_seconds": 0.0,
+      "candidate_selection_and_ranking_seconds": 0.005045127822086215,
+      "incremental_graph_readout_seconds": 0.012318531982600689,
+      "match_group_compaction_seconds": 0.0009070171508938074,
+      "match_logits_seconds": 0.0018573759589344263,
+      "model_match_unattributed_seconds": 0.0003366032615303993,
+      "readout_cache_metadata_or_gather_seconds": 0.00019066291861236095,
+      "structural_binding_decode_seconds": 0.0023933439515531063
+    },
+    "seconds": 1.9366327940952033,
+    "states_per_second": 3469.940207812907
+  },
+  "hierarchical": {
+    "16": {
+      "mean_exact_candidates_per_state": 80.0,
+      "milliseconds_per_batch": 58.209335462500654,
+      "peak_cuda_allocated_gib": 0.8669576644897461,
+      "profiled_single_batch_seconds": {
+        "batch_collate_seconds": 0.03959275921806693,
+        "batch_host_to_device_seconds": 0.00091000203974545,
+        "hierarchical_match_unattributed_seconds": 0.0003961320035159588,
+        "incremental_graph_readout_seconds": 0.012303185882046819,
+        "node_policy_seconds": 0.0012121149338781834,
+        "node_topk_and_projection_seconds": 0.00014429492875933647,
+        "readout_cache_metadata_seconds": 0.0001913749147206545,
+        "selected_candidate_pack_seconds": 1.4620833098888397e-05,
+        "selected_group_compaction_seconds": 0.0003739811945706606,
+        "selected_match_logits_seconds": 0.00019743596203625202,
+        "selected_structural_decode_seconds": 0.00239253300242126,
+        "selected_threshold_and_topn_seconds": 0.0006955061107873917
+      },
+      "seconds": 1.7462800638750196,
+      "speedup_over_full_match": 1.1090046975613914,
+      "states_per_second": 3848.179990721664
+    },
+    "32": {
+      "mean_exact_candidates_per_state": 161.0,
+      "milliseconds_per_batch": 58.99956673383713,
+      "peak_cuda_allocated_gib": 0.8669576644897461,
+      "profiled_single_batch_seconds": {
+        "batch_collate_seconds": 0.03927922202274203,
+        "batch_host_to_device_seconds": 0.0009162239730358124,
+        "hierarchical_match_unattributed_seconds": 0.00039566680788993835,
+        "incremental_graph_readout_seconds": 0.012311913073062897,
+        "node_policy_seconds": 0.0012128259986639023,
+        "node_topk_and_projection_seconds": 0.0001481650397181511,
+        "readout_cache_metadata_seconds": 0.0001880219206213951,
+        "selected_candidate_pack_seconds": 1.4801044017076492e-05,
+        "selected_group_compaction_seconds": 0.00042610964737832546,
+        "selected_match_logits_seconds": 0.0003078281879425049,
+        "selected_structural_decode_seconds": 0.0024007800966501236,
+        "selected_threshold_and_topn_seconds": 0.00104019814170897
+      },
+      "seconds": 1.7699870020151138,
+      "speedup_over_full_match": 1.0941508564132758,
+      "states_per_second": 3796.638050081352
+    },
+    "8": {
+      "mean_exact_candidates_per_state": 40.0,
+      "milliseconds_per_batch": 58.135917961287,
+      "peak_cuda_allocated_gib": 0.8669576644897461,
+      "profiled_single_batch_seconds": {
+        "batch_collate_seconds": 0.03920883615501225,
+        "batch_host_to_device_seconds": 0.0009189988486468792,
+        "hierarchical_match_unattributed_seconds": 0.0003995392471551895,
+        "incremental_graph_readout_seconds": 0.01230905600823462,
+        "node_policy_seconds": 0.001211552880704403,
+        "node_topk_and_projection_seconds": 0.00014731194823980331,
+        "readout_cache_metadata_seconds": 0.00019013695418834686,
+        "selected_candidate_pack_seconds": 1.439591869711876e-05,
+        "selected_group_compaction_seconds": 0.000390488188713789,
+        "selected_match_logits_seconds": 0.00015172502025961876,
+        "selected_structural_decode_seconds": 0.0024180810432881117,
+        "selected_threshold_and_topn_seconds": 0.0005032739136368036
+      },
+      "seconds": 1.74407753883861,
+      "speedup_over_full_match": 1.1104052147732013,
+      "states_per_second": 3853.039701706658
+    }
+  },
+  "protocol": {
+    "baseline": "all live nodes, first-gate grouped source matcher",
+    "hierarchical": "trained node head Top-K, then first-gate-compatible sources and per-node Top-N",
+    "iterations": 30,
+    "node_checkpoint": "../../runs/hierarchical_node_allpaths_rtg025_e4_s940.pt",
+    "shared": "paged readout, calibrated threshold, exact structural decoder",
+    "warmup": 5,
+    "warning": "This benchmark measures compute-path speed, not policy quality."
+  },
+  "shape": {
+    "batch_size": 224,
+    "microbatch": 224,
+    "node_ks": [
+      8,
+      16,
+      32
+    ],
+    "pattern_k": 16,
+    "sources": 3855,
+    "width": 192
+  }
+}

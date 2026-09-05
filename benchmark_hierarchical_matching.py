@@ -81,6 +81,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=Path, required=True)
     parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--node-checkpoint", type=Path)
     parser.add_argument("--calibration", type=Path, required=True)
     parser.add_argument("--ecc-file", type=Path, required=True)
     parser.add_argument("--qasm", type=Path, required=True)
@@ -115,7 +116,26 @@ def main() -> None:
     model.load_state_dict(checkpoint["model"])
     model.eval()
     model.readout_attention_backend = "paged"
-    actor = HierarchicalPPOActorCritic(model.width).to(device).eval()
+    node_checkpoint = None
+    if args.node_checkpoint is not None:
+        node_checkpoint = torch.load(
+            args.node_checkpoint, map_location="cpu", weights_only=False
+        )
+        if node_checkpoint.get("format") != "hierarchical-node-training-v1":
+            raise ValueError("unsupported hierarchical node checkpoint")
+        if int(node_checkpoint["width"]) != model.width:
+            raise ValueError("node checkpoint width differs from the base model")
+    actor = HierarchicalPPOActorCritic(
+        model.width,
+        hidden_size=(
+            int(node_checkpoint["hidden_size"])
+            if node_checkpoint is not None
+            else model.width
+        ),
+    ).to(device)
+    if node_checkpoint is not None:
+        actor.load_state_dict(node_checkpoint["actor_critic"])
+    actor.eval()
     threshold_config = load_threshold_config(
         args.calibration, args.target_recall
     )
@@ -221,11 +241,15 @@ def main() -> None:
             "iterations": args.iterations,
             "baseline": "all live nodes, first-gate grouped source matcher",
             "hierarchical": (
-                "untrained node head Top-K, then first-gate-compatible sources "
+                f"{'trained' if node_checkpoint is not None else 'untrained'} "
+                "node head Top-K, then first-gate-compatible sources "
                 "and per-node Top-N"
             ),
             "shared": "paged readout, calibrated threshold, exact structural decoder",
             "warning": "This benchmark measures compute-path speed, not policy quality.",
+            "node_checkpoint": (
+                str(args.node_checkpoint) if args.node_checkpoint is not None else None
+            ),
         },
     }
     result["full_match"] = measure(
