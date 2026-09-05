@@ -572,6 +572,7 @@ def collect_episode(
     max_source_matches: int,
     source_microbatch: int,
     source_grouping: str,
+    proposal_expansion: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -651,17 +652,23 @@ def collect_episode(
         if collector_timing is not None:
             collector_timing["model_match_seconds"] += model_match_seconds
         proposal_started = time.perf_counter()
-        proposals, _, _ = build_gpu_proposals(
+        proposals, proposal_metrics, _ = build_gpu_proposals(
             candidates,
             [state],
             rule_index,
             per_parent_cap=max_actions,
             global_cap=max_actions,
             ranking_mode="gate",
+            preselect_matches=proposal_expansion == "preselect",
         )
         if collector_timing is not None:
             collector_timing["proposal_seconds"] += (
                 time.perf_counter() - proposal_started
+            )
+            eligible_actions = int(proposal_metrics["eligible_actions"])
+            collector_timing["eligible_actions"] += eligible_actions
+            collector_timing["materialized_actions"] += int(
+                proposal_metrics.get("materialized_actions", eligible_actions)
             )
         if not proposals:
             terminated_reason = "no_candidates"
@@ -997,6 +1004,7 @@ def collect_episode_batch(
     max_source_matches: int,
     source_microbatch: int,
     source_grouping: str,
+    proposal_expansion: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -1069,17 +1077,23 @@ def collect_episode_batch(
         if collector_timing is not None:
             collector_timing["model_match_seconds"] += model_match_seconds
         proposal_started = time.perf_counter()
-        proposals, _, _ = build_gpu_proposals(
+        proposals, proposal_metrics, _ = build_gpu_proposals(
             candidates,
             current_states,
             rule_index,
             per_parent_cap=max_actions,
             global_cap=max_actions * len(active),
             ranking_mode="gate",
+            preselect_matches=proposal_expansion == "preselect",
         )
         if collector_timing is not None:
             collector_timing["proposal_seconds"] += (
                 time.perf_counter() - proposal_started
+            )
+            eligible_actions = int(proposal_metrics["eligible_actions"])
+            collector_timing["eligible_actions"] += eligible_actions
+            collector_timing["materialized_actions"] += int(
+                proposal_metrics.get("materialized_actions", eligible_actions)
             )
         if proposals:
             flat_features, flat_logits, _ = batched_proposal_features(
@@ -1697,6 +1711,12 @@ def main() -> None:
         default="none",
         help="skip source products whose first gate differs from the anchor",
     )
+    parser.add_argument(
+        "--proposal-expansion",
+        choices=("full", "preselect"),
+        default="full",
+        help="preselect top matches before materializing their xfers",
+    )
     parser.add_argument("--max-actions", type=int, default=128)
     parser.add_argument("--max-gate-increase", type=int, default=3)
     parser.add_argument("--page-size", type=int, default=8)
@@ -1941,6 +1961,7 @@ def main() -> None:
         "max_source_matches": args.max_source_matches,
         "source_microbatch": args.source_microbatch,
         "source_grouping": args.source_grouping,
+        "proposal_expansion": args.proposal_expansion,
         "max_actions": args.max_actions,
         "invalid_reward": args.invalid_reward,
         "cycle_reward": args.cycle_reward,
@@ -1976,6 +1997,8 @@ def main() -> None:
         collection_timing = {
             "model_match_seconds": 0.0,
             "proposal_seconds": 0.0,
+            "eligible_actions": 0,
+            "materialized_actions": 0,
         }
         circuit_counts = {
             qasm: sum(
@@ -2012,7 +2035,9 @@ def main() -> None:
         collection_seconds = time.perf_counter() - collection_started
         collection_timing["unattributed_seconds"] = max(
             0.0,
-            collection_seconds - sum(collection_timing.values()),
+            collection_seconds
+            - collection_timing["model_match_seconds"]
+            - collection_timing["proposal_seconds"],
         )
         collection_timing["model_match_fraction"] = (
             collection_timing["model_match_seconds"] / collection_seconds

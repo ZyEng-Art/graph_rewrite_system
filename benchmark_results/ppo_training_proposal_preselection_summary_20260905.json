@@ -1,0 +1,49 @@
+{
+  "format": "ppo-training-proposal-preselection-ab-v1",
+  "machine": "h100-gpu5",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "seed": 903,
+  "protocol": {
+    "circuits": 14,
+    "episodes": 224,
+    "episodes_per_circuit": 16,
+    "max_steps": 16,
+    "refresh_interval": 8,
+    "max_actions": 64,
+    "source_grouping": "first_gate",
+    "source_microbatch": 0
+  },
+  "preselect": {
+    "collection_seconds": 12.420465887058526,
+    "transitions": 3423,
+    "transitions_per_second": 275.59352693577995,
+    "proposal_seconds": 0.7669755951501429,
+    "eligible_actions": 2922714,
+    "materialized_actions": 412367,
+    "materialization_reduction": 7.08765250371635,
+    "peak_cuda_allocated_gib": 0.2112255096435547
+  },
+  "full_runs": [
+    {
+      "collection_seconds": 12.213970233919099,
+      "transitions": 3410,
+      "transitions_per_second": 279.18849765411886,
+      "proposal_seconds": 0.6998308149632066,
+      "eligible_actions": 2917852,
+      "materialized_actions": 2917852,
+      "peak_cuda_allocated_gib": 0.2112255096435547
+    },
+    {
+      "collection_seconds": 12.15401643095538,
+      "transitions": 3413,
+      "transitions_per_second": 280.81252147292986,
+      "proposal_seconds": 0.6856739090289921,
+      "eligible_actions": 2914673,
+      "materialized_actions": 2914673,
+      "peak_cuda_allocated_gib": 0.2112255096435547
+    }
+  ],
+  "full_mean_proposal_seconds": 0.6927523619960994,
+  "preselect_proposal_regression_percent": 10.7142519067241,
+  "decision": "Keep full expansion as the PPO training default; retain preselection as an opt-in for much wider beams."
+}

@@ -1094,3 +1094,15 @@ explicit memory control for large rollout batches, while unchunked grouping is
 the PPO default. Raw logs are
 `benchmark_results/ppo_training_matcher_ab_*_h100.json`; the compact result is
 `benchmark_results/ppo_training_matcher_grouping_summary_20260905.json`.
+
+PPO proposal preselection was tested separately and is not enabled by the
+training launcher. It reduced materialized actions from 2,917,852 to 412,367
+(7.1x) but increased proposal time from a 0.693-second mean across two full
+runs to 0.767 seconds (+10.7%). Training advances only 16 same-circuit states
+at once in this broad setup and averages about 858 eligible actions per state,
+so directly sorting the expanded rows is cheaper than constructing a padded
+match matrix and running another Top-K. The opt-in `--proposal-expansion
+preselect` remains useful for much wider beam search, where the measured
+materialization reduction was 35.1x. PPO A/B logs and the decision are in
+`benchmark_results/ppo_training_proposal_ab_*_h100.json` and
+`benchmark_results/ppo_training_proposal_preselection_summary_20260905.json`.
