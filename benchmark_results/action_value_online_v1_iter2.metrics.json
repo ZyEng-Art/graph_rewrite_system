@@ -1,0 +1,12 @@
+{
+  "accuracy": 0.6967741847038269,
+  "accuracy_by_circuit": {
+    "barenco_tof_3.qasm": 0.5789473684210527,
+    "mod5_4.qasm": 0.5,
+    "tof_4.qasm": 0.6756756756756757,
+    "vbe_adder_3.qasm": 0.828125
+  },
+  "loss": 0.5930338501930237,
+  "mean_margin": 0.3263467252254486,
+  "pairs": 155
+}

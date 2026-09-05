@@ -1,8 +1,14 @@
 from argparse import Namespace
+import json
 from pathlib import Path
 import tempfile
 
 from accelerated_self_improve import adopt_exact_candidate, build_rollout_command
+from collect_action_preferences import (
+    archive_history_paths,
+    trajectory_future_residuals,
+    unique_paths,
+)
 
 
 def test_archive_is_monotonic() -> None:
@@ -53,6 +59,8 @@ def test_resident_rounds_share_one_rollout_process() -> None:
         dedup_mode="raw",
         audit_count=64,
         action_value_weight=0.25,
+        value_increase_actions_per_parent=16,
+        value_exploration_fraction=0.0,
         exploration_checkpoint=None,
         exploration_calibration=None,
         exploration_actions_per_parent=0,
@@ -80,6 +88,41 @@ def test_resident_rounds_share_one_rollout_process() -> None:
     assert command.count("--stop-after-stale-refreshes") == 1
 
 
+def test_archive_exposes_completed_segment_histories() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        first = root / "first.json"
+        second = root / "second.json"
+        archive_path = root / "archive.json"
+        archive_path.write_text(
+            json.dumps(
+                {
+                    "format": "accelerated-self-improve-v1",
+                    "rounds": [
+                        {"refresh_history": str(first)},
+                        {"refresh_history": str(second)},
+                    ],
+                }
+            )
+        )
+        histories = archive_history_paths([archive_path])
+        assert histories == [first, second]
+        assert unique_paths(histories + [first]) == histories
+
+
+def test_best_prefix_target_ignores_forced_final_regression() -> None:
+    history = ((0,), (1,), (2,), (3,))
+    deltas = (2, -1, -3, 4)
+    assert trajectory_future_residuals(
+        10, history, deltas, "final-residual"
+    ) == [0, 1, 4, 0]
+    assert trajectory_future_residuals(
+        10, history, deltas, "best-prefix-residual"
+    ) == [-4, -3, 0, 0]
+
+
 if __name__ == "__main__":
     test_archive_is_monotonic()
     test_resident_rounds_share_one_rollout_process()
+    test_archive_exposes_completed_segment_histories()
+    test_best_prefix_target_ignores_forced_final_regression()

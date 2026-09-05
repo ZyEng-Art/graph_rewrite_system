@@ -97,9 +97,12 @@ def main() -> None:
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--weight-decay", type=float, default=1e-2)
     parser.add_argument("--score-l2", type=float, default=1e-3)
+    parser.add_argument("--advantage-weight-power", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=73)
     parser.add_argument("--eval-every", type=int, default=5)
     args = parser.parse_args()
+    if args.advantage_weight_power < 0:
+        parser.error("--advantage-weight-power must be nonnegative")
 
     torch.manual_seed(args.seed)
     if torch.cuda.is_available():
@@ -191,9 +194,9 @@ def main() -> None:
         flush=True,
     )
 
-    best_accuracy = -1.0
-    best_metrics = None
-    best_epoch = None
+    best_accuracy = initial_metrics["accuracy"]
+    best_metrics = initial_metrics
+    best_epoch = 0
     training_log = {
         "args": {
             key: str(value) if isinstance(value, Path) else value
@@ -207,15 +210,44 @@ def main() -> None:
         "epochs": [],
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
+
+    def save_best_checkpoint(metrics: dict, epoch: int) -> None:
+        checkpoint_args = dict(model_args)
+        checkpoint_args.update(
+            {
+                "preference_data": args.data,
+                "preference_init_checkpoint": args.init_checkpoint,
+                "preference_epochs": args.epochs,
+                "preference_best_epoch": epoch,
+                "preference_learning_rate": args.learning_rate,
+                "preference_score_l2": args.score_l2,
+            }
+        )
+        torch.save(
+            {
+                "model": model.state_dict(),
+                "args": checkpoint_args,
+                "metrics": initial.get("metrics"),
+                "preference_metrics": metrics,
+                "format": initial.get("format"),
+            },
+            args.output,
+        )
+        args.output.with_suffix(".metrics.json").write_text(
+            json.dumps(metrics, indent=2, sort_keys=True) + "\n"
+        )
+
+    save_best_checkpoint(initial_metrics, best_epoch)
     for epoch in range(1, args.epochs + 1):
         model.action_value_norm.train()
         model.action_value_mlp.train()
         total_loss = total_rank = total_l2 = 0.0
         batches = 0
         started = time.perf_counter()
-        for preferred_cpu, rejected_cpu, _ in feature_loader:
+        for preferred_cpu, rejected_cpu, advantages_cpu in feature_loader:
             preferred = preferred_cpu.to(device, non_blocking=True)
             rejected = rejected_cpu.to(device, non_blocking=True)
+            advantages = advantages_cpu.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
             with autocast_context(device):
                 preferred_scores = model.action_value_mlp(
@@ -224,7 +256,15 @@ def main() -> None:
                 rejected_scores = model.action_value_mlp(
                     model.action_value_norm(rejected)
                 ).squeeze(-1)
-                rank_loss = F.softplus(-(preferred_scores - rejected_scores)).mean()
+                rank_terms = F.softplus(
+                    -(preferred_scores - rejected_scores)
+                )
+                if args.advantage_weight_power:
+                    pair_weights = advantages.pow(args.advantage_weight_power)
+                    pair_weights = pair_weights / pair_weights.mean().clamp_min(1e-6)
+                    rank_loss = (rank_terms * pair_weights).mean()
+                else:
+                    rank_loss = rank_terms.mean()
                 l2_loss = (preferred_scores.square() + rejected_scores.square()).mean()
                 loss = rank_loss + args.score_l2 * l2_loss
             loss.backward()
@@ -260,29 +300,7 @@ def main() -> None:
                 best_accuracy = metrics["accuracy"]
                 best_metrics = metrics
                 best_epoch = epoch
-                checkpoint_args = dict(model_args)
-                checkpoint_args.update(
-                    {
-                        "preference_data": args.data,
-                        "preference_init_checkpoint": args.init_checkpoint,
-                        "preference_epochs": args.epochs,
-                        "preference_learning_rate": args.learning_rate,
-                        "preference_score_l2": args.score_l2,
-                    }
-                )
-                torch.save(
-                    {
-                        "model": model.state_dict(),
-                        "args": checkpoint_args,
-                        "metrics": initial.get("metrics"),
-                        "preference_metrics": metrics,
-                        "format": initial.get("format"),
-                    },
-                    args.output,
-                )
-                args.output.with_suffix(".metrics.json").write_text(
-                    json.dumps(metrics, indent=2, sort_keys=True) + "\n"
-                )
+                save_best_checkpoint(metrics, best_epoch)
             training_log["best_epoch"] = best_epoch
             training_log["best_test"] = best_metrics
             args.output.with_suffix(".training.json").write_text(
