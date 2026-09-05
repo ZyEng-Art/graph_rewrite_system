@@ -156,11 +156,31 @@ class ChunkedThresholdTest(unittest.TestCase):
             source_chunk_size=4,
             max_candidates_per_state=9,
         )
+        unchunked_grouped = threshold_candidate_tensors_grouped(
+            model,
+            batch,
+            node_vectors,
+            live,
+            gate_types,
+            torch.empty((source_first_types.numel(), 2)),
+            config,
+            source_chunk_size=0,
+            max_candidates_per_state=9,
+        )
         for field in ("batch_ids", "sources", "anchors", "bindings"):
             self.assertTrue(
                 torch.equal(getattr(full, field), getattr(grouped, field)), field
             )
+            self.assertTrue(
+                torch.equal(
+                    getattr(full, field), getattr(unchunked_grouped, field)
+                ),
+                field,
+            )
         torch.testing.assert_close(full.probabilities, grouped.probabilities)
+        torch.testing.assert_close(
+            full.probabilities, unchunked_grouped.probabilities
+        )
 
     def test_first_gate_grouping_allows_a_batch_without_eligible_anchors(self):
         logits = torch.zeros((2, 3, 2))

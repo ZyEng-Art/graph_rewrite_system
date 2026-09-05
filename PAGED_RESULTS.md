@@ -1066,3 +1066,31 @@ stage. Both searches found the same exact 817-gate best and passed all 64
 Quartz audits. A trained-PPO run retained its 811-gate best and passed 64/64
 audits while materializing 1,313,543 of 40,788,395 eligible actions. The raw
 logs are `benchmark_results/proposal_*_grover5_b128_h100.json`.
+
+## First-gate matcher grouping in PPO collection
+
+PPO collection previously used the full source-pattern matrix even though the
+online beam path could already skip source patterns whose first gate type did
+not match an anchor. The collector now accepts `--source-grouping first_gate`
+and `--source-microbatch`. A zero source microbatch executes one matrix product
+per gate-type group; this is important for the small per-circuit batches used
+by broad training. The training launcher enables unchunked first-gate grouping
+by default.
+
+Two one-iteration H100 A/B runs used the same 14-circuit distribution, 224
+episodes, batch cap 64 (16 active episodes per circuit), depth 16, refresh 8,
+and 64 actor candidates. With seed 902, unchunked grouping reduced measured
+matcher time from 3.220 to 2.672 seconds (-17.0%), collection time from 13.006
+to 12.264 seconds (-5.7%), and increased collection throughput from 261.6 to
+277.7 transitions/s (+6.1%). Incremental collection peak allocation fell from
+0.512 to 0.212 GiB, and both runs found identical per-circuit best gate counts.
+Seed 901 independently reduced collection time by 4.8% and raised throughput
+by 4.4%.
+
+Chunking each source group at 256 was also measured on seed 901 and regressed
+collection time by 1.8% versus unchunked full matching because the actual batch
+was only 16 and the extra small kernels dominated. Source chunking remains an
+explicit memory control for large rollout batches, while unchunked grouping is
+the PPO default. Raw logs are
+`benchmark_results/ppo_training_matcher_ab_*_h100.json`; the compact result is
+`benchmark_results/ppo_training_matcher_grouping_summary_20260905.json`.

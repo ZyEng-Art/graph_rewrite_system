@@ -570,6 +570,8 @@ def collect_episode(
     source_vectors: torch.Tensor,
     max_steps: int,
     max_source_matches: int,
+    source_microbatch: int,
+    source_grouping: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -587,6 +589,7 @@ def collect_episode(
     greedy: bool,
     best_by_circuit: dict[str, dict],
     replay_pool: dict[str, dict],
+    collector_timing: dict[str, float] | None = None,
 ) -> tuple[list[PPOTransition], EpisodeMetrics]:
     start_qasm = best_by_circuit[qasm.name]["qasm"] if start_from_best else None
     started_from_replay = False
@@ -626,7 +629,7 @@ def collect_episode(
     stop_episode = False
 
     for step in range(max_steps):
-        candidates, _, _, encoded = paged_model_matches(
+        candidates, model_match_seconds, _, encoded = paged_model_matches(
             [state],
             states,
             live,
@@ -639,10 +642,15 @@ def collect_episode(
             source_vectors,
             microbatch=1,
             max_candidates=max_source_matches,
+            source_microbatch=source_microbatch,
+            source_grouping=source_grouping,
             state_batch_backend="legacy",
             candidate_backend="gpu",
             return_encoded_states=True,
         )
+        if collector_timing is not None:
+            collector_timing["model_match_seconds"] += model_match_seconds
+        proposal_started = time.perf_counter()
         proposals, _, _ = build_gpu_proposals(
             candidates,
             [state],
@@ -651,6 +659,10 @@ def collect_episode(
             global_cap=max_actions,
             ranking_mode="gate",
         )
+        if collector_timing is not None:
+            collector_timing["proposal_seconds"] += (
+                time.perf_counter() - proposal_started
+            )
         if not proposals:
             terminated_reason = "no_candidates"
             break
@@ -983,6 +995,8 @@ def collect_episode_batch(
     source_vectors: torch.Tensor,
     max_steps: int,
     max_source_matches: int,
+    source_microbatch: int,
+    source_grouping: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -1001,6 +1015,7 @@ def collect_episode_batch(
     best_by_circuit: dict[str, dict],
     replay_pool: dict[str, dict],
     refresh_interval: int,
+    collector_timing: dict[str, float] | None = None,
 ) -> tuple[list[PPOTransition], list[EpisodeMetrics]]:
     if batch_size < 1:
         raise ValueError("collector batch size must be positive")
@@ -1032,7 +1047,7 @@ def collect_episode_batch(
 
     while active:
         current_states = [runtime.state for runtime in active]
-        candidates, _, _, encoded = paged_model_matches(
+        candidates, model_match_seconds, _, encoded = paged_model_matches(
             current_states,
             states,
             live,
@@ -1045,10 +1060,15 @@ def collect_episode_batch(
             source_vectors,
             microbatch=len(active),
             max_candidates=max_source_matches,
+            source_microbatch=source_microbatch,
+            source_grouping=source_grouping,
             state_batch_backend="tensorized",
             candidate_backend="gpu",
             return_encoded_states=True,
         )
+        if collector_timing is not None:
+            collector_timing["model_match_seconds"] += model_match_seconds
+        proposal_started = time.perf_counter()
         proposals, _, _ = build_gpu_proposals(
             candidates,
             current_states,
@@ -1057,6 +1077,10 @@ def collect_episode_batch(
             global_cap=max_actions * len(active),
             ranking_mode="gate",
         )
+        if collector_timing is not None:
+            collector_timing["proposal_seconds"] += (
+                time.perf_counter() - proposal_started
+            )
         if proposals:
             flat_features, flat_logits, _ = batched_proposal_features(
                 model,
@@ -1658,6 +1682,21 @@ def main() -> None:
     parser.add_argument("--evaluation-episodes-per-circuit", type=int, default=1)
     parser.add_argument("--max-steps", type=int, default=16)
     parser.add_argument("--max-source-matches", type=int, default=2048)
+    parser.add_argument(
+        "--source-microbatch",
+        type=int,
+        default=0,
+        help=(
+            "score this many source patterns at once during PPO collection; "
+            "zero keeps each first-gate group whole"
+        ),
+    )
+    parser.add_argument(
+        "--source-grouping",
+        choices=("none", "first_gate"),
+        default="none",
+        help="skip source products whose first gate differs from the anchor",
+    )
     parser.add_argument("--max-actions", type=int, default=128)
     parser.add_argument("--max-gate-increase", type=int, default=3)
     parser.add_argument("--page-size", type=int, default=8)
@@ -1729,6 +1768,8 @@ def main() -> None:
         parser.error("evaluation episodes per circuit must be nonnegative")
     if args.max_steps < 1 or args.max_actions < 1:
         parser.error("max steps and max actions must be positive")
+    if args.source_microbatch < 0:
+        parser.error("source microbatch must be nonnegative")
     if args.collector_batch_size < 1 or args.refresh_interval < 1:
         parser.error("collector batch size and refresh interval must be positive")
     if args.set_layers < 0 or args.set_heads < 1:
@@ -1898,6 +1939,8 @@ def main() -> None:
         "source_vectors": source_vectors,
         "max_steps": args.max_steps,
         "max_source_matches": args.max_source_matches,
+        "source_microbatch": args.source_microbatch,
+        "source_grouping": args.source_grouping,
         "max_actions": args.max_actions,
         "invalid_reward": args.invalid_reward,
         "cycle_reward": args.cycle_reward,
@@ -1925,9 +1968,15 @@ def main() -> None:
         )
 
     for iteration in range(start_iteration, start_iteration + args.iterations):
+        if device.type == "cuda":
+            torch.cuda.reset_peak_memory_stats(device)
         collection_started = time.perf_counter()
         transitions = []
         episode_rows = []
+        collection_timing = {
+            "model_match_seconds": 0.0,
+            "proposal_seconds": 0.0,
+        }
         circuit_counts = {
             qasm: sum(
                 args.qasm[episode % len(args.qasm)] == qasm
@@ -1943,6 +1992,7 @@ def main() -> None:
                     episode_transitions, metrics = collect_episode(
                         qasm,
                         greedy=False,
+                        collector_timing=collection_timing,
                         **episode_kwargs,
                     )
                     transitions.extend(episode_transitions)
@@ -1953,12 +2003,33 @@ def main() -> None:
                         current_batch,
                         greedy=False,
                         refresh_interval=args.refresh_interval,
+                        collector_timing=collection_timing,
                         **episode_kwargs,
                     )
                     transitions.extend(batch_transitions)
                     episode_rows.extend(batch_metrics)
                 remaining -= current_batch
         collection_seconds = time.perf_counter() - collection_started
+        collection_timing["unattributed_seconds"] = max(
+            0.0,
+            collection_seconds - sum(collection_timing.values()),
+        )
+        collection_timing["model_match_fraction"] = (
+            collection_timing["model_match_seconds"] / collection_seconds
+        )
+        collection_timing["proposal_fraction"] = (
+            collection_timing["proposal_seconds"] / collection_seconds
+        )
+        collection_peak_cuda_allocated_gib = (
+            torch.cuda.max_memory_allocated(device) / (1024**3)
+            if device.type == "cuda"
+            else 0.0
+        )
+        collection_peak_cuda_reserved_gib = (
+            torch.cuda.max_memory_reserved(device) / (1024**3)
+            if device.type == "cuda"
+            else 0.0
+        )
         if not transitions:
             raise RuntimeError("PPO collection produced no transitions")
 
@@ -1997,6 +2068,13 @@ def main() -> None:
             "collection_seconds": collection_seconds,
             "collection_transitions_per_second": len(transitions)
             / collection_seconds,
+            "collection_timing": collection_timing,
+            "collection_peak_cuda_allocated_gib": (
+                collection_peak_cuda_allocated_gib
+            ),
+            "collection_peak_cuda_reserved_gib": (
+                collection_peak_cuda_reserved_gib
+            ),
             "update_seconds": update_seconds,
             "update_samples_per_second": (
                 len(transitions) * args.ppo_epochs / update_seconds

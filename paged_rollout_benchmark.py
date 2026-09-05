@@ -640,7 +640,9 @@ def paged_model_matches(
             encoded_chunks.append(encoded)
         finish_timing("incremental_graph_readout_seconds", stage_started)
 
-        if candidate_backend == "gpu" and source_microbatch:
+        if candidate_backend == "gpu" and (
+            source_microbatch or source_grouping == "first_gate"
+        ):
             stage_started = time.perf_counter()
             with autocast_context(device):
                 node_vectors = model.match_node_vectors(encoded)
@@ -916,7 +918,10 @@ def main() -> None:
         "--source-microbatch",
         type=int,
         default=0,
-        help="score this many source patterns at once in the GPU proposal path",
+        help=(
+            "score this many source patterns at once in the GPU proposal path; "
+            "zero keeps each first-gate group whole"
+        ),
     )
     parser.add_argument(
         "--source-grouping",
@@ -1108,8 +1113,8 @@ def main() -> None:
         parser.error("--source-microbatch must be nonnegative")
     if args.source_microbatch and args.proposal_backend != "gpu":
         parser.error("--source-microbatch requires --proposal-backend gpu")
-    if args.source_grouping != "none" and not args.source_microbatch:
-        parser.error("--source-grouping requires a positive --source-microbatch")
+    if args.source_grouping != "none" and args.proposal_backend != "gpu":
+        parser.error("--source-grouping requires --proposal-backend gpu")
     if args.proposal_expansion == "preselect" and args.proposal_backend != "gpu":
         parser.error("preselected proposal expansion requires --proposal-backend gpu")
     if args.proposal_expansion == "preselect" and args.proposal_ranking not in {

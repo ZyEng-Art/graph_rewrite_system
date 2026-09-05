@@ -1,0 +1,63 @@
+{
+  "format": "ppo-training-matcher-grouping-ab-v1",
+  "machine": "h100-gpu5",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "protocol": {
+    "circuits": 14,
+    "episodes": 224,
+    "episodes_per_circuit": 16,
+    "collector_batch_cap": 64,
+    "max_steps": 16,
+    "refresh_interval": 8,
+    "max_source_matches": 2048,
+    "max_actions": 64,
+    "ppo_epochs": 1
+  },
+  "seed_901": {
+    "full": {
+      "collection_seconds": 12.854621076025069,
+      "transitions": 3426,
+      "transitions_per_second": 266.5189413003992
+    },
+    "grouped_unchunked": {
+      "collection_seconds": 12.239132798975334,
+      "transitions": 3406,
+      "transitions_per_second": 278.2876904714321,
+      "collection_time_reduction_percent": 4.78807016877123,
+      "throughput_increase_percent": 4.41572712003537
+    },
+    "grouped_chunk_256": {
+      "collection_seconds": 13.080563850933686,
+      "transitions": 3408,
+      "transitions_per_second": 260.5392274245684
+    }
+  },
+  "seed_902_reversed_order": {
+    "full": {
+      "collection_seconds": 13.00613920786418,
+      "transitions": 3403,
+      "transitions_per_second": 261.6456694498834,
+      "model_match_seconds": 3.2198789408430457,
+      "proposal_seconds": 0.7134155996609479,
+      "peak_cuda_allocated_gib": 0.5124201774597168,
+      "peak_cuda_reserved_gib": 3.880859375,
+      "selected_action_legality": 0.995004407875404
+    },
+    "grouped_unchunked": {
+      "collection_seconds": 12.26366745098494,
+      "transitions": 3406,
+      "transitions_per_second": 277.7309490503554,
+      "model_match_seconds": 2.6723987080622464,
+      "proposal_seconds": 0.6799458162859082,
+      "peak_cuda_allocated_gib": 0.21217584609985352,
+      "peak_cuda_reserved_gib": 0.283203125,
+      "selected_action_legality": 0.9950088079859072,
+      "collection_time_reduction_percent": 5.70862532695562,
+      "throughput_increase_percent": 6.14773393127113,
+      "model_match_time_reduction_percent": 17.0031309511734,
+      "peak_allocation_reduction_percent": 58.5933857734294
+    },
+    "identical_best_gate_counts": true
+  },
+  "conclusion": "Use unchunked first-gate grouping for small PPO batches; reserve source chunking for memory-bound large batches."
+}

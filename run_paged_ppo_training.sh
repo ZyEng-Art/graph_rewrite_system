@@ -30,6 +30,8 @@ circuit_dir="$root/quarl/experiment/circs/nam_circs"
     --evaluation-episodes-per-circuit 1 \
     --max-steps "${PPO_MAX_STEPS:-16}" \
     --max-source-matches 2048 \
+    --source-microbatch "${PPO_SOURCE_MICROBATCH:-0}" \
+    --source-grouping "${PPO_SOURCE_GROUPING:-first_gate}" \
     --max-actions "${PPO_MAX_ACTIONS:-64}" \
     --collector-batch-size "${PPO_COLLECTOR_BATCH_SIZE:-64}" \
     --refresh-interval "${PPO_REFRESH_INTERVAL:-8}" \

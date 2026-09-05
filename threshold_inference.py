@@ -443,8 +443,8 @@ def threshold_candidate_tensors_grouped(
     timing: dict[str, float] | None = None,
 ) -> CandidateTensors:
     """Match only anchors and sources sharing the same first gate type."""
-    if source_chunk_size <= 0:
-        raise ValueError("source_chunk_size must be positive")
+    if source_chunk_size < 0:
+        raise ValueError("source_chunk_size must be nonnegative")
     device = node_vectors.device
     batch_size, num_slots = gate_types.shape
 
@@ -558,9 +558,10 @@ def threshold_candidate_tensors_grouped(
         finish_timing("match_group_compaction_seconds", stage_started)
 
         ordered_sources = model.source_first_gate_order[source_begin:source_end]
-        for chunk_begin in range(0, ordered_sources.numel(), source_chunk_size):
+        chunk_size = source_chunk_size or ordered_sources.numel()
+        for chunk_begin in range(0, ordered_sources.numel(), chunk_size):
             source_ids = ordered_sources[
-                chunk_begin : chunk_begin + source_chunk_size
+                chunk_begin : chunk_begin + chunk_size
             ]
             stage_started = time.perf_counter()
             logits = model.match_logits_for_sources(
