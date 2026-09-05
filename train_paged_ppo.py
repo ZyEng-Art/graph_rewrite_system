@@ -153,9 +153,20 @@ def retain_replay_state(
     if len(states) < capacity:
         replacement = len(states)
     else:
-        replacement = random.randrange(bucket["unique_states_seen"])
-        if replacement >= capacity:
-            return False
+        minimum_index = min(
+            range(len(states)), key=lambda index: states[index]["gate_count"]
+        )
+        minimum_gate_count = states[minimum_index]["gate_count"]
+        if int(graph.gate_count) < minimum_gate_count:
+            replacement = max(
+                range(len(states)), key=lambda index: states[index]["gate_count"]
+            )
+        else:
+            replacement = random.randrange(bucket["unique_states_seen"])
+            if replacement >= capacity:
+                return False
+            if replacement == minimum_index:
+                return False
         bucket["retained_hashes"].remove(states[replacement]["graph_hash"])
     row = {
         "graph_hash": graph_hash,
@@ -318,6 +329,7 @@ def initialize_episode_batch(
     replay_start_probability: float,
     best_by_circuit: dict[str, dict],
     replay_pool: dict[str, dict],
+    best_start_probability: float = 1.0,
 ) -> tuple[
     list[EpisodeRuntime],
     torch.Tensor,
@@ -326,9 +338,15 @@ def initialize_episode_batch(
     PagedKVCache,
     list,
 ]:
+    if not 0.0 <= best_start_probability <= 1.0:
+        raise ValueError("best start probability must be in [0, 1]")
     episode_starts = []
     for _ in range(batch_size):
-        start_qasm = best_by_circuit[qasm.name]["qasm"] if start_from_best else None
+        use_best = start_from_best and (
+            best_start_probability == 1.0
+            or random.random() < best_start_probability
+        )
+        start_qasm = best_by_circuit[qasm.name]["qasm"] if use_best else None
         started_from_replay = False
         if (
             use_replay_starts

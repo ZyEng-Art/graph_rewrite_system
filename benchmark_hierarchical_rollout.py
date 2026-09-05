@@ -28,7 +28,7 @@ from model_factory import build_model
 from ppo_core import HierarchicalPPOActorCritic
 from threshold_inference import load_threshold_config
 from train import autocast_context
-from train_paged_ppo import make_replay_bucket
+from train_paged_ppo import make_replay_bucket, replay_pool_metrics
 
 
 def summarize_metrics(metrics, transitions, timing: dict[str, float]) -> dict:
@@ -44,6 +44,7 @@ def summarize_metrics(metrics, transitions, timing: dict[str, float]) -> dict:
     accepted = sum(row.accepted_rewrites for row in metrics)
     transition_count = sum(row.steps for row in metrics)
     rewards = [float(row.total_reward) for row in metrics]
+    initial_gate_counts = [int(row.initial_gate_count) for row in metrics]
     committed_deltas = [
         int(row.next_gate_count - row.previous_gate_count)
         for row in transitions
@@ -60,6 +61,12 @@ def summarize_metrics(metrics, transitions, timing: dict[str, float]) -> dict:
         "transitions_per_second": transition_count / total_seconds,
         "accepted_rewrites_per_second": accepted / total_seconds,
         "initial_gate_count": metrics[0].initial_gate_count,
+        "initial_gate_count_histogram": dict(
+            sorted(Counter(str(count) for count in initial_gate_counts).items())
+        ),
+        "minimum_initial_gate_count": min(initial_gate_counts),
+        "maximum_initial_gate_count": max(initial_gate_counts),
+        "mean_initial_gate_count": sum(initial_gate_counts) / len(initial_gate_counts),
         "minimum_best_gate_count": min(row.best_gate_count for row in metrics),
         "minimum_final_gate_count": min(row.final_gate_count for row in metrics),
         "mean_best_gate_count": sum(row.best_gate_count for row in metrics)
@@ -147,6 +154,11 @@ def main() -> None:
     parser.add_argument("--ppo-max-grad-norm", type=float, default=1.0)
     parser.add_argument("--ppo-output", type=Path)
     parser.add_argument("--disable-rejected-action-cache", action="store_true")
+    parser.add_argument("--start-from-best", action="store_true")
+    parser.add_argument("--best-start-probability", type=float, default=0.25)
+    parser.add_argument("--use-replay-starts", action="store_true")
+    parser.add_argument("--replay-start-probability", type=float, default=0.25)
+    parser.add_argument("--resume-search-state", action="store_true")
     args = parser.parse_args()
 
     for optional_module in ("qiskit", "dgl"):
@@ -223,14 +235,27 @@ def main() -> None:
     )
     graph = quartz.PyGraph.from_qasm(context=context, filename=str(args.qasm))
     circuit_name = args.qasm.name
+    saved_best = None
+    if args.resume_search_state:
+        saved_best = node_checkpoint.get("best_so_far", {}).get(circuit_name)
     best_by_circuit = {
-        circuit_name: {
-            "gate_count": int(graph.gate_count),
-            "qasm": graph.to_qasm_str(),
-            "episode_depth": 0,
-        }
+        circuit_name: (
+            dict(saved_best)
+            if saved_best is not None
+            and int(saved_best["gate_count"]) <= int(graph.gate_count)
+            else {
+                "gate_count": int(graph.gate_count),
+                "qasm": graph.to_qasm_str(),
+                "episode_depth": 0,
+            }
+        )
     }
-    replay_pool = {circuit_name: make_replay_bucket(graph)}
+    saved_replay_pool = node_checkpoint.get("replay_pool", {})
+    replay_pool = (
+        saved_replay_pool
+        if args.resume_search_state and circuit_name in saved_replay_pool
+        else {circuit_name: make_replay_bucket(graph)}
+    )
 
     def collect(
         run_batch_size: int,
@@ -279,6 +304,10 @@ def main() -> None:
             max_exact_rejections_per_episode=(
                 args.max_exact_rejections_per_episode
             ),
+            start_from_best=args.start_from_best,
+            best_start_probability=args.best_start_probability,
+            use_replay_starts=args.use_replay_starts,
+            replay_start_probability=args.replay_start_probability,
             collector_timing=run_timing,
         )
 
@@ -306,7 +335,13 @@ def main() -> None:
     iteration_results = []
     optimizer = None
     rejected_action_cache = (
-        None if args.disable_rejected_action_cache else {}
+        None
+        if args.disable_rejected_action_cache
+        else (
+            node_checkpoint.get("rejected_action_cache", {})
+            if args.resume_search_state
+            else {}
+        )
     )
     if args.ppo_iterations:
         optimizer = torch.optim.AdamW(
@@ -401,6 +436,7 @@ def main() -> None:
                 len(actions) for actions in (rejected_action_cache or {}).values()
             ),
         },
+        "replay_pool": replay_pool_metrics(replay_pool),
         "training_iterations": iteration_results,
     }
     rendered = json.dumps(result, indent=2, sort_keys=True, default=str) + "\n"
@@ -421,6 +457,8 @@ def main() -> None:
                 "args": vars(args),
                 "training_iterations": iteration_results,
                 "best_so_far": best_by_circuit,
+                "replay_pool": replay_pool,
+                "rejected_action_cache": rejected_action_cache,
             },
             args.ppo_output,
         )

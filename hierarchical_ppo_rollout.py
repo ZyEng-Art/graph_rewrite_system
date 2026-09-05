@@ -364,6 +364,10 @@ def collect_hierarchical_episode_batch(
     refresh_interval: int,
     rejected_action_cache: RejectedActionCache | None = None,
     max_exact_rejections_per_episode: int = 8,
+    start_from_best: bool = False,
+    best_start_probability: float = 1.0,
+    use_replay_starts: bool = False,
+    replay_start_probability: float = 0.0,
     collector_timing: dict[str, float] | None = None,
 ) -> tuple[list[HierarchicalPPOTransition], list[EpisodeMetrics]]:
     if batch_size < 1 or refresh_interval < 1:
@@ -380,11 +384,12 @@ def collect_hierarchical_episode_batch(
         max_steps=max_steps,
         page_size=page_size,
         initialization_backend="deduplicated",
-        start_from_best=False,
-        use_replay_starts=False,
-        replay_start_probability=0.0,
+        start_from_best=start_from_best,
+        use_replay_starts=use_replay_starts,
+        replay_start_probability=replay_start_probability,
         best_by_circuit=best_by_circuit,
         replay_pool=replay_pool,
+        best_start_probability=best_start_probability,
     )
     all_runtimes = list(active)
     exact_rejection_counts = {id(runtime): 0 for runtime in all_runtimes}
