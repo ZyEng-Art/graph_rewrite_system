@@ -2081,7 +2081,7 @@ def main() -> None:
         print(json.dumps(row, sort_keys=True), flush=True)
         if args.dump_beam_levels is not None:
             append_beam_level(args.dump_beam_levels, step + 1, beam)
-        if stopped_for_stale_refreshes:
+        if stopped_for_stale_refreshes or not beam:
             break
 
     search_seconds = time.perf_counter() - total_started
