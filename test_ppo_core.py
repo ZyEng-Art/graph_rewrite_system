@@ -9,6 +9,7 @@ from ppo_core import (
     PagedPPOActorCritic,
     build_policy_features,
     build_state_features,
+    categorical_reference_kl,
     clipped_ppo_objective,
     generalized_advantages,
     masked_policy_distribution,
@@ -67,6 +68,18 @@ def main() -> None:
     expected = expected / expected.sum()
     assert torch.allclose(distribution.probs[0, :2], expected)
     assert distribution.probs[0, 2] == 0
+    assert torch.equal(
+        categorical_reference_kl(
+            distribution, matcher_logits.unsqueeze(0), candidate_mask
+        ),
+        torch.zeros(()),
+    )
+    shifted_reference_kl = categorical_reference_kl(
+        distribution,
+        torch.tensor([[2.0, -2.0, 100.0]]),
+        candidate_mask,
+    )
+    assert shifted_reference_kl > 0
     flattened_logits = torch.tensor([1.0, 2.0, -2.0, 0.0, 2.0])
     parent_ids = torch.tensor([0, 0, 1, 1, 1])
     normalized = segmented_log_softmax(flattened_logits, parent_ids, 2)

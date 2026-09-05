@@ -991,3 +991,10 @@ best independently parses to 253 gates. Thus this run is not evidence of
 learned zero-shot quality; it motivates explicit reference-policy KL control
 and a broader circuit training distribution. Full evidence is in
 `benchmark_results/ppo_matchset_v1_training_findings_20260905.md`.
+
+The PPO update now has both controls. `--reference-kl-coefficient` applies an
+exact categorical KL to the frozen matcher/gate prior, analogous to reference
+policy regularization in large-model RL, and `--target-kl` stops remaining PPO
+epochs after excessive movement from the rollout policy. An H100 forced-stop
+smoke completed one of four requested epochs and logged both KL values; see
+`benchmark_results/ppo_reference_kl_findings_20260905.md`.

@@ -417,6 +417,18 @@ def masked_policy_distribution(
     return torch.distributions.Categorical(logits=logits)
 
 
+def categorical_reference_kl(
+    distribution: torch.distributions.Categorical,
+    reference_logits: torch.Tensor,
+    candidate_mask: torch.Tensor,
+) -> torch.Tensor:
+    """Exact mean KL from the current policy to a masked reference policy."""
+    reference = torch.distributions.Categorical(
+        logits=reference_logits.masked_fill(~candidate_mask, -torch.inf)
+    )
+    return torch.distributions.kl_divergence(distribution, reference).mean()
+
+
 def segmented_log_softmax(
     logits: torch.Tensor,
     segment_ids: torch.Tensor,

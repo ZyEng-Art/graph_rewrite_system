@@ -38,6 +38,8 @@ circuit_dir="$root/quarl/experiment/circs/nam_circs"
     --set-heads "${PPO_SET_HEADS:-4}" \
     --initial-gate-bias "${PPO_GATE_BIAS:-1.0}" \
     --entropy-coefficient "${PPO_ENTROPY_COEFFICIENT:-0.02}" \
+    --reference-kl-coefficient "${PPO_REFERENCE_KL_COEFFICIENT:-0.05}" \
+    --target-kl "${PPO_TARGET_KL:-0.015}" \
     --replay-start-probability "${PPO_REPLAY_START_PROBABILITY:-0.75}" \
     --replay-capacity-per-circuit "${PPO_REPLAY_CAPACITY:-256}" \
     --ppo-epochs 4 \

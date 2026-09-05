@@ -43,6 +43,7 @@ from ppo_core import (
     build_actor_critic,
     build_policy_features,
     build_state_features,
+    categorical_reference_kl,
     clipped_ppo_objective,
     generalized_advantages,
     masked_policy_distribution,
@@ -1406,6 +1407,8 @@ def ppo_update(
     value_coefficient: float,
     entropy_coefficient: float,
     legality_coefficient: float,
+    reference_kl_coefficient: float,
+    target_kl: float,
     max_grad_norm: float,
     seed: int,
 ) -> dict:
@@ -1420,8 +1423,12 @@ def ppo_update(
     legality_rate = sum(row.legal for row in transitions) / len(transitions)
     totals: dict[str, float] = defaultdict(float)
     batches = 0
+    completed_epochs = 0
+    early_stopped = False
     actor_critic.train()
     for _ in range(epochs):
+        epoch_kl = 0.0
+        epoch_batches = 0
         order = torch.randperm(len(transitions), generator=generator)
         for begin in range(0, len(transitions), minibatch_size):
             batch = collate_transitions(
@@ -1453,6 +1460,11 @@ def ppo_update(
                 clip_epsilon=clip_epsilon,
                 value_coefficient=value_coefficient,
                 entropy_coefficient=entropy_coefficient,
+            )
+            reference_kl = categorical_reference_kl(
+                distribution,
+                batch["matcher_logits"],
+                batch["candidate_mask"],
             )
             legality_logits = actor_critic.candidate_legality_logits(
                 batch["candidate_features"],
@@ -1493,7 +1505,11 @@ def ppo_update(
                 totals["legality_invalid_count"] += float(
                     (~batch["legal"].bool()).sum()
                 )
-            loss = objective.loss + legality_coefficient * legality_loss
+            loss = (
+                objective.loss
+                + legality_coefficient * legality_loss
+                + reference_kl_coefficient * reference_kl
+            )
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(
@@ -1507,6 +1523,7 @@ def ppo_update(
                 ("value_loss", objective.value_loss),
                 ("legality_loss", legality_loss),
                 ("legality_accuracy", legality_accuracy),
+                ("reference_kl", reference_kl),
                 ("entropy", objective.entropy),
                 ("approximate_kl", objective.approximate_kl),
                 ("clip_fraction", objective.clip_fraction),
@@ -1514,6 +1531,12 @@ def ppo_update(
                 totals[key] += float(value.detach())
             totals["grad_norm"] += float(grad_norm)
             batches += 1
+            epoch_kl += float(objective.approximate_kl.detach())
+            epoch_batches += 1
+        completed_epochs += 1
+        if target_kl and epoch_kl / max(1, epoch_batches) > 1.5 * target_kl:
+            early_stopped = True
+            break
     legal_count = totals.pop("legality_legal_count", 0.0)
     legal_correct = totals.pop("legality_legal_correct", 0.0)
     invalid_count = totals.pop("legality_invalid_count", 0.0)
@@ -1528,6 +1551,8 @@ def ppo_update(
         )
     result["legality_label_rate"] = legality_rate
     result["batches"] = batches
+    result["completed_epochs"] = completed_epochs
+    result["target_kl_early_stopped"] = early_stopped
     return result
 
 
@@ -1668,6 +1693,13 @@ def main() -> None:
     parser.add_argument("--value-coefficient", type=float, default=0.5)
     parser.add_argument("--entropy-coefficient", type=float, default=0.01)
     parser.add_argument("--legality-coefficient", type=float, default=0.1)
+    parser.add_argument("--reference-kl-coefficient", type=float, default=0.0)
+    parser.add_argument(
+        "--target-kl",
+        type=float,
+        default=0.0,
+        help="stop PPO epochs when mean old-policy KL exceeds 1.5x this value",
+    )
     parser.add_argument("--invalid-reward", type=float, default=-1.0)
     parser.add_argument("--cycle-reward", type=float, default=-1.0)
     parser.add_argument("--step-penalty", type=float, default=0.01)
@@ -1703,6 +1735,8 @@ def main() -> None:
         parser.error("set layers must be nonnegative and set heads positive")
     if args.legality_coefficient < 0:
         parser.error("legality coefficient must be nonnegative")
+    if args.reference_kl_coefficient < 0 or args.target_kl < 0:
+        parser.error("KL coefficient and target must be nonnegative")
     if not 0 <= args.gamma <= 1 or not 0 <= args.gae_lambda <= 1:
         parser.error("gamma and GAE lambda must be within [0, 1]")
     if args.step_penalty < 0:
@@ -1940,6 +1974,8 @@ def main() -> None:
             value_coefficient=args.value_coefficient,
             entropy_coefficient=args.entropy_coefficient,
             legality_coefficient=args.legality_coefficient,
+            reference_kl_coefficient=args.reference_kl_coefficient,
+            target_kl=args.target_kl,
             max_grad_norm=args.max_grad_norm,
             seed=args.seed + iteration,
         )
