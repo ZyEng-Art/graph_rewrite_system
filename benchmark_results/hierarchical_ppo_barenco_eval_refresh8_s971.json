@@ -1,0 +1,148 @@
+{
+  "args": {
+    "batch_size": 64,
+    "calibration": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "checkpoint": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "cycle_reward": -1.0,
+    "data": "../../data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "ecc_file": "../../quarl/experiment/ecc_set/nam_ecc.json",
+    "gae_lambda": 0.95,
+    "gamma": 0.99,
+    "greedy": false,
+    "initial_gate_bias": 1.0,
+    "invalid_reward": -2.0,
+    "max_actions": 256,
+    "max_rejected_actions_per_step": 4,
+    "max_steps": 16,
+    "node_checkpoint": "../../runs/hierarchical_ppo_barenco_i30_b64_s16_k16_s960.pt",
+    "node_k": 16,
+    "output": "benchmark_results/hierarchical_ppo_barenco_eval_refresh8_s971.json",
+    "page_size": 8,
+    "pattern_k": 16,
+    "ppo_clip_epsilon": 0.2,
+    "ppo_entropy_coefficient": 0.01,
+    "ppo_epochs": 4,
+    "ppo_iterations": 0,
+    "ppo_learning_rate": 0.0001,
+    "ppo_max_grad_norm": 1.0,
+    "ppo_minibatch_size": 128,
+    "ppo_output": null,
+    "ppo_target_kl": 0.02,
+    "ppo_value_coefficient": 0.5,
+    "qasm": "../../quarl/experiment/circs/nam_circs/barenco_tof_3.qasm",
+    "refresh_interval": 8,
+    "seed": 971,
+    "step_penalty": 0.02,
+    "target_recall": 0.95,
+    "terminate_on_improvement": false,
+    "warmup_episodes": 8,
+    "warmup_steps": 2
+  },
+  "artifacts": {
+    "actor_checkpoint_format": "hierarchical-ppo-v1",
+    "calibration": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "checkpoint": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "data": "../../data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "node_checkpoint": "../../runs/hierarchical_ppo_barenco_i30_b64_s16_k16_s960.pt",
+    "qasm": "../../quarl/experiment/circs/nam_circs/barenco_tof_3.qasm"
+  },
+  "best_so_far": {
+    "episode_depth": 0,
+    "gate_count": 58,
+    "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[5];\nh q[4];\ncx q[3],q[4];\nrz(pi*1.750000) q[4];\ncx q[2],q[4];\nrz(pi*0.250000) q[4];\ncx q[3],q[4];\nrz(pi*1.750000) q[4];\ncx q[2],q[4];\ncx q[2],q[3];\nrz(pi*0.250000) q[4];\nrz(pi*1.750000) q[3];\ncx q[2],q[3];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[3];\nh q[3];\ncx q[1],q[3];\nrz(pi*1.750000) q[3];\ncx q[0],q[3];\nrz(pi*0.250000) q[3];\ncx q[1],q[3];\nrz(pi*1.750000) q[3];\ncx q[0],q[3];\ncx q[0],q[1];\nrz(pi*0.250000) q[3];\nrz(pi*1.750000) q[1];\nh q[3];\ncx q[0],q[1];\ncx q[3],q[4];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[4];\ncx q[2],q[4];\nrz(pi*1.750000) q[4];\ncx q[3],q[4];\nrz(pi*0.250000) q[4];\ncx q[2],q[4];\ncx q[2],q[3];\nrz(pi*1.750000) q[4];\nrz(pi*0.250000) q[3];\nh q[4];\ncx q[2],q[3];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[3];\nh q[3];\ncx q[1],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\nrz(pi*1.750000) q[3];\ncx q[1],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\ncx q[0],q[1];\nrz(pi*1.750000) q[3];\nrz(pi*0.250000) q[1];\nh q[3];\ncx q[0],q[1];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\n"
+  },
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "peak_cuda_allocated_gib": 0.14234113693237305,
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-ppo-rollout-benchmark-v1",
+  "stored_transition_count": 1024,
+  "summary": {
+    "accepted_rewrites": 1024,
+    "accepted_rewrites_per_second": 1117.9565264319474,
+    "committed_gate_delta_histogram": {
+      "0": 1024
+    },
+    "cycle_actions": 0,
+    "cycle_xfers": {},
+    "episodes": 64,
+    "exact_refresh_seconds_recorded": 0.10778917279094458,
+    "exact_refreshes": 128,
+    "exact_replay_actions": 930,
+    "improved_episodes": 0,
+    "initial_gate_count": 58,
+    "invalid_actions": 0,
+    "invalid_xfers": {},
+    "legal_actions": 1024,
+    "maximum_total_reward": -0.32,
+    "mean_best_gate_count": 58.0,
+    "mean_candidates": 33.7392578125,
+    "mean_policy_entropy": 2.2030096895759925,
+    "mean_total_reward": -0.32,
+    "minimum_best_gate_count": 58,
+    "minimum_final_gate_count": 58,
+    "minimum_total_reward": -0.32,
+    "selected_xfers_top20": {
+      "120": 2,
+      "121": 6,
+      "328": 1,
+      "336": 1,
+      "340": 1,
+      "38": 117,
+      "39": 430,
+      "44": 116,
+      "45": 350
+    },
+    "termination_reasons": {
+      "horizon": 64
+    },
+    "timing": {
+      "cache_advance_seconds": 0.20198401203379035,
+      "eligible_actions": 34549.0,
+      "hierarchical_match_seconds": 0.24854479427449405,
+      "lazy_apply_seconds": 0.08020927268080413,
+      "policy_preparation_seconds": 0.1256830955389887,
+      "policy_sample_seconds": 0.04803261160850525,
+      "proposal_seconds": 0.013859862927347422,
+      "refresh_seconds": 0.12204161263071,
+      "selected_actions": 34549.0,
+      "stages": {
+        "cache_advance_seconds": {
+          "fraction": 0.22051693797664543,
+          "seconds": 0.20198401203379035
+        },
+        "hierarchical_match_seconds": {
+          "fraction": 0.27134987780259406,
+          "seconds": 0.24854479427449405
+        },
+        "lazy_apply_seconds": {
+          "fraction": 0.08756882800182098,
+          "seconds": 0.08020927268080413
+        },
+        "policy_preparation_seconds": {
+          "fraction": 0.13721507511717032,
+          "seconds": 0.1256830955389887
+        },
+        "policy_sample_seconds": {
+          "fraction": 0.052439816044237655,
+          "seconds": 0.04803261160850525
+        },
+        "proposal_seconds": {
+          "fraction": 0.015131566616289303,
+          "seconds": 0.013859862927347422
+        },
+        "refresh_seconds": {
+          "fraction": 0.133239470055451,
+          "seconds": 0.12204161263071
+        }
+      },
+      "total_seconds": 0.9159569051116705
+    },
+    "transitions": 1024,
+    "transitions_per_second": 1117.9565264319474,
+    "unique_selected_xfers": 9
+  },
+  "training_iterations": []
+}

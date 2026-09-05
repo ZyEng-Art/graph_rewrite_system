@@ -19,7 +19,10 @@ import torch
 
 from dataset import RuleMetadata
 from gpu_proposals import GpuRuleIndex
-from hierarchical_ppo_rollout import collect_hierarchical_episode_batch
+from hierarchical_ppo_rollout import (
+    collect_hierarchical_episode_batch,
+    hierarchical_ppo_update,
+)
 from incremental_graph import parse_pattern
 from model_factory import build_model
 from ppo_core import HierarchicalPPOActorCritic
@@ -40,6 +43,16 @@ def summarize_metrics(metrics, transitions, timing: dict[str, float]) -> dict:
     }
     accepted = sum(row.accepted_rewrites for row in metrics)
     transition_count = sum(row.steps for row in metrics)
+    rewards = [float(row.total_reward) for row in metrics]
+    committed_deltas = [
+        int(row.next_gate_count - row.previous_gate_count)
+        for row in transitions
+        if row.committed_action and row.legal and not row.repeated_state
+    ]
+    selected_xfers = Counter(str(row.xfer_id) for row in transitions)
+    cycle_xfers = Counter(
+        str(row.xfer_id) for row in transitions if row.repeated_state
+    )
     return {
         "episodes": len(metrics),
         "transitions": transition_count,
@@ -51,6 +64,12 @@ def summarize_metrics(metrics, transitions, timing: dict[str, float]) -> dict:
         "minimum_final_gate_count": min(row.final_gate_count for row in metrics),
         "mean_best_gate_count": sum(row.best_gate_count for row in metrics)
         / len(metrics),
+        "improved_episodes": sum(
+            row.best_gate_count < row.initial_gate_count for row in metrics
+        ),
+        "mean_total_reward": sum(rewards) / len(rewards),
+        "minimum_total_reward": min(rewards),
+        "maximum_total_reward": max(rewards),
         "legal_actions": sum(row.legal_actions for row in metrics),
         "invalid_actions": sum(row.invalid_actions for row in metrics),
         "cycle_actions": sum(row.cycle_actions for row in metrics),
@@ -76,6 +95,12 @@ def summarize_metrics(metrics, transitions, timing: dict[str, float]) -> dict:
             Counter(
                 str(row.xfer_id) for row in transitions if not row.legal
             ).most_common()
+        ),
+        "cycle_xfers": dict(cycle_xfers.most_common()),
+        "selected_xfers_top20": dict(selected_xfers.most_common(20)),
+        "unique_selected_xfers": len(selected_xfers),
+        "committed_gate_delta_histogram": dict(
+            sorted(Counter(str(delta) for delta in committed_deltas).items())
         ),
         "timing": {**timing, "stages": stages},
     }
@@ -110,6 +135,16 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=950)
     parser.add_argument("--greedy", action="store_true")
     parser.add_argument("--terminate-on-improvement", action="store_true")
+    parser.add_argument("--ppo-iterations", type=int, default=0)
+    parser.add_argument("--ppo-epochs", type=int, default=4)
+    parser.add_argument("--ppo-minibatch-size", type=int, default=128)
+    parser.add_argument("--ppo-learning-rate", type=float, default=1e-4)
+    parser.add_argument("--ppo-clip-epsilon", type=float, default=0.2)
+    parser.add_argument("--ppo-value-coefficient", type=float, default=0.5)
+    parser.add_argument("--ppo-entropy-coefficient", type=float, default=0.01)
+    parser.add_argument("--ppo-target-kl", type=float, default=0.02)
+    parser.add_argument("--ppo-max-grad-norm", type=float, default=1.0)
+    parser.add_argument("--ppo-output", type=Path)
     args = parser.parse_args()
 
     for optional_module in ("qiskit", "dgl"):
@@ -134,6 +169,15 @@ def main() -> None:
     node_checkpoint = torch.load(
         args.node_checkpoint, map_location="cpu", weights_only=False
     )
+    actor_checkpoint_format = node_checkpoint.get("format", "unknown")
+    if actor_checkpoint_format not in {
+        "hierarchical-node-training-v1",
+        "hierarchical-ppo-v1",
+    }:
+        raise ValueError(
+            "--node-checkpoint must contain a hierarchical node or PPO actor; "
+            f"got {actor_checkpoint_format!r}"
+        )
     actor = HierarchicalPPOActorCritic(
         model.width, hidden_size=int(node_checkpoint["hidden_size"])
     ).to(device)
@@ -191,6 +235,7 @@ def main() -> None:
         run_best: dict,
         run_replay: dict,
         run_timing: dict[str, float],
+        run_greedy: bool,
     ):
         return collect_hierarchical_episode_batch(
             args.qasm,
@@ -221,7 +266,7 @@ def main() -> None:
             gae_lambda=args.gae_lambda,
             page_size=args.page_size,
             initial_gate_bias=args.initial_gate_bias,
-            greedy=args.greedy,
+            greedy=run_greedy,
             best_by_circuit=run_best,
             replay_pool=run_replay,
             replay_capacity_per_circuit=64,
@@ -243,19 +288,73 @@ def main() -> None:
             warmup_best,
             {circuit_name: make_replay_bucket(graph)},
             {},
+            args.greedy,
         )
         random.seed(args.seed)
         torch.manual_seed(args.seed)
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
-    timing: dict[str, float] = {}
-    transitions, metrics = collect(
-        args.batch_size,
-        args.max_steps,
-        best_by_circuit,
-        replay_pool,
-        timing,
-    )
+    iteration_results = []
+    optimizer = None
+    if args.ppo_iterations:
+        optimizer = torch.optim.AdamW(
+            actor.parameters(), lr=args.ppo_learning_rate, weight_decay=1e-4
+        )
+        for iteration in range(1, args.ppo_iterations + 1):
+            actor.eval()
+            iteration_timing: dict[str, float] = {}
+            iteration_transitions, iteration_metrics = collect(
+                args.batch_size,
+                args.max_steps,
+                best_by_circuit,
+                replay_pool,
+                iteration_timing,
+                args.greedy,
+            )
+            update = hierarchical_ppo_update(
+                actor,
+                optimizer,
+                iteration_transitions,
+                device=device,
+                epochs=args.ppo_epochs,
+                minibatch_size=args.ppo_minibatch_size,
+                clip_epsilon=args.ppo_clip_epsilon,
+                value_coefficient=args.ppo_value_coefficient,
+                entropy_coefficient=args.ppo_entropy_coefficient,
+                target_kl=args.ppo_target_kl,
+                max_grad_norm=args.ppo_max_grad_norm,
+                seed=args.seed + iteration,
+            )
+            row = {
+                "iteration": iteration,
+                "rollout": summarize_metrics(
+                    iteration_metrics, iteration_transitions, iteration_timing
+                ),
+                "update": update,
+                "best_gate_count": best_by_circuit[circuit_name]["gate_count"],
+            }
+            iteration_results.append(row)
+            print(json.dumps(row, sort_keys=True), flush=True)
+        actor.eval()
+        timing = {}
+        transitions, metrics = collect(
+            args.batch_size,
+            args.max_steps,
+            best_by_circuit,
+            replay_pool,
+            timing,
+            args.greedy,
+        )
+    else:
+        timing = {}
+        transitions, metrics = collect(
+            args.batch_size,
+            args.max_steps,
+            best_by_circuit,
+            replay_pool,
+            timing,
+            args.greedy,
+        )
     result = {
         "format": "hierarchical-ppo-rollout-benchmark-v1",
         "environment": {
@@ -272,6 +371,7 @@ def main() -> None:
             "data": str(args.data),
             "checkpoint": str(args.checkpoint),
             "node_checkpoint": str(args.node_checkpoint),
+            "actor_checkpoint_format": actor_checkpoint_format,
             "calibration": str(args.calibration),
             "qasm": str(args.qasm),
         },
@@ -279,11 +379,29 @@ def main() -> None:
         "summary": summarize_metrics(metrics, transitions, timing),
         "best_so_far": best_by_circuit[circuit_name],
         "stored_transition_count": len(transitions),
+        "training_iterations": iteration_results,
     }
     rendered = json.dumps(result, indent=2, sort_keys=True, default=str) + "\n"
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(rendered)
     print(rendered, end="")
+    if args.ppo_output is not None:
+        args.ppo_output.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(
+            {
+                "format": "hierarchical-ppo-v1",
+                "actor_critic": actor.state_dict(),
+                "optimizer": optimizer.state_dict() if optimizer is not None else None,
+                "width": model.width,
+                "hidden_size": actor.hidden_size,
+                "base_checkpoint": str(args.checkpoint),
+                "node_checkpoint": str(args.node_checkpoint),
+                "args": vars(args),
+                "training_iterations": iteration_results,
+                "best_so_far": best_by_circuit,
+            },
+            args.ppo_output,
+        )
 
 
 if __name__ == "__main__":
