@@ -244,10 +244,13 @@ def reconcile_rotation_normalized_state(
     exact_slots: dict[int, int],
     *,
     step_penalty: float,
+    topology_mismatch: bool = False,
 ) -> bool:
     """Replace a static lazy topology with Quartz's normalized result."""
 
     state = runtime.state
+    if int(exact_graph.gate_count) == state.gate_count and not topology_mismatch:
+        return False
     exact_snapshot = snapshot(exact_graph, exact_slots)
     exact_topology = indexed_topology(exact_snapshot)
     current_topology = (
@@ -1258,7 +1261,7 @@ def refresh_speculative_runtimes(
                 replay_cache=replay_cache,
                 replay_cache_prefixes=replay_prefixes,
                 eliminate_rotation=eliminate_rotation,
-                validate_topology=validate_topology and not eliminate_rotation,
+                validate_topology=validate_topology,
             )
             replay_seconds = time.perf_counter() - started
             runtime.exact_refresh_seconds += replay_seconds
@@ -1309,6 +1312,7 @@ def refresh_speculative_runtimes(
                     exact_graph,
                     exact_slots,
                     step_penalty=step_penalty,
+                    topology_mismatch=not topology_ok,
                 )
                 add_count(
                     "rotation_topology_reconciliations" if reconciled

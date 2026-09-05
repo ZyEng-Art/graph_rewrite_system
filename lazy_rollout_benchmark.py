@@ -960,22 +960,37 @@ def replay_state(
             break
         add_seconds("binding_validation_seconds", validation_started)
         update_started = now()
-        if eliminate_rotation:
+        expected_gate_count = (
+            int(graph.gate_count)
+            - len(action.source_slots)
+            + len(action.destination_slots)
+        )
+        rotation_changed_gate_count = (
+            eliminate_rotation
+            and int(next_graph.gate_count) != expected_gate_count
+        )
+        if rotation_changed_gate_count:
             live_guids = {int(node.guid) for node in next_graph.nodes}
             surviving_destination_pairs = tuple(
                 (int(guid), int(slot))
                 for guid, slot in zip(destination_guids, action.destination_slots)
                 if int(guid) in live_guids
             )
+            add_count("rotation_live_guid_scans")
         else:
             surviving_destination_pairs = tuple(
                 (int(guid), int(slot))
                 for guid, slot in zip(destination_guids, action.destination_slots)
             )
+        if eliminate_rotation:
+            for guid in source_guids:
+                removed_slot = guid_to_slot.pop(int(guid), None)
+                if removed_slot is not None:
+                    slot_to_guid.pop(int(removed_slot), None)
         for guid, slot in surviving_destination_pairs:
             guid_to_slot[int(guid)] = int(slot)
             slot_to_guid[int(slot)] = int(guid)
-        if eliminate_rotation:
+        if rotation_changed_gate_count:
             guid_to_slot = {
                 guid: slot
                 for guid, slot in guid_to_slot.items()
