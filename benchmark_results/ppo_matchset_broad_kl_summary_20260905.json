@@ -1,0 +1,87 @@
+{
+  "format": "paged-ppo-broad-kl-summary-v1",
+  "seed": 271,
+  "training": {
+    "circuits": 14,
+    "iterations": 15,
+    "episodes_per_iteration": 224,
+    "max_steps": 16,
+    "max_actions": 64,
+    "collector_batch_size": 64,
+    "refresh_interval": 8,
+    "transitions": 46945,
+    "collection_seconds": 159.862,
+    "collection_transitions_per_second": 293.659,
+    "update_seconds": 35.583,
+    "reference_kl_coefficient": 0.05,
+    "target_kl": 0.015,
+    "final_reference_kl": 0.12302717700600624,
+    "final_approximate_kl": 0.012712684543803334,
+    "final_legality_balanced_accuracy": 0.8786129745240219,
+    "best_gate_counts": {
+      "tof_3.qasm": [45, 45],
+      "tof_4.qasm": [75, 75],
+      "tof_5.qasm": [105, 105],
+      "tof_10.qasm": [255, 255],
+      "barenco_tof_3.qasm": [58, 58],
+      "barenco_tof_4.qasm": [114, 114],
+      "barenco_tof_5.qasm": [170, 170],
+      "barenco_tof_10.qasm": [450, 450],
+      "mod5_4.qasm": [63, 62],
+      "mod_mult_55.qasm": [119, 119],
+      "mod_red_21.qasm": [278, 276],
+      "vbe_adder_3.qasm": [150, 146],
+      "csla_mux_3.qasm": [170, 159],
+      "rc_adder_6.qasm": [200, 192]
+    },
+    "best_so_far_improvements": [
+      {"iteration": 0, "circuit": "csla_mux_3.qasm", "gates": 166},
+      {"iteration": 0, "circuit": "mod5_4.qasm", "gates": 62},
+      {"iteration": 0, "circuit": "rc_adder_6.qasm", "gates": 198},
+      {"iteration": 0, "circuit": "vbe_adder_3.qasm", "gates": 148},
+      {"iteration": 1, "circuit": "csla_mux_3.qasm", "gates": 164},
+      {"iteration": 1, "circuit": "rc_adder_6.qasm", "gates": 194},
+      {"iteration": 2, "circuit": "csla_mux_3.qasm", "gates": 160},
+      {"iteration": 2, "circuit": "rc_adder_6.qasm", "gates": 192},
+      {"iteration": 6, "circuit": "mod_red_21.qasm", "gates": 276},
+      {"iteration": 6, "circuit": "vbe_adder_3.qasm", "gates": 146},
+      {"iteration": 14, "circuit": "csla_mux_3.qasm", "gates": 159}
+    ]
+  },
+  "heldout_beam_search": {
+    "beam_size": 1000,
+    "depth": 16,
+    "refresh_interval": 8,
+    "ppo_policy_weight": 0.25,
+    "results": [
+      {"circuit": "hwb6.qasm", "input": 259, "gate_first": 255, "neutral_actor": 253, "trained_ppo": 253, "learned_residual_gain": 0},
+      {"circuit": "gf2^4_mult.qasm", "input": 225, "gate_first": 219, "neutral_actor": 219, "trained_ppo": 219, "learned_residual_gain": 0},
+      {"circuit": "qcla_com_7.qasm", "input": 443, "gate_first": 441, "neutral_actor": 440, "trained_ppo": 440, "learned_residual_gain": 0},
+      {"circuit": "grover_5.qasm", "input": 831, "gate_first": 817, "neutral_actor": 813, "trained_ppo": 811, "learned_residual_gain": 2},
+      {"circuit": "gf2^5_mult.qasm", "input": 347, "gate_first": 339, "neutral_actor": 339, "trained_ppo": 339, "learned_residual_gain": 0},
+      {"circuit": "qcla_mod_7.qasm", "input": 884, "gate_first": 884, "neutral_actor": 884, "trained_ppo": 884, "learned_residual_gain": 0},
+      {"circuit": "adder_8.qasm", "input": 900, "gate_first": 900, "neutral_actor": 900, "trained_ppo": 900, "learned_residual_gain": 0}
+    ],
+    "totals": {
+      "input": 3889,
+      "gate_first": 3855,
+      "neutral_actor": 3848,
+      "trained_ppo": 3846,
+      "trained_gain_over_gate_first": 9,
+      "trained_gain_over_neutral_actor": 2
+    },
+    "audit": {
+      "trained_ppo_valid_replays": "448/448",
+      "trained_ppo_exact_topologies": "448/448",
+      "neutral_actor_valid_replays": "448/448",
+      "neutral_actor_exact_topologies": "448/448",
+      "gate_first_valid_replays": "384/384 plus adder_8 beam exhaustion at depth 8"
+    }
+  },
+  "artifacts": {
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_ppo_matchset_broad_kl_v2_s271.pt",
+    "checkpoint_sha256": "e23ab6a34fe31a83d798197768de64b36b4b7df9fab143de6a19d8f166396494",
+    "training_json": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_ppo_matchset_broad_kl_v2_s271.training.json",
+    "training_json_sha256": "cf47ed00f90886951479df3bd81ca433528370ed27f8e1c4a28f01c244b18bac"
+  }
+}

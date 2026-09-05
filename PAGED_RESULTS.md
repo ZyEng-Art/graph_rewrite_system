@@ -999,6 +999,17 @@ epochs after excessive movement from the rollout policy. An H100 forced-stop
 smoke completed one of four requested epochs and logged both KL values; see
 `benchmark_results/ppo_reference_kl_findings_20260905.md`.
 
+The regularized broad run trained one policy across 14 circuits and collected
+46,945 transitions at 293.66 transitions/s. Training best-so-far improved five
+circuits, including `csla_mux_3` from 170 to 159 and `rc_adder_6` from 200 to
+192. Across seven held-out circuits, trained PPO produced 3846 total gates,
+versus 3848 for a neutral actor and 3855 for gate-first. Only the `grover_5`
+result is attributable to the learned residual (811 trained versus 813 neutral
+and 817 gate-first); the other gains come from the shared matcher/gate prior.
+All 448 trained-PPO audit replays were Quartz-valid with exact topology. Full
+configuration, curves, attribution, and hashes are in
+`benchmark_results/ppo_matchset_broad_kl_findings_20260905.md`.
+
 ## Source-pattern chunking
 
 The match stage no longer needs to materialize the full `[state, slot, source]`
