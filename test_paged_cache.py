@@ -62,6 +62,11 @@ def main() -> None:
     assert torch.all(arena.readout_keys[left.blocks[-1], 0] == 5.75)
     assert torch.all(arena.readout_values[right.blocks[-1], 0] == 10.0)
 
+    allocated_before_retain = arena.allocated_pages
+    arena.retain(left)
+    arena.release(left)
+    assert arena.allocated_pages == allocated_before_retain
+
     # Ragged batches, including an empty prefix, must preserve zero padding and
     # agree between the vectorized action-only and full-KV gather paths.
     ragged = [chain[0], chain[2], left]

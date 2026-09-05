@@ -104,6 +104,11 @@ class PagedKVCache:
             if self.refcounts[page] == 0:
                 self.free.append(page)
 
+    def retain(self, handle: PrefixHandle) -> None:
+        """Keep a handle alive across an operation that releases its owner."""
+        for page in handle.blocks:
+            self._retain(page)
+
     def append_batch(
         self,
         parents: list[PrefixHandle],

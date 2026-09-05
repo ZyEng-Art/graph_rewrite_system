@@ -126,6 +126,7 @@ def main() -> None:
     parser.add_argument("--page-size", type=int, default=8)
     parser.add_argument("--target-recall", type=float, default=0.95)
     parser.add_argument("--max-rejected-actions-per-step", type=int, default=4)
+    parser.add_argument("--max-exact-rejections-per-episode", type=int, default=8)
     parser.add_argument("--invalid-reward", type=float, default=-2.0)
     parser.add_argument("--cycle-reward", type=float, default=-1.0)
     parser.add_argument("--step-penalty", type=float, default=0.02)
@@ -145,6 +146,7 @@ def main() -> None:
     parser.add_argument("--ppo-target-kl", type=float, default=0.02)
     parser.add_argument("--ppo-max-grad-norm", type=float, default=1.0)
     parser.add_argument("--ppo-output", type=Path)
+    parser.add_argument("--disable-rejected-action-cache", action="store_true")
     args = parser.parse_args()
 
     for optional_module in ("qiskit", "dgl"):
@@ -237,6 +239,7 @@ def main() -> None:
         run_replay: dict,
         run_timing: dict[str, float],
         run_greedy: bool,
+        run_rejected_cache,
     ):
         return collect_hierarchical_episode_batch(
             args.qasm,
@@ -272,6 +275,10 @@ def main() -> None:
             replay_pool=run_replay,
             replay_capacity_per_circuit=64,
             refresh_interval=min(args.refresh_interval, run_max_steps),
+            rejected_action_cache=run_rejected_cache,
+            max_exact_rejections_per_episode=(
+                args.max_exact_rejections_per_episode
+            ),
             collector_timing=run_timing,
         )
 
@@ -290,6 +297,7 @@ def main() -> None:
             {circuit_name: make_replay_bucket(graph)},
             {},
             args.greedy,
+            {},
         )
         random.seed(args.seed)
         torch.manual_seed(args.seed)
@@ -297,6 +305,9 @@ def main() -> None:
         torch.cuda.reset_peak_memory_stats(device)
     iteration_results = []
     optimizer = None
+    rejected_action_cache = (
+        None if args.disable_rejected_action_cache else {}
+    )
     if args.ppo_iterations:
         optimizer = torch.optim.AdamW(
             actor.parameters(), lr=args.ppo_learning_rate, weight_decay=1e-4
@@ -311,6 +322,7 @@ def main() -> None:
                 replay_pool,
                 iteration_timing,
                 args.greedy,
+                rejected_action_cache,
             )
             update = hierarchical_ppo_update(
                 actor,
@@ -345,6 +357,7 @@ def main() -> None:
             replay_pool,
             timing,
             args.greedy,
+            rejected_action_cache,
         )
     else:
         timing = {}
@@ -355,6 +368,7 @@ def main() -> None:
             replay_pool,
             timing,
             args.greedy,
+            rejected_action_cache,
         )
     result = {
         "format": "hierarchical-ppo-rollout-benchmark-v1",
@@ -380,6 +394,13 @@ def main() -> None:
         "summary": summarize_metrics(metrics, transitions, timing),
         "best_so_far": best_by_circuit[circuit_name],
         "stored_transition_count": len(transitions),
+        "rejected_action_cache": {
+            "enabled": rejected_action_cache is not None,
+            "states": len(rejected_action_cache or {}),
+            "actions": sum(
+                len(actions) for actions in (rejected_action_cache or {}).values()
+            ),
+        },
         "training_iterations": iteration_results,
     }
     rendered = json.dumps(result, indent=2, sort_keys=True, default=str) + "\n"
