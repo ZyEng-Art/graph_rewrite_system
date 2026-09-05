@@ -1182,3 +1182,28 @@ The full training log, held-out logs, hashes, and compact comparison are in
 `benchmark_results/ppo_matchset_broad_optimized_s271_h100.training.json`,
 `benchmark_results/optimized_broad_*_ppo_h100.json`, and
 `benchmark_results/ppo_broad_optimized_summary_20260905.json`.
+
+## Tensorized PPO policy padding
+
+The batched PPO collector previously grouped its flat selected proposals with
+one Python loop and one GPU `index_select` per active episode. The tensorized
+backend performs a stable parent sort, derives each proposal's within-parent
+offset, and scatters features, matcher logits, and masks into the padded
+policy batch in one path. Proposal order within every parent is unchanged, so
+sampled action indices still address the same Python proposal list. The loop
+backend remains available through `--policy-padding-backend loop`; the training
+launcher now selects `tensorized` by default.
+
+Two reversed-order H100 A/B pairs used the same 14-circuit, 224-episode
+protocol as the earlier collector optimizations, with selected proposal tensor
+reuse and batched transition transfer enabled. Averaged across seeds 909 and
+910, policy preparation fell from 1.118 to 1.005 seconds (-10.1%), collection
+time fell from 7.941 to 7.609 seconds (-4.2%), and throughput rose from 427.1
+to 445.7 transitions/s (+4.4%). Peak allocated CUDA memory was unchanged at
+about 0.212 GiB. Every A/B pair produced the same per-circuit best gate counts;
+the seed-909 pair also produced identical transition and legality counts. A
+GPU unit test checks exact padded feature, logit, mask, and proposal-order
+agreement, including interleaved parents and empty candidate sets. Raw logs and
+the compact result are in
+`benchmark_results/ppo_training_policy_padding_ab_*_h100.json` and
+`benchmark_results/ppo_training_policy_padding_summary_20260905.json`.

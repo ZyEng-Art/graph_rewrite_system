@@ -1,0 +1,71 @@
+{
+  "format": "ppo-training-policy-padding-ab-v1",
+  "machine": "h100-gpu5",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "protocol": {
+    "circuits": 14,
+    "episodes": 224,
+    "episodes_per_circuit": 16,
+    "max_steps": 16,
+    "refresh_interval": 8,
+    "max_actions": 64,
+    "source_grouping": "first_gate",
+    "source_microbatch": 0,
+    "proposal_expansion": "full",
+    "proposal_tensor_backend": "reuse",
+    "transition_transfer_backend": "batched",
+    "ppo_epochs": 1
+  },
+  "seed_909_loop_first": {
+    "loop": {
+      "collection_seconds": 7.775704025989398,
+      "transitions": 3392,
+      "transitions_per_second": 436.2305957971946,
+      "policy_preparation_seconds": 1.115418171742931,
+      "selected_action_legality": 0.9941037735849056,
+      "peak_cuda_allocated_gib": 0.21131420135498047
+    },
+    "tensorized": {
+      "collection_seconds": 7.603446217952296,
+      "transitions": 3392,
+      "transitions_per_second": 446.11349942756726,
+      "policy_preparation_seconds": 1.01649787905626,
+      "selected_action_legality": 0.9941037735849056,
+      "peak_cuda_allocated_gib": 0.21131420135498047
+    }
+  },
+  "seed_910_tensorized_first": {
+    "loop": {
+      "collection_seconds": 8.10723933414556,
+      "transitions": 3389,
+      "transitions_per_second": 418.02145715945784,
+      "policy_preparation_seconds": 1.1199998878873885,
+      "selected_action_legality": 0.991737975804072,
+      "peak_cuda_allocated_gib": 0.21223974227905273
+    },
+    "tensorized": {
+      "collection_seconds": 7.614509575068951,
+      "transitions": 3391,
+      "transitions_per_second": 445.3339990670764,
+      "policy_preparation_seconds": 0.9936819353606552,
+      "selected_action_legality": 0.9920377469772929,
+      "peak_cuda_allocated_gib": 0.21224308013916016
+    }
+  },
+  "mean": {
+    "loop_collection_seconds": 7.94147168006748,
+    "tensorized_collection_seconds": 7.60897789651062,
+    "collection_time_reduction_percent": 4.1868031134757,
+    "loop_transitions_per_second": 427.126026478326,
+    "tensorized_transitions_per_second": 445.723749247322,
+    "throughput_increase_percent": 4.35415348540913,
+    "loop_policy_preparation_seconds": 1.11770902981516,
+    "tensorized_policy_preparation_seconds": 1.00508990720846,
+    "policy_preparation_reduction_percent": 10.0758891270053
+  },
+  "correctness": {
+    "unit_test": "loop and tensorized outputs agree exactly on interleaved and empty candidate sets",
+    "best_gate_counts_equal_within_each_seed": true,
+    "note": "GPU candidate selection is not bitwise deterministic; seed 910 differed by two transitions while preserving all per-circuit best gate counts"
+  }
+}

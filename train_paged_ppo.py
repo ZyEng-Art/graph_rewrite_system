@@ -509,10 +509,50 @@ def pad_batched_policy_inputs(
     logits: torch.Tensor,
     proposals: list[Proposal],
     batch_size: int,
+    *,
+    parent_ids: torch.Tensor | None = None,
+    backend: str = "loop",
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, list[list[Proposal]]]:
+    if backend not in {"loop", "tensorized"}:
+        raise ValueError(f"unknown policy padding backend: {backend}")
+    if backend == "tensorized" and parent_ids is None:
+        raise ValueError("tensorized policy padding requires GPU parent IDs")
+
     grouped: list[list[tuple[int, Proposal]]] = [[] for _ in range(batch_size)]
     for flat_index, proposal in enumerate(proposals):
         grouped[proposal.parent].append((flat_index, proposal))
+    grouped_proposals = [
+        [proposal for _, proposal in rows] for rows in grouped
+    ]
+    if backend == "tensorized":
+        counts = torch.bincount(parent_ids, minlength=batch_size)
+        max_candidates = int(counts.max().item())
+        order = torch.argsort(parent_ids, stable=True)
+        sorted_parents = parent_ids[order]
+        positions = torch.arange(order.numel(), device=features.device)
+        new_parent = torch.ones(
+            order.numel(), dtype=torch.bool, device=features.device
+        )
+        new_parent[1:] = sorted_parents[1:] != sorted_parents[:-1]
+        group_starts = torch.where(new_parent, positions, 0)
+        group_starts = torch.cummax(group_starts, dim=0).values
+        sorted_offsets = positions - group_starts
+        offsets = torch.empty_like(sorted_offsets)
+        offsets[order] = sorted_offsets
+        padded_features = features.new_zeros(
+            (batch_size, max_candidates, features.shape[-1])
+        )
+        padded_logits = logits.new_zeros((batch_size, max_candidates))
+        mask = torch.zeros(
+            (batch_size, max_candidates),
+            dtype=torch.bool,
+            device=features.device,
+        )
+        padded_features[parent_ids, offsets] = features
+        padded_logits[parent_ids, offsets] = logits
+        mask[parent_ids, offsets] = True
+        return padded_features, padded_logits, mask, grouped_proposals
+
     max_candidates = max((len(rows) for rows in grouped), default=0)
     padded_features = features.new_zeros(
         (batch_size, max_candidates, features.shape[-1])
@@ -521,9 +561,7 @@ def pad_batched_policy_inputs(
     mask = torch.zeros(
         (batch_size, max_candidates), dtype=torch.bool, device=features.device
     )
-    grouped_proposals: list[list[Proposal]] = []
     for parent, rows in enumerate(grouped):
-        grouped_proposals.append([proposal for _, proposal in rows])
         if not rows:
             continue
         indices = torch.tensor(
@@ -591,6 +629,7 @@ def collect_episode(
     proposal_expansion: str,
     transition_transfer_backend: str,
     proposal_tensor_backend: str,
+    policy_padding_backend: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -1025,6 +1064,7 @@ def collect_episode_batch(
     proposal_expansion: str,
     transition_transfer_backend: str,
     proposal_tensor_backend: str,
+    policy_padding_backend: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -1120,7 +1160,11 @@ def collect_episode_batch(
             )
         policy_preparation_started = time.perf_counter()
         if proposals:
-            flat_features, flat_logits, _ = batched_proposal_features(
+            (
+                flat_features,
+                flat_logits,
+                flat_parent_ids,
+            ) = batched_proposal_features(
                 model,
                 encoded,
                 live,
@@ -1142,6 +1186,8 @@ def collect_episode_batch(
                 flat_logits,
                 proposals,
                 len(active),
+                parent_ids=flat_parent_ids,
+                backend=policy_padding_backend,
             )
         else:
             policy_features = encoded.new_zeros(
@@ -1818,6 +1864,12 @@ def main() -> None:
         default="rebuild",
         help="reuse selected GPU proposal tensors for PPO candidate features",
     )
+    parser.add_argument(
+        "--policy-padding-backend",
+        choices=("loop", "tensorized"),
+        default="loop",
+        help="pack per-parent PPO candidate sets with one GPU scatter",
+    )
     parser.add_argument("--max-actions", type=int, default=128)
     parser.add_argument("--max-gate-increase", type=int, default=3)
     parser.add_argument("--page-size", type=int, default=8)
@@ -2065,6 +2117,7 @@ def main() -> None:
         "proposal_expansion": args.proposal_expansion,
         "transition_transfer_backend": args.transition_transfer_backend,
         "proposal_tensor_backend": args.proposal_tensor_backend,
+        "policy_padding_backend": args.policy_padding_backend,
         "max_actions": args.max_actions,
         "invalid_reward": args.invalid_reward,
         "cycle_reward": args.cycle_reward,
