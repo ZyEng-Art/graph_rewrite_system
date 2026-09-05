@@ -975,3 +975,19 @@ run produced 8/8 valid Quartz replays and 8/8 exact topology matches. Full logs
 and configurations are in
 `benchmark_results/ppo_matchset_actor_findings_20260905.md` and
 `benchmark_results/ppo_matchset_actor_summary_20260905.json`.
+
+A subsequent 15-iteration shared-policy run on four circuits collected 18,573
+transitions in 54.36 seconds (341.64 transitions/s) and spent 14.18 seconds in
+PPO updates. Exact training bests were 58/62/75/146 from inputs 58/63/75/150.
+The curve stopped improving after iteration 2. Legality balanced accuracy rose
+from 76.85% to a 95.36% peak, but final per-iteration PPO KL reached 0.0414.
+
+The six-circuit beam A/B initially appeared to improve held-out `hwb6` from
+gate-first 255 to PPO 253. A neutral-actor control also reached 253 and passed
+64/64 exact replay audits, proving this gain came from the frozen matcher/gate
+prior rather than learned PPO residuals. The trained actor's depth-16 beam was
+entirely rejected at the final refresh, although its exported depth-8 exact
+best independently parses to 253 gates. Thus this run is not evidence of
+learned zero-shot quality; it motivates explicit reference-policy KL control
+and a broader circuit training distribution. Full evidence is in
+`benchmark_results/ppo_matchset_v1_training_findings_20260905.md`.

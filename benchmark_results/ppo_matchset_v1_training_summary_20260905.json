@@ -1,0 +1,88 @@
+{
+  "date": "2026-09-05",
+  "host": "h100-gpu5",
+  "visible_gpu_for_training": 6,
+  "training": {
+    "checkpoint": "paged_ppo_matchset_v1_s173.pt",
+    "circuits": [
+      "barenco_tof_3.qasm",
+      "mod5_4.qasm",
+      "tof_4.qasm",
+      "vbe_adder_3.qasm"
+    ],
+    "iterations": 15,
+    "episodes_per_iteration": 96,
+    "collector_batch_size": 64,
+    "refresh_interval": 8,
+    "max_steps": 16,
+    "transitions": 18573,
+    "accepted_rewrites": 18073,
+    "invalid_actions": 497,
+    "collection_seconds": 54.36388762341812,
+    "update_seconds": 14.18464628374204,
+    "weighted_collection_transitions_per_second": 341.64223369484307,
+    "initial_best_gate_counts": {
+      "barenco_tof_3.qasm": 58,
+      "mod5_4.qasm": 63,
+      "tof_4.qasm": 75,
+      "vbe_adder_3.qasm": 150
+    },
+    "final_best_gate_counts": {
+      "barenco_tof_3.qasm": 58,
+      "mod5_4.qasm": 62,
+      "tof_4.qasm": 75,
+      "vbe_adder_3.qasm": 146
+    },
+    "first_improvement_iteration": {
+      "vbe_adder_3.qasm": 0,
+      "mod5_4.qasm": 2
+    },
+    "legality_balanced_accuracy": {
+      "iteration_0": 0.7684794570799707,
+      "peak": 0.9536020776874435,
+      "iteration_14": 0.9184399848542218
+    },
+    "final_legality_recall": {
+      "legal": 0.9158273381294963,
+      "invalid": 0.9210526315789473
+    },
+    "final_approximate_kl": 0.04144738439936191,
+    "artifact": "ppo_matchset_v1_s173.training.json"
+  },
+  "beam_ab": {
+    "protocol": {
+      "beam_size": 1000,
+      "depth": 16,
+      "refresh_interval": 8,
+      "audit_count": 64,
+      "ppo_policy_weight": 0.25
+    },
+    "results": [
+      {"circuit": "barenco_tof_3", "split": "train", "input": 58, "gate_first": 58, "trained_ppo": 58},
+      {"circuit": "mod5_4", "split": "train", "input": 63, "gate_first": 62, "trained_ppo": 62},
+      {"circuit": "tof_4", "split": "train", "input": 75, "gate_first": 75, "trained_ppo": 75},
+      {"circuit": "vbe_adder_3", "split": "train", "input": 150, "gate_first": 148, "trained_ppo": 148},
+      {"circuit": "hwb6", "split": "held_out", "input": 259, "gate_first": 255, "trained_ppo": 253, "neutral_actor": 253},
+      {"circuit": "gf2^4_mult", "split": "held_out", "input": 225, "gate_first": 219, "trained_ppo": 219}
+    ],
+    "gate_first_search_seconds": 44.2057999942917,
+    "trained_ppo_search_seconds": 42.2879529942293,
+    "gate_first_best_gate_sum": 817,
+    "trained_ppo_best_gate_sum": 815,
+    "standard_audit": {
+      "gate_first_valid": "384/384",
+      "gate_first_topology_matches": "384/384",
+      "trained_ppo_valid_excluding_exhausted_hwb6": "320/320",
+      "trained_ppo_topology_matches_excluding_exhausted_hwb6": "320/320"
+    },
+    "hwb6": {
+      "trained_ppo_final_beam_size": 0,
+      "trained_ppo_best_exact_depth": 8,
+      "trained_ppo_export_reparsed_gate_count": 253,
+      "neutral_actor_final_beam_size": 1000,
+      "neutral_actor_audit_valid": "64/64",
+      "neutral_actor_topology_matches": "64/64",
+      "attribution": "The 253-gate result is produced by the frozen matcher/gate prior; it is not a learned PPO improvement."
+    }
+  }
+}
