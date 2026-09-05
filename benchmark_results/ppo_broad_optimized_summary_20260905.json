@@ -1,0 +1,95 @@
+{
+  "format": "ppo-broad-optimized-training-summary-v1",
+  "machine": "h100-gpu5",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "seed": 271,
+  "training": {
+    "circuits": 14,
+    "iterations": 15,
+    "episodes_per_iteration": 224,
+    "max_steps": 16,
+    "max_actions": 64,
+    "collector_batch_size": 64,
+    "refresh_interval": 8,
+    "source_grouping": "first_gate",
+    "source_microbatch": 0,
+    "transition_transfer_backend": "batched",
+    "proposal_tensor_backend": "reuse",
+    "transitions": 46922,
+    "collection_seconds": 97.8674939903431,
+    "collection_transitions_per_second": 479.444175863234,
+    "update_seconds": 35.7230034626555,
+    "collection_plus_update_seconds": 133.5904974529986,
+    "collection_time_reduction_percent": 38.7800140181262,
+    "throughput_increase_percent": 63.2656161953947,
+    "collection_plus_update_reduction_percent": 31.6480352769328,
+    "final_approximate_kl": 0.014203432099893689,
+    "final_reference_kl": 0.1290519815683365,
+    "final_legality_balanced_accuracy": 0.929235,
+    "best_gate_counts": {
+      "tof_3.qasm": 45,
+      "tof_4.qasm": 75,
+      "tof_5.qasm": 105,
+      "tof_10.qasm": 255,
+      "barenco_tof_3.qasm": 58,
+      "barenco_tof_4.qasm": 114,
+      "barenco_tof_5.qasm": 170,
+      "barenco_tof_10.qasm": 450,
+      "mod5_4.qasm": 62,
+      "mod_mult_55.qasm": 119,
+      "mod_red_21.qasm": 276,
+      "vbe_adder_3.qasm": 146,
+      "csla_mux_3.qasm": 164,
+      "rc_adder_6.qasm": 198
+    },
+    "best_so_far_improvements": [
+      {"iteration": 0, "circuit": "csla_mux_3.qasm", "gates": 168},
+      {"iteration": 0, "circuit": "rc_adder_6.qasm", "gates": 198},
+      {"iteration": 1, "circuit": "csla_mux_3.qasm", "gates": 166},
+      {"iteration": 2, "circuit": "csla_mux_3.qasm", "gates": 164},
+      {"iteration": 2, "circuit": "mod5_4.qasm", "gates": 62},
+      {"iteration": 2, "circuit": "vbe_adder_3.qasm", "gates": 148},
+      {"iteration": 6, "circuit": "vbe_adder_3.qasm", "gates": 146},
+      {"iteration": 12, "circuit": "mod_red_21.qasm", "gates": 276}
+    ]
+  },
+  "previous_training": {
+    "transitions": 46945,
+    "collection_seconds": 159.862,
+    "collection_transitions_per_second": 293.659,
+    "update_seconds": 35.583
+  },
+  "heldout_beam_search": {
+    "beam_size": 1000,
+    "depth": 16,
+    "refresh_interval": 8,
+    "ppo_policy_weight": 0.25,
+    "results": [
+      {"circuit": "hwb6.qasm", "input": 259, "best": 253},
+      {"circuit": "gf2^4_mult.qasm", "input": 225, "best": 219},
+      {"circuit": "qcla_com_7.qasm", "input": 443, "best": 441},
+      {"circuit": "grover_5.qasm", "input": 831, "best": 813},
+      {"circuit": "gf2^5_mult.qasm", "input": 347, "best": 339},
+      {"circuit": "qcla_mod_7.qasm", "input": 884, "best": 884},
+      {"circuit": "adder_8.qasm", "input": 900, "best": 900}
+    ],
+    "totals": {
+      "input": 3889,
+      "gate_first": 3855,
+      "neutral_actor": 3848,
+      "previous_trained_ppo": 3846,
+      "optimized_trained_ppo": 3849
+    },
+    "audit": {
+      "valid_replays": "448/448",
+      "exact_topology_matches": "448/448"
+    }
+  },
+  "artifacts": {
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_ppo_matchset_broad_optimized_s271.pt",
+    "checkpoint_sha256": "191e8dd4f0530e9cb495827251412424c1deab2299dc88b8a89c530b6de73a85",
+    "training_json": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_ppo_matchset_broad_optimized_s271.training.json",
+    "training_json_sha256": "d3bbd3c7e91afcf6edc3989dc075495bc53578f7e2865c0fef3293479c1756fa"
+  },
+  "quality_decision": "Keep the previous broad PPO as the quality baseline; use this run as the optimized throughput baseline."
+}

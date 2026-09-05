@@ -1153,3 +1153,32 @@ Python proposal. The launcher now enables tensor reuse by default. Raw logs
 and the compact summary are
 `benchmark_results/ppo_training_tensor_reuse_ab_*_h100.json` and
 `benchmark_results/ppo_training_tensor_reuse_summary_20260905.json`.
+
+## Optimized broad PPO rerun
+
+The complete 15-iteration, 14-circuit KL-regularized training protocol was
+rerun with unchunked first-gate matching, batched transition transfer, and
+selected proposal tensor reuse. It collected 46,922 transitions in 97.867
+seconds (479.4 transitions/s), versus 46,945 in 159.862 seconds (293.7/s) in
+the original broad run. Collection time fell 38.8%, throughput rose 63.3%, and
+collection plus PPO update time fell from 195.445 to 133.590 seconds (-31.6%).
+PPO update time itself was unchanged at 35.7 seconds, as expected.
+
+Training best-so-far reached `mod5_4=62`, `mod_red_21=276`,
+`vbe_adder_3=146`, `csla_mux_3=164`, and `rc_adder_6=198`; the other nine
+circuits stayed at their inputs. The old stochastic run happened to find
+`csla_mux_3=159` and `rc_adder_6=192`, so faster execution did not improve the
+sampled training archive by itself.
+
+Zero-shot beam evaluation on seven held-out circuits produced 3,849 total
+gates: 253, 219, 441, 813, 339, 884, and 900 on `hwb6`, `gf2^4_mult`,
+`qcla_com_7`, `grover_5`, `gf2^5_mult`, `qcla_mod_7`, and `adder_8`. All 448
+audited trajectories replayed successfully and matched exact topology. This
+is six gates better than gate-first (3,855), but one gate worse than the
+neutral actor (3,848) and three worse than the prior trained PPO (3,846).
+Therefore the optimized checkpoint validates training throughput, not better
+generalization, and does not replace the prior model as the quality baseline.
+The full training log, held-out logs, hashes, and compact comparison are in
+`benchmark_results/ppo_matchset_broad_optimized_s271_h100.training.json`,
+`benchmark_results/optimized_broad_*_ppo_h100.json`, and
+`benchmark_results/ppo_broad_optimized_summary_20260905.json`.
