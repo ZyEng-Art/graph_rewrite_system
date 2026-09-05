@@ -80,6 +80,50 @@ def exact_state_key(runtime) -> ExactStateKey | None:
     )
 
 
+def reconcile_paged_topology_rows(
+    states: torch.Tensor,
+    live: torch.Tensor,
+    gate_types: torch.Tensor,
+    runtimes,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
+    """Mask paged rows to exact topologies changed by Quartz normalization."""
+
+    changed_rows = [
+        index
+        for index, runtime in enumerate(runtimes)
+        if runtime.paged_topology_changed
+    ]
+    if not changed_rows:
+        return states, live, gate_types, 0
+    required_slots = max(
+        states.shape[1],
+        max(runtimes[index].state.next_slot for index in changed_rows),
+    )
+    if states.shape[1] < required_slots:
+        extra = required_slots - states.shape[1]
+        states = F.pad(states, (0, 0, 0, extra))
+        live = F.pad(live, (0, extra), value=False)
+        gate_types = F.pad(gate_types, (0, extra), value=-1)
+    for row in changed_rows:
+        exact_live = torch.zeros(
+            required_slots, dtype=torch.bool, device=live.device
+        )
+        exact_types = torch.full(
+            (required_slots,),
+            -1,
+            dtype=gate_types.dtype,
+            device=gate_types.device,
+        )
+        for slot, gate_type in runtimes[row].state.topology_index.nodes.items():
+            exact_live[int(slot)] = True
+            exact_types[int(slot)] = int(gate_type)
+        states[row] *= exact_live.unsqueeze(-1)
+        live[row] = exact_live
+        gate_types[row] = exact_types
+        runtimes[row].paged_topology_changed = False
+    return states, live, gate_types, len(changed_rows)
+
+
 def remember_rejected_action(
     cache: RejectedActionCache | None,
     state_key: ExactStateKey | None,
@@ -366,6 +410,7 @@ def collect_hierarchical_episode_batch(
     replay_pool: dict[str, dict],
     replay_capacity_per_circuit: int,
     refresh_interval: int,
+    eliminate_rotation: bool = False,
     topology_audit_interval: int = 1,
     rejected_action_cache: RejectedActionCache | None = None,
     max_exact_rejections_per_episode: int = 8,
@@ -377,6 +422,8 @@ def collect_hierarchical_episode_batch(
 ) -> tuple[list[HierarchicalPPOTransition], list[EpisodeMetrics]]:
     if batch_size < 1 or refresh_interval < 1:
         raise ValueError("batch size and refresh interval must be positive")
+    if eliminate_rotation and refresh_interval != 1:
+        raise ValueError("rotation elimination requires exact refresh every step")
     timing = defaultdict(float)
     started = time.perf_counter()
     active, states, live, gate_types, arena, handles = initialize_episode_batch(
@@ -712,6 +759,9 @@ def collect_hierarchical_episode_batch(
             best_by_circuit=best_by_circuit,
             replay_pool=replay_pool,
             topology_audit_interval=topology_audit_interval,
+            eliminate_rotation=eliminate_rotation,
+            step_penalty=step_penalty,
+            terminate_on_improvement=terminate_on_improvement,
             profile_timing=timing,
             profile_counts=timing,
         )
@@ -843,6 +893,15 @@ def collect_hierarchical_episode_batch(
             handles = next_handles
             timing["cache_advance_seconds"] += advance_seconds
         active = continuing_runtimes
+        reconcile_started = time.perf_counter()
+        states, live, gate_types, reconciled_rows = reconcile_paged_topology_rows(
+            states, live, gate_types, active
+        )
+        if reconciled_rows:
+            timing["paged_rotation_reconcile_seconds"] += (
+                time.perf_counter() - reconcile_started
+            )
+            timing["paged_rotation_reconciled_rows"] += reconciled_rows
 
     transitions = []
     episode_metrics = []

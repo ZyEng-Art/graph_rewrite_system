@@ -160,6 +160,14 @@ def main() -> None:
     parser.add_argument("--disable-candidate-fallback", action="store_true")
     parser.add_argument("--max-actions", type=int, default=256)
     parser.add_argument("--refresh-interval", type=int, default=8)
+    parser.add_argument(
+        "--eliminate-rotation",
+        action="store_true",
+        help=(
+            "fold Quartz rotation parameters after every rewrite and reconcile "
+            "the normalized exact topology back into the paged rollout"
+        ),
+    )
     parser.add_argument("--topology-audit-interval", type=int, default=1)
     parser.add_argument("--page-size", type=int, default=8)
     parser.add_argument("--target-recall", type=float, default=0.95)
@@ -191,6 +199,8 @@ def main() -> None:
     parser.add_argument("--replay-start-probability", type=float, default=0.25)
     parser.add_argument("--resume-search-state", action="store_true")
     args = parser.parse_args()
+    if args.eliminate_rotation and args.refresh_interval != 1:
+        parser.error("--eliminate-rotation requires --refresh-interval 1")
 
     for optional_module in ("qiskit", "dgl"):
         if importlib.util.find_spec(optional_module) is None:
@@ -354,6 +364,7 @@ def main() -> None:
             replay_pool=run_replay,
             replay_capacity_per_circuit=64,
             refresh_interval=min(args.refresh_interval, run_max_steps),
+            eliminate_rotation=args.eliminate_rotation,
             topology_audit_interval=args.topology_audit_interval,
             rejected_action_cache=run_rejected_cache,
             max_exact_rejections_per_episode=(

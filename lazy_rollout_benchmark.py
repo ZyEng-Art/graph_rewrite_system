@@ -975,6 +975,15 @@ def replay_state(
         for guid, slot in surviving_destination_pairs:
             guid_to_slot[int(guid)] = int(slot)
             slot_to_guid[int(slot)] = int(guid)
+        if eliminate_rotation:
+            guid_to_slot = {
+                guid: slot
+                for guid, slot in guid_to_slot.items()
+                if guid in live_guids
+            }
+            slot_to_guid = {
+                slot: guid for guid, slot in guid_to_slot.items()
+            }
         graph = next_graph
         add_seconds("slot_update_and_graph_swap_seconds", update_started)
         add_count("actions_applied")

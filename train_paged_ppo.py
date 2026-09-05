@@ -32,6 +32,7 @@ from gpu_proposals import (
 from incremental_graph import parse_pattern
 from lazy_rollout_benchmark import (
     ExactReplayCacheEntry,
+    distances_from_components,
     indexed_topology,
     lazy_child,
     replay_state,
@@ -123,6 +124,7 @@ class EpisodeRuntime:
     exact_replay_actions: int = 0
     exact_refresh_seconds: float = 0.0
     wide_candidates: bool = False
+    paged_topology_changed: bool = False
 
 
 def make_replay_bucket(graph) -> dict:
@@ -234,6 +236,84 @@ def topology_audit_required(
         or state.depth % interval == 0
         or state.gate_count < best_by_circuit[runtime.circuit]["gate_count"]
     )
+
+
+def reconcile_rotation_normalized_state(
+    runtime: EpisodeRuntime,
+    exact_graph,
+    exact_slots: dict[int, int],
+    *,
+    step_penalty: float,
+) -> bool:
+    """Replace a static lazy topology with Quartz's normalized result."""
+
+    state = runtime.state
+    exact_snapshot = snapshot(exact_graph, exact_slots)
+    exact_topology = indexed_topology(exact_snapshot)
+    current_topology = (
+        state.topology_index
+        if state.topology_index is not None
+        else indexed_topology(state.snapshot)
+    )
+    changed = (
+        int(exact_graph.gate_count) != state.gate_count
+        or exact_topology.nodes != current_topology.nodes
+        or exact_topology.edges != current_topology.edges
+    )
+    if not changed:
+        return False
+    if len(runtime.pending_transition_indices) != 1:
+        raise RuntimeError(
+            "rotation reconciliation requires exactly one pending transition"
+        )
+    if exact_topology.nodes and max(exact_topology.nodes) >= state.next_slot:
+        raise RuntimeError("Quartz normalization introduced an unreserved slot")
+
+    live_slots = set(exact_topology.nodes)
+    destination_slots = set(state.history[-1].destination_slots) & live_slots
+    if isinstance(state.rewrite_distance, dict):
+        distance_items = state.rewrite_distance.items()
+    else:
+        distance_items = enumerate(state.rewrite_distance)
+    previous_core = {
+        int(slot)
+        for slot, distance in distance_items
+        if int(distance) == 0 and int(slot) in live_slots
+    }
+    core = destination_slots | previous_core
+
+    if isinstance(state.last_touched, dict):
+        touched_items = state.last_touched.items()
+    else:
+        touched_items = enumerate(state.last_touched)
+    state.last_touched = {
+        int(slot): int(touched)
+        for slot, touched in touched_items
+        if int(touched) >= 0 and int(slot) in live_slots
+    }
+    state.rewrite_distance = distances_from_components(
+        exact_topology.nodes, exact_topology.edges, core
+    )
+    state.previous_preferred &= live_slots
+    state.snapshot = None
+    state.topology_index = exact_topology
+    state.gate_count = int(exact_graph.gate_count)
+
+    runtime.topology_hashes.discard(int(current_topology.fingerprint))
+    runtime.topology_hashes.add(int(exact_topology.fingerprint))
+    runtime.paged_topology_changed = True
+    runtime.final_gate_count = state.gate_count
+
+    transition = runtime.transitions[runtime.pending_transition_indices[-1]]
+    transition.next_gate_count = state.gate_count
+    transition.reward = shaped_transition_reward(
+        transition.previous_gate_count,
+        state.gate_count,
+        repeated_state=False,
+        step_penalty=step_penalty,
+        cycle_reward=0.0,
+    )
+    return True
 
 
 def initialize_episode(
@@ -1116,6 +1196,9 @@ def refresh_speculative_runtimes(
     best_by_circuit: dict[str, dict],
     replay_pool: dict[str, dict],
     topology_audit_interval: int = 1,
+    eliminate_rotation: bool = False,
+    step_penalty: float = 0.0,
+    terminate_on_improvement: bool = False,
     profile_timing: dict[str, float] | None = None,
     profile_counts: dict[str, float] | None = None,
 ) -> None:
@@ -1174,7 +1257,8 @@ def refresh_speculative_runtimes(
                 profile_counts=replay_counts,
                 replay_cache=replay_cache,
                 replay_cache_prefixes=replay_prefixes,
-                validate_topology=validate_topology,
+                eliminate_rotation=eliminate_rotation,
+                validate_topology=validate_topology and not eliminate_rotation,
             )
             replay_seconds = time.perf_counter() - started
             runtime.exact_refresh_seconds += replay_seconds
@@ -1218,6 +1302,19 @@ def refresh_speculative_runtimes(
                 runtime.stopped = True
                 add_seconds("refresh_result_processing_seconds", result_started)
                 continue
+
+            if eliminate_rotation:
+                reconciled = reconcile_rotation_normalized_state(
+                    runtime,
+                    exact_graph,
+                    exact_slots,
+                    step_penalty=step_penalty,
+                )
+                add_count(
+                    "rotation_topology_reconciliations" if reconciled
+                    else "rotation_topology_unchanged"
+                )
+                topology_ok = True
 
             if not topology_ok:
                 failed_index = runtime.pending_transition_indices[-1]
@@ -1271,6 +1368,13 @@ def refresh_speculative_runtimes(
                 circuit_best["qasm"] = exact_graph.to_qasm_str()
                 circuit_best["episode_depth"] = state.depth
                 add_seconds("refresh_result_best_qasm_seconds", best_started)
+            if (
+                terminate_on_improvement
+                and state.gate_count < runtime.initial_gate_count
+            ):
+                runtime.transitions[-1].done = True
+                runtime.terminated_reason = "improvement"
+                runtime.stopped = True
             add_seconds("refresh_result_processing_seconds", result_started)
     add_seconds("refresh_profiled_total_seconds", refresh_started)
 
