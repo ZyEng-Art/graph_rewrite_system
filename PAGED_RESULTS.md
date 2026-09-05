@@ -1337,3 +1337,38 @@ cached inputs. A follow-up cProfile reduced source representation calls from
 `benchmark_results/ppo_training_source_cache_ab_*_h100.json`,
 `benchmark_results/ppo_source_representation_profile_counts_20260905.txt`, and
 `benchmark_results/ppo_training_source_representation_cache_summary_20260905.json`.
+
+## Original Quarl rollout scaling profile
+
+Quarl's audited original `agent_collect` path was profiled for one fixed-work
+iteration on five Nam circuits from 58 to 3,435 gates. Every run loaded the
+same `iter_576.pt` checkpoint, used 64 episodes of exactly 20 steps (1,280
+transitions), batch size 64, one PPO epoch, and zero learning rates. Timing-only
+instrumentation synchronizes CUDA at model-stage boundaries and accounts for
+99.24-99.67% of rollout wall time. The profiled 3,435-gate run took 39.86
+seconds versus 40.56 seconds for the byte-identical uninstrumented source with
+the same seed and outcome, within normal run variation.
+
+| circuit | gates | rollout | transitions/s | rollout/iteration |
+|---|---:|---:|---:|---:|
+| `barenco_tof_3` | 58 | 5.034s | 254.26 | 89.8% |
+| `vbe_adder_3` | 150 | 6.188s | 206.86 | 84.5% |
+| `hwb6` | 259 | 6.889s | 185.81 | 92.4% |
+| `grover_5` | 831 | 10.754s | 119.03 | 93.9% |
+| `gf2_16_mult` | 3,435 | 39.859s | 32.11 | 98.1% |
+
+For 58-259 gates, materializing the current and next DGL subgraphs needed by
+the original PPO update is the largest group at 35-44% of rollout. Exact
+Quartz apply grows from 1.2% at 58 gates to 28.3% at 831 and 38.0% at 3,435.
+At 3,435 gates, `apply_xfer_with_local_state_tracking`, selected-node
+`available_xfers_parallel` plus mask construction, and full graph-to-DGL
+conversion consume 38.0%, 19.6%, and 13.5%, respectively. These three stages
+account for 71.1% of rollout; GNN inference is only 5.3% there. The largest run
+retained only 19 buffer states, so this slowdown is not a large-buffer effect.
+
+The instrumenter validates original source hashes before applying, and the run
+script fixes the checkpoint, horizon, episode count, batch size, and no-learning
+protocol. Detailed mutually exclusive stage percentages, absolute time per
+transition, source/environment identity, and remote raw-log paths are in
+`benchmark_results/quarl_original_rollout_size_profile_summary_20260905.json`
+and `benchmark_results/quarl_original_rollout_size_profile_findings_20260905.md`.
