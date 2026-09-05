@@ -1,0 +1,71 @@
+{
+  "best_gate_count": 62,
+  "best_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/archive_resident_v2_mod5_gate_b256_r2d16/exact_archive/best_g62_round_0000.qasm",
+  "best_round": 0,
+  "config": {
+    "action_value_weight": 0.25,
+    "beam_size": 256,
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_onpolicy_v13_r8_lr5e5_epoch1.pt",
+    "depth_per_round": 16,
+    "max_gate_increase": 1,
+    "proposal_ranking": "gate",
+    "refresh_factor": 2,
+    "refresh_interval": 8,
+    "rounds_per_invocation": 2
+  },
+  "copied_input_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/archive_resident_v2_mod5_gate_b256_r2d16/roots/mod5_4.qasm",
+  "format": "accelerated-self-improve-v1",
+  "improvements": [
+    {
+      "gate_count": 62,
+      "qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/archive_resident_v2_mod5_gate_b256_r2d16/exact_archive/best_g62_round_0000.qasm",
+      "round": 0
+    }
+  ],
+  "initial_gate_count": 63,
+  "input_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/mod5_4.qasm",
+  "next_round": 2,
+  "rounds": [
+    {
+      "best_gate_count_so_far": 62,
+      "improved": true,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/archive_resident_v2_mod5_gate_b256_r2d16/runs/run_0000/refresh_histories/segment_0000_depth_0016.json",
+      "restarted_from_best": true,
+      "root_gate_count": 63,
+      "round": 0,
+      "round_best_exact_gate_count": 62,
+      "search_step": 16,
+      "stale_rounds": 1
+    },
+    {
+      "best_gate_count_so_far": 62,
+      "improved": false,
+      "refresh_history": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/archive_resident_v2_mod5_gate_b256_r2d16/runs/run_0000/refresh_histories/segment_0001_depth_0032.json",
+      "restarted_from_best": false,
+      "root_gate_count": 62,
+      "round": 1,
+      "round_best_exact_gate_count": 62,
+      "search_step": 32,
+      "stale_rounds": 3
+    }
+  ],
+  "runs": [
+    {
+      "best_gate_count": 62,
+      "best_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/archive_resident_v2_mod5_gate_b256_r2d16/runs/run_0000/best_exact.qasm",
+      "completed_rounds": 2,
+      "final_histories": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/archive_resident_v2_mod5_gate_b256_r2d16/runs/run_0000/final_beam_histories.json",
+      "improved": true,
+      "log": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/archive_resident_v2_mod5_gate_b256_r2d16/runs/run_0000/rollout.log",
+      "model_loads": 1,
+      "refresh_histories_dir": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/archive_resident_v2_mod5_gate_b256_r2d16/runs/run_0000/refresh_histories",
+      "result": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/archive_resident_v2_mod5_gate_b256_r2d16/runs/run_0000/rollout.json",
+      "root_gate_count": 63,
+      "run": 0,
+      "search_seconds": 3.376366308890283,
+      "start_round": 0,
+      "wall_seconds": 37.781407833099365
+    }
+  ],
+  "stale_rounds": 3
+}

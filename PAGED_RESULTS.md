@@ -749,3 +749,40 @@ returns 62 gates.  Search excluding audit takes 1.566 seconds.  The full result
 and exported circuit are retained as
 `benchmark_results/best_exact_tracking_smoke_mod5_b256_d8.json` and
 `benchmark_results/best_exact_tracking_smoke_mod5_b256_d8_best.qasm`.
+
+## Resident best-root self-improvement
+
+`accelerated_self_improve.py` adds a persistent, resumable archive around the
+paged search.  More importantly, `--restart-from-best-at-refresh` can relocate
+the search root inside the existing process.  The model, rule tensors, Quartz
+context, and CUDA allocations remain resident.  Only the selected exact graph,
+incremental graph tensors, dedup set, and empty paged-cache handles are reset.
+`--best-root-restart-interval` separates correctness refreshes from root
+relocation, so a 16-action training trajectory can still refresh at action 8.
+
+Every refresh beam can be written with `--dump-refresh-histories-dir`.  Each
+file contains the exact segment root snapshot and action histories relative to
+that root, making the files directly consumable by the preference collector.
+The archive records the root gate count, monotonic exact best, history path,
+stale-refresh count, and whether the next segment restarted from the best.
+
+On H100, three `mod5_4` rounds with beam 256 and eight actions per round compare
+as follows:
+
+| execution | model loads | wall time | exact best trace |
+|---|---:|---:|---|
+| one Python process per round | 3 | 112.57 s | 63 -> 62 -> 62 -> 62 |
+| resident model/CUDA process | 1 | **37.89 s** | 63 -> 62 -> 62 -> 62 |
+
+Resident execution reduces wall time by 66.3% (2.97x).  A separate two-round,
+16-action test refreshes every eight actions and relocates only at actions 16
+and 32.  It records roots 63 then 62, keeps the exact best at 62, independently
+replays 64/64 final states successfully with 64/64 topology matches, spends
+3.376 seconds in search, and takes 37.781 seconds including the single process
+and model startup.  The artifacts are:
+
+- `benchmark_results/process_per_round_archive_mod5_b256_r3d8.json`;
+- `benchmark_results/resident_archive_mod5_b256_r3d8.json`;
+- `benchmark_results/resident_best_archive_mod5_b256_r2d16.json`;
+- `benchmark_results/resident_best_archive_mod5_b256_r2d16_rollout.json`;
+- `benchmark_results/resident_best_archive_mod5_b256_r2d16_best.qasm`.

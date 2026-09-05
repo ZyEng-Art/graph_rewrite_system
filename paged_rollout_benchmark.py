@@ -251,6 +251,30 @@ def append_beam_level(path: Path, depth: int, beam: list[BeamState]) -> None:
         )
 
 
+def write_beam_histories(
+    path: Path,
+    *,
+    qasm: Path,
+    initial_qasm: str,
+    initial_snapshot: dict,
+    beam: list[BeamState],
+    completed_depth: int,
+    segment_index: int,
+    segment_start_depth: int,
+) -> None:
+    payload = {
+        "qasm": str(qasm),
+        "initial_qasm": initial_qasm,
+        "initial_snapshot": initial_snapshot,
+        "completed_depth": completed_depth,
+        "segment_index": segment_index,
+        "segment_start_depth": segment_start_depth,
+        "states": [serialized_history_state(state) for state in beam],
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+
 @torch.no_grad()
 def paged_model_matches(
     beam: list[BeamState],
@@ -694,6 +718,34 @@ def main() -> None:
     parser.add_argument("--best-qasm", type=Path)
     parser.add_argument("--dump-beam-histories", type=Path)
     parser.add_argument(
+        "--dump-refresh-histories-dir",
+        type=Path,
+        help="write each exact refresh beam as a separate training history file",
+    )
+    parser.add_argument(
+        "--restart-from-best-at-refresh",
+        action="store_true",
+        help=(
+            "after each non-final exact refresh, reset the beam to the confirmed "
+            "best-so-far without reloading the model or CUDA state"
+        ),
+    )
+    parser.add_argument(
+        "--best-root-restart-interval",
+        type=int,
+        default=0,
+        help=(
+            "actions between best-root restarts; 0 restarts at every refresh and "
+            "the value must be a multiple of --refresh-interval"
+        ),
+    )
+    parser.add_argument(
+        "--stop-after-stale-refreshes",
+        type=int,
+        default=0,
+        help="stop after this many exact refreshes without a new best (0 disables)",
+    )
+    parser.add_argument(
         "--dump-beam-levels",
         type=Path,
         help="write every actual per-depth beam as JSONL for strict cache A/B",
@@ -738,6 +790,22 @@ def main() -> None:
             parser.error("value proposal ranking requires --proposal-backend gpu")
         if args.action_value_weight <= 0:
             parser.error("value proposal ranking requires --action-value-weight > 0")
+    if args.restart_from_best_at_refresh and not args.refresh_interval:
+        parser.error("best-root restart requires a positive refresh interval")
+    if args.restart_from_best_at_refresh and args.exploration_checkpoint is not None:
+        parser.error("best-root restart does not yet support an exploration model")
+    if args.stop_after_stale_refreshes < 0:
+        parser.error("--stop-after-stale-refreshes must be nonnegative")
+    if args.best_root_restart_interval < 0:
+        parser.error("--best-root-restart-interval must be nonnegative")
+    if args.best_root_restart_interval and not args.restart_from_best_at_refresh:
+        parser.error("best-root restart interval requires best-root restart")
+    if (
+        args.best_root_restart_interval
+        and args.refresh_interval
+        and args.best_root_restart_interval % args.refresh_interval
+    ):
+        parser.error("best-root restart interval must be a multiple of refresh interval")
 
     # Quartz imports these packages unconditionally for conversion and DGL
     # helpers, while this benchmark uses only its compiled graph API.  Supply
@@ -842,13 +910,20 @@ def main() -> None:
 
     graph = quartz.PyGraph.from_qasm(context=context, filename=str(args.qasm))
     initial_qasm = graph.to_qasm_str()
+    replay_initial_qasm = initial_qasm
     guid_to_slot: dict[int, int] = {}
     next_slot = update_slots(graph, guid_to_slot, 0)
     initial_snapshot = snapshot(graph, guid_to_slot)
+    replay_initial_snapshot = initial_snapshot
     initial_gate_count = int(graph.gate_count)
     best_exact_graph = graph
     best_exact_gate_count = initial_gate_count
     best_exact_depth = 0
+    segment_index = 0
+    segment_start_depth = 0
+    segment_root_gate_count = initial_gate_count
+    restart_count = 0
+    stale_refreshes = 0
     beam = [
         BeamState(
             graph=None,
@@ -1197,8 +1272,10 @@ def main() -> None:
         refresh_profile_counts: dict[str, int] = {}
         checkpoint_audited = 0
         checkpoint_mismatches = 0
+        refresh_improved_best = False
         if refresh_due:
             refresh_started = time.perf_counter()
+            best_before_refresh = best_exact_gate_count
             refresh_candidates = len(beam)
             valid_indices = []
             refresh_checkpoints = {}
@@ -1223,7 +1300,7 @@ def main() -> None:
                     context,
                     quartz.PyGraph,
                     xfers,
-                    initial_qasm,
+                    replay_initial_qasm,
                     return_checkpoint=True,
                     profile_timing=(
                         refresh_profile_seconds if args.profile_stages else None
@@ -1248,7 +1325,7 @@ def main() -> None:
                         context,
                         quartz.PyGraph,
                         xfers,
-                        initial_qasm,
+                        replay_initial_qasm,
                         return_checkpoint=True,
                         ignore_checkpoint=True,
                         profile_timing=(
@@ -1302,7 +1379,9 @@ def main() -> None:
                 if state.gate_count < best_exact_gate_count:
                     best_exact_graph = exact_graph
                     best_exact_gate_count = state.gate_count
-                    best_exact_depth = len(state.history)
+                    best_exact_depth = segment_start_depth + len(state.history)
+            refresh_improved_best = best_exact_gate_count < best_before_refresh
+            stale_refreshes = 0 if refresh_improved_best else stale_refreshes + 1
             refresh_seconds = time.perf_counter() - refresh_started
         else:
             keep_indices = list(range(min(args.beam_size, len(beam))))
@@ -1336,6 +1415,106 @@ def main() -> None:
         if args.profile_stages and device.type == "cuda":
             torch.cuda.synchronize(device)
         beam_prune_seconds = time.perf_counter() - beam_prune_started
+        searched_segment_index = segment_index
+        searched_segment_start_depth = segment_start_depth
+        searched_segment_root_gate_count = segment_root_gate_count
+        accepted_beam_size = len(beam)
+        accepted_best_gate_count = min(state.gate_count for state in beam)
+        refresh_history_path = None
+        if refresh_due and args.dump_refresh_histories_dir is not None:
+            refresh_history_path = args.dump_refresh_histories_dir / (
+                f"segment_{segment_index:04d}_depth_{step + 1:04d}.json"
+            )
+            write_beam_histories(
+                refresh_history_path,
+                qasm=args.qasm,
+                initial_qasm=replay_initial_qasm,
+                initial_snapshot=replay_initial_snapshot,
+                beam=beam,
+                completed_depth=max(len(state.history) for state in beam),
+                segment_index=segment_index,
+                segment_start_depth=segment_start_depth,
+            )
+
+        restart_seconds = 0.0
+        best_root_restart_due = bool(
+            refresh_due
+            and args.restart_from_best_at_refresh
+            and (
+                not args.best_root_restart_interval
+                or (step + 1) % args.best_root_restart_interval == 0
+            )
+        )
+        stopped_for_stale_refreshes = bool(
+            refresh_due
+            and args.stop_after_stale_refreshes
+            and stale_refreshes >= args.stop_after_stale_refreshes
+        )
+        restarted_from_best = bool(
+            best_root_restart_due
+            and args.restart_from_best_at_refresh
+            and step + 1 < args.depth
+            and not stopped_for_stale_refreshes
+        )
+        segment_completed = bool(
+            refresh_due
+            and (
+                best_root_restart_due
+                or step + 1 == args.depth
+                or stopped_for_stale_refreshes
+            )
+        )
+        if restarted_from_best:
+            restart_started = time.perf_counter()
+            for handle in handles:
+                arena.release(handle)
+            if arena.allocated_pages:
+                raise RuntimeError("paged cache pages leaked while restarting from best")
+            root_graph = best_exact_graph
+            root_guid_to_slot: dict[int, int] = {}
+            root_next_slot = update_slots(root_graph, root_guid_to_slot, 0)
+            root_snapshot = snapshot(root_graph, root_guid_to_slot)
+            replay_initial_qasm = root_graph.to_qasm_str()
+            replay_initial_snapshot = root_snapshot
+            segment_index += 1
+            segment_start_depth = step + 1
+            segment_root_gate_count = best_exact_gate_count
+            beam = [
+                BeamState(
+                    graph=None,
+                    snapshot=root_snapshot,
+                    guid_to_slot={},
+                    next_slot=root_next_slot,
+                    last_touched={},
+                    rewrite_distance={
+                        int(row[0]): 5 for row in root_snapshot["nodes"]
+                    },
+                    previous_preferred=set(),
+                    local_streak=0,
+                    gate_count=best_exact_gate_count,
+                    depth=0,
+                    history=(),
+                    topology_index=indexed_topology(root_snapshot),
+                    exact_graph_checkpoint=root_graph,
+                    exact_slot_checkpoint=dict(root_guid_to_slot),
+                    exact_checkpoint_depth=0,
+                )
+            ]
+            with torch.no_grad(), autocast_context(device):
+                slot_states, live, gate_types = model.initialize_incremental(
+                    move_batch(initial_batch(root_snapshot), device)
+                )
+            handles = [arena.empty_handle()]
+            if args.dedup_mode == "canonical":
+                seen = {topology_digest(root_snapshot)}
+            elif args.dedup_mode == "raw":
+                seen = {raw_topology_hash(root_snapshot)}
+            else:
+                seen = set()
+            restart_count += 1
+            if args.profile_stages and device.type == "cuda":
+                torch.cuda.synchronize(device)
+            restart_seconds = time.perf_counter() - restart_started
         logical_pages = sum(len(handle.blocks) for handle in handles)
         elapsed = time.perf_counter() - step_started
         stage_seconds: dict[str, float] = {}
@@ -1364,23 +1543,36 @@ def main() -> None:
             )
             stage_seconds["exact_quartz_refresh_seconds"] = refresh_seconds
             stage_seconds["beam_prune_and_reindex_seconds"] = beam_prune_seconds
+            stage_seconds["best_root_restart_seconds"] = restart_seconds
             stage_seconds["step_unattributed_seconds"] = max(
                 0.0, elapsed - sum(stage_seconds.values())
             )
         row = {
             "step": step + 1,
+            "segment_index": searched_segment_index,
+            "segment_start_depth": searched_segment_start_depth,
+            "segment_root_gate_count": searched_segment_root_gate_count,
             "input_states": input_state_count,
             "output_states": len(beam),
-            "best_speculative_gate_count": min(
-                state.gate_count for state in beam
-            ),
+            "accepted_states_before_restart": accepted_beam_size,
+            "best_speculative_gate_count": accepted_best_gate_count,
             "best_exact_gate_count_so_far": best_exact_gate_count,
             "best_exact_depth_so_far": best_exact_depth,
+            "refresh_improved_best": refresh_improved_best,
+            "stale_refreshes": stale_refreshes,
+            "stopped_for_stale_refreshes": stopped_for_stale_refreshes,
+            "best_root_restart_due": best_root_restart_due,
+            "segment_completed": segment_completed,
+            "restarted_from_best": restarted_from_best,
+            "restart_seconds": restart_seconds,
+            "refresh_history": (
+                str(refresh_history_path) if refresh_history_path is not None else None
+            ),
             "predicted_actions": predicted_action_count,
             "eligible_actions_before_parent_cap": eligible_actions,
             "proposals_after_caps": len(proposals),
             "attempted_actions": attempted,
-            "accepted_actions": len(beam),
+            "accepted_actions": accepted_beam_size,
             "invalid_structural_actions": invalid,
             "duplicate_speculative_successors": duplicates,
             "model_match_seconds": model_seconds,
@@ -1441,6 +1633,8 @@ def main() -> None:
         print(json.dumps(row, sort_keys=True), flush=True)
         if args.dump_beam_levels is not None:
             append_beam_level(args.dump_beam_levels, step + 1, beam)
+        if stopped_for_stale_refreshes:
+            break
 
     search_seconds = time.perf_counter() - total_started
     stage_totals: dict[str, float] = {}
@@ -1481,7 +1675,7 @@ def main() -> None:
             context,
             quartz.PyGraph,
             xfers,
-            initial_qasm,
+            replay_initial_qasm,
             ignore_checkpoint=True,
             prefer_direct_binding=False,
         )
@@ -1498,7 +1692,7 @@ def main() -> None:
         if gate_count < best_exact_gate_count:
             best_exact_graph = exact_graph
             best_exact_gate_count = gate_count
-            best_exact_depth = len(state.history)
+            best_exact_depth = segment_start_depth + len(state.history)
     audit = {
         "audited_states": audited,
         "valid_trajectories": valid,
@@ -1519,6 +1713,14 @@ def main() -> None:
         "best_speculative_gate_count": min(state.gate_count for state in beam),
         "best_exact_gate_count": best_exact_gate_count,
         "best_exact_depth": best_exact_depth,
+        "restart_from_best_at_refresh": args.restart_from_best_at_refresh,
+        "best_root_restart_interval": args.best_root_restart_interval,
+        "restart_count": restart_count,
+        "stop_after_stale_refreshes": args.stop_after_stale_refreshes,
+        "stale_refreshes": stale_refreshes,
+        "final_segment_index": segment_index,
+        "final_segment_start_depth": segment_start_depth,
+        "final_segment_root_gate_count": segment_root_gate_count,
         "final_beam_size": len(beam),
         "dedup_mode": args.dedup_mode,
         "lazy_topology_backend": args.lazy_topology_backend,
@@ -1603,18 +1805,15 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(rendered)
     if args.dump_beam_histories is not None:
-        history_payload = {
-            "qasm": str(args.qasm),
-            "initial_qasm": initial_qasm,
-            "initial_snapshot": initial_snapshot,
-            "completed_depth": len(step_rows),
-            "states": [
-                serialized_history_state(state) for state in beam
-            ],
-        }
-        args.dump_beam_histories.parent.mkdir(parents=True, exist_ok=True)
-        args.dump_beam_histories.write_text(
-            json.dumps(history_payload, indent=2, sort_keys=True) + "\n"
+        write_beam_histories(
+            args.dump_beam_histories,
+            qasm=args.qasm,
+            initial_qasm=replay_initial_qasm,
+            initial_snapshot=replay_initial_snapshot,
+            beam=beam,
+            completed_depth=max((len(state.history) for state in beam), default=0),
+            segment_index=segment_index,
+            segment_start_depth=segment_start_depth,
         )
     if args.best_qasm is not None:
         args.best_qasm.parent.mkdir(parents=True, exist_ok=True)
