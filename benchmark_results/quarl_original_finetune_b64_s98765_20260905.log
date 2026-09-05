@@ -1,0 +1,939 @@
+/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/torch/cuda/__init__.py:58: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/SharedData/dengzy/Quarl/experiment/ppo-new/original_snapshot_compat_20260828/ppo.py:787: Hydra14MigrationWarning: 
+The version_base parameter is not specified.
+Hydra will assume defaults for version 1.1.
+Hydra 1.4 will remove this compatibility behavior.
+Before upgrading to Hydra 1.4, set version_base="1.3" and test your application.
+See https://hydra.cc/docs/upgrades/1.3_to_1.4/prepare_for_1_4/ for preparation instructions.
+  @hydra.main(config_path='config', config_name='config')
+/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/hydra/_internal/hydra.py:119: UserWarning: Future Hydra versions will no longer change working directory at job runtime by default.
+See https://hydra.cc/docs/1.2/upgrades/1.1_to_1.2/changes_to_job_working_dir/ for more information.
+  ret = run_job(
+wandb: WARNING `wandb.require('service')` is a no-op as it is now the default behavior.
+================ Configs ================
+mode: train
+resume: true
+resume_optimizer: false
+ckpt_path: /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/h100_nam_pretrain_6small_cluster_20260816_183726/ckpts/iter_576.pt
+load_non_ddp_ckpt: true
+load_best_info: false
+best_info_dir: outputs/2022-06-26/08-45-11/sync_dir
+gpus:
+- 0
+ddp_port: 33907
+omp_num_threads: 4
+seed: 98765
+wandb:
+  en: false
+  offline: false
+  entity: quartz
+  project: PPO-Finetune-04
+gate_set:
+- h
+- cx
+- x
+- rz
+- add
+ecc_file: ../ecc_set/nam_ecc.json
+no_increase: false
+include_nop: true
+num_gate_types: 40
+input_graphs:
+- name: barenco_tof_3
+  path: ../circs/nam_circs/barenco_tof_3.qasm
+gnn_type: QGNN
+gate_type_embed_dim: 16
+gnn_num_layers: 6
+gnn_hidden_dim: 128
+gnn_output_dim: 128
+gin_num_mlp_layers: 2
+gin_learn_eps: false
+gin_neighbor_pooling_type: sum
+gin_graph_pooling_type: none
+actor_hidden_size: 256
+critic_hidden_size: 128
+gamma: 0.95
+entropy_coeff: 0.02
+eps_clip: 0.2
+softmax_temp_en: true
+hit_rate: 0.9
+mp_start_method: spawn
+obs_per_agent: 0
+cost_type: gate_count
+nop_stop: true
+invalid_reward: -1.0
+max_extra_cost: 6
+limit_total_gate_count: false
+batch_inference: true
+dyn_eps_len: true
+max_eps_len: 600
+min_eps_len: 20
+greedy_sample: true
+agent_collect: true
+agent_batch_size: 64
+subgraph_opt: true
+xfer_pred_layers: 1
+max_iterations: 597
+num_eps_per_iter: 64
+mini_batch_size: 4800
+k_epochs: 5
+lr_gnn: 0.0003
+lr_actor: 0.0003
+lr_critic: 0.0005
+lr_scheduler: linear
+lr_start_factor: 0.1
+lr_warmup_epochs: 15
+update_policy_interval: 1
+save_ckpt_interval: 1
+time_budget: ''
+wandb_run_name_suffix: ''
+best_graph_output_dir: best_graphs
+output_full_seq: false
+full_seq_path: ''
+vmem_perct_limit: 70.0
+
+output_dir : /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905
+=========================================
+spawning 1 local processes (1 total), node_rank=0/1, master_addr=127.0.0.1...
+/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/torch/cuda/__init__.py:58: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/SharedData/dengzy/Quarl/experiment/ppo-new/original_snapshot_compat_20260828/ppo.py:787: Hydra14MigrationWarning: 
+The version_base parameter is not specified.
+Hydra will assume defaults for version 1.1.
+Hydra 1.4 will remove this compatibility behavior.
+Before upgrading to Hydra 1.4, set version_base="1.3" and test your application.
+See https://hydra.cc/docs/upgrades/1.3_to_1.4/prepare_for_1_4/ for preparation instructions.
+  @hydra.main(config_path='config', config_name='config')
+/SharedData/dengzy/Quarl/experiment/ppo-new/original_snapshot_compat_20260828/qtz.py:45: UserWarning: enum class GateType not importable from CCore. You are probably using a cpdef enum declared in a .pxd file that does not have a .py  or .pyx file.
+  quartz_context = quartz.QuartzContext(
+rank 0 / 1 on cuda:0 initialized
+/SharedData/dengzy/Quarl/experiment/ppo-new/original_snapshot_compat_20260828/ppo.py:625: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  ckpt = torch.load(ckpt_path, map_location=self.agent.device)
+resumed from "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/h100_nam_pretrain_6small_cluster_20260816_183726/ckpts/iter_576.pt"!
+
+  Data for iter 577 collected in 4.998093483 s .
+[2026-09-05 11:49:36.823877] 
+  Training lasted 0:00:05.005292 .
+    barenco_tof_3_best_graph_cost : 58
+    barenco_tof_3_best_graph_gate_count : 58
+    barenco_tof_3_best_graph_cx_count : 24
+    barenco_tof_3_best_graph_depth : 45
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 5
+    barenco_tof_3_mean_epslen : 1.2237093690248566
+    barenco_tof_3_max_epslen_global : 5
+    barenco_tof_3_max_eps_reward : 3.0
+    barenco_tof_3_mean_eps_reward : -0.0009560229445506687
+    barenco_tof_3_mean_exp_reward : -0.00078125
+    barenco_tof_3_min_init_gate_count : 58
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 58.0
+    barenco_tof_3_min_gate_count_iter : 58
+    barenco_tof_3_max_gate_count_iter : 60
+    barenco_tof_3_mean_gate_count_iter : 58.00472914875323
+    barenco_tof_3_min_init_cx_count : 24
+    barenco_tof_3_max_init_cx_count : 24
+    barenco_tof_3_mean_init_cx_count : 24.0
+    barenco_tof_3_min_cx_count_iter : 24
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 24.004729148753224
+    barenco_tof_3_min_init_depth : 40
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 44.22753346080306
+    barenco_tof_3_min_depth_iter : 40
+    barenco_tof_3_max_depth_iter : 48
+    barenco_tof_3_mean_depth_iter : 44.17583834909716
+    barenco_tof_3_min_init_cost : 58
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 58.0
+    barenco_tof_3_min_cost_iter : 58
+    barenco_tof_3_max_cost_iter : 60
+    barenco_tof_3_mean_cost_iter : 58.00472914875323
+    barenco_tof_3_buffer_size : 200
+    barenco_tof_3_diff_costs : 1
+    barenco_tof_3_min_cost : 58
+    barenco_tof_3_max_cost : 58
+    iter : 577
+    num_exps : 1280
+    tot_exps_collected_all_rank : 1280
+    lr_0 : 2.9999999999999997e-05
+    lr_1 : 2.9999999999999997e-05
+    lr_2 : 5e-05
+    vmem_perct : 0.07954505594145228
+Iter 577 : 0/5 |          | 00:00 Iter 577 : 1/5 |██        | 00:01 Iter 577 : 1/5 |██        | 00:01 , actor_loss=0.0132, critic_loss=2.78, xfer_entropy=0.832, loss=1.39Iter 577 : 1/5 |██        | 00:01 , actor_loss=0.0132, critic_loss=2.78, xfer_entropy=0.832, loss=1.39Iter 577 : 2/5 |████      | 00:01 , actor_loss=0.0128, critic_loss=2.64, xfer_entropy=0.833, loss=1.32Iter 577 : 2/5 |████      | 00:01 , actor_loss=0.0128, critic_loss=2.64, xfer_entropy=0.833, loss=1.32Iter 577 : 3/5 |██████    | 00:01 , actor_loss=0.0128, critic_loss=2.64, xfer_entropy=0.833, loss=1.32Iter 577 : 3/5 |██████    | 00:01 , actor_loss=0.0122, critic_loss=2.52, xfer_entropy=0.832, loss=1.26Iter 577 : 3/5 |██████    | 00:01 , actor_loss=0.0122, critic_loss=2.52, xfer_entropy=0.832, loss=1.26Iter 577 : 4/5 |████████  | 00:01 , actor_loss=0.012, critic_loss=2.41, xfer_entropy=0.831, loss=1.2  Iter 577 : 4/5 |████████  | 00:01 , actor_loss=0.012, critic_loss=2.41, xfer_entropy=0.831, loss=1.2Iter 577 : 5/5 |██████████| 00:01 , actor_loss=0.012, critic_loss=2.41, xfer_entropy=0.831, loss=1.2Iter 577 : 5/5 |██████████| 00:01 , actor_loss=0.0117, critic_loss=2.32, xfer_entropy=0.832, loss=1.16Iter 577 : 5/5 |██████████| 00:01 , actor_loss=0.0117, critic_loss=2.32, xfer_entropy=0.832, loss=1.16Iter 577 : 5/5 |██████████| 00:01 , actor_loss=0.0117, critic_loss=2.32, xfer_entropy=0.832, loss=1.16
+  Timing: rollout 5.00s, learn 1.42s, iter 6.43s, rollout/iter 0.777
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_577.pt"!
+
+Agent 0 : barenco_tof_3: 58 -> 56 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/56_0 .
+
+
+Agent 0 : barenco_tof_3: 56 -> 55 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/55_0 .
+
+
+Agent 0 : barenco_tof_3: 55 -> 53 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/53_0 .
+
+
+Agent 0 : barenco_tof_3: 53 -> 52 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/52_0 .
+
+
+  Data for iter 578 collected in 4.2973060400000005 s .
+[2026-09-05 11:49:42.614327] 
+  Training lasted 0:00:10.795744 .
+    barenco_tof_3_best_graph_cost : 52
+    barenco_tof_3_best_graph_gate_count : 52
+    barenco_tof_3_best_graph_cx_count : 22
+    barenco_tof_3_best_graph_depth : 40
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 14
+    barenco_tof_3_mean_epslen : 2.4380952380952383
+    barenco_tof_3_max_epslen_global : 14
+    barenco_tof_3_max_eps_reward : 12.0
+    barenco_tof_3_mean_eps_reward : 0.08761904761904761
+    barenco_tof_3_mean_exp_reward : 0.0359375
+    barenco_tof_3_min_init_gate_count : 53
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 56.57904761904762
+    barenco_tof_3_min_gate_count_iter : 52
+    barenco_tof_3_max_gate_count_iter : 60
+    barenco_tof_3_mean_gate_count_iter : 56.649307479224376
+    barenco_tof_3_min_init_cx_count : 23
+    barenco_tof_3_max_init_cx_count : 24
+    barenco_tof_3_mean_init_cx_count : 23.927619047619046
+    barenco_tof_3_min_cx_count_iter : 22
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 24.065373961218835
+    barenco_tof_3_min_init_depth : 38
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 43.684914067472945
+    barenco_tof_3_min_depth_iter : 37
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 43.462841926894214
+    barenco_tof_3_min_init_cost : 53
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 56.57904761904762
+    barenco_tof_3_min_cost_iter : 52
+    barenco_tof_3_max_cost_iter : 60
+    barenco_tof_3_mean_cost_iter : 56.649307479224376
+    barenco_tof_3_buffer_size : 483
+    barenco_tof_3_diff_costs : 6
+    barenco_tof_3_min_cost : 52
+    barenco_tof_3_max_cost : 58
+    iter : 578
+    num_exps : 1280
+    tot_exps_collected_all_rank : 2560
+    lr_0 : 3.497743203539495e-05
+    lr_1 : 3.497743203539495e-05
+    lr_2 : 5.829572005899159e-05
+    vmem_perct : 0.09337396721014764
+Iter 578 : 0/5 |          | 00:00 Iter 578 : 1/5 |██        | 00:00 Iter 578 : 1/5 |██        | 00:00 , actor_loss=0.0476, critic_loss=1.08, xfer_entropy=0.96, loss=0.566Iter 578 : 1/5 |██        | 00:00 , actor_loss=0.0476, critic_loss=1.08, xfer_entropy=0.96, loss=0.566Iter 578 : 2/5 |████      | 00:00 , actor_loss=0.0454, critic_loss=1.03, xfer_entropy=0.967, loss=0.54Iter 578 : 2/5 |████      | 00:00 , actor_loss=0.0454, critic_loss=1.03, xfer_entropy=0.967, loss=0.54Iter 578 : 3/5 |██████    | 00:00 , actor_loss=0.0454, critic_loss=1.03, xfer_entropy=0.967, loss=0.54Iter 578 : 3/5 |██████    | 00:00 , actor_loss=0.0425, critic_loss=0.974, xfer_entropy=0.973, loss=0.51Iter 578 : 3/5 |██████    | 00:00 , actor_loss=0.0425, critic_loss=0.974, xfer_entropy=0.973, loss=0.51Iter 578 : 4/5 |████████  | 00:00 , actor_loss=0.0394, critic_loss=0.918, xfer_entropy=0.979, loss=0.479Iter 578 : 4/5 |████████  | 00:00 , actor_loss=0.0394, critic_loss=0.918, xfer_entropy=0.979, loss=0.479Iter 578 : 5/5 |██████████| 00:00 , actor_loss=0.0394, critic_loss=0.918, xfer_entropy=0.979, loss=0.479Iter 578 : 5/5 |██████████| 00:00 , actor_loss=0.0359, critic_loss=0.863, xfer_entropy=0.984, loss=0.448Iter 578 : 5/5 |██████████| 00:00 , actor_loss=0.0359, critic_loss=0.863, xfer_entropy=0.984, loss=0.448Iter 578 : 5/5 |██████████| 00:00 , actor_loss=0.0359, critic_loss=0.863, xfer_entropy=0.984, loss=0.448
+  Timing: rollout 4.30s, learn 0.79s, iter 5.09s, rollout/iter 0.844
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_578.pt"!
+
+  Data for iter 579 collected in 4.352201621 s .
+[2026-09-05 11:49:47.831948] 
+  Training lasted 0:00:16.013366 .
+    barenco_tof_3_best_graph_cost : 52
+    barenco_tof_3_best_graph_gate_count : 52
+    barenco_tof_3_best_graph_cx_count : 22
+    barenco_tof_3_best_graph_depth : 40
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 21
+    barenco_tof_3_mean_epslen : 9.26896551724138
+    barenco_tof_3_max_epslen_global : 21
+    barenco_tof_3_max_eps_reward : 21.0
+    barenco_tof_3_mean_eps_reward : -0.06896551724137952
+    barenco_tof_3_mean_exp_reward : -0.00744047619047619
+    barenco_tof_3_min_init_gate_count : 52
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 52.675862068965515
+    barenco_tof_3_min_gate_count_iter : 52
+    barenco_tof_3_max_gate_count_iter : 60
+    barenco_tof_3_mean_gate_count_iter : 53.13834788448623
+    barenco_tof_3_min_init_cx_count : 22
+    barenco_tof_3_max_init_cx_count : 25
+    barenco_tof_3_mean_init_cx_count : 22.482758620689655
+    barenco_tof_3_min_cx_count_iter : 22
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 22.924781732706514
+    barenco_tof_3_min_init_depth : 37
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 43.41025641025641
+    barenco_tof_3_min_depth_iter : 37
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 42.72046263345196
+    barenco_tof_3_min_init_cost : 52
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 52.675862068965515
+    barenco_tof_3_min_cost_iter : 52
+    barenco_tof_3_max_cost_iter : 60
+    barenco_tof_3_mean_cost_iter : 53.13834788448623
+    barenco_tof_3_buffer_size : 583
+    barenco_tof_3_diff_costs : 6
+    barenco_tof_3_min_cost : 52
+    barenco_tof_3_max_cost : 58
+    iter : 579
+    num_exps : 1344
+    tot_exps_collected_all_rank : 3904
+    lr_0 : 4.0780691726355766e-05
+    lr_1 : 4.0780691726355766e-05
+    lr_2 : 6.796781954392627e-05
+    vmem_perct : 0.09445033781693708
+Iter 579 : 0/5 |          | 00:00 Iter 579 : 1/5 |██        | 00:00 Iter 579 : 1/5 |██        | 00:00 , actor_loss=0.261, critic_loss=1.44, xfer_entropy=0.691, loss=0.966Iter 579 : 1/5 |██        | 00:00 , actor_loss=0.261, critic_loss=1.44, xfer_entropy=0.691, loss=0.966Iter 579 : 2/5 |████      | 00:00 , actor_loss=0.234, critic_loss=1.41, xfer_entropy=0.708, loss=0.925Iter 579 : 2/5 |████      | 00:00 , actor_loss=0.234, critic_loss=1.41, xfer_entropy=0.708, loss=0.925Iter 579 : 3/5 |██████    | 00:00 , actor_loss=0.234, critic_loss=1.41, xfer_entropy=0.708, loss=0.925Iter 579 : 3/5 |██████    | 00:00 , actor_loss=0.2, critic_loss=1.39, xfer_entropy=0.723, loss=0.88   Iter 579 : 3/5 |██████    | 00:00 , actor_loss=0.2, critic_loss=1.39, xfer_entropy=0.723, loss=0.88Iter 579 : 4/5 |████████  | 00:00 , actor_loss=0.186, critic_loss=1.37, xfer_entropy=0.727, loss=0.856Iter 579 : 4/5 |████████  | 00:00 , actor_loss=0.186, critic_loss=1.37, xfer_entropy=0.727, loss=0.856Iter 579 : 5/5 |██████████| 00:00 , actor_loss=0.186, critic_loss=1.37, xfer_entropy=0.727, loss=0.856Iter 579 : 5/5 |██████████| 00:00 , actor_loss=0.181, critic_loss=1.35, xfer_entropy=0.72, loss=0.841 Iter 579 : 5/5 |██████████| 00:00 , actor_loss=0.181, critic_loss=1.35, xfer_entropy=0.72, loss=0.841Iter 579 : 5/5 |██████████| 00:00 , actor_loss=0.181, critic_loss=1.35, xfer_entropy=0.72, loss=0.841
+  Timing: rollout 4.35s, learn 0.81s, iter 5.17s, rollout/iter 0.842
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_579.pt"!
+
+Agent 0 : barenco_tof_3: 52 -> 50 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/50_0 .
+
+
+Agent 0 : barenco_tof_3: 50 -> 48 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/48_0 .
+
+
+  Data for iter 580 collected in 6.547636851 s .
+[2026-09-05 11:49:55.266144] 
+  Training lasted 0:00:23.447560 .
+    barenco_tof_3_best_graph_cost : 48
+    barenco_tof_3_best_graph_gate_count : 48
+    barenco_tof_3_best_graph_cx_count : 20
+    barenco_tof_3_best_graph_depth : 41
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 32
+    barenco_tof_3_mean_epslen : 18.962962962962962
+    barenco_tof_3_max_epslen_global : 32
+    barenco_tof_3_max_eps_reward : 19
+    barenco_tof_3_mean_eps_reward : -0.5648148148148142
+    barenco_tof_3_mean_exp_reward : -0.02978515625
+    barenco_tof_3_min_init_gate_count : 48
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 51.5462962962963
+    barenco_tof_3_min_gate_count_iter : 48
+    barenco_tof_3_max_gate_count_iter : 60
+    barenco_tof_3_mean_gate_count_iter : 52.01252319109462
+    barenco_tof_3_min_init_cx_count : 20
+    barenco_tof_3_max_init_cx_count : 25
+    barenco_tof_3_mean_init_cx_count : 22.00925925925926
+    barenco_tof_3_min_cx_count_iter : 20
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 22.3613172541744
+    barenco_tof_3_min_init_depth : 37
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 43.23464912280702
+    barenco_tof_3_min_depth_iter : 36
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 42.045010288065846
+    barenco_tof_3_min_init_cost : 48
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 51.5462962962963
+    barenco_tof_3_min_cost_iter : 48
+    barenco_tof_3_max_cost_iter : 60
+    barenco_tof_3_mean_cost_iter : 52.01252319109462
+    barenco_tof_3_buffer_size : 735
+    barenco_tof_3_diff_costs : 10
+    barenco_tof_3_min_cost : 48
+    barenco_tof_3_max_cost : 58
+    iter : 580
+    num_exps : 2048
+    tot_exps_collected_all_rank : 5952
+    lr_0 : 4.75467957738334e-05
+    lr_1 : 4.75467957738334e-05
+    lr_2 : 7.924465962305567e-05
+    vmem_perct : 0.0968773292519399
+Iter 580 : 0/5 |          | 00:00 Iter 580 : 1/5 |██        | 00:00 Iter 580 : 1/5 |██        | 00:00 , actor_loss=0.192, critic_loss=0.826, xfer_entropy=0.749, loss=0.589Iter 580 : 1/5 |██        | 00:00 , actor_loss=0.192, critic_loss=0.826, xfer_entropy=0.749, loss=0.589Iter 580 : 2/5 |████      | 00:00 , actor_loss=0.192, critic_loss=0.826, xfer_entropy=0.749, loss=0.589Iter 580 : 2/5 |████      | 00:00 , actor_loss=0.174, critic_loss=0.823, xfer_entropy=0.747, loss=0.571Iter 580 : 2/5 |████      | 00:00 , actor_loss=0.174, critic_loss=0.823, xfer_entropy=0.747, loss=0.571Iter 580 : 3/5 |██████    | 00:00 , actor_loss=0.174, critic_loss=0.823, xfer_entropy=0.747, loss=0.571Iter 580 : 3/5 |██████    | 00:00 , actor_loss=0.166, critic_loss=0.818, xfer_entropy=0.746, loss=0.56 Iter 580 : 3/5 |██████    | 00:00 , actor_loss=0.166, critic_loss=0.818, xfer_entropy=0.746, loss=0.56Iter 580 : 4/5 |████████  | 00:00 , actor_loss=0.166, critic_loss=0.818, xfer_entropy=0.746, loss=0.56Iter 580 : 4/5 |████████  | 00:00 , actor_loss=0.161, critic_loss=0.806, xfer_entropy=0.745, loss=0.549Iter 580 : 4/5 |████████  | 00:00 , actor_loss=0.161, critic_loss=0.806, xfer_entropy=0.745, loss=0.549Iter 580 : 5/5 |██████████| 00:01 , actor_loss=0.161, critic_loss=0.806, xfer_entropy=0.745, loss=0.549Iter 580 : 5/5 |██████████| 00:01 , actor_loss=0.156, critic_loss=0.794, xfer_entropy=0.745, loss=0.538Iter 580 : 5/5 |██████████| 00:01 , actor_loss=0.156, critic_loss=0.794, xfer_entropy=0.745, loss=0.538Iter 580 : 5/5 |██████████| 00:01 , actor_loss=0.156, critic_loss=0.794, xfer_entropy=0.745, loss=0.538
+  Timing: rollout 6.55s, learn 1.06s, iter 7.61s, rollout/iter 0.861
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_580.pt"!
+
+Agent 0 : barenco_tof_3: 48 -> 46 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/46_0 .
+
+
+  Data for iter 581 collected in 9.596909283999999 s .
+[2026-09-05 11:50:06.028498] 
+  Training lasted 0:00:34.209915 .
+    barenco_tof_3_best_graph_cost : 46
+    barenco_tof_3_best_graph_gate_count : 46
+    barenco_tof_3_best_graph_cx_count : 20
+    barenco_tof_3_best_graph_depth : 41
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 48
+    barenco_tof_3_mean_epslen : 30.11764705882353
+    barenco_tof_3_max_epslen_global : 48
+    barenco_tof_3_max_eps_reward : 20.0
+    barenco_tof_3_mean_eps_reward : -0.4117647058823529
+    barenco_tof_3_mean_exp_reward : -0.013671875
+    barenco_tof_3_min_init_gate_count : 46
+    barenco_tof_3_max_init_gate_count : 56
+    barenco_tof_3_mean_init_gate_count : 48.490196078431374
+    barenco_tof_3_min_gate_count_iter : 46
+    barenco_tof_3_max_gate_count_iter : 58
+    barenco_tof_3_mean_gate_count_iter : 48.80277252678009
+    barenco_tof_3_min_init_cx_count : 20
+    barenco_tof_3_max_init_cx_count : 25
+    barenco_tof_3_mean_init_cx_count : 20.666666666666668
+    barenco_tof_3_min_cx_count_iter : 20
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 20.645872715816004
+    barenco_tof_3_min_init_depth : 37
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 43.10955347871236
+    barenco_tof_3_min_depth_iter : 36
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 41.66182648401826
+    barenco_tof_3_min_init_cost : 46
+    barenco_tof_3_max_init_cost : 56
+    barenco_tof_3_mean_init_cost : 48.490196078431374
+    barenco_tof_3_min_cost_iter : 46
+    barenco_tof_3_max_cost_iter : 58
+    barenco_tof_3_mean_cost_iter : 48.80277252678009
+    barenco_tof_3_buffer_size : 1030
+    barenco_tof_3_diff_costs : 12
+    barenco_tof_3_min_cost : 46
+    barenco_tof_3_max_cost : 58
+    iter : 581
+    num_exps : 3072
+    tot_exps_collected_all_rank : 9024
+    lr_0 : 5.5435493922668716e-05
+    lr_1 : 5.5435493922668716e-05
+    lr_2 : 9.239248987111454e-05
+    vmem_perct : 0.09985263186117677
+Iter 581 : 0/5 |          | 00:00 Iter 581 : 1/5 |██        | 00:00 Iter 581 : 1/5 |██        | 00:01 , actor_loss=0.117, critic_loss=0.447, xfer_entropy=0.773, loss=0.325Iter 581 : 1/5 |██        | 00:01 , actor_loss=0.117, critic_loss=0.447, xfer_entropy=0.773, loss=0.325Iter 581 : 2/5 |████      | 00:01 , actor_loss=0.117, critic_loss=0.447, xfer_entropy=0.773, loss=0.325Iter 581 : 2/5 |████      | 00:01 , actor_loss=0.116, critic_loss=0.441, xfer_entropy=0.771, loss=0.321Iter 581 : 2/5 |████      | 00:01 , actor_loss=0.116, critic_loss=0.441, xfer_entropy=0.771, loss=0.321Iter 581 : 3/5 |██████    | 00:01 , actor_loss=0.116, critic_loss=0.441, xfer_entropy=0.771, loss=0.321Iter 581 : 3/5 |██████    | 00:01 , actor_loss=0.114, critic_loss=0.433, xfer_entropy=0.768, loss=0.315Iter 581 : 3/5 |██████    | 00:01 , actor_loss=0.114, critic_loss=0.433, xfer_entropy=0.768, loss=0.315Iter 581 : 4/5 |████████  | 00:01 , actor_loss=0.114, critic_loss=0.433, xfer_entropy=0.768, loss=0.315Iter 581 : 4/5 |████████  | 00:01 , actor_loss=0.112, critic_loss=0.424, xfer_entropy=0.765, loss=0.308Iter 581 : 4/5 |████████  | 00:01 , actor_loss=0.112, critic_loss=0.424, xfer_entropy=0.765, loss=0.308Iter 581 : 5/5 |██████████| 00:01 , actor_loss=0.112, critic_loss=0.424, xfer_entropy=0.765, loss=0.308Iter 581 : 5/5 |██████████| 00:01 , actor_loss=0.109, critic_loss=0.414, xfer_entropy=0.763, loss=0.301Iter 581 : 5/5 |██████████| 00:01 , actor_loss=0.109, critic_loss=0.414, xfer_entropy=0.763, loss=0.301Iter 581 : 5/5 |██████████| 00:01 , actor_loss=0.109, critic_loss=0.414, xfer_entropy=0.763, loss=0.301
+  Timing: rollout 9.60s, learn 1.92s, iter 11.52s, rollout/iter 0.833
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_581.pt"!
+
+  Data for iter 582 collected in 12.214630032999999 s .
+[2026-09-05 11:50:20.318094] 
+  Training lasted 0:00:48.499501 .
+    barenco_tof_3_best_graph_cost : 46
+    barenco_tof_3_best_graph_gate_count : 46
+    barenco_tof_3_best_graph_cx_count : 20
+    barenco_tof_3_best_graph_depth : 41
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 58
+    barenco_tof_3_mean_epslen : 27.094890510948904
+    barenco_tof_3_max_epslen_global : 58
+    barenco_tof_3_max_eps_reward : 14.0
+    barenco_tof_3_mean_eps_reward : -0.6861313868613134
+    barenco_tof_3_mean_exp_reward : -0.025323275862068964
+    barenco_tof_3_min_init_gate_count : 46
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 47.54014598540146
+    barenco_tof_3_min_gate_count_iter : 46
+    barenco_tof_3_max_gate_count_iter : 60
+    barenco_tof_3_mean_gate_count_iter : 47.887503247596776
+    barenco_tof_3_min_init_cx_count : 20
+    barenco_tof_3_max_init_cx_count : 25
+    barenco_tof_3_mean_init_cx_count : 20.67883211678832
+    barenco_tof_3_min_cx_count_iter : 20
+    barenco_tof_3_max_cx_count_iter : 27
+    barenco_tof_3_mean_cx_count_iter : 20.89919459599896
+    barenco_tof_3_min_init_depth : 37
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 42.96267571497819
+    barenco_tof_3_min_depth_iter : 34
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 41.53767146428813
+    barenco_tof_3_min_init_cost : 46
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 47.54014598540146
+    barenco_tof_3_min_cost_iter : 46
+    barenco_tof_3_max_cost_iter : 60
+    barenco_tof_3_mean_cost_iter : 47.887503247596776
+    barenco_tof_3_buffer_size : 1270
+    barenco_tof_3_diff_costs : 12
+    barenco_tof_3_min_cost : 46
+    barenco_tof_3_max_cost : 58
+    iter : 582
+    num_exps : 3712
+    tot_exps_collected_all_rank : 12736
+    lr_0 : 6.46330407009565e-05
+    lr_1 : 6.46330407009565e-05
+    lr_2 : 0.00010772173450159417
+    vmem_perct : 0.10145876531804597
+Iter 582 : 0/5 |          | 00:00 Iter 582 : 1/5 |██        | 00:01 Iter 582 : 1/5 |██        | 00:01 , actor_loss=0.116, critic_loss=0.432, xfer_entropy=0.861, loss=0.315Iter 582 : 1/5 |██        | 00:01 , actor_loss=0.116, critic_loss=0.432, xfer_entropy=0.861, loss=0.315Iter 582 : 2/5 |████      | 00:01 , actor_loss=0.116, critic_loss=0.432, xfer_entropy=0.861, loss=0.315Iter 582 : 2/5 |████      | 00:01 , actor_loss=0.111, critic_loss=0.42, xfer_entropy=0.859, loss=0.304 Iter 582 : 2/5 |████      | 00:01 , actor_loss=0.111, critic_loss=0.42, xfer_entropy=0.859, loss=0.304Iter 582 : 3/5 |██████    | 00:01 , actor_loss=0.111, critic_loss=0.42, xfer_entropy=0.859, loss=0.304Iter 582 : 3/5 |██████    | 00:01 , actor_loss=0.106, critic_loss=0.408, xfer_entropy=0.857, loss=0.292Iter 582 : 3/5 |██████    | 00:01 , actor_loss=0.106, critic_loss=0.408, xfer_entropy=0.857, loss=0.292Iter 582 : 4/5 |████████  | 00:01 , actor_loss=0.106, critic_loss=0.408, xfer_entropy=0.857, loss=0.292Iter 582 : 4/5 |████████  | 00:01 , actor_loss=0.1, critic_loss=0.395, xfer_entropy=0.854, loss=0.281  Iter 582 : 4/5 |████████  | 00:01 , actor_loss=0.1, critic_loss=0.395, xfer_entropy=0.854, loss=0.281Iter 582 : 5/5 |██████████| 00:02 , actor_loss=0.1, critic_loss=0.395, xfer_entropy=0.854, loss=0.281Iter 582 : 5/5 |██████████| 00:02 , actor_loss=0.0957, critic_loss=0.383, xfer_entropy=0.852, loss=0.27Iter 582 : 5/5 |██████████| 00:02 , actor_loss=0.0957, critic_loss=0.383, xfer_entropy=0.852, loss=0.27Iter 582 : 5/5 |██████████| 00:02 , actor_loss=0.0957, critic_loss=0.383, xfer_entropy=0.852, loss=0.27
+  Timing: rollout 12.21s, learn 2.21s, iter 14.44s, rollout/iter 0.846
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_582.pt"!
+
+Agent 0 : barenco_tof_3: 46 -> 45 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/45_0 .
+
+
+  Data for iter 583 collected in 14.306714824999998 s .
+[2026-09-05 11:50:37.039777] 
+  Training lasted 0:01:05.221186 .
+    barenco_tof_3_best_graph_cost : 45
+    barenco_tof_3_best_graph_gate_count : 45
+    barenco_tof_3_best_graph_cx_count : 19
+    barenco_tof_3_best_graph_depth : 38
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 70
+    barenco_tof_3_mean_epslen : 26.198830409356724
+    barenco_tof_3_max_epslen_global : 70
+    barenco_tof_3_max_eps_reward : 27
+    barenco_tof_3_mean_eps_reward : -0.695906432748538
+    barenco_tof_3_mean_exp_reward : -0.0265625
+    barenco_tof_3_min_init_gate_count : 45
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 46.96491228070175
+    barenco_tof_3_min_gate_count_iter : 45
+    barenco_tof_3_max_gate_count_iter : 58
+    barenco_tof_3_mean_gate_count_iter : 47.532143625026876
+    barenco_tof_3_min_init_cx_count : 19
+    barenco_tof_3_max_init_cx_count : 24
+    barenco_tof_3_mean_init_cx_count : 20.28654970760234
+    barenco_tof_3_min_cx_count_iter : 19
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 20.899161470651475
+    barenco_tof_3_min_init_depth : 36
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 42.73455684870188
+    barenco_tof_3_min_depth_iter : 34
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 41.35907455012853
+    barenco_tof_3_min_init_cost : 45
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 46.96491228070175
+    barenco_tof_3_min_cost_iter : 45
+    barenco_tof_3_max_cost_iter : 58
+    barenco_tof_3_mean_cost_iter : 47.532143625026876
+    barenco_tof_3_buffer_size : 1644
+    barenco_tof_3_diff_costs : 13
+    barenco_tof_3_min_cost : 45
+    barenco_tof_3_max_cost : 58
+    iter : 583
+    num_exps : 4480
+    tot_exps_collected_all_rank : 17216
+    lr_0 : 7.535659294528738e-05
+    lr_1 : 7.535659294528738e-05
+    lr_2 : 0.00012559432157547898
+    vmem_perct : 0.10480238464977487
+Iter 583 : 0/5 |          | 00:00 Iter 583 : 1/5 |██        | 00:01 Iter 583 : 1/5 |██        | 00:01 , actor_loss=0.0575, critic_loss=0.2, xfer_entropy=0.921, loss=0.139Iter 583 : 1/5 |██        | 00:01 , actor_loss=0.0575, critic_loss=0.2, xfer_entropy=0.921, loss=0.139Iter 583 : 2/5 |████      | 00:01 , actor_loss=0.0575, critic_loss=0.2, xfer_entropy=0.921, loss=0.139Iter 583 : 2/5 |████      | 00:01 , actor_loss=0.0567, critic_loss=0.192, xfer_entropy=0.921, loss=0.134Iter 583 : 2/5 |████      | 00:01 , actor_loss=0.0567, critic_loss=0.192, xfer_entropy=0.921, loss=0.134Iter 583 : 3/5 |██████    | 00:01 , actor_loss=0.0567, critic_loss=0.192, xfer_entropy=0.921, loss=0.134Iter 583 : 3/5 |██████    | 00:01 , actor_loss=0.0561, critic_loss=0.184, xfer_entropy=0.92, loss=0.129 Iter 583 : 3/5 |██████    | 00:01 , actor_loss=0.0561, critic_loss=0.184, xfer_entropy=0.92, loss=0.129Iter 583 : 4/5 |████████  | 00:02 , actor_loss=0.0561, critic_loss=0.184, xfer_entropy=0.92, loss=0.129Iter 583 : 4/5 |████████  | 00:02 , actor_loss=0.0555, critic_loss=0.176, xfer_entropy=0.92, loss=0.125Iter 583 : 4/5 |████████  | 00:02 , actor_loss=0.0555, critic_loss=0.176, xfer_entropy=0.92, loss=0.125Iter 583 : 5/5 |██████████| 00:02 , actor_loss=0.0555, critic_loss=0.176, xfer_entropy=0.92, loss=0.125Iter 583 : 5/5 |██████████| 00:02 , actor_loss=0.0549, critic_loss=0.169, xfer_entropy=0.921, loss=0.121Iter 583 : 5/5 |██████████| 00:02 , actor_loss=0.0549, critic_loss=0.169, xfer_entropy=0.921, loss=0.121Iter 583 : 5/5 |██████████| 00:02 , actor_loss=0.0549, critic_loss=0.169, xfer_entropy=0.921, loss=0.121
+  Timing: rollout 14.31s, learn 2.61s, iter 16.93s, rollout/iter 0.845
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_583.pt"!
+
+Agent 0 : barenco_tof_3: 45 -> 44 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/44_0 .
+
+
+Agent 0 : barenco_tof_3: 44 -> 43 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/43_0 .
+
+
+Agent 0 : barenco_tof_3: 43 -> 42 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/42_0 .
+
+
+Agent 0 : barenco_tof_3: 42 -> 41 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/41_0 .
+
+
+Agent 0 : barenco_tof_3: 41 -> 40 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/40_0 .
+
+
+Agent 0 : barenco_tof_3: 40 -> 39 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/39_0 .
+
+
+Agent 0 : barenco_tof_3: 39 -> 38 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/barenco_tof_3/38_0 .
+
+
+  Data for iter 584 collected in 16.643948380999998 s .
+[2026-09-05 11:50:56.526511] 
+  Training lasted 0:01:24.707919 .
+    barenco_tof_3_best_graph_cost : 38
+    barenco_tof_3_best_graph_gate_count : 38
+    barenco_tof_3_best_graph_cx_count : 16
+    barenco_tof_3_best_graph_depth : 36
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 83
+    barenco_tof_3_mean_epslen : 23.787610619469028
+    barenco_tof_3_max_epslen_global : 83
+    barenco_tof_3_max_eps_reward : 15.0
+    barenco_tof_3_mean_eps_reward : -0.5884955752212391
+    barenco_tof_3_mean_exp_reward : -0.024739583333333332
+    barenco_tof_3_min_init_gate_count : 38
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 43.5
+    barenco_tof_3_min_gate_count_iter : 38
+    barenco_tof_3_max_gate_count_iter : 58
+    barenco_tof_3_mean_gate_count_iter : 42.475544448411284
+    barenco_tof_3_min_init_cx_count : 16
+    barenco_tof_3_max_init_cx_count : 25
+    barenco_tof_3_mean_init_cx_count : 19.057522123893804
+    barenco_tof_3_min_cx_count_iter : 16
+    barenco_tof_3_max_cx_count_iter : 25
+    barenco_tof_3_mean_cx_count_iter : 19.214209210996074
+    barenco_tof_3_min_init_depth : 35
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 42.28658536585366
+    barenco_tof_3_min_depth_iter : 32
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 40.59192878812071
+    barenco_tof_3_min_init_cost : 38
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 43.5
+    barenco_tof_3_min_cost_iter : 38
+    barenco_tof_3_max_cost_iter : 58
+    barenco_tof_3_mean_cost_iter : 42.475544448411284
+    barenco_tof_3_buffer_size : 2534
+    barenco_tof_3_diff_costs : 20
+    barenco_tof_3_min_cost : 38
+    barenco_tof_3_max_cost : 58
+    iter : 584
+    num_exps : 5376
+    tot_exps_collected_all_rank : 22592
+    lr_0 : 8.785933693875706e-05
+    lr_1 : 8.785933693875706e-05
+    lr_2 : 0.0001464322282312618
+    vmem_perct : 0.10728653520615107
+Iter 584 : 0/10 |          | 00:00 Iter 584 : 1/10 |█         | 00:01 Iter 584 : 1/10 |█         | 00:01 , actor_loss=0.0803, critic_loss=0.407, xfer_entropy=1.09, loss=0.262Iter 584 : 1/10 |█         | 00:01 , actor_loss=0.0803, critic_loss=0.407, xfer_entropy=1.09, loss=0.262Iter 584 : 2/10 |██        | 00:01 , actor_loss=0.0799, critic_loss=0.381, xfer_entropy=1.07, loss=0.249Iter 584 : 2/10 |██        | 00:01 , actor_loss=0.0799, critic_loss=0.381, xfer_entropy=1.07, loss=0.249Iter 584 : 3/10 |███       | 00:01 , actor_loss=0.0799, critic_loss=0.381, xfer_entropy=1.07, loss=0.249Iter 584 : 3/10 |███       | 00:01 , actor_loss=0.0815, critic_loss=0.388, xfer_entropy=1.09, loss=0.254Iter 584 : 3/10 |███       | 00:01 , actor_loss=0.0815, critic_loss=0.388, xfer_entropy=1.09, loss=0.254Iter 584 : 4/10 |████      | 00:01 , actor_loss=0.0621, critic_loss=0.314, xfer_entropy=1.1, loss=0.197 Iter 584 : 4/10 |████      | 00:01 , actor_loss=0.0621, critic_loss=0.314, xfer_entropy=1.1, loss=0.197Iter 584 : 5/10 |█████     | 00:02 , actor_loss=0.0621, critic_loss=0.314, xfer_entropy=1.1, loss=0.197Iter 584 : 5/10 |█████     | 00:02 , actor_loss=0.0778, critic_loss=0.352, xfer_entropy=1.1, loss=0.232Iter 584 : 5/10 |█████     | 00:02 , actor_loss=0.0778, critic_loss=0.352, xfer_entropy=1.1, loss=0.232Iter 584 : 6/10 |██████    | 00:02 , actor_loss=0.0804, critic_loss=0.336, xfer_entropy=1.07, loss=0.227Iter 584 : 6/10 |██████    | 00:02 , actor_loss=0.0804, critic_loss=0.336, xfer_entropy=1.07, loss=0.227Iter 584 : 7/10 |███████   | 00:02 , actor_loss=0.0804, critic_loss=0.336, xfer_entropy=1.07, loss=0.227Iter 584 : 7/10 |███████   | 00:02 , actor_loss=0.0784, critic_loss=0.327, xfer_entropy=1.1, loss=0.22  Iter 584 : 7/10 |███████   | 00:02 , actor_loss=0.0784, critic_loss=0.327, xfer_entropy=1.1, loss=0.22Iter 584 : 8/10 |████████  | 00:02 , actor_loss=0.0639, critic_loss=0.306, xfer_entropy=1.06, loss=0.196Iter 584 : 8/10 |████████  | 00:02 , actor_loss=0.0639, critic_loss=0.306, xfer_entropy=1.06, loss=0.196Iter 584 : 9/10 |█████████ | 00:03 , actor_loss=0.0639, critic_loss=0.306, xfer_entropy=1.06, loss=0.196Iter 584 : 9/10 |█████████ | 00:03 , actor_loss=0.0757, critic_loss=0.309, xfer_entropy=1.08, loss=0.209Iter 584 : 9/10 |█████████ | 00:03 , actor_loss=0.0757, critic_loss=0.309, xfer_entropy=1.08, loss=0.209Iter 584 : 10/10 |██████████| 00:03 , actor_loss=0.0672, critic_loss=0.291, xfer_entropy=1.15, loss=0.19Iter 584 : 10/10 |██████████| 00:03 , actor_loss=0.0672, critic_loss=0.291, xfer_entropy=1.15, loss=0.19Iter 584 : 10/10 |██████████| 00:03 , actor_loss=0.0672, critic_loss=0.291, xfer_entropy=1.15, loss=0.19
+  Timing: rollout 16.64s, learn 3.19s, iter 19.86s, rollout/iter 0.838
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_584.pt"!
+
+  Data for iter 585 collected in 21.013232212 s .
+[2026-09-05 11:51:20.998719] 
+  Training lasted 0:01:49.180132 .
+    barenco_tof_3_best_graph_cost : 38
+    barenco_tof_3_best_graph_gate_count : 38
+    barenco_tof_3_best_graph_cx_count : 16
+    barenco_tof_3_best_graph_depth : 36
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 100
+    barenco_tof_3_mean_epslen : 11.015490533562822
+    barenco_tof_3_max_epslen_global : 100
+    barenco_tof_3_max_eps_reward : 16.0
+    barenco_tof_3_mean_eps_reward : 0.118760757314974
+    barenco_tof_3_mean_exp_reward : 0.01078125
+    barenco_tof_3_min_init_gate_count : 38
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 40.399311531841654
+    barenco_tof_3_min_gate_count_iter : 38
+    barenco_tof_3_max_gate_count_iter : 58
+    barenco_tof_3_mean_gate_count_iter : 40.17934393353388
+    barenco_tof_3_min_init_cx_count : 16
+    barenco_tof_3_max_init_cx_count : 24
+    barenco_tof_3_mean_init_cx_count : 17.376936316695353
+    barenco_tof_3_min_cx_count_iter : 16
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 17.863916344363272
+    barenco_tof_3_min_init_depth : 34
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 41.29694179546202
+    barenco_tof_3_min_depth_iter : 32
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 39.87372397215372
+    barenco_tof_3_min_init_cost : 38
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 40.399311531841654
+    barenco_tof_3_min_cost_iter : 38
+    barenco_tof_3_max_cost_iter : 58
+    barenco_tof_3_mean_cost_iter : 40.17934393353388
+    barenco_tof_3_buffer_size : 3582
+    barenco_tof_3_diff_costs : 20
+    barenco_tof_3_min_cost : 38
+    barenco_tof_3_max_cost : 58
+    iter : 585
+    num_exps : 6400
+    tot_exps_collected_all_rank : 28992
+    lr_0 : 0.00010243646621500801
+    lr_1 : 0.00010243646621500801
+    lr_2 : 0.00017072744369168002
+    vmem_perct : 0.10686919791267986
+Iter 585 : 0/10 |          | 00:00 Iter 585 : 1/10 |█         | 00:01 Iter 585 : 1/10 |█         | 00:01 , actor_loss=0.0338, critic_loss=0.106, xfer_entropy=1.03, loss=0.0663Iter 585 : 1/10 |█         | 00:01 , actor_loss=0.0338, critic_loss=0.106, xfer_entropy=1.03, loss=0.0663Iter 585 : 2/10 |██        | 00:01 , actor_loss=0.0338, critic_loss=0.106, xfer_entropy=1.03, loss=0.0663Iter 585 : 2/10 |██        | 00:01 , actor_loss=0.0402, critic_loss=0.119, xfer_entropy=1.03, loss=0.0793Iter 585 : 2/10 |██        | 00:01 , actor_loss=0.0402, critic_loss=0.119, xfer_entropy=1.03, loss=0.0793Iter 585 : 3/10 |███       | 00:02 , actor_loss=0.0402, critic_loss=0.119, xfer_entropy=1.03, loss=0.0793Iter 585 : 3/10 |███       | 00:02 , actor_loss=0.034, critic_loss=0.11, xfer_entropy=1.03, loss=0.0681  Iter 585 : 3/10 |███       | 00:02 , actor_loss=0.034, critic_loss=0.11, xfer_entropy=1.03, loss=0.0681Iter 585 : 4/10 |████      | 00:02 , actor_loss=0.034, critic_loss=0.11, xfer_entropy=1.03, loss=0.0681Iter 585 : 4/10 |████      | 00:02 , actor_loss=0.0367, critic_loss=0.0856, xfer_entropy=1.01, loss=0.0593Iter 585 : 4/10 |████      | 00:02 , actor_loss=0.0367, critic_loss=0.0856, xfer_entropy=1.01, loss=0.0593Iter 585 : 5/10 |█████     | 00:02 , actor_loss=0.0367, critic_loss=0.0856, xfer_entropy=1.01, loss=0.0593Iter 585 : 5/10 |█████     | 00:02 , actor_loss=0.0329, critic_loss=0.0959, xfer_entropy=1.02, loss=0.0603Iter 585 : 5/10 |█████     | 00:02 , actor_loss=0.0329, critic_loss=0.0959, xfer_entropy=1.02, loss=0.0603Iter 585 : 6/10 |██████    | 00:02 , actor_loss=0.0329, critic_loss=0.0959, xfer_entropy=1.02, loss=0.0603Iter 585 : 6/10 |██████    | 00:02 , actor_loss=0.0369, critic_loss=0.113, xfer_entropy=1.03, loss=0.0727 Iter 585 : 6/10 |██████    | 00:02 , actor_loss=0.0369, critic_loss=0.113, xfer_entropy=1.03, loss=0.0727Iter 585 : 7/10 |███████   | 00:03 , actor_loss=0.0369, critic_loss=0.113, xfer_entropy=1.03, loss=0.0727Iter 585 : 7/10 |███████   | 00:03 , actor_loss=0.0367, critic_loss=0.101, xfer_entropy=1.02, loss=0.0665Iter 585 : 7/10 |███████   | 00:03 , actor_loss=0.0367, critic_loss=0.101, xfer_entropy=1.02, loss=0.0665Iter 585 : 8/10 |████████  | 00:03 , actor_loss=0.0367, critic_loss=0.101, xfer_entropy=1.02, loss=0.0665Iter 585 : 8/10 |████████  | 00:03 , actor_loss=0.023, critic_loss=0.0849, xfer_entropy=1.03, loss=0.0448Iter 585 : 8/10 |████████  | 00:03 , actor_loss=0.023, critic_loss=0.0849, xfer_entropy=1.03, loss=0.0448Iter 585 : 9/10 |█████████ | 00:03 , actor_loss=0.023, critic_loss=0.0849, xfer_entropy=1.03, loss=0.0448Iter 585 : 9/10 |█████████ | 00:03 , actor_loss=0.0318, critic_loss=0.0946, xfer_entropy=1.01, loss=0.0589Iter 585 : 9/10 |█████████ | 00:03 , actor_loss=0.0318, critic_loss=0.0946, xfer_entropy=1.01, loss=0.0589Iter 585 : 10/10 |██████████| 00:03 , actor_loss=0.0318, critic_loss=0.0946, xfer_entropy=1.01, loss=0.0589Iter 585 : 10/10 |██████████| 00:03 , actor_loss=0.035, critic_loss=0.0905, xfer_entropy=1.06, loss=0.059  Iter 585 : 10/10 |██████████| 00:03 , actor_loss=0.035, critic_loss=0.0905, xfer_entropy=1.06, loss=0.059Iter 585 : 10/10 |██████████| 00:03 , actor_loss=0.035, critic_loss=0.0905, xfer_entropy=1.06, loss=0.059
+  Timing: rollout 21.01s, learn 3.92s, iter 24.95s, rollout/iter 0.842
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_585.pt"!
+
+  Data for iter 586 collected in 24.585733239 s .
+[2026-09-05 11:51:49.832217] 
+  Training lasted 0:02:18.013627 .
+    barenco_tof_3_best_graph_cost : 38
+    barenco_tof_3_best_graph_gate_count : 38
+    barenco_tof_3_best_graph_cx_count : 16
+    barenco_tof_3_best_graph_depth : 36
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 112
+    barenco_tof_3_mean_epslen : 9.411764705882353
+    barenco_tof_3_max_epslen_global : 112
+    barenco_tof_3_max_eps_reward : 20.0
+    barenco_tof_3_mean_eps_reward : 0.16421568627451005
+    barenco_tof_3_mean_exp_reward : 0.017447916666666667
+    barenco_tof_3_min_init_gate_count : 38
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 40.150735294117645
+    barenco_tof_3_min_gate_count_iter : 38
+    barenco_tof_3_max_gate_count_iter : 59
+    barenco_tof_3_mean_gate_count_iter : 40.02554143126177
+    barenco_tof_3_min_init_cx_count : 16
+    barenco_tof_3_max_init_cx_count : 25
+    barenco_tof_3_mean_init_cx_count : 17.26593137254902
+    barenco_tof_3_min_cx_count_iter : 16
+    barenco_tof_3_max_cx_count_iter : 25
+    barenco_tof_3_mean_cx_count_iter : 17.652424670433145
+    barenco_tof_3_min_init_depth : 34
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 40.370754472387866
+    barenco_tof_3_min_depth_iter : 32
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 39.284166892842165
+    barenco_tof_3_min_init_cost : 38
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 40.150735294117645
+    barenco_tof_3_min_cost_iter : 38
+    barenco_tof_3_max_cost_iter : 59
+    barenco_tof_3_mean_cost_iter : 40.02554143126177
+    barenco_tof_3_buffer_size : 4491
+    barenco_tof_3_diff_costs : 20
+    barenco_tof_3_min_cost : 38
+    barenco_tof_3_max_cost : 58
+    iter : 586
+    num_exps : 7680
+    tot_exps_collected_all_rank : 36672
+    lr_0 : 0.00011943215116604914
+    lr_1 : 0.00011943215116604914
+    lr_2 : 0.00019905358527674857
+    vmem_perct : 0.11140123487057914
+Iter 586 : 0/10 |          | 00:00 Iter 586 : 1/10 |█         | 00:01 Iter 586 : 1/10 |█         | 00:01 , actor_loss=0.0328, critic_loss=0.0897, xfer_entropy=0.968, loss=0.0582Iter 586 : 1/10 |█         | 00:01 , actor_loss=0.0328, critic_loss=0.0897, xfer_entropy=0.968, loss=0.0582Iter 586 : 2/10 |██        | 00:02 , actor_loss=0.0328, critic_loss=0.0897, xfer_entropy=0.968, loss=0.0582Iter 586 : 2/10 |██        | 00:02 , actor_loss=0.0388, critic_loss=0.095, xfer_entropy=0.98, loss=0.0667  Iter 586 : 2/10 |██        | 00:02 , actor_loss=0.0388, critic_loss=0.095, xfer_entropy=0.98, loss=0.0667Iter 586 : 3/10 |███       | 00:02 , actor_loss=0.0388, critic_loss=0.095, xfer_entropy=0.98, loss=0.0667Iter 586 : 3/10 |███       | 00:02 , actor_loss=0.0305, critic_loss=0.0873, xfer_entropy=0.973, loss=0.0547Iter 586 : 3/10 |███       | 00:02 , actor_loss=0.0305, critic_loss=0.0873, xfer_entropy=0.973, loss=0.0547Iter 586 : 4/10 |████      | 00:02 , actor_loss=0.0305, critic_loss=0.0873, xfer_entropy=0.973, loss=0.0547Iter 586 : 4/10 |████      | 00:02 , actor_loss=0.0395, critic_loss=0.0891, xfer_entropy=0.972, loss=0.0647Iter 586 : 4/10 |████      | 00:02 , actor_loss=0.0395, critic_loss=0.0891, xfer_entropy=0.972, loss=0.0647Iter 586 : 5/10 |█████     | 00:03 , actor_loss=0.0395, critic_loss=0.0891, xfer_entropy=0.972, loss=0.0647Iter 586 : 5/10 |█████     | 00:03 , actor_loss=0.0333, critic_loss=0.0897, xfer_entropy=0.969, loss=0.0588Iter 586 : 5/10 |█████     | 00:03 , actor_loss=0.0333, critic_loss=0.0897, xfer_entropy=0.969, loss=0.0588Iter 586 : 6/10 |██████    | 00:03 , actor_loss=0.0333, critic_loss=0.0897, xfer_entropy=0.969, loss=0.0588Iter 586 : 6/10 |██████    | 00:03 , actor_loss=0.0318, critic_loss=0.0756, xfer_entropy=0.975, loss=0.0501Iter 586 : 6/10 |██████    | 00:03 , actor_loss=0.0318, critic_loss=0.0756, xfer_entropy=0.975, loss=0.0501Iter 586 : 7/10 |███████   | 00:03 , actor_loss=0.0318, critic_loss=0.0756, xfer_entropy=0.975, loss=0.0501Iter 586 : 7/10 |███████   | 00:03 , actor_loss=0.0306, critic_loss=0.0778, xfer_entropy=0.977, loss=0.05  Iter 586 : 7/10 |███████   | 00:03 , actor_loss=0.0306, critic_loss=0.0778, xfer_entropy=0.977, loss=0.05Iter 586 : 8/10 |████████  | 00:03 , actor_loss=0.0306, critic_loss=0.0778, xfer_entropy=0.977, loss=0.05Iter 586 : 8/10 |████████  | 00:03 , actor_loss=0.0334, critic_loss=0.0871, xfer_entropy=0.957, loss=0.0578Iter 586 : 8/10 |████████  | 00:03 , actor_loss=0.0334, critic_loss=0.0871, xfer_entropy=0.957, loss=0.0578Iter 586 : 9/10 |█████████ | 00:04 , actor_loss=0.0334, critic_loss=0.0871, xfer_entropy=0.957, loss=0.0578Iter 586 : 9/10 |█████████ | 00:04 , actor_loss=0.0279, critic_loss=0.0774, xfer_entropy=0.96, loss=0.0474 Iter 586 : 9/10 |█████████ | 00:04 , actor_loss=0.0279, critic_loss=0.0774, xfer_entropy=0.96, loss=0.0474Iter 586 : 10/10 |██████████| 00:04 , actor_loss=0.0279, critic_loss=0.0774, xfer_entropy=0.96, loss=0.0474Iter 586 : 10/10 |██████████| 00:04 , actor_loss=0.0354, critic_loss=0.0802, xfer_entropy=0.981, loss=0.0559Iter 586 : 10/10 |██████████| 00:04 , actor_loss=0.0354, critic_loss=0.0802, xfer_entropy=0.981, loss=0.0559Iter 586 : 10/10 |██████████| 00:04 , actor_loss=0.0354, critic_loss=0.0802, xfer_entropy=0.981, loss=0.0559
+  Timing: rollout 24.59s, learn 4.44s, iter 29.05s, rollout/iter 0.846
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_586.pt"!
+
+  Data for iter 587 collected in 27.293479856999998 s .
+[2026-09-05 11:52:21.958952] 
+  Training lasted 0:02:50.140368 .
+    barenco_tof_3_best_graph_cost : 38
+    barenco_tof_3_best_graph_gate_count : 38
+    barenco_tof_3_best_graph_cx_count : 16
+    barenco_tof_3_best_graph_depth : 36
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 135
+    barenco_tof_3_mean_epslen : 15.882352941176471
+    barenco_tof_3_max_epslen_global : 135
+    barenco_tof_3_max_eps_reward : 23.0
+    barenco_tof_3_mean_eps_reward : 0.1875
+    barenco_tof_3_mean_exp_reward : 0.011805555555555555
+    barenco_tof_3_min_init_gate_count : 38
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 40.46875
+    barenco_tof_3_min_gate_count_iter : 38
+    barenco_tof_3_max_gate_count_iter : 60
+    barenco_tof_3_mean_gate_count_iter : 40.05564024390244
+    barenco_tof_3_min_init_cx_count : 16
+    barenco_tof_3_max_init_cx_count : 25
+    barenco_tof_3_mean_init_cx_count : 17.47610294117647
+    barenco_tof_3_min_cx_count_iter : 16
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 17.788218641114984
+    barenco_tof_3_min_init_depth : 33
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 39.968189047943646
+    barenco_tof_3_min_depth_iter : 32
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 38.90598032707742
+    barenco_tof_3_min_init_cost : 38
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 40.46875
+    barenco_tof_3_min_cost_iter : 38
+    barenco_tof_3_max_cost_iter : 60
+    barenco_tof_3_mean_cost_iter : 40.05564024390244
+    barenco_tof_3_buffer_size : 5559
+    barenco_tof_3_diff_costs : 20
+    barenco_tof_3_min_cost : 38
+    barenco_tof_3_max_cost : 58
+    iter : 587
+    num_exps : 8640
+    tot_exps_collected_all_rank : 45312
+    lr_0 : 0.00013924766500838332
+    lr_1 : 0.00013924766500838332
+    lr_2 : 0.0002320794416806389
+    vmem_perct : 0.11382368385885028
+Iter 587 : 0/10 |          | 00:00 Iter 587 : 1/10 |█         | 00:02 Iter 587 : 1/10 |█         | 00:02 , actor_loss=0.0324, critic_loss=0.0759, xfer_entropy=1.04, loss=0.0496Iter 587 : 1/10 |█         | 00:02 , actor_loss=0.0324, critic_loss=0.0759, xfer_entropy=1.04, loss=0.0496Iter 587 : 2/10 |██        | 00:02 , actor_loss=0.0324, critic_loss=0.0759, xfer_entropy=1.04, loss=0.0496Iter 587 : 2/10 |██        | 00:02 , actor_loss=0.0413, critic_loss=0.0832, xfer_entropy=1.02, loss=0.0626Iter 587 : 2/10 |██        | 00:02 , actor_loss=0.0413, critic_loss=0.0832, xfer_entropy=1.02, loss=0.0626Iter 587 : 3/10 |███       | 00:02 , actor_loss=0.0413, critic_loss=0.0832, xfer_entropy=1.02, loss=0.0626Iter 587 : 3/10 |███       | 00:02 , actor_loss=0.0337, critic_loss=0.0798, xfer_entropy=1.03, loss=0.053 Iter 587 : 3/10 |███       | 00:02 , actor_loss=0.0337, critic_loss=0.0798, xfer_entropy=1.03, loss=0.053Iter 587 : 4/10 |████      | 00:02 , actor_loss=0.0337, critic_loss=0.0798, xfer_entropy=1.03, loss=0.053Iter 587 : 4/10 |████      | 00:03 , actor_loss=0.0384, critic_loss=0.0768, xfer_entropy=1.03, loss=0.0562Iter 587 : 4/10 |████      | 00:03 , actor_loss=0.0384, critic_loss=0.0768, xfer_entropy=1.03, loss=0.0562Iter 587 : 5/10 |█████     | 00:03 , actor_loss=0.0384, critic_loss=0.0768, xfer_entropy=1.03, loss=0.0562Iter 587 : 5/10 |█████     | 00:03 , actor_loss=0.0378, critic_loss=0.0768, xfer_entropy=1.03, loss=0.0555Iter 587 : 5/10 |█████     | 00:03 , actor_loss=0.0378, critic_loss=0.0768, xfer_entropy=1.03, loss=0.0555Iter 587 : 6/10 |██████    | 00:03 , actor_loss=0.0378, critic_loss=0.0768, xfer_entropy=1.03, loss=0.0555Iter 587 : 6/10 |██████    | 00:03 , actor_loss=0.0314, critic_loss=0.0759, xfer_entropy=1.02, loss=0.049 Iter 587 : 6/10 |██████    | 00:03 , actor_loss=0.0314, critic_loss=0.0759, xfer_entropy=1.02, loss=0.049Iter 587 : 7/10 |███████   | 00:04 , actor_loss=0.0314, critic_loss=0.0759, xfer_entropy=1.02, loss=0.049Iter 587 : 7/10 |███████   | 00:04 , actor_loss=0.033, critic_loss=0.0735, xfer_entropy=1.03, loss=0.0492Iter 587 : 7/10 |███████   | 00:04 , actor_loss=0.033, critic_loss=0.0735, xfer_entropy=1.03, loss=0.0492Iter 587 : 8/10 |████████  | 00:04 , actor_loss=0.033, critic_loss=0.0735, xfer_entropy=1.03, loss=0.0492Iter 587 : 8/10 |████████  | 00:04 , actor_loss=0.035, critic_loss=0.0747, xfer_entropy=1.02, loss=0.052 Iter 587 : 8/10 |████████  | 00:04 , actor_loss=0.035, critic_loss=0.0747, xfer_entropy=1.02, loss=0.052Iter 587 : 9/10 |█████████ | 00:04 , actor_loss=0.035, critic_loss=0.0747, xfer_entropy=1.02, loss=0.052Iter 587 : 9/10 |█████████ | 00:04 , actor_loss=0.0352, critic_loss=0.0722, xfer_entropy=1.02, loss=0.051Iter 587 : 9/10 |█████████ | 00:04 , actor_loss=0.0352, critic_loss=0.0722, xfer_entropy=1.02, loss=0.051Iter 587 : 10/10 |██████████| 00:04 , actor_loss=0.0352, critic_loss=0.0722, xfer_entropy=1.02, loss=0.051Iter 587 : 10/10 |██████████| 00:04 , actor_loss=0.0302, critic_loss=0.0694, xfer_entropy=1.03, loss=0.0444Iter 587 : 10/10 |██████████| 00:04 , actor_loss=0.0302, critic_loss=0.0694, xfer_entropy=1.03, loss=0.0444Iter 587 : 10/10 |██████████| 00:04 , actor_loss=0.0302, critic_loss=0.0694, xfer_entropy=1.03, loss=0.0444
+  Timing: rollout 27.29s, learn 4.98s, iter 32.29s, rollout/iter 0.845
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_587.pt"!
+
+  Data for iter 588 collected in 32.861370326 s .
+[2026-09-05 11:53:00.262546] 
+  Training lasted 0:03:28.443961 .
+    barenco_tof_3_best_graph_cost : 38
+    barenco_tof_3_best_graph_gate_count : 38
+    barenco_tof_3_best_graph_cx_count : 16
+    barenco_tof_3_best_graph_depth : 36
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 159
+    barenco_tof_3_mean_epslen : 20.132038834951455
+    barenco_tof_3_max_epslen_global : 159
+    barenco_tof_3_max_eps_reward : 24
+    barenco_tof_3_mean_eps_reward : 0.18446601941747562
+    barenco_tof_3_mean_exp_reward : 0.00916280864197531
+    barenco_tof_3_min_init_gate_count : 38
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 40.10485436893204
+    barenco_tof_3_min_gate_count_iter : 38
+    barenco_tof_3_max_gate_count_iter : 58
+    barenco_tof_3_mean_gate_count_iter : 40.023522925663876
+    barenco_tof_3_min_init_cx_count : 16
+    barenco_tof_3_max_init_cx_count : 24
+    barenco_tof_3_mean_init_cx_count : 17.293203883495146
+    barenco_tof_3_min_cx_count_iter : 16
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 17.823761830377652
+    barenco_tof_3_min_init_depth : 33
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 39.657851912123675
+    barenco_tof_3_min_depth_iter : 32
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 38.63604858406495
+    barenco_tof_3_min_init_cost : 38
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 40.10485436893204
+    barenco_tof_3_min_cost_iter : 38
+    barenco_tof_3_max_cost_iter : 58
+    barenco_tof_3_mean_cost_iter : 40.023522925663876
+    barenco_tof_3_buffer_size : 6759
+    barenco_tof_3_diff_costs : 20
+    barenco_tof_3_min_cost : 38
+    barenco_tof_3_max_cost : 58
+    iter : 588
+    num_exps : 10368
+    tot_exps_collected_all_rank : 55680
+    lr_0 : 0.000162350857963939
+    lr_1 : 0.000162350857963939
+    lr_2 : 0.0002705847632732317
+    vmem_perct : 0.11929562875297542
+Iter 588 : 0/15 |          | 00:00 Iter 588 : 1/15 |▋         | 00:02 Iter 588 : 1/15 |▋         | 00:02 , actor_loss=0.0233, critic_loss=0.0554, xfer_entropy=0.976, loss=0.0314Iter 588 : 1/15 |▋         | 00:02 , actor_loss=0.0233, critic_loss=0.0554, xfer_entropy=0.976, loss=0.0314Iter 588 : 2/15 |█▎        | 00:02 , actor_loss=0.0233, critic_loss=0.0554, xfer_entropy=0.976, loss=0.0314Iter 588 : 2/15 |█▎        | 00:02 , actor_loss=0.0283, critic_loss=0.0603, xfer_entropy=0.989, loss=0.0387Iter 588 : 2/15 |█▎        | 00:02 , actor_loss=0.0283, critic_loss=0.0603, xfer_entropy=0.989, loss=0.0387Iter 588 : 3/15 |██        | 00:02 , actor_loss=0.0283, critic_loss=0.0603, xfer_entropy=0.989, loss=0.0387Iter 588 : 3/15 |██        | 00:02 , actor_loss=0.0271, critic_loss=0.0529, xfer_entropy=0.976, loss=0.034 Iter 588 : 3/15 |██        | 00:02 , actor_loss=0.0271, critic_loss=0.0529, xfer_entropy=0.976, loss=0.034Iter 588 : 4/15 |██▋       | 00:03 , actor_loss=0.0271, critic_loss=0.0529, xfer_entropy=0.976, loss=0.034Iter 588 : 4/15 |██▋       | 00:03 , actor_loss=0.0288, critic_loss=0.0595, xfer_entropy=0.97, loss=0.0391Iter 588 : 4/15 |██▋       | 00:03 , actor_loss=0.0288, critic_loss=0.0595, xfer_entropy=0.97, loss=0.0391Iter 588 : 5/15 |███▎      | 00:03 , actor_loss=0.0288, critic_loss=0.0595, xfer_entropy=0.97, loss=0.0391Iter 588 : 5/15 |███▎      | 00:03 , actor_loss=0.0207, critic_loss=0.0468, xfer_entropy=0.996, loss=0.0242Iter 588 : 5/15 |███▎      | 00:03 , actor_loss=0.0207, critic_loss=0.0468, xfer_entropy=0.996, loss=0.0242Iter 588 : 6/15 |████      | 00:03 , actor_loss=0.0207, critic_loss=0.0468, xfer_entropy=0.996, loss=0.0242Iter 588 : 6/15 |████      | 00:03 , actor_loss=0.0237, critic_loss=0.0474, xfer_entropy=0.955, loss=0.0283Iter 588 : 6/15 |████      | 00:03 , actor_loss=0.0237, critic_loss=0.0474, xfer_entropy=0.955, loss=0.0283Iter 588 : 7/15 |████▋     | 00:04 , actor_loss=0.0237, critic_loss=0.0474, xfer_entropy=0.955, loss=0.0283Iter 588 : 7/15 |████▋     | 00:04 , actor_loss=0.0249, critic_loss=0.0473, xfer_entropy=0.977, loss=0.029 Iter 588 : 7/15 |████▋     | 00:04 , actor_loss=0.0249, critic_loss=0.0473, xfer_entropy=0.977, loss=0.029Iter 588 : 8/15 |█████▎    | 00:04 , actor_loss=0.0249, critic_loss=0.0473, xfer_entropy=0.977, loss=0.029Iter 588 : 8/15 |█████▎    | 00:04 , actor_loss=0.0246, critic_loss=0.0522, xfer_entropy=0.988, loss=0.031Iter 588 : 8/15 |█████▎    | 00:04 , actor_loss=0.0246, critic_loss=0.0522, xfer_entropy=0.988, loss=0.031Iter 588 : 9/15 |██████    | 00:04 , actor_loss=0.0246, critic_loss=0.0522, xfer_entropy=0.988, loss=0.031Iter 588 : 9/15 |██████    | 00:04 , actor_loss=0.00533, critic_loss=0.0453, xfer_entropy=0.967, loss=0.00863Iter 588 : 9/15 |██████    | 00:04 , actor_loss=0.00533, critic_loss=0.0453, xfer_entropy=0.967, loss=0.00863Iter 588 : 10/15 |██████▋   | 00:04 , actor_loss=0.00533, critic_loss=0.0453, xfer_entropy=0.967, loss=0.00863Iter 588 : 10/15 |██████▋   | 00:04 , actor_loss=0.0279, critic_loss=0.0495, xfer_entropy=0.986, loss=0.033   Iter 588 : 10/15 |██████▋   | 00:04 , actor_loss=0.0279, critic_loss=0.0495, xfer_entropy=0.986, loss=0.033Iter 588 : 11/15 |███████▎  | 00:05 , actor_loss=0.0279, critic_loss=0.0495, xfer_entropy=0.986, loss=0.033Iter 588 : 11/15 |███████▎  | 00:05 , actor_loss=0.0175, critic_loss=0.0464, xfer_entropy=0.974, loss=0.0212Iter 588 : 11/15 |███████▎  | 00:05 , actor_loss=0.0175, critic_loss=0.0464, xfer_entropy=0.974, loss=0.0212Iter 588 : 12/15 |████████  | 00:05 , actor_loss=0.0175, critic_loss=0.0464, xfer_entropy=0.974, loss=0.0212Iter 588 : 12/15 |████████  | 00:05 , actor_loss=0.0193, critic_loss=0.041, xfer_entropy=0.987, loss=0.0201 Iter 588 : 12/15 |████████  | 00:05 , actor_loss=0.0193, critic_loss=0.041, xfer_entropy=0.987, loss=0.0201Iter 588 : 13/15 |████████▋ | 00:05 , actor_loss=0.0193, critic_loss=0.041, xfer_entropy=0.987, loss=0.0201Iter 588 : 13/15 |████████▋ | 00:05 , actor_loss=0.0221, critic_loss=0.0459, xfer_entropy=0.98, loss=0.0254Iter 588 : 13/15 |████████▋ | 00:05 , actor_loss=0.0221, critic_loss=0.0459, xfer_entropy=0.98, loss=0.0254Iter 588 : 14/15 |█████████▎| 00:06 , actor_loss=0.0221, critic_loss=0.0459, xfer_entropy=0.98, loss=0.0254Iter 588 : 14/15 |█████████▎| 00:06 , actor_loss=0.0224, critic_loss=0.0472, xfer_entropy=0.969, loss=0.0266Iter 588 : 14/15 |█████████▎| 00:06 , actor_loss=0.0224, critic_loss=0.0472, xfer_entropy=0.969, loss=0.0266Iter 588 : 15/15 |██████████| 00:06 , actor_loss=0.0224, critic_loss=0.0472, xfer_entropy=0.969, loss=0.0266Iter 588 : 15/15 |██████████| 00:06 , actor_loss=0.0125, critic_loss=0.0475, xfer_entropy=1.03, loss=0.0156 Iter 588 : 15/15 |██████████| 00:06 , actor_loss=0.0125, critic_loss=0.0475, xfer_entropy=1.03, loss=0.0156Iter 588 : 15/15 |██████████| 00:06 , actor_loss=0.0125, critic_loss=0.0475, xfer_entropy=1.03, loss=0.0156
+  Timing: rollout 32.86s, learn 6.13s, iter 39.02s, rollout/iter 0.842
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_588.pt"!
+
+  Data for iter 589 collected in 39.049372950999995 s .
+[2026-09-05 11:53:45.977562] 
+  Training lasted 0:04:14.158978 .
+    barenco_tof_3_best_graph_cost : 38
+    barenco_tof_3_best_graph_gate_count : 38
+    barenco_tof_3_best_graph_cx_count : 16
+    barenco_tof_3_best_graph_depth : 36
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 175
+    barenco_tof_3_mean_epslen : 12.151093439363818
+    barenco_tof_3_max_epslen_global : 175
+    barenco_tof_3_max_eps_reward : 28.0
+    barenco_tof_3_mean_eps_reward : 0.3439363817097417
+    barenco_tof_3_mean_exp_reward : 0.02830497382198953
+    barenco_tof_3_min_init_gate_count : 38
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 40.27634194831014
+    barenco_tof_3_min_gate_count_iter : 38
+    barenco_tof_3_max_gate_count_iter : 60
+    barenco_tof_3_mean_gate_count_iter : 40.03703703703704
+    barenco_tof_3_min_init_cx_count : 16
+    barenco_tof_3_max_init_cx_count : 25
+    barenco_tof_3_mean_init_cx_count : 17.365805168986082
+    barenco_tof_3_min_cx_count_iter : 16
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 17.77445200302343
+    barenco_tof_3_min_init_depth : 33
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 39.22644376899696
+    barenco_tof_3_min_depth_iter : 32
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 38.37647983095386
+    barenco_tof_3_min_init_cost : 38
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 40.27634194831014
+    barenco_tof_3_min_cost_iter : 38
+    barenco_tof_3_max_cost_iter : 60
+    barenco_tof_3_mean_cost_iter : 40.03703703703704
+    barenco_tof_3_buffer_size : 7775
+    barenco_tof_3_diff_costs : 20
+    barenco_tof_3_min_cost : 38
+    barenco_tof_3_max_cost : 58
+    iter : 589
+    num_exps : 12224
+    tot_exps_collected_all_rank : 67904
+    lr_0 : 0.00018928720334405788
+    lr_1 : 0.00018928720334405788
+    lr_2 : 0.00031547867224009655
+    vmem_perct : 0.12261388609045255
+Iter 589 : 0/15 |          | 00:00 Iter 589 : 1/15 |▋         | 00:02 Iter 589 : 1/15 |▋         | 00:02 , actor_loss=0.0135, critic_loss=0.0651, xfer_entropy=0.999, loss=0.0261Iter 589 : 1/15 |▋         | 00:02 , actor_loss=0.0135, critic_loss=0.0651, xfer_entropy=0.999, loss=0.0261Iter 589 : 2/15 |█▎        | 00:03 , actor_loss=0.0135, critic_loss=0.0651, xfer_entropy=0.999, loss=0.0261Iter 589 : 2/15 |█▎        | 00:03 , actor_loss=0.00698, critic_loss=0.068, xfer_entropy=0.989, loss=0.0212Iter 589 : 2/15 |█▎        | 00:03 , actor_loss=0.00698, critic_loss=0.068, xfer_entropy=0.989, loss=0.0212Iter 589 : 3/15 |██        | 00:03 , actor_loss=0.00698, critic_loss=0.068, xfer_entropy=0.989, loss=0.0212Iter 589 : 3/15 |██        | 00:03 , actor_loss=0.00723, critic_loss=0.059, xfer_entropy=0.988, loss=0.017 Iter 589 : 3/15 |██        | 00:03 , actor_loss=0.00723, critic_loss=0.059, xfer_entropy=0.988, loss=0.017Iter 589 : 4/15 |██▋       | 00:03 , actor_loss=0.00723, critic_loss=0.059, xfer_entropy=0.988, loss=0.017Iter 589 : 4/15 |██▋       | 00:03 , actor_loss=0.0113, critic_loss=0.0596, xfer_entropy=0.995, loss=0.0212Iter 589 : 4/15 |██▋       | 00:03 , actor_loss=0.0113, critic_loss=0.0596, xfer_entropy=0.995, loss=0.0212Iter 589 : 5/15 |███▎      | 00:04 , actor_loss=0.0113, critic_loss=0.0596, xfer_entropy=0.995, loss=0.0212Iter 589 : 5/15 |███▎      | 00:04 , actor_loss=0.00478, critic_loss=0.0661, xfer_entropy=0.985, loss=0.0181Iter 589 : 5/15 |███▎      | 00:04 , actor_loss=0.00478, critic_loss=0.0661, xfer_entropy=0.985, loss=0.0181Iter 589 : 6/15 |████      | 00:04 , actor_loss=0.00478, critic_loss=0.0661, xfer_entropy=0.985, loss=0.0181Iter 589 : 6/15 |████      | 00:04 , actor_loss=0.0112, critic_loss=0.0582, xfer_entropy=0.991, loss=0.0205 Iter 589 : 6/15 |████      | 00:04 , actor_loss=0.0112, critic_loss=0.0582, xfer_entropy=0.991, loss=0.0205Iter 589 : 7/15 |████▋     | 00:04 , actor_loss=0.0112, critic_loss=0.0582, xfer_entropy=0.991, loss=0.0205Iter 589 : 7/15 |████▋     | 00:04 , actor_loss=0.00829, critic_loss=0.0549, xfer_entropy=0.995, loss=0.0158Iter 589 : 7/15 |████▋     | 00:04 , actor_loss=0.00829, critic_loss=0.0549, xfer_entropy=0.995, loss=0.0158Iter 589 : 8/15 |█████▎    | 00:05 , actor_loss=0.00829, critic_loss=0.0549, xfer_entropy=0.995, loss=0.0158Iter 589 : 8/15 |█████▎    | 00:05 , actor_loss=0.0112, critic_loss=0.0619, xfer_entropy=0.976, loss=0.0226 Iter 589 : 8/15 |█████▎    | 00:05 , actor_loss=0.0112, critic_loss=0.0619, xfer_entropy=0.976, loss=0.0226Iter 589 : 9/15 |██████    | 00:05 , actor_loss=0.0112, critic_loss=0.0619, xfer_entropy=0.976, loss=0.0226Iter 589 : 9/15 |██████    | 00:05 , actor_loss=-0.000477, critic_loss=0.0562, xfer_entropy=0.99, loss=0.00783Iter 589 : 9/15 |██████    | 00:05 , actor_loss=-0.000477, critic_loss=0.0562, xfer_entropy=0.99, loss=0.00783Iter 589 : 10/15 |██████▋   | 00:05 , actor_loss=-0.000477, critic_loss=0.0562, xfer_entropy=0.99, loss=0.00783Iter 589 : 10/15 |██████▋   | 00:05 , actor_loss=0.00829, critic_loss=0.0604, xfer_entropy=0.981, loss=0.0189  Iter 589 : 10/15 |██████▋   | 00:05 , actor_loss=0.00829, critic_loss=0.0604, xfer_entropy=0.981, loss=0.0189Iter 589 : 11/15 |███████▎  | 00:06 , actor_loss=0.00829, critic_loss=0.0604, xfer_entropy=0.981, loss=0.0189Iter 589 : 11/15 |███████▎  | 00:06 , actor_loss=0.00616, critic_loss=0.0522, xfer_entropy=0.985, loss=0.0126Iter 589 : 11/15 |███████▎  | 00:06 , actor_loss=0.00616, critic_loss=0.0522, xfer_entropy=0.985, loss=0.0126Iter 589 : 12/15 |████████  | 00:06 , actor_loss=0.00616, critic_loss=0.0522, xfer_entropy=0.985, loss=0.0126Iter 589 : 12/15 |████████  | 00:06 , actor_loss=0.00511, critic_loss=0.0505, xfer_entropy=0.981, loss=0.0107Iter 589 : 12/15 |████████  | 00:06 , actor_loss=0.00511, critic_loss=0.0505, xfer_entropy=0.981, loss=0.0107Iter 589 : 13/15 |████████▋ | 00:06 , actor_loss=0.00511, critic_loss=0.0505, xfer_entropy=0.981, loss=0.0107Iter 589 : 13/15 |████████▋ | 00:06 , actor_loss=0.00829, critic_loss=0.0534, xfer_entropy=0.977, loss=0.0154Iter 589 : 13/15 |████████▋ | 00:06 , actor_loss=0.00829, critic_loss=0.0534, xfer_entropy=0.977, loss=0.0154Iter 589 : 14/15 |█████████▎| 00:06 , actor_loss=0.00829, critic_loss=0.0534, xfer_entropy=0.977, loss=0.0154Iter 589 : 14/15 |█████████▎| 00:07 , actor_loss=0.00522, critic_loss=0.0553, xfer_entropy=0.974, loss=0.0134Iter 589 : 14/15 |█████████▎| 00:07 , actor_loss=0.00522, critic_loss=0.0553, xfer_entropy=0.974, loss=0.0134Iter 589 : 15/15 |██████████| 00:07 , actor_loss=0.00522, critic_loss=0.0553, xfer_entropy=0.974, loss=0.0134Iter 589 : 15/15 |██████████| 00:07 , actor_loss=0.00272, critic_loss=0.0438, xfer_entropy=0.993, loss=0.00477Iter 589 : 15/15 |██████████| 00:07 , actor_loss=0.00272, critic_loss=0.0438, xfer_entropy=0.993, loss=0.00477Iter 589 : 15/15 |██████████| 00:07 , actor_loss=0.00272, critic_loss=0.0438, xfer_entropy=0.993, loss=0.00477
+  Timing: rollout 39.05s, learn 7.24s, iter 46.31s, rollout/iter 0.843
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_589.pt"!
+
+  Data for iter 590 collected in 43.483306389999996 s .
+[2026-09-05 11:54:37.337010] 
+  Training lasted 0:05:05.518426 .
+    barenco_tof_3_best_graph_cost : 38
+    barenco_tof_3_best_graph_gate_count : 38
+    barenco_tof_3_best_graph_cx_count : 16
+    barenco_tof_3_best_graph_depth : 36
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 165
+    barenco_tof_3_mean_epslen : 14.343649946638207
+    barenco_tof_3_max_epslen_global : 175
+    barenco_tof_3_max_eps_reward : 18.0
+    barenco_tof_3_mean_eps_reward : 0.34258271077908214
+    barenco_tof_3_mean_exp_reward : 0.02388392857142857
+    barenco_tof_3_min_init_gate_count : 38
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 40.45037353255069
+    barenco_tof_3_min_gate_count_iter : 38
+    barenco_tof_3_max_gate_count_iter : 58
+    barenco_tof_3_mean_gate_count_iter : 40.07637198302845
+    barenco_tof_3_min_init_cx_count : 16
+    barenco_tof_3_max_init_cx_count : 25
+    barenco_tof_3_mean_init_cx_count : 17.44076840981857
+    barenco_tof_3_min_cx_count_iter : 16
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 17.85212492175002
+    barenco_tof_3_min_init_depth : 33
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 38.958448753462605
+    barenco_tof_3_min_depth_iter : 32
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 38.19686405224312
+    barenco_tof_3_min_init_cost : 38
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 40.45037353255069
+    barenco_tof_3_min_cost_iter : 38
+    barenco_tof_3_max_cost_iter : 58
+    barenco_tof_3_mean_cost_iter : 40.07637198302845
+    barenco_tof_3_buffer_size : 8275
+    barenco_tof_3_diff_costs : 20
+    barenco_tof_3_min_cost : 38
+    barenco_tof_3_max_cost : 58
+    iter : 590
+    num_exps : 13440
+    tot_exps_collected_all_rank : 81344
+    lr_0 : 0.0002206926763378923
+    lr_1 : 0.0002206926763378923
+    lr_2 : 0.00036782112722982054
+    vmem_perct : 0.1294669240596159
+Iter 590 : 0/15 |          | 00:00 Iter 590 : 1/15 |▋         | 00:03 Iter 590 : 1/15 |▋         | 00:03 , actor_loss=0.0248, critic_loss=0.0499, xfer_entropy=1, loss=0.0297Iter 590 : 1/15 |▋         | 00:03 , actor_loss=0.0248, critic_loss=0.0499, xfer_entropy=1, loss=0.0297Iter 590 : 2/15 |█▎        | 00:03 , actor_loss=0.0248, critic_loss=0.0499, xfer_entropy=1, loss=0.0297Iter 590 : 2/15 |█▎        | 00:03 , actor_loss=0.0145, critic_loss=0.0495, xfer_entropy=1.02, loss=0.0189Iter 590 : 2/15 |█▎        | 00:03 , actor_loss=0.0145, critic_loss=0.0495, xfer_entropy=1.02, loss=0.0189Iter 590 : 3/15 |██        | 00:04 , actor_loss=0.0145, critic_loss=0.0495, xfer_entropy=1.02, loss=0.0189Iter 590 : 3/15 |██        | 00:04 , actor_loss=0.0197, critic_loss=0.0573, xfer_entropy=1.02, loss=0.028 Iter 590 : 3/15 |██        | 00:04 , actor_loss=0.0197, critic_loss=0.0573, xfer_entropy=1.02, loss=0.028Iter 590 : 4/15 |██▋       | 00:04 , actor_loss=0.0197, critic_loss=0.0573, xfer_entropy=1.02, loss=0.028Iter 590 : 4/15 |██▋       | 00:04 , actor_loss=0.0228, critic_loss=0.0536, xfer_entropy=1.01, loss=0.0293Iter 590 : 4/15 |██▋       | 00:04 , actor_loss=0.0228, critic_loss=0.0536, xfer_entropy=1.01, loss=0.0293Iter 590 : 5/15 |███▎      | 00:04 , actor_loss=0.0228, critic_loss=0.0536, xfer_entropy=1.01, loss=0.0293Iter 590 : 5/15 |███▎      | 00:04 , actor_loss=0.0171, critic_loss=0.0518, xfer_entropy=1.02, loss=0.0227Iter 590 : 5/15 |███▎      | 00:04 , actor_loss=0.0171, critic_loss=0.0518, xfer_entropy=1.02, loss=0.0227Iter 590 : 6/15 |████      | 00:05 , actor_loss=0.0171, critic_loss=0.0518, xfer_entropy=1.02, loss=0.0227Iter 590 : 6/15 |████      | 00:05 , actor_loss=0.0145, critic_loss=0.047, xfer_entropy=1, loss=0.0179    Iter 590 : 6/15 |████      | 00:05 , actor_loss=0.0145, critic_loss=0.047, xfer_entropy=1, loss=0.0179Iter 590 : 7/15 |████▋     | 00:05 , actor_loss=0.0145, critic_loss=0.047, xfer_entropy=1, loss=0.0179Iter 590 : 7/15 |████▋     | 00:05 , actor_loss=0.0207, critic_loss=0.0508, xfer_entropy=1, loss=0.026Iter 590 : 7/15 |████▋     | 00:05 , actor_loss=0.0207, critic_loss=0.0508, xfer_entropy=1, loss=0.026Iter 590 : 8/15 |█████▎    | 00:05 , actor_loss=0.0207, critic_loss=0.0508, xfer_entropy=1, loss=0.026Iter 590 : 8/15 |█████▎    | 00:05 , actor_loss=0.016, critic_loss=0.0487, xfer_entropy=1.03, loss=0.0198Iter 590 : 8/15 |█████▎    | 00:05 , actor_loss=0.016, critic_loss=0.0487, xfer_entropy=1.03, loss=0.0198Iter 590 : 9/15 |██████    | 00:06 , actor_loss=0.016, critic_loss=0.0487, xfer_entropy=1.03, loss=0.0198Iter 590 : 9/15 |██████    | 00:06 , actor_loss=0.0147, critic_loss=0.0434, xfer_entropy=0.991, loss=0.0165Iter 590 : 9/15 |██████    | 00:06 , actor_loss=0.0147, critic_loss=0.0434, xfer_entropy=0.991, loss=0.0165Iter 590 : 10/15 |██████▋   | 00:06 , actor_loss=0.0147, critic_loss=0.0434, xfer_entropy=0.991, loss=0.0165Iter 590 : 10/15 |██████▋   | 00:06 , actor_loss=0.0169, critic_loss=0.0511, xfer_entropy=0.997, loss=0.0225Iter 590 : 10/15 |██████▋   | 00:06 , actor_loss=0.0169, critic_loss=0.0511, xfer_entropy=0.997, loss=0.0225Iter 590 : 11/15 |███████▎  | 00:07 , actor_loss=0.0169, critic_loss=0.0511, xfer_entropy=0.997, loss=0.0225Iter 590 : 11/15 |███████▎  | 00:07 , actor_loss=0.0154, critic_loss=0.0413, xfer_entropy=1.03, loss=0.0154 Iter 590 : 11/15 |███████▎  | 00:07 , actor_loss=0.0154, critic_loss=0.0413, xfer_entropy=1.03, loss=0.0154Iter 590 : 12/15 |████████  | 00:07 , actor_loss=0.0154, critic_loss=0.0413, xfer_entropy=1.03, loss=0.0154Iter 590 : 12/15 |████████  | 00:07 , actor_loss=0.0169, critic_loss=0.0435, xfer_entropy=0.986, loss=0.0189Iter 590 : 12/15 |████████  | 00:07 , actor_loss=0.0169, critic_loss=0.0435, xfer_entropy=0.986, loss=0.0189Iter 590 : 13/15 |████████▋ | 00:07 , actor_loss=0.0169, critic_loss=0.0435, xfer_entropy=0.986, loss=0.0189Iter 590 : 13/15 |████████▋ | 00:07 , actor_loss=0.0158, critic_loss=0.0472, xfer_entropy=1.01, loss=0.0193 Iter 590 : 13/15 |████████▋ | 00:07 , actor_loss=0.0158, critic_loss=0.0472, xfer_entropy=1.01, loss=0.0193Iter 590 : 14/15 |█████████▎| 00:08 , actor_loss=0.0158, critic_loss=0.0472, xfer_entropy=1.01, loss=0.0193Iter 590 : 14/15 |█████████▎| 00:08 , actor_loss=0.0177, critic_loss=0.043, xfer_entropy=0.999, loss=0.0193Iter 590 : 14/15 |█████████▎| 00:08 , actor_loss=0.0177, critic_loss=0.043, xfer_entropy=0.999, loss=0.0193Iter 590 : 15/15 |██████████| 00:08 , actor_loss=0.0177, critic_loss=0.043, xfer_entropy=0.999, loss=0.0193Iter 590 : 15/15 |██████████| 00:08 , actor_loss=0.0128, critic_loss=0.0397, xfer_entropy=1.01, loss=0.0126Iter 590 : 15/15 |██████████| 00:08 , actor_loss=0.0128, critic_loss=0.0397, xfer_entropy=1.01, loss=0.0126Iter 590 : 15/15 |██████████| 00:08 , actor_loss=0.0128, critic_loss=0.0397, xfer_entropy=1.01, loss=0.0126
+  Timing: rollout 43.48s, learn 8.40s, iter 51.92s, rollout/iter 0.838
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_finetune_b64_s98765_20260905/ckpts/iter_590.pt"!
+Traceback (most recent call last):
+  File "/SharedData/dengzy/Quarl/experiment/ppo-new/original_snapshot_compat_20260828/ppo.py", line 850, in <module>
+    main()
+  File "/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/SharedData/dengzy/Quarl/experiment/ppo-new/original_snapshot_compat_20260828/ppo.py", line 815, in main
+    mp.spawn(
+  File "/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/torch/multiprocessing/spawn.py", line 282, in spawn
+    return start_processes(fn, args, nprocs, join, daemon, start_method="spawn")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/torch/multiprocessing/spawn.py", line 238, in start_processes
+    while not context.join():
+              ^^^^^^^^^^^^^^
+  File "/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/torch/multiprocessing/spawn.py", line 118, in join
+    ready = multiprocessing.connection.wait(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/SharedData/lintc/miniforge3/envs/torch212/lib/python3.12/multiprocessing/connection.py", line 1136, in wait
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/SharedData/lintc/miniforge3/envs/torch212/lib/python3.12/selectors.py", line 415, in select
+    fd_event_list = self._selector.poll(timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

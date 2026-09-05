@@ -1,0 +1,305 @@
+/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/torch/cuda/__init__.py:58: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/SharedData/dengzy/Quarl/experiment/ppo-new/original_snapshot_compat_20260828/ppo.py:787: Hydra14MigrationWarning: 
+The version_base parameter is not specified.
+Hydra will assume defaults for version 1.1.
+Hydra 1.4 will remove this compatibility behavior.
+Before upgrading to Hydra 1.4, set version_base="1.3" and test your application.
+See https://hydra.cc/docs/upgrades/1.3_to_1.4/prepare_for_1_4/ for preparation instructions.
+  @hydra.main(config_path='config', config_name='config')
+/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/hydra/_internal/hydra.py:119: UserWarning: Future Hydra versions will no longer change working directory at job runtime by default.
+See https://hydra.cc/docs/1.2/upgrades/1.1_to_1.2/changes_to_job_working_dir/ for more information.
+  ret = run_job(
+wandb: WARNING `wandb.require('service')` is a no-op as it is now the default behavior.
+================ Configs ================
+mode: train
+resume: true
+resume_optimizer: false
+ckpt_path: /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/h100_nam_pretrain_6small_cluster_20260816_183726/ckpts/iter_576.pt
+load_non_ddp_ckpt: true
+load_best_info: false
+best_info_dir: outputs/2022-06-26/08-45-11/sync_dir
+gpus:
+- 0
+ddp_port: 33906
+omp_num_threads: 4
+seed: 98766
+wandb:
+  en: false
+  offline: false
+  entity: quartz
+  project: PPO-Finetune-04
+gate_set:
+- h
+- cx
+- x
+- rz
+- add
+ecc_file: ../ecc_set/nam_ecc.json
+no_increase: false
+include_nop: true
+num_gate_types: 40
+input_graphs:
+- name: barenco_tof_3
+  path: ../circs/nam_circs/barenco_tof_3.qasm
+gnn_type: QGNN
+gate_type_embed_dim: 16
+gnn_num_layers: 6
+gnn_hidden_dim: 128
+gnn_output_dim: 128
+gin_num_mlp_layers: 2
+gin_learn_eps: false
+gin_neighbor_pooling_type: sum
+gin_graph_pooling_type: none
+actor_hidden_size: 256
+critic_hidden_size: 128
+gamma: 0.95
+entropy_coeff: 0.02
+eps_clip: 0.2
+softmax_temp_en: true
+hit_rate: 0.9
+mp_start_method: spawn
+obs_per_agent: 0
+cost_type: gate_count
+nop_stop: true
+invalid_reward: -1.0
+max_extra_cost: 6
+limit_total_gate_count: false
+batch_inference: true
+dyn_eps_len: false
+max_eps_len: 20
+min_eps_len: 20
+greedy_sample: true
+agent_collect: true
+agent_batch_size: 768
+subgraph_opt: true
+xfer_pred_layers: 1
+max_iterations: 580
+num_eps_per_iter: 768
+mini_batch_size: 4800
+k_epochs: 1
+lr_gnn: 0.0003
+lr_actor: 0.0003
+lr_critic: 0.0005
+lr_scheduler: linear
+lr_start_factor: 0.1
+lr_warmup_epochs: 15
+update_policy_interval: 1
+save_ckpt_interval: 1
+time_budget: ''
+wandb_run_name_suffix: ''
+best_graph_output_dir: best_graphs
+output_full_seq: false
+full_seq_path: ''
+vmem_perct_limit: 70.0
+
+output_dir : /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905
+=========================================
+spawning 1 local processes (1 total), node_rank=0/1, master_addr=127.0.0.1...
+/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/lib/python3.12/site-packages/torch/cuda/__init__.py:58: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/SharedData/dengzy/Quarl/experiment/ppo-new/original_snapshot_compat_20260828/ppo.py:787: Hydra14MigrationWarning: 
+The version_base parameter is not specified.
+Hydra will assume defaults for version 1.1.
+Hydra 1.4 will remove this compatibility behavior.
+Before upgrading to Hydra 1.4, set version_base="1.3" and test your application.
+See https://hydra.cc/docs/upgrades/1.3_to_1.4/prepare_for_1_4/ for preparation instructions.
+  @hydra.main(config_path='config', config_name='config')
+/SharedData/dengzy/Quarl/experiment/ppo-new/original_snapshot_compat_20260828/qtz.py:45: UserWarning: enum class GateType not importable from CCore. You are probably using a cpdef enum declared in a .pxd file that does not have a .py  or .pyx file.
+  quartz_context = quartz.QuartzContext(
+rank 0 / 1 on cuda:0 initialized
+/SharedData/dengzy/Quarl/experiment/ppo-new/original_snapshot_compat_20260828/ppo.py:625: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  ckpt = torch.load(ckpt_path, map_location=self.agent.device)
+resumed from "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/h100_nam_pretrain_6small_cluster_20260816_183726/ckpts/iter_576.pt"!
+
+Agent 0 : barenco_tof_3: 58 -> 56 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/barenco_tof_3/56_0 .
+
+
+Agent 0 : barenco_tof_3: 56 -> 54 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/barenco_tof_3/54_0 .
+
+
+Agent 0 : barenco_tof_3: 54 -> 53 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/barenco_tof_3/53_0 .
+
+
+Agent 0 : barenco_tof_3: 53 -> 52 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/barenco_tof_3/52_0 .
+
+
+Agent 0 : barenco_tof_3: 52 -> 51 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/barenco_tof_3/51_0 .
+
+
+  Data for iter 577 collected in 50.370083566 s .
+[2026-09-05 11:50:22.200890] 
+  Training lasted 0:00:50.382427 .
+    barenco_tof_3_best_graph_cost : 51
+    barenco_tof_3_best_graph_gate_count : 51
+    barenco_tof_3_best_graph_cx_count : 23
+    barenco_tof_3_best_graph_depth : 43
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 7
+    barenco_tof_3_mean_epslen : 1.2376117959874304
+    barenco_tof_3_max_epslen_global : 7
+    barenco_tof_3_max_eps_reward : 2.0
+    barenco_tof_3_mean_eps_reward : 0.006043026347594873
+    barenco_tof_3_mean_exp_reward : 0.0048828125
+    barenco_tof_3_min_init_gate_count : 53
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 56.15889130609943
+    barenco_tof_3_min_gate_count_iter : 51
+    barenco_tof_3_max_gate_count_iter : 60
+    barenco_tof_3_mean_gate_count_iter : 56.19725613049584
+    barenco_tof_3_min_init_cx_count : 23
+    barenco_tof_3_max_init_cx_count : 24
+    barenco_tof_3_mean_init_cx_count : 23.94343727338651
+    barenco_tof_3_min_cx_count_iter : 23
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 23.951676208994996
+    barenco_tof_3_min_init_depth : 39
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 43.72733865119652
+    barenco_tof_3_min_depth_iter : 38
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 43.6988225126931
+    barenco_tof_3_min_init_cost : 53
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 56.15889130609943
+    barenco_tof_3_min_cost_iter : 51
+    barenco_tof_3_max_cost_iter : 60
+    barenco_tof_3_mean_cost_iter : 56.19725613049584
+    barenco_tof_3_buffer_size : 1892
+    barenco_tof_3_diff_costs : 6
+    barenco_tof_3_min_cost : 51
+    barenco_tof_3_max_cost : 58
+    iter : 577
+    num_exps : 15360
+    tot_exps_collected_all_rank : 15360
+    lr_0 : 2.9999999999999997e-05
+    lr_1 : 2.9999999999999997e-05
+    lr_2 : 5e-05
+    vmem_perct : 0.1044406923287665
+Iter 577 : 0/4 |          | 00:00 Iter 577 : 1/4 |██▌       | 00:04 Iter 577 : 1/4 |██▌       | 00:04 , actor_loss=0.0861, critic_loss=2.66, xfer_entropy=0.815, loss=1.4Iter 577 : 1/4 |██▌       | 00:04 , actor_loss=0.0861, critic_loss=2.66, xfer_entropy=0.815, loss=1.4Iter 577 : 2/4 |█████     | 00:04 , actor_loss=0.0861, critic_loss=2.66, xfer_entropy=0.815, loss=1.4Iter 577 : 2/4 |█████     | 00:04 , actor_loss=0.00391, critic_loss=2.58, xfer_entropy=0.812, loss=1.28Iter 577 : 2/4 |█████     | 00:04 , actor_loss=0.00391, critic_loss=2.58, xfer_entropy=0.812, loss=1.28Iter 577 : 3/4 |███████▌  | 00:04 , actor_loss=0.00391, critic_loss=2.58, xfer_entropy=0.812, loss=1.28Iter 577 : 3/4 |███████▌  | 00:04 , actor_loss=0.0531, critic_loss=2.48, xfer_entropy=0.808, loss=1.28 Iter 577 : 3/4 |███████▌  | 00:04 , actor_loss=0.0531, critic_loss=2.48, xfer_entropy=0.808, loss=1.28Iter 577 : 4/4 |██████████| 00:04 , actor_loss=0.0531, critic_loss=2.48, xfer_entropy=0.808, loss=1.28Iter 577 : 4/4 |██████████| 00:04 , actor_loss=-0.00318, critic_loss=2.4, xfer_entropy=0.815, loss=1.18Iter 577 : 4/4 |██████████| 00:04 , actor_loss=-0.00318, critic_loss=2.4, xfer_entropy=0.815, loss=1.18Iter 577 : 4/4 |██████████| 00:04 , actor_loss=-0.00318, critic_loss=2.4, xfer_entropy=0.815, loss=1.18
+  Timing: rollout 50.37s, learn 4.94s, iter 55.32s, rollout/iter 0.910
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/ckpts/iter_577.pt"!
+
+Agent 0 : barenco_tof_3: 51 -> 50 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/barenco_tof_3/50_0 .
+
+
+Agent 0 : barenco_tof_3: 50 -> 48 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/barenco_tof_3/48_0 .
+
+
+Agent 0 : barenco_tof_3: 48 -> 46 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/barenco_tof_3/46_0 .
+
+
+  Data for iter 578 collected in 51.755947727 s .
+[2026-09-05 11:51:19.663195] 
+  Training lasted 0:01:47.844721 .
+    barenco_tof_3_best_graph_cost : 46
+    barenco_tof_3_best_graph_gate_count : 46
+    barenco_tof_3_best_graph_cx_count : 20
+    barenco_tof_3_best_graph_depth : 42
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 20
+    barenco_tof_3_mean_epslen : 2.921262837580829
+    barenco_tof_3_max_epslen_global : 20
+    barenco_tof_3_max_eps_reward : 16.0
+    barenco_tof_3_mean_eps_reward : 0.312666413084821
+    barenco_tof_3_mean_exp_reward : 0.10703125
+    barenco_tof_3_min_init_gate_count : 46
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 48.62343096234309
+    barenco_tof_3_min_gate_count_iter : 46
+    barenco_tof_3_max_gate_count_iter : 60
+    barenco_tof_3_mean_gate_count_iter : 48.42938209331652
+    barenco_tof_3_min_init_cx_count : 20
+    barenco_tof_3_max_init_cx_count : 24
+    barenco_tof_3_mean_init_cx_count : 21.06656523392925
+    barenco_tof_3_min_cx_count_iter : 20
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 20.753079833155496
+    barenco_tof_3_min_init_depth : 37
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 43.1748825626804
+    barenco_tof_3_min_depth_iter : 36
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 42.84988323792597
+    barenco_tof_3_min_init_cost : 46
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 48.62343096234309
+    barenco_tof_3_min_cost_iter : 46
+    barenco_tof_3_max_cost_iter : 60
+    barenco_tof_3_mean_cost_iter : 48.42938209331652
+    barenco_tof_3_buffer_size : 2646
+    barenco_tof_3_diff_costs : 11
+    barenco_tof_3_min_cost : 46
+    barenco_tof_3_max_cost : 58
+    iter : 578
+    num_exps : 15360
+    tot_exps_collected_all_rank : 30720
+    lr_0 : 3.497743203539495e-05
+    lr_1 : 3.497743203539495e-05
+    lr_2 : 5.829572005899159e-05
+    vmem_perct : 0.12310920205281722
+Iter 578 : 0/4 |          | 00:00 Iter 578 : 1/4 |██▌       | 00:03 Iter 578 : 1/4 |██▌       | 00:03 , actor_loss=0.0435, critic_loss=0.925, xfer_entropy=0.761, loss=0.491Iter 578 : 1/4 |██▌       | 00:03 , actor_loss=0.0435, critic_loss=0.925, xfer_entropy=0.761, loss=0.491Iter 578 : 2/4 |█████     | 00:04 , actor_loss=0.0435, critic_loss=0.925, xfer_entropy=0.761, loss=0.491Iter 578 : 2/4 |█████     | 00:04 , actor_loss=0.0452, critic_loss=0.876, xfer_entropy=0.751, loss=0.468Iter 578 : 2/4 |█████     | 00:04 , actor_loss=0.0452, critic_loss=0.876, xfer_entropy=0.751, loss=0.468Iter 578 : 3/4 |███████▌  | 00:04 , actor_loss=0.0452, critic_loss=0.876, xfer_entropy=0.751, loss=0.468Iter 578 : 3/4 |███████▌  | 00:04 , actor_loss=0.0452, critic_loss=0.832, xfer_entropy=0.786, loss=0.445Iter 578 : 3/4 |███████▌  | 00:04 , actor_loss=0.0452, critic_loss=0.832, xfer_entropy=0.786, loss=0.445Iter 578 : 4/4 |██████████| 00:04 , actor_loss=0.0452, critic_loss=0.832, xfer_entropy=0.786, loss=0.445Iter 578 : 4/4 |██████████| 00:04 , actor_loss=0.0643, critic_loss=0.821, xfer_entropy=0.763, loss=0.459Iter 578 : 4/4 |██████████| 00:04 , actor_loss=0.0643, critic_loss=0.821, xfer_entropy=0.763, loss=0.459Iter 578 : 4/4 |██████████| 00:04 , actor_loss=0.0643, critic_loss=0.821, xfer_entropy=0.763, loss=0.459
+  Timing: rollout 51.76s, learn 4.58s, iter 56.38s, rollout/iter 0.918
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/ckpts/iter_578.pt"!
+
+Agent 0 : barenco_tof_3: 46 -> 44 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/barenco_tof_3/44_0 .
+
+
+Agent 0 : barenco_tof_3: 44 -> 43 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/barenco_tof_3/43_0 .
+
+
+Agent 0 : barenco_tof_3: 43 -> 41 ! Seq saved to /SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/barenco_tof_3/41_0 .
+
+
+  Data for iter 579 collected in 57.331241866 s .
+[2026-09-05 11:52:22.406146] 
+  Training lasted 0:02:50.587669 .
+    barenco_tof_3_best_graph_cost : 41
+    barenco_tof_3_best_graph_gate_count : 41
+    barenco_tof_3_best_graph_cx_count : 19
+    barenco_tof_3_best_graph_depth : 39
+    barenco_tof_3_min_epslen : 1
+    barenco_tof_3_max_epslen : 20
+    barenco_tof_3_mean_epslen : 7.12430426716141
+    barenco_tof_3_max_epslen_global : 20
+    barenco_tof_3_max_eps_reward : 31.0
+    barenco_tof_3_mean_eps_reward : 0.011131725417441568
+    barenco_tof_3_mean_exp_reward : 0.0015625
+    barenco_tof_3_min_init_gate_count : 43
+    barenco_tof_3_max_init_gate_count : 58
+    barenco_tof_3_mean_init_gate_count : 47.06354359925788
+    barenco_tof_3_min_gate_count_iter : 41
+    barenco_tof_3_max_gate_count_iter : 60
+    barenco_tof_3_mean_gate_count_iter : 47.38033797670701
+    barenco_tof_3_min_init_cx_count : 19
+    barenco_tof_3_max_init_cx_count : 24
+    barenco_tof_3_mean_init_cx_count : 20.55148423005566
+    barenco_tof_3_min_cx_count_iter : 19
+    barenco_tof_3_max_cx_count_iter : 26
+    barenco_tof_3_mean_cx_count_iter : 20.44005480703357
+    barenco_tof_3_min_init_depth : 35
+    barenco_tof_3_max_init_depth : 48
+    barenco_tof_3_mean_init_depth : 42.88272383354351
+    barenco_tof_3_min_depth_iter : 35
+    barenco_tof_3_max_depth_iter : 49
+    barenco_tof_3_mean_depth_iter : 42.18734542143995
+    barenco_tof_3_min_init_cost : 43
+    barenco_tof_3_max_init_cost : 58
+    barenco_tof_3_mean_init_cost : 47.06354359925788
+    barenco_tof_3_min_cost_iter : 41
+    barenco_tof_3_max_cost_iter : 60
+    barenco_tof_3_mean_cost_iter : 47.38033797670701
+    barenco_tof_3_buffer_size : 3205
+    barenco_tof_3_diff_costs : 14
+    barenco_tof_3_min_cost : 41
+    barenco_tof_3_max_cost : 58
+    iter : 579
+    num_exps : 15360
+    tot_exps_collected_all_rank : 46080
+    lr_0 : 4.0780691726355766e-05
+    lr_1 : 4.0780691726355766e-05
+    lr_2 : 6.796781954392627e-05
+    vmem_perct : 0.128961387592105
+Iter 579 : 0/4 |          | 00:00 Iter 579 : 1/4 |██▌       | 00:03 Iter 579 : 1/4 |██▌       | 00:03 , actor_loss=0.238, critic_loss=0.914, xfer_entropy=0.729, loss=0.681Iter 579 : 1/4 |██▌       | 00:03 , actor_loss=0.238, critic_loss=0.914, xfer_entropy=0.729, loss=0.681Iter 579 : 2/4 |█████     | 00:04 , actor_loss=0.238, critic_loss=0.914, xfer_entropy=0.729, loss=0.681Iter 579 : 2/4 |█████     | 00:04 , actor_loss=0.226, critic_loss=0.92, xfer_entropy=0.736, loss=0.672 Iter 579 : 2/4 |█████     | 00:04 , actor_loss=0.226, critic_loss=0.92, xfer_entropy=0.736, loss=0.672Iter 579 : 3/4 |███████▌  | 00:04 , actor_loss=0.226, critic_loss=0.92, xfer_entropy=0.736, loss=0.672Iter 579 : 3/4 |███████▌  | 00:04 , actor_loss=0.197, critic_loss=0.916, xfer_entropy=0.743, loss=0.641Iter 579 : 3/4 |███████▌  | 00:04 , actor_loss=0.197, critic_loss=0.916, xfer_entropy=0.743, loss=0.641Iter 579 : 4/4 |██████████| 00:04 , actor_loss=0.197, critic_loss=0.916, xfer_entropy=0.743, loss=0.641Iter 579 : 4/4 |██████████| 00:04 , actor_loss=0.165, critic_loss=0.886, xfer_entropy=0.745, loss=0.593Iter 579 : 4/4 |██████████| 00:04 , actor_loss=0.165, critic_loss=0.886, xfer_entropy=0.745, loss=0.593Iter 579 : 4/4 |██████████| 00:04 , actor_loss=0.165, critic_loss=0.886, xfer_entropy=0.745, loss=0.593
+  Timing: rollout 57.33s, learn 4.83s, iter 62.21s, rollout/iter 0.922
+saved "/SharedData/dengzy/Quarl/experiment/ppo-new/outputs/quarl_original_fixed20_b768_s98766_20260905/ckpts/iter_579.pt"!

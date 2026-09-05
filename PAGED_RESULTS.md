@@ -904,3 +904,19 @@ Reproducibility artifacts are `ppo_core.py`, `train_paged_ppo.py`,
 `run_paged_ppo_training.sh`, `run_ppo_policy_ab.sh`,
 `benchmark_results/paged_ppo_replay_v1*`, and
 `benchmark_results/ppo_v3_*`.
+
+## Original Quarl rollout audit
+
+A fresh H100 run on `barenco_tof_3` used Quarl's original exact-graph actor,
+persistent graph buffer, dynamic episode horizon, and six-circuit pretrained
+checkpoint.  Fourteen completed fine-tuning iterations collected 81,344 exact
+transitions in 261.24 rollout seconds (311.37 transitions/s) and changed the
+best-so-far from 58 to 38 gates.  A same-seed control that executed the same PPO
+training loop with all learning rates set to zero reached 36 gates in 59,584
+transitions.  Thus the observed short-run descent is primarily evidence for
+Quarl's exact graph-buffer search and restart curriculum, not by itself evidence
+that online PPO is improving the policy.
+
+The complete curves, exact QASM audits, configurations, source hashes, and raw
+logs are recorded in
+`benchmark_results/quarl_original_rollout_findings_20260905.md`.
