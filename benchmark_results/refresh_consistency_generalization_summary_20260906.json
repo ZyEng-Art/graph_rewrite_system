@@ -1,0 +1,104 @@
+{
+  "date": "2026-09-06",
+  "scope": "candidate-level replay of held-out GF and Barenco optimization trajectories",
+  "search_replay_claimed": false,
+  "selected": {
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311.pt",
+    "checkpoint_sha256": "d24313ad152448d0bf3ca4b18a405ed945be613c42d142d0a12a56c16e557d0c",
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311_calibration_r999.json",
+    "calibration_sha256": "8a803b8e26485f2ca5db633863002d6a13e12ad85d13273de1333f91f94763ff",
+    "target_recall": 0.999,
+    "max_source_matches": 8192,
+    "unthresholded_reserve": 0,
+    "near_reserve": 0,
+    "training_data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/binding_longmix_randomrefresh_complex_holdout_20260906.pt",
+    "training_data_sha256": "e9f03f64f856d911ed846a6e3a3ee7dc1eb8030757d212a13d508c3bdaba1202"
+  },
+  "calibration": {
+    "states": 512,
+    "partitions": {
+      "far": {
+        "raw_logit_threshold": -5.537871360778809,
+        "estimated_candidates_per_state_before_structural_decode": 4946.74169921875
+      },
+      "near": {
+        "raw_logit_threshold": -6.96396541595459,
+        "estimated_candidates_per_state_before_structural_decode": 3553.053955078125
+      }
+    },
+    "note": "near/far are calibration partitions; neither is an unthresholded reserve"
+  },
+  "strict_audits": {
+    "gf2^6_mult_370_2_w8": {
+      "states": 271,
+      "teacher_final_retained": 271,
+      "teacher_actions": 271,
+      "exact_final_retained": 559297,
+      "exact_matches": 559524,
+      "exact_final_recall": 0.9995942980104517,
+      "result": "refreshrand_possafe_c015_gf_w8_r999_s8192_norsv.json"
+    },
+    "gf2^6_mult_370_2_w64": {
+      "states": 271,
+      "teacher_final_retained": 271,
+      "teacher_actions": 271,
+      "exact_final_retained": 559467,
+      "exact_matches": 559524,
+      "exact_final_recall": 0.9998981276942545,
+      "result": "refreshrand_possafe_c015_gf_w64_r999_s8192_norsv.json"
+    },
+    "barenco_38_3_w8": {
+      "states": 16,
+      "teacher_final_retained": 16,
+      "teacher_actions": 16,
+      "exact_final_retained": 1600,
+      "exact_matches": 1600,
+      "exact_final_recall": 1.0,
+      "result": "refreshrand_possafe_c015_barenco_w8_r999_s8192_norsv.json"
+    },
+    "barenco_38_3_w64": {
+      "states": 16,
+      "teacher_final_retained": 16,
+      "teacher_actions": 16,
+      "exact_final_retained": 1600,
+      "exact_matches": 1600,
+      "exact_final_recall": 1.0,
+      "result": "refreshrand_possafe_c015_barenco_w64_r999_s8192_norsv.json"
+    }
+  },
+  "random_data": {
+    "total_added_usable_states": 7988,
+    "continued_local_states": 6144,
+    "continued_local_fraction": 0.7691537305958939,
+    "merged_usable_train_states": 34912,
+    "heldout_eval_states": 2048,
+    "datasets": [
+      {
+        "path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/random_rewrite_rich_exact_n128_s307_20260906.pt",
+        "sha256": "c9c9dccce44b3bbbec0a223bdfa60868f6fb594980437fc139d2461a67e0165f",
+        "trajectories": 128,
+        "states": 3624,
+        "continued_local_states": 2775
+      },
+      {
+        "path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/random_rewrite_large_exact_n128_s309_20260906.pt",
+        "sha256": "7f29d71d7952f908016d12cfe98b3ed4e5718b94b264625dc6743c3bc89239d6",
+        "trajectories": 128,
+        "states": 4364,
+        "continued_local_states": 3369
+      }
+    ],
+    "target_overlap": {
+      "graph_hashes": 0,
+      "supervised_states": 0,
+      "supervised_action_keys": 0
+    }
+  },
+  "validation": {
+    "focused_tests_passed": 11,
+    "focused_tests_total": 11,
+    "collector_smoke_passed": true,
+    "merged_training_smoke_passed": true,
+    "paired_views_same_current_graph_and_labels": true
+  }
+}
