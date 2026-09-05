@@ -7,6 +7,7 @@ from pathlib import Path
 import time
 
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from dataset import (
@@ -14,6 +15,7 @@ from dataset import (
     collate_current_graphs,
     collate_prefixes,
     load_datasets,
+    rebase_prefix_sample,
 )
 from model_factory import build_model
 
@@ -29,6 +31,100 @@ def autocast_context(device: torch.device):
     if device.type == "cuda":
         return torch.autocast(device_type="cuda", dtype=torch.bfloat16)
     return nullcontext()
+
+
+def matcher_refresh_consistency_loss(
+    logits: torch.Tensor,
+    refreshed_logits: torch.Tensor,
+    eligible: torch.Tensor,
+    refreshed_eligible: torch.Tensor,
+    positives: list[list],
+    *,
+    max_hard_pairs: int,
+) -> torch.Tensor:
+    """Align matcher scores for two decompositions of the same graph state.
+
+    Every exact-positive anchor/source pair is included.  The highest-scoring
+    eligible pairs from either view are added so the loss also constrains the
+    part of the negative distribution that controls a finite Top-N boundary.
+    """
+
+    if logits.shape != refreshed_logits.shape:
+        raise ValueError("refresh views must have identical matcher shapes")
+    if max_hard_pairs < 0:
+        raise ValueError("max_hard_pairs must be nonnegative")
+    losses = []
+    for batch_index, rows in enumerate(positives):
+        common = eligible[batch_index] & refreshed_eligible[batch_index]
+        if not bool(common.any()):
+            continue
+        selected = []
+        if rows:
+            anchors = torch.tensor(
+                [int(binding[0]) for _, binding in rows],
+                dtype=torch.long,
+                device=logits.device,
+            )
+            sources = torch.tensor(
+                [int(source) for source, _ in rows],
+                dtype=torch.long,
+                device=logits.device,
+            )
+            selected.append(anchors * logits.shape[-1] + sources)
+        if max_hard_pairs:
+            common_positions = common.flatten().nonzero(
+                as_tuple=False
+            ).squeeze(1)
+            hard_count = min(max_hard_pairs, int(common_positions.numel()))
+            with torch.no_grad():
+                boundary_scores = torch.maximum(
+                    logits[batch_index].float(),
+                    refreshed_logits[batch_index].float(),
+                ).flatten()[common_positions]
+                hard = common_positions[boundary_scores.topk(hard_count).indices]
+            selected.append(hard)
+        if not selected:
+            continue
+        positions = torch.unique(torch.cat(selected))
+        base_values = logits[batch_index].flatten()[positions].float().clamp(-20, 20)
+        refreshed_values = (
+            refreshed_logits[batch_index]
+            .flatten()[positions]
+            .float()
+            .clamp(-20, 20)
+        )
+        losses.append(F.smooth_l1_loss(base_values, refreshed_values))
+    if not losses:
+        return logits.sum() * 0
+    return torch.stack(losses).mean()
+
+
+def collate_refresh_views(samples: list[dict], rules, max_actions: int) -> dict:
+    """Collate aligned long- and short-prefix views of identical states."""
+
+    base = collate_prefixes(samples, rules)
+    refresh = collate_prefixes(
+        [rebase_prefix_sample(sample, max_actions) for sample in samples],
+        rules,
+    )
+    slots = max(base["initial_types"].shape[1], refresh["initial_types"].shape[1])
+    for batch in (base, refresh):
+        extra = slots - batch["initial_types"].shape[1]
+        if not extra:
+            continue
+        batch["initial_types"] = F.pad(
+            batch["initial_types"], (0, extra), value=-1
+        )
+        batch["current_types"] = F.pad(
+            batch["current_types"], (0, extra), value=-1
+        )
+        batch["current_rewrite_distance"] = F.pad(
+            batch["current_rewrite_distance"], (0, extra), value=5
+        )
+        batch["current_touch_age"] = F.pad(
+            batch["current_touch_age"], (0, extra), value=7
+        )
+    return {"base": base, "refresh": refresh}
 
 
 @torch.no_grad()
@@ -320,6 +416,33 @@ def main() -> None:
     )
     parser.add_argument("--topn-boundary-weight", type=float, default=0.0)
     parser.add_argument("--topn-boundary-margin", type=float, default=0.0)
+    parser.add_argument(
+        "--refresh-augmentation-actions",
+        type=int,
+        default=0,
+        help=(
+            "also supervise each state after rebasing its prefix to at most this "
+            "many actions; 0 disables refresh augmentation"
+        ),
+    )
+    parser.add_argument(
+        "--refresh-supervision-weight",
+        type=float,
+        default=1.0,
+        help="relative supervised-loss weight of the rebased refresh view",
+    )
+    parser.add_argument(
+        "--refresh-consistency-weight",
+        type=float,
+        default=0.0,
+        help="weight for matching logits across original and rebased views",
+    )
+    parser.add_argument(
+        "--refresh-consistency-pairs",
+        type=int,
+        default=2048,
+        help="hard eligible anchor/source pairs per state in consistency loss",
+    )
     parser.add_argument("--init-checkpoint", type=Path)
     parser.add_argument(
         "--selection-metric",
@@ -333,6 +456,8 @@ def main() -> None:
         "locality_negative_weight",
         "action_positive_weight",
         "topn_boundary_weight",
+        "refresh_supervision_weight",
+        "refresh_consistency_weight",
     ):
         if getattr(args, name) < 0:
             parser.error(f"--{name.replace('_', '-')} must be nonnegative")
@@ -342,6 +467,14 @@ def main() -> None:
         parser.error("paged_action consumes action prefixes and cannot be state-only")
     if args.architecture == "paged_action" and args.locality_features:
         parser.error("paged_action does not consume materialized locality features")
+    if args.refresh_augmentation_actions < 0:
+        parser.error("--refresh-augmentation-actions must be nonnegative")
+    if args.refresh_consistency_pairs < 0:
+        parser.error("--refresh-consistency-pairs must be nonnegative")
+    if args.refresh_consistency_weight and not args.refresh_augmentation_actions:
+        parser.error("refresh consistency requires refresh augmentation")
+    if args.refresh_augmentation_actions and args.state_only:
+        parser.error("refresh augmentation requires action-prefix training")
 
     torch.manual_seed(args.seed)
     if torch.cuda.is_available():
@@ -359,12 +492,18 @@ def main() -> None:
         if args.state_only
         else collate_prefixes(samples, rules)
     )
+    if args.refresh_augmentation_actions:
+        train_collate = lambda samples: collate_refresh_views(
+            samples, rules, args.refresh_augmentation_actions
+        )
+    else:
+        train_collate = collate
     sampler = EpochRandomSampler(train_dataset, args.seed)
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
         sampler=sampler,
-        collate_fn=collate,
+        collate_fn=train_collate,
         num_workers=0,
         pin_memory=device.type == "cuda",
     )
@@ -436,12 +575,19 @@ def main() -> None:
         epoch_loss = 0.0
         epoch_class = 0.0
         epoch_binding = 0.0
+        epoch_refresh = 0.0
+        epoch_consistency = 0.0
         batches = 0
         started = time.perf_counter()
         for batch_index, cpu_batch in enumerate(train_loader):
             if args.max_train_batches is not None and batch_index >= args.max_train_batches:
                 break
-            batch = move_batch(cpu_batch, device)
+            if args.refresh_augmentation_actions:
+                batch = move_batch(cpu_batch["base"], device)
+                refresh_batch = move_batch(cpu_batch["refresh"], device)
+            else:
+                batch = move_batch(cpu_batch, device)
+                refresh_batch = None
             optimizer.zero_grad(set_to_none=True)
             with autocast_context(device):
                 states, live, gate_types = model.encode(batch)
@@ -466,18 +612,78 @@ def main() -> None:
                     )
                 else:
                     binding_loss = states.sum() * 0
-                loss = class_loss + args.binding_weight * binding_loss
+                base_supervised_loss = class_loss + args.binding_weight * binding_loss
+                refresh_supervised_loss = states.sum() * 0
+                consistency_loss = states.sum() * 0
+                if refresh_batch is not None:
+                    (
+                        refresh_states,
+                        refresh_live,
+                        refresh_gate_types,
+                    ) = model.encode(refresh_batch)
+                    refresh_logits, refresh_eligible = model.match_logits(
+                        refresh_states, refresh_live, refresh_gate_types
+                    )
+                    refresh_class_loss = model.classification_loss(
+                        refresh_logits,
+                        refresh_eligible,
+                        refresh_batch["positives"],
+                        batch=refresh_batch,
+                        live=refresh_live,
+                        gate_types=refresh_gate_types,
+                        structural_hard_negatives=args.structural_hard_negatives,
+                        locality_positive_weight=args.locality_positive_weight,
+                        locality_negative_weight=args.locality_negative_weight,
+                        action_positive_weight=args.action_positive_weight,
+                        topn_boundary_weight=args.topn_boundary_weight,
+                        topn_boundary_margin=args.topn_boundary_margin,
+                    )
+                    if args.binding_weight > 0:
+                        refresh_binding_loss = model.binding_loss(
+                            refresh_states,
+                            refresh_live,
+                            refresh_gate_types,
+                            refresh_batch["positives"],
+                        )
+                    else:
+                        refresh_binding_loss = refresh_states.sum() * 0
+                    refresh_supervised_loss = (
+                        refresh_class_loss
+                        + args.binding_weight * refresh_binding_loss
+                    )
+                    consistency_loss = matcher_refresh_consistency_loss(
+                        logits,
+                        refresh_logits,
+                        eligible,
+                        refresh_eligible,
+                        batch["positives"],
+                        max_hard_pairs=args.refresh_consistency_pairs,
+                    )
+                supervised_denominator = 1.0 + (
+                    args.refresh_supervision_weight
+                    if refresh_batch is not None
+                    else 0.0
+                )
+                loss = (
+                    base_supervised_loss
+                    + args.refresh_supervision_weight * refresh_supervised_loss
+                ) / supervised_denominator
+                loss = loss + args.refresh_consistency_weight * consistency_loss
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             epoch_loss += float(loss.detach())
             epoch_class += float(class_loss.detach())
             epoch_binding += float(binding_loss.detach())
+            epoch_refresh += float(refresh_supervised_loss.detach())
+            epoch_consistency += float(consistency_loss.detach())
             batches += 1
         elapsed = time.perf_counter() - started
         print(
             f"epoch={epoch:03d} loss={epoch_loss / batches:.4f} "
             f"class={epoch_class / batches:.4f} binding={epoch_binding / batches:.4f} "
+            f"refresh={epoch_refresh / batches:.4f} "
+            f"consistency={epoch_consistency / batches:.4f} "
             f"seconds={elapsed:.1f}",
             flush=True,
         )

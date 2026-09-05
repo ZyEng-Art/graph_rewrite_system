@@ -120,6 +120,69 @@ def action_with_effective_delta(step: dict) -> dict:
     return {**action, "effective_delta": step["delta"]}
 
 
+def apply_snapshot_delta(snapshot: dict, delta: dict) -> dict:
+    """Apply an authoritative trajectory delta without renumbering slots."""
+
+    nodes = {
+        int(slot): (int(gate_type), int(guid))
+        for slot, gate_type, guid in snapshot["nodes"]
+    }
+    edges = {tuple(map(int, edge)) for edge in snapshot["edges"]}
+    for slot in delta["removed_slots"]:
+        nodes.pop(int(slot))
+    for slot, gate_type, guid in delta["added_nodes"]:
+        slot = int(slot)
+        if slot in nodes:
+            raise ValueError(f"trajectory delta reuses live slot {slot}")
+        nodes[slot] = (int(gate_type), int(guid))
+    edges.difference_update(tuple(map(int, edge)) for edge in delta["removed_edges"])
+    edges.update(tuple(map(int, edge)) for edge in delta["added_edges"])
+    return {
+        "nodes": sorted(
+            (slot, gate_type, guid)
+            for slot, (gate_type, guid) in nodes.items()
+        ),
+        "edges": sorted(edges),
+    }
+
+
+def rebase_prefix_sample(sample: dict, max_actions: int) -> dict:
+    """Represent the same current state from a more recent refresh boundary.
+
+    The target matches and action are unchanged.  Only the decomposition into
+    ``initial_graph + action suffix`` changes, which makes this suitable for a
+    supervised refresh-invariance objective.
+    """
+
+    if max_actions < 0:
+        raise ValueError("refresh augmentation length must be nonnegative")
+    actions = list(sample["actions"])
+    dropped = max(0, len(actions) - max_actions)
+    initial_graph = sample["initial_graph"]
+    for action in actions[:dropped]:
+        delta = action.get("effective_delta")
+        if delta is None:
+            raise ValueError("refresh rebasing requires authoritative graph deltas")
+        initial_graph = apply_snapshot_delta(initial_graph, delta)
+    suffix = actions[dropped:]
+    previous_action = suffix[-1] if suffix else None
+    return {
+        **sample,
+        "initial_graph": initial_graph,
+        "actions": suffix,
+        "prefix_length": len(suffix),
+        "previous_action": previous_action,
+        "previous_delta": (
+            previous_action.get("effective_delta")
+            if previous_action is not None
+            else None
+        ),
+        # This field is evaluation-only.  The model-facing streak is replayed
+        # from ``suffix`` by collate_prefixes.
+        "previous_local_streak": None,
+    }
+
+
 def validate_trajectory(trajectory: dict, rules: RuleMetadata) -> None:
     live = {
         int(slot): int(gate_type)
