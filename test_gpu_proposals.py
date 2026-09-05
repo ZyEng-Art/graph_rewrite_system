@@ -3,7 +3,11 @@ from __future__ import annotations
 import torch
 
 from beam_search_benchmark import BeamState
-from gpu_proposals import GpuRuleIndex, build_gpu_proposals
+from gpu_proposals import (
+    GpuRuleIndex,
+    build_gpu_proposals,
+    materialize_selected_proposals,
+)
 from paged_rollout_benchmark import (
     build_legacy_proposals,
     parse_topn,
@@ -208,6 +212,9 @@ def main() -> None:
     assert selected_tensors.source_ids.tolist() == [
         xfer_to_source[row.xfer_id] for row in actual
     ]
+    assert selected_tensors.anchor_slots.tolist() == [
+        row.anchor_slot for row in actual
+    ]
     assert selected_tensors.gate_deltas.tolist() == [
         row.next_gate_count - beam[row.parent].gate_count for row in actual
     ]
@@ -217,9 +224,31 @@ def main() -> None:
         selected_tensors.probabilities.cpu(),
         torch.tensor([row.probability for row in actual]),
     )
+    assert selected_tensors.next_gate_counts.tolist() == [
+        row.next_gate_count for row in actual
+    ]
+    assert list(map(simplify, materialize_selected_proposals(selected_tensors))) == list(
+        map(simplify, actual)
+    )
+    deferred, deferred_metrics, _, deferred_tensors = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=2,
+        global_cap=4,
+        return_selected_tensors=True,
+        materialize_python_proposals=False,
+    )
+    assert deferred is None
+    assert deferred_metrics == metrics
+    assert deferred_tensors is not None
+    assert list(
+        map(simplify, materialize_selected_proposals(deferred_tensors))
+    ) == list(map(simplify, actual))
     assert metrics == {
         "predicted_actions": 10,
         "eligible_actions": 8,
+        "selected_actions": 4,
         "value_increase_candidates_after_parent_cap": 0,
         "selected_value_exploration_proposals": 0,
     }

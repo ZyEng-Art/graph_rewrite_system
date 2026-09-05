@@ -1268,3 +1268,42 @@ The launcher enables trusted inputs, while checked remains the diagnostic
 fallback. Raw logs and exact stage accounting are in
 `benchmark_results/ppo_training_advance_ab_*_h100.json` and
 `benchmark_results/ppo_training_trusted_advance_summary_20260905.json`.
+
+## Deferred PPO proposal materialization
+
+The PPO collector previously converted every retained candidate into a CPU
+`Proposal` object even though the actor executes only one candidate per active
+episode. With 64 candidates, this copied and packed roughly 64 Python objects
+for every sampled action. `--proposal-materialization-backend deferred` keeps
+parent, xfer, anchor, binding, probability, and gate-count metadata on the GPU.
+Tensorized policy padding retains each candidate's flat GPU index, and only the
+actor-selected indices are copied and packed immediately before the indexed
+lazy rewrite. Invalid or cyclic choices are re-sampled against the updated mask
+and materialized from their new indices. The eager backend remains available
+for regression comparison.
+
+A counted 14-circuit, 224-episode H100 run reduced Python proposal construction
+from 222,400 objects to 3,472, exactly 64x. Proposal construction plus deferred
+selected-item materialization fell from 1.395 to 0.559 seconds (-60.0%). Under
+the same high host load, collection time fell from 13.882 to 13.535 seconds
+(-2.5%) and throughput rose from 246.9 to 253.1 transitions/s (+2.5%). Both
+runs found the same per-circuit best gate counts and used about 0.212 GiB peak
+CUDA allocation.
+
+An earlier clean pair independently reduced the targeted stage from 0.727 to
+0.320 seconds (-55.9%) and produced exactly the same 3,441 transitions, 13
+invalid actions, legality, and per-circuit best counts. Its total collection
+time was statistically flat at 7.398 versus 7.449 seconds because policy,
+matcher, advance, and refresh variation exceeded the saved wall time. A third
+pair is retained but excluded from comparison because a concurrent trajectory
+collector expanded to about 75 CPU cores between its two runs. Across the two
+usable pairs, the directly targeted stage fell by 57.9%; the end-to-end effect
+ranged from -0.7% to +2.5%.
+
+GPU tests verify eager/deferred proposal field equality and Python-backed versus
+tensor-only padding equality. An end-to-end smoke completed all 32 sampled
+actions legally, including continued execution after a cycle rejection. The
+training launcher now enables deferred materialization by default. Raw logs and
+the load-qualified comparison are in
+`benchmark_results/ppo_training_materialization_ab_*_h100.json` and
+`benchmark_results/ppo_training_deferred_materialization_summary_20260905.json`.

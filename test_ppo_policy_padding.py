@@ -42,6 +42,20 @@ def _assert_backends_match(
     for expected_tensor, actual_tensor in zip(expected[:3], actual[:3]):
         torch.testing.assert_close(actual_tensor, expected_tensor)
     assert actual[3] == expected[3]
+    torch.testing.assert_close(actual[4], expected[4])
+
+    deferred = pad_batched_policy_inputs(
+        features,
+        logits,
+        None,
+        batch_size,
+        parent_ids=parent_ids,
+        backend="tensorized",
+    )
+    for expected_tensor, deferred_tensor in zip(expected[:3], deferred[:3]):
+        torch.testing.assert_close(deferred_tensor, expected_tensor)
+    assert deferred[3] == [[] for _ in range(batch_size)]
+    torch.testing.assert_close(deferred[4], expected[4])
 
 
 def main() -> None:

@@ -34,7 +34,7 @@ def main() -> None:
     ]
     features = torch.tensor([[1.0, 10.0], [2.0, 20.0], [3.0, 30.0]])
     logits = torch.tensor([0.1, 0.2, 0.3])
-    padded, padded_logits, mask, grouped = pad_batched_policy_inputs(
+    padded, padded_logits, mask, grouped, flat_indices = pad_batched_policy_inputs(
         features, logits, proposals, batch_size=3
     )
     assert padded.shape == (3, 2, 2)
@@ -51,6 +51,10 @@ def main() -> None:
     assert [row.xfer_id for row in grouped[0]] == [11]
     assert [row.xfer_id for row in grouped[1]] == [10, 12]
     assert grouped[2] == []
+    assert torch.equal(
+        flat_indices,
+        torch.tensor([[1, -1], [0, 2], [-1, -1]]),
+    )
     print("batched PPO initial collation and candidate grouping are correct")
 
 

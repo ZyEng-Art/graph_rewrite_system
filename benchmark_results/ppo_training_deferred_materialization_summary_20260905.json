@@ -1,0 +1,90 @@
+{
+  "format": "ppo-training-deferred-proposal-materialization-ab-v1",
+  "machine": "h100-gpu5",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "protocol": {
+    "circuits": 14,
+    "episodes": 224,
+    "episodes_per_circuit": 16,
+    "max_steps": 16,
+    "refresh_interval": 8,
+    "max_actions": 64,
+    "source_grouping": "first_gate",
+    "proposal_tensor_backend": "reuse",
+    "policy_padding_backend": "tensorized",
+    "episode_initialization_backend": "deduplicated",
+    "advance_input_backend": "trusted",
+    "transition_transfer_backend": "batched",
+    "ppo_epochs": 1
+  },
+  "seed_916_clean_eager_first": {
+    "eager": {
+      "collection_seconds": 7.398321124026552,
+      "transitions": 3441,
+      "transitions_per_second": 465.10552087623205,
+      "proposal_seconds": 0.7265687666367739,
+      "proposal_materialization_seconds": 0.0,
+      "selected_action_legality": 0.996222028480093,
+      "peak_cuda_allocated_gib": 0.21225976943969727
+    },
+    "deferred": {
+      "collection_seconds": 7.448706028051674,
+      "transitions": 3441,
+      "transitions_per_second": 461.95943121412824,
+      "proposal_seconds": 0.28164965100586414,
+      "proposal_materialization_seconds": 0.038655178621411324,
+      "selected_action_legality": 0.996222028480093,
+      "peak_cuda_allocated_gib": 0.21226024627685547
+    },
+    "proposal_plus_materialization_reduction_percent": 55.91541443352434,
+    "collection_time_reduction_percent": -0.6810315905522618,
+    "throughput_increase_percent": -0.676424923139325
+  },
+  "seed_918_high_load_eager_first": {
+    "eager": {
+      "collection_seconds": 13.881811250001192,
+      "transitions": 3427,
+      "transitions_per_second": 246.86980238257496,
+      "proposal_seconds": 1.3952495374251157,
+      "proposal_materialization_seconds": 0.0,
+      "selected_proposals": 222400,
+      "python_proposals_materialized": 222400,
+      "selected_action_legality": 0.9950393930551503,
+      "peak_cuda_allocated_gib": 0.2122645378112793
+    },
+    "deferred": {
+      "collection_seconds": 13.534515693085268,
+      "transitions": 3425,
+      "transitions_per_second": 253.05670905903335,
+      "proposal_seconds": 0.49128089658915997,
+      "proposal_materialization_seconds": 0.06747659109532833,
+      "selected_proposals": 222208,
+      "python_proposals_materialized": 3472,
+      "selected_action_legality": 0.9953284671532847,
+      "peak_cuda_allocated_gib": 0.2122635841369629
+    },
+    "python_object_reduction_factor": 64.0,
+    "proposal_plus_materialization_reduction_percent": 59.95286343433192,
+    "collection_time_reduction_percent": 2.501802903536051,
+    "throughput_increase_percent": 2.5061415437399346
+  },
+  "paired_stage_result": {
+    "mean_proposal_plus_materialization_reduction_percent": 57.93413893392813,
+    "note": "The clean and high-load pairs both remove the same eager object construction work. End-to-end results range from -0.7% to +2.5% because matcher and refresh variation are larger than the remaining collector saving."
+  },
+  "excluded_seed_917": {
+    "files": [
+      "ppo_training_materialization_ab_deferred_s917_h100.json",
+      "ppo_training_materialization_ab_eager_s917_h100.json"
+    ],
+    "reason": "A concurrent trajectory collection job expanded to about 75 CPU cores between the two runs; collection times of 15.158 and 8.078 seconds are not comparable."
+  },
+  "correctness": {
+    "gpu_proposal_test": "eager and deferred materialization agree field by field",
+    "policy_padding_test": "Python-backed and tensor-only padding produce equal features, logits, masks, and flat indices",
+    "smoke_test": "32 transitions completed with 32 legal actions and one cycle retry",
+    "seed_916_transitions_equal": true,
+    "best_gate_counts_equal_within_included_pairs": true,
+    "peak_cuda_memory_unchanged": true
+  }
+}

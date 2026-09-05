@@ -27,6 +27,7 @@ from gpu_proposals import (
     GpuRuleIndex,
     SelectedProposalTensors,
     build_gpu_proposals,
+    materialize_selected_proposals,
 )
 from incremental_graph import parse_pattern
 from lazy_rollout_benchmark import (
@@ -496,16 +497,16 @@ def batched_proposal_features(
     encoded: torch.Tensor,
     live: torch.Tensor,
     states: list[BeamState],
-    proposals: list[Proposal],
+    proposals: list[Proposal] | None,
     rules: RuleMetadata,
     device: torch.device,
     initial_gate_bias: float,
     ordered_roles: bool = False,
     proposal_tensors: SelectedProposalTensors | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    count = len(proposals)
     if proposal_tensors is not None:
-        if proposal_tensors.parent_ids.numel() != count:
+        count = proposal_tensors.parent_ids.numel()
+        if proposals is not None and len(proposals) != count:
             raise ValueError("selected proposal tensor count differs from proposals")
         parent_ids = proposal_tensors.parent_ids
         xfer_ids = proposal_tensors.xfer_ids
@@ -514,6 +515,9 @@ def batched_proposal_features(
         probabilities = proposal_tensors.probabilities
         gate_deltas = proposal_tensors.gate_deltas
     else:
+        if proposals is None:
+            raise ValueError("proposal features require Python or GPU proposals")
+        count = len(proposals)
         parent_ids = torch.tensor(
             [proposal.parent for proposal in proposals], device=device
         )
@@ -562,20 +566,29 @@ def batched_proposal_features(
 def pad_batched_policy_inputs(
     features: torch.Tensor,
     logits: torch.Tensor,
-    proposals: list[Proposal],
+    proposals: list[Proposal] | None,
     batch_size: int,
     *,
     parent_ids: torch.Tensor | None = None,
     backend: str = "loop",
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, list[list[Proposal]]]:
+) -> tuple[
+    torch.Tensor,
+    torch.Tensor,
+    torch.Tensor,
+    list[list[Proposal]],
+    torch.Tensor,
+]:
     if backend not in {"loop", "tensorized"}:
         raise ValueError(f"unknown policy padding backend: {backend}")
     if backend == "tensorized" and parent_ids is None:
         raise ValueError("tensorized policy padding requires GPU parent IDs")
+    if backend == "loop" and proposals is None:
+        raise ValueError("loop policy padding requires Python proposals")
 
     grouped: list[list[tuple[int, Proposal]]] = [[] for _ in range(batch_size)]
-    for flat_index, proposal in enumerate(proposals):
-        grouped[proposal.parent].append((flat_index, proposal))
+    if proposals is not None:
+        for flat_index, proposal in enumerate(proposals):
+            grouped[proposal.parent].append((flat_index, proposal))
     grouped_proposals = [
         [proposal for _, proposal in rows] for rows in grouped
     ]
@@ -606,7 +619,22 @@ def pad_batched_policy_inputs(
         padded_features[parent_ids, offsets] = features
         padded_logits[parent_ids, offsets] = logits
         mask[parent_ids, offsets] = True
-        return padded_features, padded_logits, mask, grouped_proposals
+        flat_indices = torch.full(
+            (batch_size, max_candidates),
+            -1,
+            dtype=torch.long,
+            device=features.device,
+        )
+        flat_indices[parent_ids, offsets] = torch.arange(
+            parent_ids.numel(), device=features.device
+        )
+        return (
+            padded_features,
+            padded_logits,
+            mask,
+            grouped_proposals,
+            flat_indices,
+        )
 
     max_candidates = max((len(rows) for rows in grouped), default=0)
     padded_features = features.new_zeros(
@@ -615,6 +643,12 @@ def pad_batched_policy_inputs(
     padded_logits = logits.new_zeros((batch_size, max_candidates))
     mask = torch.zeros(
         (batch_size, max_candidates), dtype=torch.bool, device=features.device
+    )
+    flat_indices = torch.full(
+        (batch_size, max_candidates),
+        -1,
+        dtype=torch.long,
+        device=features.device,
     )
     for parent, rows in enumerate(grouped):
         if not rows:
@@ -626,7 +660,8 @@ def pad_batched_policy_inputs(
         padded_features[parent, :count] = features.index_select(0, indices)
         padded_logits[parent, :count] = logits.index_select(0, indices)
         mask[parent, :count] = True
-    return padded_features, padded_logits, mask, grouped_proposals
+        flat_indices[parent, :count] = indices
+    return padded_features, padded_logits, mask, grouped_proposals, flat_indices
 
 
 def current_prefix_states(
@@ -684,6 +719,7 @@ def collect_episode(
     proposal_expansion: str,
     transition_transfer_backend: str,
     proposal_tensor_backend: str,
+    proposal_materialization_backend: str,
     policy_padding_backend: str,
     episode_initialization_backend: str,
     advance_input_backend: str,
@@ -784,6 +820,9 @@ def collect_episode(
             collector_timing["materialized_actions"] += int(
                 proposal_metrics.get("materialized_actions", eligible_actions)
             )
+            selected_actions = int(proposal_metrics.get("selected_actions", 0))
+            collector_timing["selected_proposals"] += selected_actions
+            collector_timing["python_proposals_materialized"] += selected_actions
         if not proposals:
             terminated_reason = "no_candidates"
             break
@@ -1131,6 +1170,7 @@ def collect_episode_batch(
     proposal_expansion: str,
     transition_transfer_backend: str,
     proposal_tensor_backend: str,
+    proposal_materialization_backend: str,
     policy_padding_backend: str,
     episode_initialization_backend: str,
     advance_input_backend: str,
@@ -1216,7 +1256,13 @@ def collect_episode_batch(
                 global_cap=max_actions * len(active),
                 ranking_mode="gate",
                 preselect_matches=proposal_expansion == "preselect",
-                return_selected_tensors=proposal_tensor_backend == "reuse",
+                return_selected_tensors=(
+                    proposal_tensor_backend == "reuse"
+                    or proposal_materialization_backend == "deferred"
+                ),
+                materialize_python_proposals=(
+                    proposal_materialization_backend == "eager"
+                ),
             )
         )
         if collector_timing is not None:
@@ -1228,8 +1274,18 @@ def collect_episode_batch(
             collector_timing["materialized_actions"] += int(
                 proposal_metrics.get("materialized_actions", eligible_actions)
             )
+            selected_actions = int(proposal_metrics.get("selected_actions", 0))
+            collector_timing["selected_proposals"] += selected_actions
+            if proposal_materialization_backend == "eager":
+                collector_timing["python_proposals_materialized"] += selected_actions
         policy_preparation_started = time.perf_counter()
-        if proposals:
+        has_proposals = (
+            bool(proposals)
+            if proposal_materialization_backend == "eager"
+            else selected_proposal_tensors is not None
+            and bool(selected_proposal_tensors.parent_ids.numel())
+        )
+        if has_proposals:
             (
                 flat_features,
                 flat_logits,
@@ -1251,6 +1307,7 @@ def collect_episode_batch(
                 matcher_logits,
                 candidate_mask,
                 grouped_proposals,
+                candidate_flat_indices,
             ) = pad_batched_policy_inputs(
                 flat_features,
                 flat_logits,
@@ -1268,6 +1325,9 @@ def collect_episode_batch(
                 (len(active), 0), dtype=torch.bool, device=device
             )
             grouped_proposals = [[] for _ in active]
+            candidate_flat_indices = torch.empty(
+                (len(active), 0), dtype=torch.long, device=device
+            )
 
         state_features = build_state_features(
             encoded,
@@ -1278,7 +1338,7 @@ def collect_episode_batch(
         )
         prefix_states = current_prefix_states(encoded, live, arena, handles)
         with torch.no_grad():
-            if proposals:
+            if has_proposals:
                 value_mask = candidate_mask.clone()
                 value_mask[~value_mask.any(1), 0] = True
                 old_values = actor_critic.state_values(
@@ -1315,14 +1375,19 @@ def collect_episode_batch(
 
         advance_records: dict[int, tuple[BeamState, Proposal]] = {}
         refresh_indices = set()
+        candidate_presence = (
+            transition_candidate_mask.any(1).tolist()
+            if transition_candidate_mask is not None
+            else candidate_mask.any(1).tolist()
+        )
         for parent_index, runtime in enumerate(active):
-            if not grouped_proposals[parent_index]:
+            if not candidate_presence[parent_index]:
                 runtime.terminated_reason = "no_candidates"
                 runtime.stopped = True
                 if runtime.pending_transition_indices:
                     refresh_indices.add(parent_index)
         unresolved = [
-            index for index, rows in enumerate(grouped_proposals) if rows
+            index for index, present in enumerate(candidate_presence) if present
         ]
         rejected_counts = {index: 0 for index in unresolved}
         while unresolved:
@@ -1367,12 +1432,31 @@ def collect_episode_batch(
                 collector_timing["transition_transfer_seconds"] += (
                     time.perf_counter() - transfer_started
                 )
+            chosen_proposals = None
+            if proposal_materialization_backend == "deferred":
+                materialization_started = time.perf_counter()
+                chosen_flat_indices = candidate_flat_indices[
+                    unresolved_tensor, actions
+                ]
+                chosen_proposals = materialize_selected_proposals(
+                    selected_proposal_tensors, chosen_flat_indices
+                )
+                if collector_timing is not None:
+                    collector_timing["proposal_materialization_seconds"] += (
+                        time.perf_counter() - materialization_started
+                    )
+                    collector_timing["python_proposals_materialized"] += len(
+                        chosen_proposals
+                    )
             retry = []
             for row_index, parent_index in enumerate(unresolved):
                 runtime = active[parent_index]
-                rows = grouped_proposals[parent_index]
                 action_index = int(actor_outputs[row_index][0])
-                proposal = rows[action_index]
+                proposal = (
+                    chosen_proposals[row_index]
+                    if chosen_proposals is not None
+                    else grouped_proposals[parent_index][action_index]
+                )
                 old_log_prob = float(actor_outputs[row_index][1])
                 entropy = float(actor_outputs[row_index][2])
                 local_mask = candidate_mask[parent_index]
@@ -1945,6 +2029,12 @@ def main() -> None:
         help="reuse selected GPU proposal tensors for PPO candidate features",
     )
     parser.add_argument(
+        "--proposal-materialization-backend",
+        choices=("eager", "deferred"),
+        default="eager",
+        help="materialize only actor-selected Python proposals",
+    )
+    parser.add_argument(
         "--policy-padding-backend",
         choices=("loop", "tensorized"),
         default="loop",
@@ -2053,6 +2143,16 @@ def main() -> None:
         parser.error("replay start probability must be within [0, 1]")
     if args.replay_capacity_per_circuit < 1:
         parser.error("replay capacity per circuit must be positive")
+    if (
+        args.proposal_materialization_backend == "deferred"
+        and args.proposal_tensor_backend != "reuse"
+    ):
+        parser.error("deferred proposals require --proposal-tensor-backend reuse")
+    if (
+        args.proposal_materialization_backend == "deferred"
+        and args.policy_padding_backend != "tensorized"
+    ):
+        parser.error("deferred proposals require tensorized policy padding")
 
     random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -2211,6 +2311,7 @@ def main() -> None:
         "proposal_expansion": args.proposal_expansion,
         "transition_transfer_backend": args.transition_transfer_backend,
         "proposal_tensor_backend": args.proposal_tensor_backend,
+        "proposal_materialization_backend": args.proposal_materialization_backend,
         "policy_padding_backend": args.policy_padding_backend,
         "episode_initialization_backend": args.episode_initialization_backend,
         "advance_input_backend": args.advance_input_backend,
@@ -2249,11 +2350,14 @@ def main() -> None:
         collection_timing = {
             "model_match_seconds": 0.0,
             "proposal_seconds": 0.0,
+            "proposal_materialization_seconds": 0.0,
             "transition_transfer_seconds": 0.0,
             "policy_preparation_seconds": 0.0,
             "cache_advance_seconds": 0.0,
             "eligible_actions": 0,
             "materialized_actions": 0,
+            "selected_proposals": 0,
+            "python_proposals_materialized": 0,
         }
         circuit_counts = {
             qasm: sum(
@@ -2300,6 +2404,10 @@ def main() -> None:
         )
         collection_timing["proposal_fraction"] = (
             collection_timing["proposal_seconds"] / collection_seconds
+        )
+        collection_timing["proposal_materialization_fraction"] = (
+            collection_timing["proposal_materialization_seconds"]
+            / collection_seconds
         )
         collection_timing["transition_transfer_fraction"] = (
             collection_timing["transition_transfer_seconds"]

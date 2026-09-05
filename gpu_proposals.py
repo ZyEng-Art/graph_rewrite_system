@@ -75,9 +75,56 @@ class SelectedProposalTensors:
     parent_ids: torch.Tensor
     xfer_ids: torch.Tensor
     source_ids: torch.Tensor
+    anchor_slots: torch.Tensor
     bindings: torch.Tensor
     probabilities: torch.Tensor
     gate_deltas: torch.Tensor
+    next_gate_counts: torch.Tensor
+    value_scores: torch.Tensor
+
+
+def materialize_selected_proposals(
+    tensors: SelectedProposalTensors,
+    indices: torch.Tensor | None = None,
+) -> list[Proposal]:
+    if indices is None:
+        indices = torch.arange(
+            tensors.parent_ids.numel(),
+            dtype=torch.long,
+            device=tensors.parent_ids.device,
+        )
+    else:
+        indices = indices.to(device=tensors.parent_ids.device, dtype=torch.long)
+    metadata = torch.stack(
+        (
+            tensors.parent_ids[indices],
+            tensors.xfer_ids[indices],
+            tensors.anchor_slots[indices],
+            tensors.next_gate_counts[indices],
+        ),
+        dim=1,
+    ).cpu()
+    bindings = tensors.bindings[indices].cpu()
+    scores = torch.stack(
+        (tensors.probabilities[indices], tensors.value_scores[indices]), dim=1
+    ).cpu()
+    proposals = []
+    for row, binding, score in zip(
+        metadata.tolist(), bindings.tolist(), scores.tolist()
+    ):
+        parent, xfer_id, anchor, next_gate_count = row
+        proposals.append(
+            Proposal(
+                parent=parent,
+                xfer_id=xfer_id,
+                anchor_slot=anchor,
+                binding=tuple(slot for slot in binding if slot >= 0),
+                probability=score[0],
+                next_gate_count=next_gate_count,
+                value_score=score[1],
+            )
+        )
+    return proposals
 
 
 def _stable_lexsort(
@@ -242,14 +289,15 @@ def build_gpu_proposals(
     ppo_policy_weight: float = 0.25,
     preselect_matches: bool = False,
     return_selected_tensors: bool = False,
+    materialize_python_proposals: bool = True,
     profile_stages: bool = False,
 ) -> tuple[
-    list[Proposal],
+    list[Proposal] | None,
     dict[str, float | int],
     dict[str, float],
     SelectedProposalTensors | None,
 ]:
-    """Expand, cap, and globally rank actions before one compact D2H copy."""
+    """Expand and rank actions, optionally deferring their compact D2H copy."""
     if ranking_mode not in {"gate", "probability", "stochastic", "value", "ppo"}:
         raise ValueError(f"unknown proposal ranking mode: {ranking_mode}")
     if ranking_mode == "value" and (
@@ -282,6 +330,8 @@ def build_gpu_proposals(
         raise ValueError("value exploration fraction must be within [0, 1]")
     if value_exploration_fraction and ranking_mode != "value":
         raise ValueError("value exploration is only valid for value ranking")
+    if not materialize_python_proposals and not return_selected_tensors:
+        raise ValueError("deferred proposals require selected GPU tensors")
     device = candidates.sources.device
     timing: dict[str, float] = {}
 
@@ -302,7 +352,7 @@ def build_gpu_proposals(
     if not expanded_count:
         finish_timing("gpu_action_expansion_seconds", stage_started)
         return (
-            [],
+            [] if materialize_python_proposals else None,
             {
                 "predicted_actions": predicted_actions,
                 "eligible_actions": 0,
@@ -582,55 +632,30 @@ def build_gpu_proposals(
         selected_value_scores = policy_scores[ppo_order]
         finish_timing("gpu_ppo_policy_seconds", stage_started)
 
-    selected_tensors = None
-    if return_selected_tensors:
-        selected_tensors = SelectedProposalTensors(
-            parent_ids=parents[selected],
-            xfer_ids=xfer_ids[selected],
-            source_ids=source_ids[selected],
-            bindings=bindings[selected],
-            probabilities=probabilities[selected],
-            gate_deltas=rule_index.gate_deltas[xfer_ids[selected]],
-        )
+    proposal_tensors = SelectedProposalTensors(
+        parent_ids=parents[selected],
+        xfer_ids=xfer_ids[selected],
+        source_ids=source_ids[selected],
+        anchor_slots=anchors[selected],
+        bindings=bindings[selected],
+        probabilities=probabilities[selected],
+        gate_deltas=rule_index.gate_deltas[xfer_ids[selected]],
+        next_gate_counts=next_gate_counts[selected],
+        value_scores=selected_value_scores,
+    )
+    selected_tensors = proposal_tensors if return_selected_tensors else None
 
     stage_started = time.perf_counter()
-    metadata = torch.stack(
-        (
-            parents[selected],
-            xfer_ids[selected],
-            anchors[selected],
-            next_gate_counts[selected],
-        ),
-        dim=1,
-    ).cpu()
-    selected_bindings = bindings[selected].cpu()
-    selected_probabilities = probabilities[selected].cpu()
-    selected_value_scores = selected_value_scores.cpu()
-    proposals = []
-    for row, binding, probability, value_score in zip(
-        metadata.tolist(),
-        selected_bindings.tolist(),
-        selected_probabilities.tolist(),
-        selected_value_scores.tolist(),
-    ):
-        parent, xfer_id, anchor, next_gate_count = row
-        # Structural decoding pads complete bindings with -1.
-        clean_binding = tuple(slot for slot in binding if slot >= 0)
-        proposals.append(
-            Proposal(
-                parent=parent,
-                xfer_id=xfer_id,
-                anchor_slot=anchor,
-                binding=clean_binding,
-                probability=probability,
-                next_gate_count=next_gate_count,
-                value_score=value_score,
-            )
-        )
+    proposals = (
+        materialize_selected_proposals(proposal_tensors)
+        if materialize_python_proposals
+        else None
+    )
     finish_timing("proposal_device_to_host_and_pack_seconds", stage_started)
     metrics: dict[str, float | int] = {
         "predicted_actions": predicted_actions,
         "eligible_actions": expanded_count,
+        "selected_actions": int(selected.numel()),
         "value_increase_candidates_after_parent_cap": (
             int(
                 (rule_index.gate_deltas[xfer_ids[parent_order]] > 0)

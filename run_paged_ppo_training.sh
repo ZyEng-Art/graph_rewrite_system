@@ -34,6 +34,7 @@ circuit_dir="$root/quarl/experiment/circs/nam_circs"
     --source-grouping "${PPO_SOURCE_GROUPING:-first_gate}" \
     --transition-transfer-backend "${PPO_TRANSITION_TRANSFER:-batched}" \
     --proposal-tensor-backend "${PPO_PROPOSAL_TENSORS:-reuse}" \
+    --proposal-materialization-backend "${PPO_PROPOSAL_MATERIALIZATION:-deferred}" \
     --policy-padding-backend "${PPO_POLICY_PADDING:-tensorized}" \
     --episode-initialization-backend "${PPO_EPISODE_INITIALIZATION:-deduplicated}" \
     --advance-input-backend "${PPO_ADVANCE_INPUTS:-trusted}" \
