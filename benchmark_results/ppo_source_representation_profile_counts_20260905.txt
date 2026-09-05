@@ -1,0 +1,12 @@
+H100 PPO source representation cProfile comparison
+
+Before: /SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/ppo_optimized_collection_s915.prof
+  435 calls to model.py:230(source_representations)
+
+After: /SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/ppo_source_cache_collection_s923.prof
+  1 call to model.py:230(source_representations)
+
+Both profiles use the 14-circuit, 224-episode, depth-16 collection protocol.
+The after profile used --skip-ppo-updates so the profile contains collection
+without optimizer work; the source representation count is independent of the
+PPO update.

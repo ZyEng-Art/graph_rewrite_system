@@ -1307,3 +1307,33 @@ training launcher now enables deferred materialization by default. Raw logs and
 the load-qualified comparison are in
 `benchmark_results/ppo_training_materialization_ab_*_h100.json` and
 `benchmark_results/ppo_training_deferred_materialization_summary_20260905.json`.
+
+## Cached frozen source representations
+
+The frozen paged model previously recomputed every source pattern embedding in
+both PPO candidate feature construction and every incremental action advance.
+These embeddings depend only on frozen base-model parameters and static source
+patterns, but a profiled 14-circuit collection still called
+`source_representations()` 435 times. The collector now computes the source
+representations once alongside the already cached retrieval vectors and passes
+that tensor through candidate feature and paged advance APIs.
+`--source-representation-backend recompute` preserves the old path; `cached` is
+enabled by the training launcher.
+
+Four reversed-order H100 A/B pairs used 224 episodes, depth 16, and all prior
+collector optimizations. Caching reduced mean policy preparation from 0.938 to
+0.863 seconds (-8.0%) and mean cache advance from 0.993 to 0.978 seconds
+(-1.5%). The two affected stages together fell 4.7%, including after
+normalizing by transition count. Mean collection time fell from 6.754 to 6.694
+seconds (-0.9%) and throughput rose from 502.5 to 507.0 transitions/s (+0.9%).
+Three pairs found identical per-circuit best counts; in the fourth stochastic
+pair the cached run improved `mod5_4` from 63 to 62. Peak CUDA allocation rose
+by 1.27 MiB for the retained source tensor.
+
+A focused eight-step regression checks equal candidate features, states, live
+masks, gate types, causal keys/values, and action states between recomputed and
+cached inputs. A follow-up cProfile reduced source representation calls from
+435 to one. Raw A/B logs and the compact result are in
+`benchmark_results/ppo_training_source_cache_ab_*_h100.json`,
+`benchmark_results/ppo_source_representation_profile_counts_20260905.txt`, and
+`benchmark_results/ppo_training_source_representation_cache_summary_20260905.json`.

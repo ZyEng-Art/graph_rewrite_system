@@ -34,6 +34,7 @@ def main() -> None:
         dropout=0.0,
     ).to(device).eval()
     model.readout_attention_backend = "paged"
+    source_representations = model.source_representations()
     states, live, gate_types = model.initialize_incremental(batch)
     arena = PagedKVCache(
         layers=model.action_layers_count,
@@ -94,11 +95,43 @@ def main() -> None:
                 **advance_kwargs,
                 trusted_paged_inputs=True,
             )
+            cached = model.advance_incremental(
+                states,
+                live,
+                gate_types,
+                None,
+                None,
+                empty_actions,
+                empty_mask,
+                **advance_kwargs,
+                trusted_paged_inputs=True,
+                source_representations=source_representations,
+            )
             for expected, actual in zip(checked[:6], trusted[:6]):
                 if expected.dtype in (torch.bool, torch.long):
                     assert torch.equal(expected, actual)
                 else:
                     torch.testing.assert_close(actual, expected)
+            for expected, actual in zip(trusted, cached):
+                if expected.dtype in (torch.bool, torch.long):
+                    assert torch.equal(expected, actual)
+                else:
+                    torch.testing.assert_close(actual, expected)
+            candidate_kwargs = {
+                "xfer_ids": advance_kwargs["xfer_ids"],
+                "source_ids": advance_kwargs["source_ids"],
+                "binding_slots": source_slots,
+            }
+            recomputed_features = model.candidate_features(
+                states, live, **candidate_kwargs
+            )
+            cached_features = model.candidate_features(
+                states,
+                live,
+                **candidate_kwargs,
+                source_representations=source_representations,
+            )
+            torch.testing.assert_close(cached_features, recomputed_features)
             assert trusted[6].numel() == 0
             states, live, gate_types, keys, values, action, _ = trusted
             readout_keys, readout_values = model.project_action_readout_kv(action)

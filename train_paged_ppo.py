@@ -452,6 +452,7 @@ def proposal_features(
     device: torch.device,
     initial_gate_bias: float,
     ordered_roles: bool = False,
+    source_representations: torch.Tensor | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     count = len(proposals)
     xfer_ids = torch.tensor(
@@ -475,6 +476,7 @@ def proposal_features(
         bindings,
         torch.zeros(count, dtype=torch.long, device=device),
         ordered_roles=ordered_roles,
+        source_representations=source_representations,
     )
     probabilities = torch.tensor(
         [proposal.probability for proposal in proposals], device=device
@@ -503,6 +505,7 @@ def batched_proposal_features(
     initial_gate_bias: float,
     ordered_roles: bool = False,
     proposal_tensors: SelectedProposalTensors | None = None,
+    source_representations: torch.Tensor | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     if proposal_tensors is not None:
         count = proposal_tensors.parent_ids.numel()
@@ -553,6 +556,7 @@ def batched_proposal_features(
         bindings,
         parent_ids,
         ordered_roles=ordered_roles,
+        source_representations=source_representations,
     )
     features, logits = build_policy_features(
         base,
@@ -712,6 +716,7 @@ def collect_episode(
     device: torch.device,
     threshold_config: dict,
     source_vectors: torch.Tensor,
+    source_representations: torch.Tensor | None,
     max_steps: int,
     max_source_matches: int,
     source_microbatch: int,
@@ -837,6 +842,7 @@ def collect_episode(
             device,
             initial_gate_bias,
             ordered_roles=actor_critic.match_set_aware,
+            source_representations=source_representations,
         )
         state_features = build_state_features(
             encoded, live, torch.tensor([state.gate_count], device=device)
@@ -999,6 +1005,7 @@ def collect_episode(
                 device,
                 microbatch=1,
                 trusted_paged_inputs=advance_input_backend == "trusted",
+                source_representations=source_representations,
             )
             if collector_timing is not None:
                 collector_timing["cache_advance_seconds"] += advance_seconds
@@ -1163,6 +1170,7 @@ def collect_episode_batch(
     device: torch.device,
     threshold_config: dict,
     source_vectors: torch.Tensor,
+    source_representations: torch.Tensor | None,
     max_steps: int,
     max_source_matches: int,
     source_microbatch: int,
@@ -1301,6 +1309,7 @@ def collect_episode_batch(
                 initial_gate_bias,
                 ordered_roles=actor_critic.match_set_aware,
                 proposal_tensors=selected_proposal_tensors,
+                source_representations=source_representations,
             )
             (
                 policy_features,
@@ -1623,6 +1632,7 @@ def collect_episode_batch(
             device,
             microbatch=len(continuing_records),
             trusted_paged_inputs=advance_input_backend == "trusted",
+            source_representations=source_representations,
         )
         if collector_timing is not None:
             collector_timing["cache_advance_seconds"] += advance_seconds
@@ -2035,6 +2045,12 @@ def main() -> None:
         help="materialize only actor-selected Python proposals",
     )
     parser.add_argument(
+        "--source-representation-backend",
+        choices=("recompute", "cached"),
+        default="recompute",
+        help="reuse frozen source-pattern representations during collection",
+    )
+    parser.add_argument(
         "--policy-padding-backend",
         choices=("loop", "tensorized"),
         default="loop",
@@ -2227,7 +2243,8 @@ def main() -> None:
         args.calibration, args.target_recall
     )
     with torch.no_grad(), autocast_context(device):
-        source_vectors = model.retrieval_source(model.source_representations())
+        cached_source_representations = model.source_representations()
+        source_vectors = model.retrieval_source(cached_source_representations)
     context = quartz.QuartzContext(
         gate_set=["h", "cx", "x", "rz", "add"],
         filename=str(args.ecc_file),
@@ -2304,6 +2321,11 @@ def main() -> None:
         "device": device,
         "threshold_config": threshold_config,
         "source_vectors": source_vectors,
+        "source_representations": (
+            cached_source_representations
+            if args.source_representation_backend == "cached"
+            else None
+        ),
         "max_steps": args.max_steps,
         "max_source_matches": args.max_source_matches,
         "source_microbatch": args.source_microbatch,

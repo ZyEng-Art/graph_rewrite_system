@@ -1,0 +1,147 @@
+{
+  "format": "ppo-training-source-representation-cache-ab-v1",
+  "machine": "h100-gpu5",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "protocol": {
+    "circuits": 14,
+    "episodes": 224,
+    "episodes_per_circuit": 16,
+    "max_steps": 16,
+    "refresh_interval": 8,
+    "max_actions": 64,
+    "source_grouping": "first_gate",
+    "proposal_tensor_backend": "reuse",
+    "proposal_materialization_backend": "deferred",
+    "policy_padding_backend": "tensorized",
+    "episode_initialization_backend": "deduplicated",
+    "advance_input_backend": "trusted",
+    "transition_transfer_backend": "batched",
+    "ppo_epochs": 1
+  },
+  "pairs": [
+    {
+      "seed": 921,
+      "order": ["recompute", "cached"],
+      "recompute": {
+        "collection_seconds": 6.70401549898088,
+        "transitions_per_second": 514.3186200157431,
+        "policy_preparation_seconds": 0.9254789759870619,
+        "cache_advance_seconds": 0.9764363509602845,
+        "transitions": 3448,
+        "selected_action_legality": 0.9968097447795824
+      },
+      "cached": {
+        "collection_seconds": 7.059237882960588,
+        "transitions_per_second": 486.1714616933474,
+        "policy_preparation_seconds": 0.8757033983711153,
+        "cache_advance_seconds": 1.14719451777637,
+        "transitions": 3432,
+        "selected_action_legality": 0.9962121212121212
+      },
+      "best_difference": "cached found mod5_4=62; recompute retained 63"
+    },
+    {
+      "seed": 922,
+      "order": ["cached", "recompute"],
+      "recompute": {
+        "collection_seconds": 6.6186229039449245,
+        "transitions_per_second": 509.47153946331844,
+        "policy_preparation_seconds": 0.9278249498456717,
+        "cache_advance_seconds": 0.9821921186521649,
+        "transitions": 3372,
+        "selected_action_legality": 0.9940688018979834
+      },
+      "cached": {
+        "collection_seconds": 6.481616680976003,
+        "transitions_per_second": 521.1662716671699,
+        "policy_preparation_seconds": 0.8545086123049259,
+        "cache_advance_seconds": 0.92261743824929,
+        "transitions": 3378,
+        "selected_action_legality": 0.9937833037300178
+      },
+      "best_gate_counts_equal": true
+    },
+    {
+      "seed": 924,
+      "order": ["cached", "recompute"],
+      "recompute": {
+        "collection_seconds": 6.838298762915656,
+        "transitions_per_second": 494.7136879052627,
+        "policy_preparation_seconds": 0.9136485245544463,
+        "cache_advance_seconds": 0.9735223148018122,
+        "transitions": 3383,
+        "selected_action_legality": 0.9937924918711203
+      },
+      "cached": {
+        "collection_seconds": 6.676722583826631,
+        "transitions_per_second": 506.8354956363227,
+        "policy_preparation_seconds": 0.8783094671089202,
+        "cache_advance_seconds": 0.9229300434235483,
+        "transitions": 3384,
+        "selected_action_legality": 0.9929078014184397
+      },
+      "best_gate_counts_equal": true
+    },
+    {
+      "seed": 925,
+      "order": ["recompute", "cached"],
+      "recompute": {
+        "collection_seconds": 6.85466455318965,
+        "transitions_per_second": 491.3442479738536,
+        "policy_preparation_seconds": 0.9868579490575939,
+        "cache_advance_seconds": 1.0404384939465672,
+        "transitions": 3368,
+        "selected_action_legality": 0.9931710213776722
+      },
+      "cached": {
+        "collection_seconds": 6.556761109968647,
+        "transitions_per_second": 513.9732778850798,
+        "policy_preparation_seconds": 0.8440700331702828,
+        "cache_advance_seconds": 0.9207984944805503,
+        "transitions": 3370,
+        "selected_action_legality": 0.9931750741839762
+      },
+      "best_gate_counts_equal": true
+    }
+  ],
+  "mean": {
+    "recompute_policy_preparation_seconds": 0.9384525998611934,
+    "cached_policy_preparation_seconds": 0.8631478777388111,
+    "policy_preparation_reduction_percent": 8.024350098611343,
+    "recompute_cache_advance_seconds": 0.9931473195902072,
+    "cached_cache_advance_seconds": 0.9783851234824397,
+    "cache_advance_reduction_percent": 1.4864054724387454,
+    "combined_target_stage_reduction_percent": 4.66281435007152,
+    "combined_target_microseconds_per_transition_reduction_percent": 4.667245491070382,
+    "recompute_collection_seconds": 6.753900429757778,
+    "cached_collection_seconds": 6.6935845644329675,
+    "collection_time_reduction_percent": 0.893052332531552,
+    "recompute_transitions_per_second": 502.4620238395445,
+    "cached_transitions_per_second": 507.03662672047994,
+    "throughput_increase_percent": 0.9104375383394814,
+    "recompute_peak_cuda_allocated_gib": 0.21521687507629395,
+    "cached_peak_cuda_allocated_gib": 0.21646177768707275,
+    "peak_cuda_memory_increase_mib": 1.2747802734375
+  },
+  "profile": {
+    "before_source_representation_calls": 435,
+    "after_source_representation_calls": 1,
+    "before_profile": "ppo_optimized_collection_s915.prof",
+    "after_profile": "ppo_source_cache_collection_s923.prof"
+  },
+  "correctness": {
+    "focused_test_steps": 8,
+    "equal_outputs": [
+      "candidate_features",
+      "states",
+      "live",
+      "gate_types",
+      "causal_keys",
+      "causal_values",
+      "action_state"
+    ],
+    "best_gate_counts_equal_pairs": 3,
+    "best_gate_counts_improved_cached_pairs": 1,
+    "note": "The cached tensor is valid because the base matcher model is frozen and in evaluation mode for all PPO collection and updates."
+  }
+}

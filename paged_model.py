@@ -217,6 +217,7 @@ class PagedActionBindingModel(S0ActionBindingModel):
         binding_slots: torch.Tensor,
         batch_ids: torch.Tensor | None = None,
         ordered_roles: bool = False,
+        source_representations: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Build candidate features from the current causal graph state."""
         if batch_ids is None:
@@ -237,7 +238,9 @@ class PagedActionBindingModel(S0ActionBindingModel):
         graph_pool = live_states.sum(1)
         graph_pool = graph_pool / live.sum(1, keepdim=True).clamp_min(1)
         graph_pool = graph_pool.index_select(0, batch_ids)
-        source_states = self.source_representations().index_select(0, source_ids)
+        if source_representations is None:
+            source_representations = self.source_representations()
+        source_states = source_representations.index_select(0, source_ids)
         xfer_states = self.xfer_embedding(xfer_ids)
         return torch.cat(
             (xfer_states, source_states, bound_pool, graph_pool), dim=-1
@@ -544,6 +547,7 @@ class PagedActionBindingModel(S0ActionBindingModel):
         block_table: torch.Tensor | None = None,
         past_lengths: torch.Tensor | None = None,
         trusted_paged_inputs: bool = False,
+        source_representations: torch.Tensor | None = None,
     ) -> tuple[
         torch.Tensor,
         torch.Tensor,
@@ -601,7 +605,8 @@ class PagedActionBindingModel(S0ActionBindingModel):
         bound_states = self._ordered_bound_states(bound_states, source_mask)
         bound_pool = (bound_states * source_mask.unsqueeze(-1)).sum(1)
         bound_pool = bound_pool / source_mask.sum(1, keepdim=True).clamp_min(1)
-        source_representations = self.source_representations()
+        if source_representations is None:
+            source_representations = self.source_representations()
         raw_context = self.action_context(
             torch.cat(
                 (
