@@ -43,6 +43,7 @@ for ranking in "${rankings[@]}"; do
             --depth 16 \
             --microbatch "${PPO_MICROBATCH:-512}" \
             --source-microbatch "${PPO_SOURCE_MICROBATCH:-256}" \
+            --source-grouping "${PPO_SOURCE_GROUPING:-first_gate}" \
             --state-batch-backend tensorized \
             --proposal-backend gpu \
             --proposal-ranking "$ranking" \

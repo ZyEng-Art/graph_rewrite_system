@@ -52,6 +52,7 @@ from threshold_inference import (
     threshold_candidates,
     threshold_candidate_tensors,
     threshold_candidate_tensors_chunked,
+    threshold_candidate_tensors_grouped,
 )
 from tensorized_batch import collate_paged_states
 from train import autocast_context, move_batch
@@ -546,6 +547,7 @@ def paged_model_matches(
     microbatch: int,
     max_candidates: int,
     source_microbatch: int = 0,
+    source_grouping: str = "none",
     state_batch_backend: str = "legacy",
     candidate_backend: str = "legacy",
     return_encoded_states: bool = False,
@@ -644,8 +646,13 @@ def paged_model_matches(
                 node_vectors = model.match_node_vectors(encoded)
             finish_timing("match_logits_seconds", stage_started)
             with autocast_context(device):
+                threshold_function = (
+                    threshold_candidate_tensors_grouped
+                    if source_grouping == "first_gate"
+                    else threshold_candidate_tensors_chunked
+                )
                 candidate_chunks.append(
-                    threshold_candidate_tensors_chunked(
+                    threshold_function(
                         model,
                         batch,
                         node_vectors,
@@ -911,6 +918,12 @@ def main() -> None:
         default=0,
         help="score this many source patterns at once in the GPU proposal path",
     )
+    parser.add_argument(
+        "--source-grouping",
+        choices=("none", "first_gate"),
+        default="none",
+        help="skip matcher products whose anchor and source first gate differ",
+    )
     parser.add_argument("--page-size", type=int, default=8)
     parser.add_argument(
         "--cache-gather-backend",
@@ -1089,6 +1102,8 @@ def main() -> None:
         parser.error("--source-microbatch must be nonnegative")
     if args.source_microbatch and args.proposal_backend != "gpu":
         parser.error("--source-microbatch requires --proposal-backend gpu")
+    if args.source_grouping != "none" and not args.source_microbatch:
+        parser.error("--source-grouping requires a positive --source-microbatch")
     if args.refresh_factor < 1:
         parser.error("--refresh-factor must be at least one")
     if args.checkpoint_audit_count < 0:
@@ -1453,6 +1468,7 @@ def main() -> None:
             args.microbatch,
             args.max_source_matches,
             source_microbatch=args.source_microbatch,
+            source_grouping=args.source_grouping,
             state_batch_backend=args.state_batch_backend,
             candidate_backend="gpu" if use_gpu_proposals else "legacy",
             return_encoded_states=args.proposal_ranking in {"value", "ppo"},
@@ -1481,6 +1497,7 @@ def main() -> None:
                 args.microbatch,
                 args.max_source_matches,
                 source_microbatch=0,
+                source_grouping="none",
                 state_batch_backend=args.state_batch_backend,
                 candidate_backend="legacy",
                 return_encoded_states=False,
@@ -2260,6 +2277,7 @@ def main() -> None:
         "target_recall_by_group": threshold_config["target_recall_by_group"],
         "microbatch": args.microbatch,
         "source_microbatch": args.source_microbatch,
+        "source_grouping": args.source_grouping,
         "refresh_interval": args.refresh_interval,
         "refresh_factor": args.refresh_factor,
         "checkpoint_audit_count": args.checkpoint_audit_count,

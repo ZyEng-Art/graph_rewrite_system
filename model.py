@@ -72,6 +72,7 @@ class S0ActionBindingModel(nn.Module):
         self.retrieval_width = retrieval_width
         self.use_action_history = use_action_history
         self.use_locality_features = use_locality_features
+        self.num_gate_types = rules.num_gate_types
         self.num_sources = len(rules.source_gate_types)
         self.max_pattern = max(map(len, rules.source_gate_types))
         source_types = torch.full(
@@ -83,6 +84,27 @@ class S0ActionBindingModel(nn.Module):
             source_lengths[source_id] = len(gate_types)
         self.register_buffer("source_types", source_types)
         self.register_buffer("source_lengths", source_lengths)
+        grouped_source_ids = []
+        source_first_gate_groups = []
+        for gate_type in range(rules.num_gate_types):
+            source_ids = [
+                source_id
+                for source_id, types in enumerate(rules.source_gate_types)
+                if types[0] == gate_type
+            ]
+            if not source_ids:
+                continue
+            begin = len(grouped_source_ids)
+            grouped_source_ids.extend(source_ids)
+            source_first_gate_groups.append(
+                (gate_type, begin, len(grouped_source_ids))
+            )
+        self.source_first_gate_groups = tuple(source_first_gate_groups)
+        self.register_buffer(
+            "source_first_gate_order",
+            torch.tensor(grouped_source_ids, dtype=torch.long),
+            persistent=False,
+        )
         from incremental_graph import parse_pattern
 
         pattern_edge_rows = []
@@ -413,6 +435,19 @@ class S0ActionBindingModel(nn.Module):
         first_types = self.source_types[source_begin:source_end, 0]
         eligible = live.unsqueeze(-1) & gate_types.unsqueeze(-1).eq(first_types)
         return logits.masked_fill(~eligible, -1e4), eligible
+
+    def match_logits_for_sources(
+        self,
+        node_vectors: torch.Tensor,
+        source_vectors: torch.Tensor,
+        source_ids: torch.Tensor,
+    ) -> torch.Tensor:
+        selected_sources = source_vectors.index_select(0, source_ids)
+        logits = torch.einsum("bsd,vd->bsv", node_vectors, selected_sources)
+        return (
+            logits / math.sqrt(self.retrieval_width)
+            + self.source_bias.index_select(0, source_ids)
+        )
 
     @torch.no_grad()
     def structural_decode(

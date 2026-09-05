@@ -1,0 +1,60 @@
+{
+  "format": "first-gate-source-grouping-ab-v1",
+  "source_first_gate_counts": {
+    "cx": 2661,
+    "x": 491,
+    "h": 452,
+    "rz": 243,
+    "add": 8
+  },
+  "source_microbatch": 256,
+  "beam_size": 1000,
+  "depth": 16,
+  "results": [
+    {
+      "circuit": "grover_5.qasm",
+      "state_microbatch": 128,
+      "baseline_search_seconds": 23.154777156189084,
+      "grouped_search_seconds": 22.021273171063513,
+      "search_reduction_percent": 4.89533532315855,
+      "baseline_model_match_seconds": 9.914490731200203,
+      "grouped_model_match_seconds": 8.257929596817121,
+      "model_match_reduction_percent": 16.70848437197083,
+      "baseline_peak_allocated_gib": 4.638,
+      "grouped_peak_allocated_gib": 4.640,
+      "best_exact_gate_count": 817,
+      "quartz_valid_replays": "64/64",
+      "exact_topology_matches": "64/64"
+    },
+    {
+      "circuit": "gf2^5_mult.qasm",
+      "state_microbatch": 512,
+      "baseline_search_seconds": 11.119657368166372,
+      "grouped_search_seconds": 10.663400390883908,
+      "search_reduction_percent": 4.10315679859568,
+      "baseline_model_match_seconds": 4.563714670715854,
+      "grouped_model_match_seconds": 3.824779838323593,
+      "model_match_reduction_percent": 16.19152128711747,
+      "baseline_peak_allocated_gib": 2.562,
+      "grouped_peak_allocated_gib": 2.563,
+      "best_exact_gate_count": 339,
+      "quartz_valid_replays": "64/64",
+      "exact_topology_matches": "64/64"
+    },
+    {
+      "circuit": "qcla_mod_7.qasm",
+      "state_microbatch": 512,
+      "baseline_search_seconds": 27.62911203596741,
+      "grouped_search_seconds": 25.729684623191133,
+      "search_reduction_percent": 6.874732022888082,
+      "baseline_model_match_seconds": 11.37469920841977,
+      "grouped_model_match_seconds": 9.162347258068621,
+      "model_match_reduction_percent": 19.44976222943569,
+      "baseline_peak_allocated_gib": 5.939,
+      "grouped_peak_allocated_gib": 5.940,
+      "best_exact_gate_count": 884,
+      "quartz_valid_replays": "64/64",
+      "exact_topology_matches": "64/64"
+    }
+  ]
+}

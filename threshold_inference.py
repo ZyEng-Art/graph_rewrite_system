@@ -425,3 +425,200 @@ def threshold_candidate_tensors_chunked(
         bindings=bindings[structurally_valid],
         probabilities=probabilities[structurally_valid],
     )
+
+
+@torch.no_grad()
+def threshold_candidate_tensors_grouped(
+    model,
+    batch: dict,
+    node_vectors: torch.Tensor,
+    live: torch.Tensor,
+    gate_types: torch.Tensor,
+    source_vectors: torch.Tensor,
+    config: dict,
+    *,
+    source_chunk_size: int,
+    max_candidates_per_state: int = 2048,
+    batch_offset: int = 0,
+    timing: dict[str, float] | None = None,
+) -> CandidateTensors:
+    """Match only anchors and sources sharing the same first gate type."""
+    if source_chunk_size <= 0:
+        raise ValueError("source_chunk_size must be positive")
+    device = node_vectors.device
+    batch_size, num_slots = gate_types.shape
+
+    def finish_timing(name: str, started: float) -> None:
+        if timing is None:
+            return
+        if device.type == "cuda":
+            torch.cuda.synchronize(device)
+        timing[name] = timing.get(name, 0.0) + time.perf_counter() - started
+
+    stage_started = time.perf_counter()
+    distance = batch["current_rewrite_distance"]
+    near_anchor = distance.le(2)
+    near = config["groups"]["near"]
+    far = config["groups"]["far"]
+    scale = torch.where(
+        near_anchor,
+        torch.tensor(near["scale"], device=device),
+        torch.tensor(far["scale"], device=device),
+    )
+    bias = torch.where(
+        near_anchor,
+        torch.tensor(near["bias"], device=device),
+        torch.tensor(far["bias"], device=device),
+    )
+    threshold = torch.where(
+        near_anchor,
+        torch.tensor(near["raw_threshold"], device=device),
+        torch.tensor(far["raw_threshold"], device=device),
+    )
+    group_masks = [
+        live & gate_types.eq(gate_type)
+        for gate_type, _, _ in model.source_first_gate_groups
+    ]
+    group_counts = torch.stack([mask.sum(1) for mask in group_masks], dim=1)
+    max_group_counts = group_counts.amax(0).tolist()
+    finish_timing("match_group_compaction_seconds", stage_started)
+
+    best_scores = None
+    best_anchors = None
+    best_sources = None
+
+    def merge_chunk(
+        logits: torch.Tensor,
+        anchor_present: torch.Tensor,
+        anchors: torch.Tensor,
+        source_ids: torch.Tensor,
+        local_scale: torch.Tensor,
+        local_bias: torch.Tensor,
+        local_threshold: torch.Tensor,
+    ) -> None:
+        nonlocal best_scores, best_anchors, best_sources
+        stage_started = time.perf_counter()
+        calibrated_logits = (
+            logits.float() * local_scale.unsqueeze(-1) + local_bias.unsqueeze(-1)
+        )
+        selected = anchor_present.unsqueeze(-1) & logits.ge(
+            local_threshold.unsqueeze(-1)
+        )
+        flat_scores = calibrated_logits.flatten(1).masked_fill(
+            ~selected.flatten(1), -torch.inf
+        )
+        count = min(max_candidates_per_state, flat_scores.shape[1])
+        chunk_scores, flat_positions = flat_scores.topk(count, dim=1)
+        source_count = source_ids.numel()
+        compact_anchors = torch.div(
+            flat_positions, source_count, rounding_mode="floor"
+        )
+        chunk_anchors = anchors.gather(1, compact_anchors)
+        chunk_sources = source_ids[flat_positions.remainder(source_count)]
+        if best_scores is None:
+            best_scores = chunk_scores
+            best_anchors = chunk_anchors
+            best_sources = chunk_sources
+        else:
+            merged_scores = torch.cat((best_scores, chunk_scores), dim=1)
+            merged_anchors = torch.cat((best_anchors, chunk_anchors), dim=1)
+            merged_sources = torch.cat((best_sources, chunk_sources), dim=1)
+            count = min(max_candidates_per_state, merged_scores.shape[1])
+            best_scores, order = merged_scores.topk(count, dim=1)
+            best_anchors = merged_anchors.gather(1, order)
+            best_sources = merged_sources.gather(1, order)
+        finish_timing("candidate_selection_and_ranking_seconds", stage_started)
+
+    for group_index, (_, source_begin, source_end) in enumerate(
+        model.source_first_gate_groups
+    ):
+        max_anchors = int(max_group_counts[group_index])
+        if not max_anchors:
+            continue
+        stage_started = time.perf_counter()
+        mask = group_masks[group_index]
+        counts = group_counts[:, group_index]
+        compact_ranks = mask.cumsum(1) - 1
+        rows, slots = mask.nonzero(as_tuple=True)
+        anchors = torch.zeros(
+            (batch_size, max_anchors), dtype=torch.long, device=device
+        )
+        anchors[rows, compact_ranks[rows, slots]] = slots
+        anchor_present = (
+            torch.arange(max_anchors, device=device).unsqueeze(0)
+            < counts.unsqueeze(1)
+        )
+        safe_anchors = anchors.clamp_max(num_slots - 1)
+        selected_nodes = node_vectors.gather(
+            1, safe_anchors.unsqueeze(-1).expand(-1, -1, node_vectors.shape[-1])
+        )
+        local_scale = scale.gather(1, safe_anchors)
+        local_bias = bias.gather(1, safe_anchors)
+        local_threshold = threshold.gather(1, safe_anchors)
+        finish_timing("match_group_compaction_seconds", stage_started)
+
+        ordered_sources = model.source_first_gate_order[source_begin:source_end]
+        for chunk_begin in range(0, ordered_sources.numel(), source_chunk_size):
+            source_ids = ordered_sources[
+                chunk_begin : chunk_begin + source_chunk_size
+            ]
+            stage_started = time.perf_counter()
+            logits = model.match_logits_for_sources(
+                selected_nodes, source_vectors, source_ids
+            )
+            finish_timing("match_logits_seconds", stage_started)
+            merge_chunk(
+                logits,
+                anchor_present,
+                anchors,
+                source_ids,
+                local_scale,
+                local_bias,
+                local_threshold,
+            )
+
+    if best_scores is None or best_anchors is None or best_sources is None:
+        empty_long = torch.empty(0, dtype=torch.long, device=device)
+        return CandidateTensors(
+            batch_ids=empty_long,
+            sources=empty_long,
+            anchors=empty_long,
+            bindings=torch.empty(
+                (0, model.max_pattern), dtype=torch.long, device=device
+            ),
+            probabilities=torch.empty(0, device=device),
+        )
+
+    stage_started = time.perf_counter()
+    present = best_scores.isfinite()
+    batch_ids = (
+        torch.arange(batch_size, device=device)
+        .unsqueeze(1)
+        .expand_as(best_scores)[present]
+    )
+    scores = best_scores[present]
+    anchors = best_anchors[present]
+    sources = best_sources[present]
+    probabilities = scores.sigmoid()
+    finish_timing("candidate_gpu_pack_seconds", stage_started)
+
+    stage_started = time.perf_counter()
+    bindings, structurally_valid = model.structural_decode(
+        batch,
+        batch["current_types"],
+        batch["current_types"].ge(0),
+        batch_ids,
+        sources,
+        anchors,
+    )
+    finish_timing("structural_binding_decode_seconds", stage_started)
+    if timing is not None:
+        timing.setdefault("candidate_device_to_host_seconds", 0.0)
+        timing.setdefault("candidate_python_pack_seconds", 0.0)
+    return CandidateTensors(
+        batch_ids=batch_ids[structurally_valid] + batch_offset,
+        sources=sources[structurally_valid],
+        anchors=anchors[structurally_valid],
+        bindings=bindings[structurally_valid],
+        probabilities=probabilities[structurally_valid],
+    )

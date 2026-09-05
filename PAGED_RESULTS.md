@@ -1027,3 +1027,22 @@ both runs found the same exact 817-gate best from 831 gates. State microbatch
 512, which previously OOMed while allocating the full logits, now completes in
 24.035 seconds with 5.551 GiB peak allocated memory and the same 817-gate best.
 The measured JSON logs are `benchmark_results/source_chunk_grover5_*_h100.json`.
+
+Source retrieval can additionally group anchors and source patterns by their
+first gate type. The rule set contains 2661 `cx`, 491 `x`, 452 `h`, 243 `rz`,
+and 8 `add` sources. `--source-grouping first_gate` compacts the corresponding
+anchor slots and computes only type-compatible dot products instead of
+computing every pair and masking most of them afterward.
+
+| Circuit | State batch | Match before | Match grouped | Search before | Search grouped |
+|---|---:|---:|---:|---:|---:|
+| `grover_5` | 128 | 9.914s | 8.258s (-16.7%) | 23.155s | 22.021s (-4.9%) |
+| `gf2^5_mult` | 512 | 4.564s | 3.825s (-16.2%) | 11.120s | 10.663s (-4.1%) |
+| `qcla_mod_7` | 512 | 11.375s | 9.162s (-19.4%) | 27.629s | 25.730s (-6.9%) |
+
+All A/B pairs found the same exact best gate counts (817, 339, and 884), and
+every grouped run passed 64/64 Quartz replay and topology audits. Peak memory
+was unchanged because source chunking had already bounded the dense matcher
+activation; first-gate grouping is a compute optimization. The raw A/B logs
+are `benchmark_results/source_group_*_h100.json` and the existing
+`source_chunk_grover5_chunk256_b128_h100.json` baseline.
