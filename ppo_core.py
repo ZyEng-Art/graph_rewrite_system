@@ -17,6 +17,14 @@ class PPOObjective:
     clip_fraction: torch.Tensor
 
 
+@dataclass(frozen=True)
+class HierarchicalPolicy:
+    log_probs: torch.Tensor
+    mask: torch.Tensor
+    node_log_probs: torch.Tensor
+    conditional_candidate_log_probs: torch.Tensor
+
+
 class PagedPPOActorCritic(nn.Module):
     """Small PPO heads over frozen paged-model state and action features."""
 
@@ -322,6 +330,272 @@ class MatchSetPPOActorCritic(nn.Module):
             yield from module.parameters()
 
 
+def hierarchical_policy_log_probs(
+    node_logits: torch.Tensor,
+    node_mask: torch.Tensor,
+    candidate_logits: torch.Tensor,
+    candidate_nodes: torch.Tensor,
+    candidate_mask: torch.Tensor,
+    *,
+    stop_logits: torch.Tensor | None = None,
+) -> HierarchicalPolicy:
+    """Normalize stop, node, and node-conditional candidate decisions.
+
+    Candidates may cover a truncated node set. Nodes without a retained
+    candidate are removed from the node distribution, making the returned
+    policy exact over the supplied support.
+    """
+    # Policy normalization stays in fp32 under autocast, matching the existing
+    # PPO distribution path and avoiding precision-sensitive segmented sums.
+    node_logits = node_logits.float()
+    candidate_logits = candidate_logits.float()
+    if stop_logits is not None:
+        stop_logits = stop_logits.float()
+    if node_logits.ndim != 2 or node_mask.shape != node_logits.shape:
+        raise ValueError("node logits and mask must be aligned matrices")
+    if (
+        candidate_logits.ndim != 2
+        or candidate_nodes.shape != candidate_logits.shape
+        or candidate_mask.shape != candidate_logits.shape
+        or candidate_logits.shape[0] != node_logits.shape[0]
+    ):
+        raise ValueError("candidate tensors must be aligned padded matrices")
+    if candidate_nodes.numel():
+        valid_nodes = candidate_nodes[candidate_mask]
+        if valid_nodes.numel() and (
+            bool(valid_nodes.lt(0).any())
+            or bool(valid_nodes.ge(node_logits.shape[1]).any())
+        ):
+            raise ValueError("candidate node is outside the node tensor")
+
+    batch_size, num_nodes = node_logits.shape
+    node_has_candidate = torch.zeros_like(node_mask)
+    if candidate_mask.any():
+        batch_ids = (
+            torch.arange(batch_size, device=node_logits.device)
+            .unsqueeze(1)
+            .expand_as(candidate_nodes)
+        )
+        node_has_candidate[batch_ids[candidate_mask], candidate_nodes[candidate_mask]] = True
+    effective_node_mask = node_mask & node_has_candidate
+    has_candidate = candidate_mask.any(1)
+    if stop_logits is None and not bool(has_candidate.all()):
+        raise ValueError("a policy without stop must retain a candidate in every row")
+    if bool(has_candidate.any()) and not bool(
+        effective_node_mask[has_candidate].any(1).all()
+    ):
+        raise ValueError("candidate nodes must refer to enabled policy nodes")
+
+    masked_node_logits = node_logits.masked_fill(~effective_node_mask, -torch.inf)
+    node_log_probs = torch.full_like(node_logits, -torch.inf)
+    node_log_probs[has_candidate] = F.log_softmax(
+        masked_node_logits[has_candidate], dim=-1
+    )
+
+    conditional = torch.full_like(candidate_logits, -torch.inf)
+    if bool(candidate_mask.any()):
+        batch_ids = (
+            torch.arange(batch_size, device=node_logits.device)
+            .unsqueeze(1)
+            .expand_as(candidate_nodes)
+        )
+        flat_batch = batch_ids[candidate_mask]
+        flat_nodes = candidate_nodes[candidate_mask]
+        segment_ids = flat_batch * num_nodes + flat_nodes
+        flat_log_probs = segmented_log_softmax(
+            candidate_logits[candidate_mask], segment_ids, batch_size * num_nodes
+        )
+        conditional[candidate_mask] = flat_log_probs
+        candidate_node_log_probs = node_log_probs[flat_batch, flat_nodes]
+    else:
+        candidate_node_log_probs = candidate_logits.new_empty(0)
+
+    if stop_logits is None:
+        candidate_log_probs = torch.full_like(candidate_logits, -torch.inf)
+        candidate_log_probs[candidate_mask] = (
+            candidate_node_log_probs + conditional[candidate_mask]
+        )
+        return HierarchicalPolicy(
+            candidate_log_probs,
+            candidate_mask,
+            node_log_probs,
+            conditional,
+        )
+
+    if stop_logits.shape != (batch_size,):
+        raise ValueError("stop logits must contain one scalar per state")
+    stop_log_probs = F.logsigmoid(stop_logits)
+    stop_log_probs = torch.where(
+        has_candidate, stop_log_probs, torch.zeros_like(stop_log_probs)
+    )
+    continue_log_probs = F.logsigmoid(-stop_logits)
+    candidate_log_probs = torch.full_like(candidate_logits, -torch.inf)
+    candidate_log_probs[candidate_mask] = (
+        continue_log_probs[flat_batch]
+        + candidate_node_log_probs
+        + conditional[candidate_mask]
+    )
+    all_log_probs = torch.cat((stop_log_probs.unsqueeze(1), candidate_log_probs), dim=1)
+    all_mask = torch.cat(
+        (
+            torch.ones((batch_size, 1), dtype=torch.bool, device=node_mask.device),
+            candidate_mask,
+        ),
+        dim=1,
+    )
+    return HierarchicalPolicy(all_log_probs, all_mask, node_log_probs, conditional)
+
+
+class HierarchicalPPOActorCritic(nn.Module):
+    """Sequence-conditioned stop/node/pattern policy over frozen model features."""
+
+    def __init__(self, width: int, hidden_size: int | None = None) -> None:
+        super().__init__()
+        self.match_set_aware = False
+        self.hierarchical = True
+        hidden_size = width if hidden_size is None else hidden_size
+        self.width = width
+        self.hidden_size = hidden_size
+        self.policy_feature_dim = 4 * width + 2
+        self.state_feature_dim = 2 * width + 1
+
+        self.node_norm = nn.LayerNorm(width)
+        self.node_projection = nn.Linear(width, hidden_size)
+        self.node_prefix_projection = nn.Linear(width, hidden_size, bias=False)
+        self.node_state_projection = nn.Linear(
+            self.state_feature_dim, hidden_size, bias=False
+        )
+        self.node_output = nn.Linear(hidden_size, 1)
+
+        self.pattern_norm = nn.LayerNorm(self.policy_feature_dim)
+        self.pattern = nn.Sequential(
+            nn.Linear(self.policy_feature_dim, hidden_size),
+            nn.GELU(),
+            nn.Linear(hidden_size, 1),
+        )
+        self.stop_norm = nn.LayerNorm(width + self.state_feature_dim)
+        self.stop = nn.Sequential(
+            nn.Linear(width + self.state_feature_dim, hidden_size),
+            nn.GELU(),
+            nn.Linear(hidden_size, 1),
+        )
+        self.value_norm = nn.LayerNorm(width + self.state_feature_dim)
+        self.value = nn.Sequential(
+            nn.Linear(width + self.state_feature_dim, hidden_size),
+            nn.GELU(),
+            nn.Linear(hidden_size, 1),
+        )
+
+        # Preserve the matcher ranking until the hierarchy is distilled.
+        nn.init.zeros_(self.pattern[-1].weight)
+        nn.init.zeros_(self.pattern[-1].bias)
+        nn.init.zeros_(self.stop[-1].weight)
+        nn.init.constant_(self.stop[-1].bias, -4.0)
+        nn.init.zeros_(self.value[-1].weight)
+        nn.init.zeros_(self.value[-1].bias)
+
+    @staticmethod
+    def _context(
+        prefix_states: torch.Tensor | None,
+        state_features: torch.Tensor | None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        if prefix_states is None or state_features is None:
+            raise ValueError("hierarchical actor requires prefix and state features")
+        return prefix_states, state_features
+
+    def node_policy_logits(
+        self,
+        node_features: torch.Tensor,
+        node_mask: torch.Tensor,
+        prefix_states: torch.Tensor,
+        state_features: torch.Tensor,
+    ) -> torch.Tensor:
+        context = self.node_prefix_projection(prefix_states)
+        context = context + self.node_state_projection(state_features)
+        hidden = self.node_projection(self.node_norm(node_features))
+        hidden = F.gelu(hidden + context.unsqueeze(1))
+        return self.node_output(hidden).squeeze(-1).masked_fill(
+            ~node_mask, -torch.inf
+        )
+
+    def candidate_policy_logits(
+        self,
+        candidate_features: torch.Tensor,
+        matcher_logits: torch.Tensor,
+    ) -> torch.Tensor:
+        residual = self.pattern(self.pattern_norm(candidate_features)).squeeze(-1)
+        return matcher_logits + residual
+
+    def stop_policy_logits(
+        self, prefix_states: torch.Tensor, state_features: torch.Tensor
+    ) -> torch.Tensor:
+        features = torch.cat((prefix_states, state_features), dim=-1)
+        return self.stop(self.stop_norm(features)).squeeze(-1)
+
+    def policy(
+        self,
+        node_features: torch.Tensor,
+        node_mask: torch.Tensor,
+        candidate_features: torch.Tensor,
+        matcher_logits: torch.Tensor,
+        candidate_nodes: torch.Tensor,
+        candidate_mask: torch.Tensor,
+        prefix_states: torch.Tensor,
+        state_features: torch.Tensor,
+        *,
+        include_stop: bool = True,
+    ) -> HierarchicalPolicy:
+        node_logits = self.node_policy_logits(
+            node_features, node_mask, prefix_states, state_features
+        )
+        candidate_logits = self.candidate_policy_logits(
+            candidate_features, matcher_logits
+        )
+        stop_logits = (
+            self.stop_policy_logits(prefix_states, state_features)
+            if include_stop
+            else None
+        )
+        return hierarchical_policy_log_probs(
+            node_logits,
+            node_mask,
+            candidate_logits,
+            candidate_nodes,
+            candidate_mask,
+            stop_logits=stop_logits,
+        )
+
+    def state_values(
+        self,
+        state_features: torch.Tensor,
+        candidate_features: torch.Tensor | None = None,
+        candidate_mask: torch.Tensor | None = None,
+        prefix_states: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        prefix_states, state_features = self._context(prefix_states, state_features)
+        features = torch.cat((prefix_states, state_features), dim=-1)
+        return self.value(self.value_norm(features)).squeeze(-1)
+
+    def actor_parameters(self):
+        modules = (
+            self.node_norm,
+            self.node_projection,
+            self.node_prefix_projection,
+            self.node_state_projection,
+            self.node_output,
+            self.pattern_norm,
+            self.pattern,
+            self.stop_norm,
+            self.stop,
+        )
+        for module in modules:
+            yield from module.parameters()
+
+    def critic_parameters(self):
+        yield from self.value_norm.parameters()
+        yield from self.value.parameters()
+
+
 def build_actor_critic(
     architecture: str,
     width: int,
@@ -339,6 +613,8 @@ def build_actor_critic(
             set_layers=set_layers,
             set_heads=set_heads,
         )
+    if architecture == "hierarchical":
+        return HierarchicalPPOActorCritic(width, hidden_size=hidden_size)
     raise ValueError(f"unknown actor/critic architecture: {architecture}")
 
 

@@ -1,0 +1,40 @@
+{
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-policy-head-benchmark-v1",
+  "hierarchical": {
+    "milliseconds_per_batch": 1.9625389412976801,
+    "normalization_max_error": 4.76837158203125e-07,
+    "peak_cuda_allocated_gib": 0.30388641357421875,
+    "seconds": 0.19625389412976801,
+    "states_per_second": 114137.86258523133
+  },
+  "match_set": {
+    "milliseconds_per_batch": 1.2755850004032254,
+    "normalization_max_error": 2.384185791015625e-07,
+    "peak_cuda_allocated_gib": 0.23703718185424805,
+    "seconds": 0.12755850004032254,
+    "states_per_second": 175605.70242609573
+  },
+  "parameters": {
+    "hierarchical": 522828,
+    "match_set": 2893836
+  },
+  "protocol": {
+    "autocast": "bfloat16",
+    "iterations": 100,
+    "scope": "policy heads only; candidate retrieval and graph update excluded",
+    "warmup": 20
+  },
+  "shape": {
+    "batch_size": 224,
+    "candidates": 64,
+    "hidden_size": 192,
+    "nodes": 450,
+    "width": 192
+  },
+  "speedup_over_match_set": 0.6499667209455607
+}
