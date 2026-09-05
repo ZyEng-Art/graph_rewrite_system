@@ -25,7 +25,13 @@ from beam_search_benchmark import BeamState, Proposal, snapshot, update_slots
 from dataset import RuleMetadata
 from gpu_proposals import GpuRuleIndex, build_gpu_proposals
 from incremental_graph import parse_pattern
-from lazy_rollout_benchmark import indexed_topology, lazy_child, replay_state
+from lazy_rollout_benchmark import (
+    ExactReplayCacheEntry,
+    indexed_topology,
+    lazy_child,
+    replay_state,
+    shared_replay_prefixes,
+)
 from model_factory import build_model
 from paged_cache import PagedKVCache
 from paged_rollout_benchmark import (
@@ -60,6 +66,13 @@ class PPOTransition:
     legal: bool
     xfer_id: int
     matcher_probability: float
+    history_depth: int = 0
+    committed_action: bool = False
+    repeated_state: bool = False
+    candidate_count: int = 0
+    policy_entropy: float = 0.0
+    previous_gate_count: int = 0
+    next_gate_count: int = 0
     advantage: float = 0.0
     return_value: float = 0.0
 
@@ -80,6 +93,28 @@ class EpisodeMetrics:
     mean_entropy: float
     started_from_replay: bool
     terminated_reason: str
+    exact_refreshes: int = 0
+    exact_replay_actions: int = 0
+    exact_refresh_seconds: float = 0.0
+
+
+@dataclass
+class EpisodeRuntime:
+    circuit: str
+    state: BeamState
+    initial_qasm: str
+    initial_gate_count: int
+    started_from_replay: bool
+    transitions: list[PPOTransition]
+    pending_transition_indices: list[int]
+    exact_hashes: set[int]
+    topology_hashes: set[int]
+    terminated_reason: str = "horizon"
+    stopped: bool = False
+    final_gate_count: int | None = None
+    exact_refreshes: int = 0
+    exact_replay_actions: int = 0
+    exact_refresh_seconds: float = 0.0
 
 
 def make_replay_bucket(graph) -> dict:
@@ -206,6 +241,144 @@ def initialize_episode(
     return state, states, live, gate_types, arena, [arena.empty_handle()], initial_qasm
 
 
+def initial_batch_many(snapshot_rows: list[dict]) -> dict:
+    """Pack initial graphs without materializing a current-graph batch."""
+    rows = [initial_batch(snapshot_row) for snapshot_row in snapshot_rows]
+    max_slots = max(row["initial_types"].shape[1] for row in rows)
+    initial_types = torch.cat(
+        [
+            F.pad(
+                row["initial_types"],
+                (0, max_slots - row["initial_types"].shape[1]),
+                value=-1,
+            )
+            for row in rows
+        ]
+    )
+    edge_batches = []
+    edge_sources = []
+    edge_destinations = []
+    edge_relations = []
+    for batch_index, row in enumerate(rows):
+        edge_batches.append(
+            torch.full_like(row["edge_batch"], batch_index)
+        )
+        edge_sources.append(row["edge_src"])
+        edge_destinations.append(row["edge_dst"])
+        edge_relations.append(row["edge_relation"])
+    return {
+        "initial_types": initial_types,
+        "edge_batch": torch.cat(edge_batches),
+        "edge_src": torch.cat(edge_sources),
+        "edge_dst": torch.cat(edge_destinations),
+        "edge_relation": torch.cat(edge_relations),
+    }
+
+
+def initialize_episode_batch(
+    qasm: Path,
+    batch_size: int,
+    *,
+    context,
+    quartz,
+    model,
+    device: torch.device,
+    max_steps: int,
+    page_size: int,
+    start_from_best: bool,
+    use_replay_starts: bool,
+    replay_start_probability: float,
+    best_by_circuit: dict[str, dict],
+    replay_pool: dict[str, dict],
+) -> tuple[
+    list[EpisodeRuntime],
+    torch.Tensor,
+    torch.Tensor,
+    torch.Tensor,
+    PagedKVCache,
+    list,
+]:
+    snapshots = []
+    runtimes = []
+    for _ in range(batch_size):
+        start_qasm = best_by_circuit[qasm.name]["qasm"] if start_from_best else None
+        started_from_replay = False
+        if (
+            use_replay_starts
+            and len(replay_pool[qasm.name]["states"]) > 1
+            and random.random() < replay_start_probability
+        ):
+            start_qasm = random.choice(replay_pool[qasm.name]["states"])["qasm"]
+            started_from_replay = True
+        graph = (
+            quartz.PyGraph.from_qasm_str(context=context, qasm_str=start_qasm)
+            if start_qasm is not None
+            else quartz.PyGraph.from_qasm(context=context, filename=str(qasm))
+        )
+        initial_qasm = graph.to_qasm_str()
+        guid_to_slot: dict[int, int] = {}
+        next_slot = update_slots(graph, guid_to_slot, 0)
+        initial_snapshot = snapshot(graph, guid_to_slot)
+        topology = indexed_topology(initial_snapshot)
+        state = BeamState(
+            graph=None,
+            snapshot=initial_snapshot,
+            guid_to_slot={},
+            next_slot=next_slot,
+            last_touched={},
+            rewrite_distance={
+                int(row[0]): 5 for row in initial_snapshot["nodes"]
+            },
+            previous_preferred=set(),
+            local_streak=0,
+            gate_count=int(graph.gate_count),
+            depth=0,
+            history=(),
+            topology_index=topology,
+            exact_graph_checkpoint=graph,
+            exact_slot_checkpoint=dict(guid_to_slot),
+            exact_checkpoint_depth=0,
+        )
+        snapshots.append(initial_snapshot)
+        runtimes.append(
+            EpisodeRuntime(
+                circuit=qasm.name,
+                state=state,
+                initial_qasm=initial_qasm,
+                initial_gate_count=state.gate_count,
+                started_from_replay=started_from_replay,
+                transitions=[],
+                pending_transition_indices=[],
+                exact_hashes={int(graph.hash())},
+                topology_hashes={int(topology.fingerprint)},
+            )
+        )
+    with torch.no_grad(), autocast_context(device):
+        states, live, gate_types = model.initialize_incremental(
+            move_batch(initial_batch_many(snapshots), device)
+        )
+    cache_pages = batch_size * (math.ceil(max_steps / page_size) + 2) + 4
+    arena = PagedKVCache(
+        layers=model.action_layers_count,
+        capacity=cache_pages,
+        page_size=page_size,
+        heads=model.action_heads,
+        head_width=model.width // model.action_heads,
+        model_width=model.width,
+        device=device,
+        dtype=torch.bfloat16 if device.type == "cuda" else states.dtype,
+        gather_backend="vectorized",
+    )
+    return (
+        runtimes,
+        states,
+        live,
+        gate_types,
+        arena,
+        [arena.empty_handle() for _ in runtimes],
+    )
+
+
 @torch.no_grad()
 def proposal_features(
     model,
@@ -252,6 +425,93 @@ def proposal_features(
         gate_deltas,
         initial_gate_bias=initial_gate_bias,
     )
+
+
+@torch.no_grad()
+def batched_proposal_features(
+    model,
+    encoded: torch.Tensor,
+    live: torch.Tensor,
+    states: list[BeamState],
+    proposals: list[Proposal],
+    rules: RuleMetadata,
+    device: torch.device,
+    initial_gate_bias: float,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    count = len(proposals)
+    parent_ids = torch.tensor(
+        [proposal.parent for proposal in proposals], device=device
+    )
+    xfer_ids = torch.tensor(
+        [proposal.xfer_id for proposal in proposals], device=device
+    )
+    source_ids = torch.tensor(
+        [rules.xfer_to_source[proposal.xfer_id] for proposal in proposals],
+        device=device,
+    )
+    bindings = torch.full(
+        (count, model.max_pattern), -1, dtype=torch.long, device=device
+    )
+    for index, proposal in enumerate(proposals):
+        binding = proposal.binding or ()
+        bindings[index, : len(binding)] = torch.tensor(binding, device=device)
+    base = model.candidate_features(
+        encoded,
+        live,
+        xfer_ids,
+        source_ids,
+        bindings,
+        parent_ids,
+    )
+    probabilities = torch.tensor(
+        [proposal.probability for proposal in proposals], device=device
+    )
+    gate_deltas = torch.tensor(
+        [
+            proposal.next_gate_count - states[proposal.parent].gate_count
+            for proposal in proposals
+        ],
+        device=device,
+    )
+    features, logits = build_policy_features(
+        base,
+        probabilities,
+        gate_deltas,
+        initial_gate_bias=initial_gate_bias,
+    )
+    return features, logits, parent_ids
+
+
+def pad_batched_policy_inputs(
+    features: torch.Tensor,
+    logits: torch.Tensor,
+    proposals: list[Proposal],
+    batch_size: int,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, list[list[Proposal]]]:
+    grouped: list[list[tuple[int, Proposal]]] = [[] for _ in range(batch_size)]
+    for flat_index, proposal in enumerate(proposals):
+        grouped[proposal.parent].append((flat_index, proposal))
+    max_candidates = max((len(rows) for rows in grouped), default=0)
+    padded_features = features.new_zeros(
+        (batch_size, max_candidates, features.shape[-1])
+    )
+    padded_logits = logits.new_zeros((batch_size, max_candidates))
+    mask = torch.zeros(
+        (batch_size, max_candidates), dtype=torch.bool, device=features.device
+    )
+    grouped_proposals: list[list[Proposal]] = []
+    for parent, rows in enumerate(grouped):
+        grouped_proposals.append([proposal for _, proposal in rows])
+        if not rows:
+            continue
+        indices = torch.tensor(
+            [flat_index for flat_index, _ in rows], device=features.device
+        )
+        count = len(rows)
+        padded_features[parent, :count] = features.index_select(0, indices)
+        padded_logits[parent, :count] = logits.index_select(0, indices)
+        mask[parent, :count] = True
+    return padded_features, padded_logits, mask, grouped_proposals
 
 
 def finalize_episode(transitions: list[PPOTransition], gamma: float, gae_lambda: float) -> None:
@@ -555,6 +815,473 @@ def collect_episode(
     )
 
 
+def refresh_speculative_runtimes(
+    runtimes: list[EpisodeRuntime],
+    *,
+    context,
+    quartz,
+    xfers,
+    invalid_reward: float,
+    cycle_reward: float,
+    replay_capacity_per_circuit: int,
+    best_by_circuit: dict[str, dict],
+    replay_pool: dict[str, dict],
+) -> None:
+    """Validate pending action suffixes and advance exact checkpoints."""
+    grouped: dict[tuple[str, int, int], list[EpisodeRuntime]] = defaultdict(list)
+    for runtime in runtimes:
+        if not runtime.pending_transition_indices:
+            continue
+        state = runtime.state
+        checkpoint_hash = int(state.exact_graph_checkpoint.hash())
+        grouped[
+            (runtime.circuit, state.exact_checkpoint_depth, checkpoint_hash)
+        ].append(runtime)
+
+    for group in grouped.values():
+        group_states = [runtime.state for runtime in group]
+        replay_prefixes = shared_replay_prefixes(group_states)
+        replay_cache: dict[tuple, ExactReplayCacheEntry] = {}
+        for runtime in group:
+            state = runtime.state
+            profile_counts: dict[str, int] = {}
+            started = time.perf_counter()
+            exact_graph, failure_step, topology_ok, exact_slots = replay_state(
+                state,
+                context,
+                quartz.PyGraph,
+                xfers,
+                runtime.initial_qasm,
+                return_checkpoint=True,
+                profile_counts=profile_counts,
+                replay_cache=replay_cache,
+                replay_cache_prefixes=replay_prefixes,
+            )
+            runtime.exact_refresh_seconds += time.perf_counter() - started
+            runtime.exact_refreshes += 1
+            runtime.exact_replay_actions += profile_counts.get(
+                "actions_attempted", 0
+            )
+
+            if failure_step is not None or exact_graph is None:
+                failed_depth = int(failure_step or len(state.history))
+                failed_index = next(
+                    (
+                        index
+                        for index in runtime.pending_transition_indices
+                        if runtime.transitions[index].history_depth == failed_depth
+                    ),
+                    runtime.pending_transition_indices[-1],
+                )
+                failed = runtime.transitions[failed_index]
+                failed.legal = False
+                failed.committed_action = False
+                failed.reward = float(invalid_reward)
+                failed.done = True
+                del runtime.transitions[failed_index + 1 :]
+                runtime.pending_transition_indices.clear()
+                runtime.final_gate_count = failed.previous_gate_count
+                runtime.terminated_reason = "exact_refresh_failure"
+                runtime.stopped = True
+                continue
+
+            if not topology_ok:
+                failed_index = runtime.pending_transition_indices[-1]
+                failed = runtime.transitions[failed_index]
+                failed.legal = False
+                failed.committed_action = False
+                failed.reward = float(invalid_reward)
+                failed.done = True
+                runtime.pending_transition_indices.clear()
+                runtime.final_gate_count = failed.previous_gate_count
+                runtime.terminated_reason = "exact_topology_mismatch"
+                runtime.stopped = True
+                continue
+
+            graph_hash = int(exact_graph.hash())
+            if graph_hash in runtime.exact_hashes:
+                cycle_index = runtime.pending_transition_indices[-1]
+                cycle = runtime.transitions[cycle_index]
+                cycle.repeated_state = True
+                cycle.committed_action = False
+                cycle.reward = float(cycle_reward)
+                cycle.done = True
+                runtime.pending_transition_indices.clear()
+                runtime.final_gate_count = cycle.next_gate_count
+                runtime.terminated_reason = "exact_cycle"
+                runtime.stopped = True
+                continue
+
+            state.exact_graph_checkpoint = exact_graph
+            state.exact_slot_checkpoint = exact_slots
+            state.exact_checkpoint_depth = len(state.history)
+            runtime.exact_hashes.add(graph_hash)
+            runtime.pending_transition_indices.clear()
+            runtime.final_gate_count = state.gate_count
+            retain_replay_state(
+                replay_pool[runtime.circuit],
+                exact_graph,
+                capacity=replay_capacity_per_circuit,
+            )
+            circuit_best = best_by_circuit[runtime.circuit]
+            if state.gate_count < circuit_best["gate_count"]:
+                circuit_best["gate_count"] = state.gate_count
+                circuit_best["qasm"] = exact_graph.to_qasm_str()
+                circuit_best["episode_depth"] = state.depth
+
+
+def collect_episode_batch(
+    qasm: Path,
+    batch_size: int,
+    *,
+    context,
+    quartz,
+    xfers,
+    rules: RuleMetadata,
+    source_patterns,
+    destination_patterns,
+    rule_index: GpuRuleIndex,
+    model,
+    actor_critic: PagedPPOActorCritic,
+    device: torch.device,
+    threshold_config: dict,
+    source_vectors: torch.Tensor,
+    max_steps: int,
+    max_source_matches: int,
+    max_actions: int,
+    invalid_reward: float,
+    cycle_reward: float,
+    step_penalty: float,
+    max_rejected_actions_per_step: int,
+    terminate_on_improvement: bool,
+    start_from_best: bool,
+    use_replay_starts: bool,
+    replay_start_probability: float,
+    replay_capacity_per_circuit: int,
+    gamma: float,
+    gae_lambda: float,
+    page_size: int,
+    initial_gate_bias: float,
+    greedy: bool,
+    best_by_circuit: dict[str, dict],
+    replay_pool: dict[str, dict],
+    refresh_interval: int,
+) -> tuple[list[PPOTransition], list[EpisodeMetrics]]:
+    if batch_size < 1:
+        raise ValueError("collector batch size must be positive")
+    if refresh_interval < 1:
+        raise ValueError("PPO refresh interval must be positive")
+    (
+        active,
+        states,
+        live,
+        gate_types,
+        arena,
+        handles,
+    ) = initialize_episode_batch(
+        qasm,
+        batch_size,
+        context=context,
+        quartz=quartz,
+        model=model,
+        device=device,
+        max_steps=max_steps,
+        page_size=page_size,
+        start_from_best=start_from_best,
+        use_replay_starts=use_replay_starts,
+        replay_start_probability=replay_start_probability,
+        best_by_circuit=best_by_circuit,
+        replay_pool=replay_pool,
+    )
+    all_runtimes = list(active)
+
+    while active:
+        current_states = [runtime.state for runtime in active]
+        candidates, _, _, encoded = paged_model_matches(
+            current_states,
+            states,
+            live,
+            gate_types,
+            handles,
+            arena,
+            model,
+            device,
+            threshold_config,
+            source_vectors,
+            microbatch=len(active),
+            max_candidates=max_source_matches,
+            state_batch_backend="tensorized",
+            candidate_backend="gpu",
+            return_encoded_states=True,
+        )
+        proposals, _, _ = build_gpu_proposals(
+            candidates,
+            current_states,
+            rule_index,
+            per_parent_cap=max_actions,
+            global_cap=max_actions * len(active),
+            ranking_mode="gate",
+        )
+        if proposals:
+            flat_features, flat_logits, _ = batched_proposal_features(
+                model,
+                encoded,
+                live,
+                current_states,
+                proposals,
+                rules,
+                device,
+                initial_gate_bias,
+            )
+            (
+                policy_features,
+                matcher_logits,
+                candidate_mask,
+                grouped_proposals,
+            ) = pad_batched_policy_inputs(
+                flat_features,
+                flat_logits,
+                proposals,
+                len(active),
+            )
+        else:
+            policy_features = encoded.new_zeros(
+                (len(active), 0, actor_critic.policy_feature_dim)
+            )
+            matcher_logits = encoded.new_zeros((len(active), 0))
+            candidate_mask = torch.zeros(
+                (len(active), 0), dtype=torch.bool, device=device
+            )
+            grouped_proposals = [[] for _ in active]
+
+        state_features = build_state_features(
+            encoded,
+            live,
+            torch.tensor(
+                [runtime.state.gate_count for runtime in active], device=device
+            ),
+        )
+        with torch.no_grad():
+            old_values = actor_critic.state_values(state_features)
+
+        advance_records: dict[int, tuple[BeamState, Proposal]] = {}
+        refresh_indices = set()
+        for parent_index, runtime in enumerate(active):
+            rows = grouped_proposals[parent_index]
+            if not rows:
+                runtime.terminated_reason = "no_candidates"
+                runtime.stopped = True
+                if runtime.pending_transition_indices:
+                    refresh_indices.add(parent_index)
+                continue
+
+            local_mask = candidate_mask[parent_index].clone()
+            accepted = False
+            for rejected_count in range(max_rejected_actions_per_step + 1):
+                with torch.no_grad():
+                    distribution = masked_policy_distribution(
+                        actor_critic,
+                        policy_features[parent_index : parent_index + 1],
+                        matcher_logits[parent_index : parent_index + 1],
+                        local_mask.unsqueeze(0),
+                    )
+                    action = (
+                        distribution.logits.argmax(-1)
+                        if greedy
+                        else distribution.sample()
+                    )
+                action_index = int(action.item())
+                proposal = rows[action_index]
+                old_log_prob = float(distribution.log_prob(action).item())
+                entropy = float(distribution.entropy().item())
+                candidate_count = int(local_mask.sum().item())
+                child, fingerprint, duplicate = lazy_child(
+                    runtime.state,
+                    proposal,
+                    source_patterns,
+                    destination_patterns,
+                    structural_recheck=False,
+                    dedup_mode="raw",
+                    seen=runtime.topology_hashes,
+                    topology_backend="indexed",
+                )
+                rejected = child is None
+                can_retry = (
+                    rejected
+                    and rejected_count < max_rejected_actions_per_step
+                    and candidate_count > 1
+                )
+                legal = bool(duplicate or child is not None)
+                reward = float(invalid_reward)
+                if duplicate:
+                    reward = float(cycle_reward)
+                elif child is not None:
+                    reward = shaped_transition_reward(
+                        runtime.state.gate_count,
+                        child.gate_count,
+                        repeated_state=False,
+                        step_penalty=step_penalty,
+                        cycle_reward=cycle_reward,
+                    )
+                next_gate_count = (
+                    child.gate_count if child is not None else runtime.state.gate_count
+                )
+                transition = PPOTransition(
+                    state_features=state_features[parent_index].float().cpu(),
+                    candidate_features=policy_features[parent_index].float().cpu(),
+                    matcher_logits=matcher_logits[parent_index].float().cpu(),
+                    candidate_mask=local_mask.cpu().clone(),
+                    action_index=action_index,
+                    old_log_prob=old_log_prob,
+                    old_value=float(old_values[parent_index].item()),
+                    reward=reward,
+                    done=rejected and not can_retry,
+                    legal=legal,
+                    xfer_id=proposal.xfer_id,
+                    matcher_probability=proposal.probability,
+                    history_depth=runtime.state.depth + 1,
+                    committed_action=child is not None,
+                    repeated_state=bool(duplicate),
+                    candidate_count=candidate_count,
+                    policy_entropy=entropy,
+                    previous_gate_count=runtime.state.gate_count,
+                    next_gate_count=next_gate_count,
+                )
+                runtime.transitions.append(transition)
+                if rejected:
+                    local_mask[action_index] = False
+                    if can_retry:
+                        continue
+                    runtime.terminated_reason = (
+                        "cycle_actions_exhausted"
+                        if duplicate
+                        else "rejected_actions_exhausted"
+                    )
+                    runtime.stopped = True
+                    if runtime.pending_transition_indices:
+                        refresh_indices.add(parent_index)
+                    break
+
+                accepted = True
+                runtime.pending_transition_indices.append(
+                    len(runtime.transitions) - 1
+                )
+                runtime.state = child
+                runtime.topology_hashes.add(int(fingerprint))
+                advance_records[parent_index] = (child, proposal)
+                improved_initial = child.gate_count < runtime.initial_gate_count
+                improved_global = (
+                    child.gate_count
+                    < best_by_circuit[runtime.circuit]["gate_count"]
+                )
+                if child.depth >= max_steps:
+                    runtime.terminated_reason = "horizon"
+                    runtime.stopped = True
+                elif terminate_on_improvement and improved_initial:
+                    runtime.terminated_reason = "improvement"
+                    runtime.stopped = True
+                if (
+                    child.depth - child.exact_checkpoint_depth >= refresh_interval
+                    or runtime.stopped
+                    or improved_global
+                ):
+                    refresh_indices.add(parent_index)
+                break
+            if not accepted and not runtime.stopped:
+                raise RuntimeError("PPO action retry loop exited without a successor")
+
+        refresh_speculative_runtimes(
+            [active[index] for index in sorted(refresh_indices)],
+            context=context,
+            quartz=quartz,
+            xfers=xfers,
+            invalid_reward=invalid_reward,
+            cycle_reward=cycle_reward,
+            replay_capacity_per_circuit=replay_capacity_per_circuit,
+            best_by_circuit=best_by_circuit,
+            replay_pool=replay_pool,
+        )
+
+        continuing_records = []
+        continuing_runtimes = []
+        for parent_index, runtime in enumerate(active):
+            record = advance_records.get(parent_index)
+            if runtime.stopped or record is None:
+                continue
+            continuing_records.append(record)
+            continuing_runtimes.append(runtime)
+        if not continuing_records:
+            for handle in handles:
+                arena.release(handle)
+            break
+        states, live, gate_types, handles, _, _ = advance_selected(
+            states,
+            live,
+            gate_types,
+            handles,
+            continuing_records,
+            rules,
+            arena,
+            model,
+            device,
+            microbatch=len(continuing_records),
+        )
+        active = continuing_runtimes
+
+    transitions = []
+    episode_metrics = []
+    for runtime in all_runtimes:
+        finalize_episode(runtime.transitions, gamma, gae_lambda)
+        transitions.extend(runtime.transitions)
+        legal_actions = sum(row.legal for row in runtime.transitions)
+        invalid_actions = len(runtime.transitions) - legal_actions
+        cycle_actions = sum(row.repeated_state for row in runtime.transitions)
+        accepted_rewrites = sum(
+            row.committed_action and row.legal and not row.repeated_state
+            for row in runtime.transitions
+        )
+        best_gate_count = min(
+            [runtime.initial_gate_count]
+            + [
+                row.next_gate_count
+                for row in runtime.transitions
+                if row.committed_action and row.legal
+            ]
+        )
+        episode_metrics.append(
+            EpisodeMetrics(
+                circuit=runtime.circuit,
+                steps=len(runtime.transitions),
+                legal_actions=legal_actions,
+                invalid_actions=invalid_actions,
+                cycle_actions=cycle_actions,
+                accepted_rewrites=accepted_rewrites,
+                total_reward=sum(row.reward for row in runtime.transitions),
+                initial_gate_count=runtime.initial_gate_count,
+                final_gate_count=(
+                    runtime.final_gate_count
+                    if runtime.final_gate_count is not None
+                    else runtime.state.gate_count
+                ),
+                best_gate_count=best_gate_count,
+                mean_candidates=sum(
+                    row.candidate_count for row in runtime.transitions
+                )
+                / max(1, len(runtime.transitions)),
+                mean_entropy=sum(
+                    row.policy_entropy for row in runtime.transitions
+                )
+                / max(1, len(runtime.transitions)),
+                started_from_replay=runtime.started_from_replay,
+                terminated_reason=runtime.terminated_reason,
+                exact_refreshes=runtime.exact_refreshes,
+                exact_replay_actions=runtime.exact_replay_actions,
+                exact_refresh_seconds=runtime.exact_refresh_seconds,
+            )
+        )
+    return transitions, episode_metrics
+
+
 def collate_transitions(
     transitions: list[PPOTransition], indices: torch.Tensor, device: torch.device
 ) -> dict:
@@ -692,6 +1419,9 @@ def aggregate_episodes(rows: list[EpisodeMetrics]) -> dict:
         / max(1, len(rows)),
         "mean_policy_entropy": sum(row.mean_entropy for row in rows)
         / max(1, len(rows)),
+        "exact_refreshes": sum(row.exact_refreshes for row in rows),
+        "exact_replay_actions": sum(row.exact_replay_actions for row in rows),
+        "exact_refresh_seconds": sum(row.exact_refresh_seconds for row in rows),
         "replay_start_episodes": sum(row.started_from_replay for row in rows),
         "best_gate_count_by_circuit": {
             circuit: min(row.best_gate_count for row in rows if row.circuit == circuit)
@@ -707,15 +1437,33 @@ def aggregate_episodes(rows: list[EpisodeMetrics]) -> dict:
 def evaluate_policy(
     qasms: list[Path],
     episodes_per_circuit: int,
+    *,
+    collector_batch_size: int = 1,
+    refresh_interval: int = 1,
     **episode_kwargs,
 ) -> dict:
     episode_kwargs["actor_critic"].eval()
     episode_kwargs["use_replay_starts"] = False
     rows = []
     for qasm in qasms:
-        for _ in range(episodes_per_circuit):
-            _, metrics = collect_episode(qasm, greedy=True, **episode_kwargs)
-            rows.append(metrics)
+        remaining = episodes_per_circuit
+        while remaining:
+            current_batch = min(collector_batch_size, remaining)
+            if collector_batch_size == 1 and refresh_interval == 1:
+                _, metrics = collect_episode(
+                    qasm, greedy=True, **episode_kwargs
+                )
+                rows.append(metrics)
+            else:
+                _, batch_rows = collect_episode_batch(
+                    qasm,
+                    current_batch,
+                    greedy=True,
+                    refresh_interval=refresh_interval,
+                    **episode_kwargs,
+                )
+                rows.extend(batch_rows)
+            remaining -= current_batch
     return {
         **aggregate_episodes(rows),
         "episodes_detail": [asdict(row) for row in rows],
@@ -751,6 +1499,18 @@ def main() -> None:
     parser.add_argument("--max-actions", type=int, default=128)
     parser.add_argument("--max-gate-increase", type=int, default=3)
     parser.add_argument("--page-size", type=int, default=8)
+    parser.add_argument(
+        "--collector-batch-size",
+        type=int,
+        default=1,
+        help="episodes advanced together by the paged speculative collector",
+    )
+    parser.add_argument(
+        "--refresh-interval",
+        type=int,
+        default=1,
+        help="actions between exact Quartz checks (1 preserves the exact collector)",
+    )
     parser.add_argument("--hidden-size", type=int)
     parser.add_argument("--initial-gate-bias", type=float, default=1.0)
     parser.add_argument("--ppo-epochs", type=int, default=4)
@@ -792,6 +1552,8 @@ def main() -> None:
         parser.error("evaluation episodes per circuit must be nonnegative")
     if args.max_steps < 1 or args.max_actions < 1:
         parser.error("max steps and max actions must be positive")
+    if args.collector_batch_size < 1 or args.refresh_interval < 1:
+        parser.error("collector batch size and refresh interval must be positive")
     if not 0 <= args.gamma <= 1 or not 0 <= args.gae_lambda <= 1:
         parser.error("gamma and GAE lambda must be within [0, 1]")
     if args.step_penalty < 0:
@@ -922,6 +1684,11 @@ def main() -> None:
         "args": serialized_args(args),
         "base_checkpoint": str(args.checkpoint),
         "frozen_base_model": True,
+        "collector": (
+            "exact"
+            if args.collector_batch_size == 1 and args.refresh_interval == 1
+            else "batched_speculative"
+        ),
         "iterations": [],
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -962,6 +1729,8 @@ def main() -> None:
         training_log["initial_evaluation"] = evaluate_policy(
             args.qasm,
             args.evaluation_episodes_per_circuit,
+            collector_batch_size=args.collector_batch_size,
+            refresh_interval=args.refresh_interval,
             **episode_kwargs,
         )
 
@@ -969,15 +1738,36 @@ def main() -> None:
         collection_started = time.perf_counter()
         transitions = []
         episode_rows = []
-        for episode in range(args.episodes_per_iteration):
-            qasm = args.qasm[episode % len(args.qasm)]
-            episode_transitions, metrics = collect_episode(
-                qasm,
-                greedy=False,
-                **episode_kwargs,
+        circuit_counts = {
+            qasm: sum(
+                args.qasm[episode % len(args.qasm)] == qasm
+                for episode in range(args.episodes_per_iteration)
             )
-            transitions.extend(episode_transitions)
-            episode_rows.append(metrics)
+            for qasm in args.qasm
+        }
+        for qasm, episode_count in circuit_counts.items():
+            remaining = episode_count
+            while remaining:
+                current_batch = min(args.collector_batch_size, remaining)
+                if args.collector_batch_size == 1 and args.refresh_interval == 1:
+                    episode_transitions, metrics = collect_episode(
+                        qasm,
+                        greedy=False,
+                        **episode_kwargs,
+                    )
+                    transitions.extend(episode_transitions)
+                    episode_rows.append(metrics)
+                else:
+                    batch_transitions, batch_metrics = collect_episode_batch(
+                        qasm,
+                        current_batch,
+                        greedy=False,
+                        refresh_interval=args.refresh_interval,
+                        **episode_kwargs,
+                    )
+                    transitions.extend(batch_transitions)
+                    episode_rows.extend(batch_metrics)
+                remaining -= current_batch
         collection_seconds = time.perf_counter() - collection_started
         if not transitions:
             raise RuntimeError("PPO collection produced no transitions")
@@ -1002,6 +1792,8 @@ def main() -> None:
             evaluate_policy(
                 args.qasm,
                 args.evaluation_episodes_per_circuit,
+                collector_batch_size=args.collector_batch_size,
+                refresh_interval=args.refresh_interval,
                 **episode_kwargs,
             )
             if args.evaluation_episodes_per_circuit

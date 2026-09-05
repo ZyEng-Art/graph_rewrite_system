@@ -665,6 +665,30 @@ binding path.  All 1000 trajectories are valid and all 1000 reconstructed
 topologies match; this independent audit takes 11.708 seconds.  The profile and
 audit are retained in `current_gpu6_*_lazygraph*.json`.
 
+## Batched speculative PPO collection
+
+The original PPO collector advanced one episode at a time and performed an
+exact Quartz replay after every selected action. The new collector directly
+reuses the paged causal cache and indexed lightweight topology from beam search,
+advances many episodes in one GPU batch, and commits pending PPO transitions
+only after periodic exact replay. The exact B=1/R=1 path remains available as
+the compatibility baseline.
+
+On `h100-gpu5` GPU 6, 64 `barenco_tof_3` episodes with maximum depth 16 and
+seed 773 give 77.36 transitions/s for the legacy collector, 217.89
+transitions/s for B=64/R=1, and 214.88 transitions/s for B=64/R=8. Accepted
+rewrite throughput rises from 67.76/s to 209.91/s at B=64/R=8. Exact selected
+action legality is 98.12%, 98.72%, and 97.69%, respectively. The same 58-gate
+best is retained in this one-iteration collector test.
+
+The near tie between R=1 and R=8 on this small circuit shows that the measured
+2.78x transition-throughput gain comes from batched neural collection rather
+than delayed Quartz checks. The batched collector terminates deferred paths at
+an exact invalid action or cycle, while the legacy collector retries at the
+same state, so the transition counts are not trajectory-identical. Full data
+and caveats are in
+`benchmark_results/ppo_batched_collector_findings_20260905.md`.
+
 ## Offline action-value pilot
 
 The matcher is trained to recover legal source-pattern bindings, not to choose

@@ -31,6 +31,8 @@ circuit_dir="$root/quarl/experiment/circs/nam_circs"
     --max-steps "${PPO_MAX_STEPS:-16}" \
     --max-source-matches 2048 \
     --max-actions "${PPO_MAX_ACTIONS:-64}" \
+    --collector-batch-size "${PPO_COLLECTOR_BATCH_SIZE:-64}" \
+    --refresh-interval "${PPO_REFRESH_INTERVAL:-8}" \
     --initial-gate-bias "${PPO_GATE_BIAS:-1.0}" \
     --entropy-coefficient "${PPO_ENTROPY_COEFFICIENT:-0.02}" \
     --replay-start-probability "${PPO_REPLAY_START_PROBABILITY:-0.75}" \

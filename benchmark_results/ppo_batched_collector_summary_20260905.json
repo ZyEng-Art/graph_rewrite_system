@@ -1,0 +1,82 @@
+{
+  "date": "2026-09-05",
+  "host": "h100-gpu5",
+  "visible_gpu": 6,
+  "physical_gpu": "H100",
+  "note": "All GPUs also held an idle vLLM allocation of approximately 47.9 GiB.",
+  "protocol": {
+    "circuit": "barenco_tof_3.qasm",
+    "initial_gates": 58,
+    "episodes": 64,
+    "max_steps": 16,
+    "max_source_matches": 2048,
+    "max_actions": 64,
+    "ppo_epochs": 1,
+    "replay_start_probability": 0.0,
+    "seed": 773
+  },
+  "runs": [
+    {
+      "name": "legacy_exact_b1_r1",
+      "collector_batch_size": 1,
+      "refresh_interval": 1,
+      "collection_seconds": 15.111339663155377,
+      "transitions": 1169,
+      "transitions_per_second": 77.3591240788709,
+      "accepted_rewrites": 1024,
+      "accepted_rewrites_per_second": 67.76368097242413,
+      "selected_action_legality": 0.981180496150556,
+      "invalid_actions": 22,
+      "cycle_actions": 123,
+      "best_gate_count": 58,
+      "artifact": "ppo_collector_barenco_baseline_s773.training.json"
+    },
+    {
+      "name": "batched_speculative_b64_r1",
+      "collector_batch_size": 64,
+      "refresh_interval": 1,
+      "collection_seconds": 2.510387415997684,
+      "transitions": 547,
+      "transitions_per_second": 217.89465502981338,
+      "accepted_rewrites": 494,
+      "accepted_rewrites_per_second": 196.78237584045306,
+      "selected_action_legality": 0.9872029250457038,
+      "invalid_actions": 7,
+      "cycle_actions": 46,
+      "exact_refreshes": 547,
+      "exact_replay_actions": 525,
+      "exact_refresh_seconds": 0.09237262792885303,
+      "best_gate_count": 58,
+      "artifact": "ppo_collector_barenco_b64_r1_s773.training.json"
+    },
+    {
+      "name": "batched_speculative_b64_r8",
+      "collector_batch_size": 64,
+      "refresh_interval": 8,
+      "collection_seconds": 4.225653521949425,
+      "transitions": 908,
+      "transitions_per_second": 214.87800532711717,
+      "accepted_rewrites": 887,
+      "accepted_rewrites_per_second": 209.90835982946356,
+      "selected_action_legality": 0.9768722466960352,
+      "invalid_actions": 21,
+      "cycle_actions": 0,
+      "exact_refreshes": 121,
+      "exact_replay_actions": 886,
+      "exact_refresh_seconds": 0.07311787828803062,
+      "best_gate_count": 58,
+      "artifact": "ppo_collector_barenco_b64_r8_s773.training.json"
+    }
+  ],
+  "comparisons": {
+    "b64_r1_transition_throughput_over_legacy": 2.8166639375034874,
+    "b64_r8_transition_throughput_over_legacy": 2.777668541179964,
+    "b64_r1_accepted_throughput_over_legacy": 2.903950508835729,
+    "b64_r8_accepted_throughput_over_legacy": 3.09765285499889
+  },
+  "interpretation": [
+    "The measured speedup comes from batching matcher and causal-cache work; refresh interval 8 did not improve transitions/s on this small circuit because Quartz direct apply is already cheap.",
+    "The batched collector terminates a trajectory when a deferred exact check finds an invalid action or exact cycle. The legacy collector retries those actions immediately, so episode lengths and transition counts are not trajectory-identical.",
+    "Every retained speculative suffix was replayed by Quartz. Invalid suffix tails were discarded before GAE and PPO update."
+  ]
+}
