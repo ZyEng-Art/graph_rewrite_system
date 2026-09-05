@@ -172,6 +172,7 @@ def main() -> None:
     actor_checkpoint_format = node_checkpoint.get("format", "unknown")
     if actor_checkpoint_format not in {
         "hierarchical-node-training-v1",
+        "hierarchical-action-training-v1",
         "hierarchical-ppo-v1",
     }:
         raise ValueError(
