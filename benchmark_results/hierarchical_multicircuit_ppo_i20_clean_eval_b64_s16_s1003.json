@@ -1,0 +1,716 @@
+{
+  "args": {
+    "additional_qasm": [
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/barenco_tof_4.qasm",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/gf2^4_mult.qasm",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/gf2^6_mult.qasm"
+    ],
+    "batch_size": 64,
+    "best_start_probability": 0.25,
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "cycle_reward": -1.0,
+    "data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "disable_rejected_action_cache": false,
+    "ecc_file": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/ecc_set/nam_ecc.json",
+    "gae_lambda": 0.95,
+    "gamma": 0.99,
+    "greedy": false,
+    "initial_gate_bias": 1.0,
+    "invalid_reward": -2.0,
+    "max_actions": 256,
+    "max_exact_rejections_per_episode": 8,
+    "max_rejected_actions_per_step": 4,
+    "max_steps": 16,
+    "node_checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/hierarchical_multicircuit_ppo_i20_b64_s16_s1002.pt",
+    "node_k": 16,
+    "output": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/experiment/s0_binding_paged_worldmodel_20260903/benchmark_results/hierarchical_multicircuit_ppo_i20_clean_eval_b64_s16_s1003.json",
+    "page_size": 8,
+    "pattern_k": 16,
+    "ppo_clip_epsilon": 0.2,
+    "ppo_entropy_coefficient": 0.01,
+    "ppo_epochs": 4,
+    "ppo_iterations": 0,
+    "ppo_learning_rate": 0.0001,
+    "ppo_max_grad_norm": 1.0,
+    "ppo_minibatch_size": 128,
+    "ppo_output": null,
+    "ppo_target_kl": 0.02,
+    "ppo_value_coefficient": 0.5,
+    "qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/barenco_tof_3.qasm",
+    "refresh_interval": 1,
+    "replay_start_probability": 0.25,
+    "resume_search_state": false,
+    "seed": 1003,
+    "start_from_best": false,
+    "step_penalty": 0.02,
+    "target_recall": 0.95,
+    "terminate_on_improvement": false,
+    "use_replay_starts": false,
+    "warmup_episodes": 8,
+    "warmup_steps": 2
+  },
+  "artifacts": {
+    "actor_checkpoint_format": "hierarchical-ppo-v1",
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "node_checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/hierarchical_multicircuit_ppo_i20_b64_s16_s1002.pt",
+    "qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/barenco_tof_3.qasm",
+    "qasm_paths": [
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/barenco_tof_3.qasm",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/barenco_tof_4.qasm",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/gf2^4_mult.qasm",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/gf2^6_mult.qasm"
+    ]
+  },
+  "best_by_circuit": {
+    "barenco_tof_3.qasm": {
+      "episode_depth": 0,
+      "gate_count": 58,
+      "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[5];\nh q[4];\ncx q[3],q[4];\nrz(pi*1.750000) q[4];\ncx q[2],q[4];\nrz(pi*0.250000) q[4];\ncx q[3],q[4];\nrz(pi*1.750000) q[4];\ncx q[2],q[4];\ncx q[2],q[3];\nrz(pi*0.250000) q[4];\nrz(pi*1.750000) q[3];\ncx q[2],q[3];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[3];\nh q[3];\ncx q[1],q[3];\nrz(pi*1.750000) q[3];\ncx q[0],q[3];\nrz(pi*0.250000) q[3];\ncx q[1],q[3];\nrz(pi*1.750000) q[3];\ncx q[0],q[3];\ncx q[0],q[1];\nrz(pi*0.250000) q[3];\nrz(pi*1.750000) q[1];\nh q[3];\ncx q[0],q[1];\ncx q[3],q[4];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[4];\ncx q[2],q[4];\nrz(pi*1.750000) q[4];\ncx q[3],q[4];\nrz(pi*0.250000) q[4];\ncx q[2],q[4];\ncx q[2],q[3];\nrz(pi*1.750000) q[4];\nrz(pi*0.250000) q[3];\nh q[4];\ncx q[2],q[3];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[3];\nh q[3];\ncx q[1],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\nrz(pi*1.750000) q[3];\ncx q[1],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\ncx q[0],q[1];\nrz(pi*1.750000) q[3];\nrz(pi*0.250000) q[1];\nh q[3];\ncx q[0],q[1];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\n"
+    },
+    "barenco_tof_4.qasm": {
+      "episode_depth": 0,
+      "gate_count": 114,
+      "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[7];\nh q[6];\ncx q[5],q[6];\nrz(pi*1.750000) q[6];\ncx q[3],q[6];\nrz(pi*0.250000) q[6];\ncx q[5],q[6];\nrz(pi*1.750000) q[6];\ncx q[3],q[6];\ncx q[3],q[5];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[5];\ncx q[3],q[5];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[5];\nh q[5];\ncx q[4],q[5];\nrz(pi*1.750000) q[5];\ncx q[2],q[5];\nrz(pi*0.250000) q[5];\ncx q[4],q[5];\nrz(pi*1.750000) q[5];\ncx q[2],q[5];\ncx q[2],q[4];\nrz(pi*0.250000) q[5];\nrz(pi*1.750000) q[4];\ncx q[2],q[4];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[4];\nh q[4];\ncx q[1],q[4];\nrz(pi*1.750000) q[4];\ncx q[0],q[4];\nrz(pi*0.250000) q[4];\ncx q[1],q[4];\nrz(pi*1.750000) q[4];\ncx q[0],q[4];\ncx q[0],q[1];\nrz(pi*0.250000) q[4];\nrz(pi*1.750000) q[1];\nh q[4];\ncx q[0],q[1];\ncx q[4],q[5];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[5];\ncx q[2],q[5];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\nrz(pi*0.250000) q[5];\ncx q[2],q[5];\ncx q[2],q[4];\nrz(pi*1.750000) q[5];\nrz(pi*0.250000) q[4];\nh q[5];\ncx q[2],q[4];\ncx q[5],q[6];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[4];\nrz(pi*0.250000) q[6];\ncx q[3],q[6];\nrz(pi*1.750000) q[6];\ncx q[5],q[6];\nrz(pi*0.250000) q[6];\ncx q[3],q[6];\ncx q[3],q[5];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[5];\nh q[6];\ncx q[3],q[5];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[5];\nh q[5];\ncx q[4],q[5];\nrz(pi*1.750000) q[5];\ncx q[2],q[5];\nrz(pi*0.250000) q[5];\ncx q[4],q[5];\nrz(pi*1.750000) q[5];\ncx q[2],q[5];\ncx q[2],q[4];\nrz(pi*0.250000) q[5];\nrz(pi*1.750000) q[4];\ncx q[2],q[4];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[4];\nh q[4];\ncx q[1],q[4];\nrz(pi*0.250000) q[4];\ncx q[0],q[4];\nrz(pi*1.750000) q[4];\ncx q[1],q[4];\nrz(pi*0.250000) q[4];\ncx q[0],q[4];\ncx q[0],q[1];\nrz(pi*1.750000) q[4];\nrz(pi*0.250000) q[1];\nh q[4];\ncx q[0],q[1];\ncx q[4],q[5];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\nrz(pi*0.250000) q[5];\ncx q[2],q[5];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\nrz(pi*0.250000) q[5];\ncx q[2],q[5];\ncx q[2],q[4];\nrz(pi*1.750000) q[5];\nrz(pi*0.250000) q[4];\nh q[5];\ncx q[2],q[4];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[4];\n"
+    },
+    "gf2^4_mult.qasm": {
+      "episode_depth": 3,
+      "gate_count": 219,
+      "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[12];\nh q[8];\nh q[9];\nh q[10];\nh q[11];\ncx q[5],q[8];\nrz(pi*1.750000) q[8];\ncx q[3],q[8];\nrz(pi*0.250000) q[8];\ncx q[5],q[8];\nrz(pi*1.750000) q[8];\ncx q[3],q[8];\ncx q[3],q[5];\nrz(pi*0.250000) q[8];\nrz(pi*1.750000) q[5];\ncx q[6],q[8];\ncx q[3],q[5];\nrz(pi*0.250000) q[8];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[5];\ncx q[2],q[8];\nrz(pi*1.750000) q[8];\ncx q[6],q[8];\nrz(pi*0.250000) q[8];\ncx q[2],q[8];\ncx q[2],q[6];\nrz(pi*1.750000) q[8];\nrz(pi*0.250000) q[6];\ncx q[7],q[8];\ncx q[2],q[6];\nrz(pi*1.750000) q[8];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[6];\ncx q[1],q[8];\ncx q[6],q[9];\nrz(pi*0.250000) q[8];\nrz(pi*1.750000) q[9];\ncx q[7],q[8];\ncx q[3],q[9];\nrz(pi*1.750000) q[8];\nrz(pi*0.250000) q[9];\ncx q[1],q[8];\ncx q[6],q[9];\ncx q[1],q[7];\nrz(pi*0.250000) q[8];\nrz(pi*1.750000) q[9];\nrz(pi*1.750000) q[7];\ncx q[3],q[9];\ncx q[1],q[7];\ncx q[3],q[6];\nrz(pi*0.250000) q[9];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[6];\ncx q[7],q[9];\ncx q[3],q[6];\nrz(pi*0.250000) q[9];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[6];\ncx q[2],q[9];\nrz(pi*1.750000) q[9];\ncx q[7],q[9];\nrz(pi*0.250000) q[9];\ncx q[2],q[9];\ncx q[2],q[7];\nrz(pi*1.750000) q[9];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[7];\ncx q[7],q[10];\nrz(pi*1.750000) q[10];\ncx q[3],q[10];\nrz(pi*0.250000) q[10];\ncx q[7],q[10];\nrz(pi*1.750000) q[10];\ncx q[3],q[10];\ncx q[3],q[7];\nrz(pi*0.250000) q[10];\nrz(pi*1.750000) q[7];\ncx q[11],q[10];\ncx q[3],q[7];\ncx q[4],q[11];\ncx q[10],q[9];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[11];\ncx q[9],q[8];\ncx q[3],q[11];\nrz(pi*0.250000) q[11];\ncx q[4],q[11];\nrz(pi*1.750000) q[11];\ncx q[3],q[11];\ncx q[3],q[4];\nrz(pi*0.250000) q[11];\nrz(pi*1.750000) q[4];\ncx q[5],q[11];\ncx q[3],q[4];\nrz(pi*0.250000) q[11];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[4];\ncx q[2],q[11];\ncx q[4],q[10];\nrz(pi*1.750000) q[11];\nrz(pi*0.250000) q[10];\ncx q[5],q[11];\nrz(pi*0.250000) q[11];\ncx q[2],q[11];\ncx q[2],q[5];\nrz(pi*1.750000) q[11];\nrz(pi*0.250000) q[5];\ncx q[6],q[11];\ncx q[2],q[5];\nrz(pi*0.250000) q[11];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[5];\ncx q[1],q[11];\ncx q[2],q[10];\nrz(pi*1.750000) q[11];\nrz(pi*1.750000) q[10];\ncx q[6],q[11];\ncx q[4],q[10];\nrz(pi*0.250000) q[11];\nrz(pi*0.250000) q[10];\ncx q[1],q[11];\ncx q[2],q[10];\ncx q[1],q[6];\nrz(pi*1.750000) q[11];\ncx q[2],q[4];\nrz(pi*1.750000) q[10];\nrz(pi*0.250000) q[6];\ncx q[7],q[11];\nrz(pi*0.250000) q[4];\ncx q[5],q[10];\ncx q[1],q[6];\nrz(pi*1.750000) q[11];\ncx q[2],q[4];\nrz(pi*1.750000) q[10];\nrz(pi*1.750000) q[1];\nrz(pi*1.750000) q[6];\ncx q[0],q[11];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[4];\ncx q[1],q[10];\nrz(pi*0.250000) q[11];\ncx q[4],q[9];\nrz(pi*0.250000) q[10];\ncx q[7],q[11];\nrz(pi*0.250000) q[9];\ncx q[5],q[10];\nrz(pi*1.750000) q[11];\nrz(pi*1.750000) q[10];\ncx q[0],q[11];\ncx q[1],q[10];\ncx q[0],q[7];\nrz(pi*0.250000) q[11];\ncx q[1],q[5];\nrz(pi*0.250000) q[10];\nrz(pi*1.750000) q[7];\nh q[11];\nrz(pi*1.750000) q[5];\ncx q[6],q[10];\ncx q[0],q[7];\ncx q[1],q[5];\nrz(pi*1.750000) q[10];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[7];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[5];\ncx q[0],q[10];\ncx q[1],q[9];\nrz(pi*0.250000) q[10];\nrz(pi*1.750000) q[9];\ncx q[6],q[10];\ncx q[4],q[9];\nrz(pi*1.750000) q[10];\nrz(pi*0.250000) q[9];\ncx q[0],q[10];\ncx q[1],q[9];\ncx q[0],q[6];\nrz(pi*0.250000) q[10];\ncx q[1],q[4];\nrz(pi*1.750000) q[9];\nrz(pi*1.750000) q[6];\nh q[10];\nrz(pi*0.250000) q[4];\ncx q[5],q[9];\ncx q[0],q[6];\ncx q[1],q[4];\nrz(pi*1.750000) q[9];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[1];\nrz(pi*1.750000) q[4];\ncx q[0],q[9];\ncx q[4],q[8];\nrz(pi*0.250000) q[9];\nrz(pi*1.750000) q[8];\ncx q[5],q[9];\nrz(pi*1.750000) q[9];\ncx q[0],q[9];\ncx q[0],q[5];\nrz(pi*0.250000) q[9];\nrz(pi*1.750000) q[5];\nh q[9];\ncx q[0],q[5];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[5];\ncx q[0],q[8];\nrz(pi*0.250000) q[8];\ncx q[4],q[8];\nrz(pi*1.750000) q[8];\ncx q[0],q[8];\ncx q[0],q[4];\nrz(pi*0.250000) q[8];\nrz(pi*1.750000) q[4];\nh q[8];\ncx q[0],q[4];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[4];\n"
+    },
+    "gf2^6_mult.qasm": {
+      "episode_depth": 5,
+      "gate_count": 485,
+      "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[18];\nh q[12];\nh q[13];\nh q[14];\nh q[15];\nh q[16];\nh q[17];\ncx q[7],q[12];\nrz(pi*1.750000) q[12];\ncx q[5],q[12];\nrz(pi*0.250000) q[12];\ncx q[7],q[12];\nrz(pi*1.750000) q[12];\ncx q[5],q[12];\ncx q[5],q[7];\nrz(pi*0.250000) q[12];\nrz(pi*1.750000) q[7];\ncx q[8],q[12];\ncx q[5],q[7];\nrz(pi*0.250000) q[12];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[7];\ncx q[4],q[12];\nrz(pi*1.750000) q[12];\ncx q[8],q[12];\nrz(pi*0.250000) q[12];\ncx q[4],q[12];\ncx q[4],q[8];\nrz(pi*1.750000) q[12];\nrz(pi*0.250000) q[8];\ncx q[9],q[12];\ncx q[4],q[8];\nrz(pi*1.750000) q[12];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[8];\ncx q[3],q[12];\ncx q[8],q[13];\nrz(pi*0.250000) q[12];\nrz(pi*1.750000) q[13];\ncx q[9],q[12];\ncx q[5],q[13];\nrz(pi*1.750000) q[12];\nrz(pi*0.250000) q[13];\ncx q[3],q[12];\ncx q[8],q[13];\ncx q[3],q[9];\nrz(pi*0.250000) q[12];\nrz(pi*1.750000) q[13];\nrz(pi*1.750000) q[9];\ncx q[10],q[12];\ncx q[5],q[13];\ncx q[3],q[9];\nrz(pi*0.250000) q[12];\ncx q[5],q[8];\nrz(pi*0.250000) q[13];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[9];\ncx q[2],q[12];\nrz(pi*1.750000) q[8];\ncx q[9],q[13];\nrz(pi*1.750000) q[12];\ncx q[5],q[8];\nrz(pi*0.250000) q[13];\ncx q[10],q[12];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[8];\ncx q[4],q[13];\nrz(pi*0.250000) q[12];\nrz(pi*1.750000) q[13];\ncx q[2],q[12];\ncx q[9],q[13];\ncx q[2],q[10];\nrz(pi*1.750000) q[12];\nrz(pi*0.250000) q[13];\nrz(pi*0.250000) q[10];\ncx q[11],q[12];\ncx q[4],q[13];\ncx q[2],q[10];\nrz(pi*1.750000) q[12];\ncx q[4],q[9];\nrz(pi*1.750000) q[13];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[10];\ncx q[1],q[12];\nrz(pi*0.250000) q[9];\ncx q[10],q[13];\nrz(pi*0.250000) q[12];\ncx q[4],q[9];\nrz(pi*1.750000) q[13];\ncx q[11],q[12];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[9];\ncx q[3],q[13];\nrz(pi*1.750000) q[12];\ncx q[9],q[14];\nrz(pi*0.250000) q[13];\ncx q[1],q[12];\nrz(pi*1.750000) q[14];\ncx q[10],q[13];\ncx q[1],q[11];\nrz(pi*0.250000) q[12];\ncx q[5],q[14];\nrz(pi*1.750000) q[13];\nrz(pi*1.750000) q[11];\nrz(pi*0.250000) q[14];\ncx q[3],q[13];\ncx q[1],q[11];\ncx q[9],q[14];\ncx q[3],q[10];\nrz(pi*0.250000) q[13];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[11];\nrz(pi*1.750000) q[14];\nrz(pi*1.750000) q[10];\ncx q[11],q[13];\ncx q[5],q[14];\ncx q[3],q[10];\nrz(pi*0.250000) q[13];\ncx q[5],q[9];\nrz(pi*0.250000) q[14];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[10];\ncx q[2],q[13];\nrz(pi*1.750000) q[9];\ncx q[10],q[14];\nrz(pi*1.750000) q[13];\ncx q[5],q[9];\nrz(pi*0.250000) q[14];\ncx q[11],q[13];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[9];\ncx q[4],q[14];\nrz(pi*0.250000) q[13];\nrz(pi*1.750000) q[14];\ncx q[2],q[13];\ncx q[10],q[14];\ncx q[2],q[11];\nrz(pi*1.750000) q[13];\nrz(pi*0.250000) q[14];\nrz(pi*0.250000) q[11];\ncx q[4],q[14];\ncx q[2],q[11];\ncx q[4],q[10];\nrz(pi*1.750000) q[14];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[11];\nrz(pi*0.250000) q[10];\ncx q[11],q[14];\ncx q[4],q[10];\nrz(pi*1.750000) q[14];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[10];\ncx q[3],q[14];\ncx q[10],q[15];\nrz(pi*0.250000) q[14];\nrz(pi*1.750000) q[15];\ncx q[11],q[14];\ncx q[5],q[15];\nrz(pi*1.750000) q[14];\nrz(pi*0.250000) q[15];\ncx q[3],q[14];\ncx q[10],q[15];\ncx q[3],q[11];\nrz(pi*0.250000) q[14];\nrz(pi*1.750000) q[15];\nrz(pi*1.750000) q[11];\ncx q[5],q[15];\ncx q[3],q[11];\ncx q[5],q[10];\nrz(pi*0.250000) q[15];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[11];\nrz(pi*1.750000) q[10];\ncx q[11],q[15];\ncx q[5],q[10];\nrz(pi*0.250000) q[15];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[10];\ncx q[4],q[15];\nrz(pi*1.750000) q[15];\ncx q[11],q[15];\nrz(pi*0.250000) q[15];\ncx q[4],q[15];\ncx q[4],q[11];\nrz(pi*1.750000) q[15];\nrz(pi*0.250000) q[11];\ncx q[4],q[11];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[11];\ncx q[11],q[16];\nrz(pi*1.750000) q[16];\ncx q[5],q[16];\nrz(pi*0.250000) q[16];\ncx q[11],q[16];\nrz(pi*1.750000) q[16];\ncx q[5],q[16];\ncx q[5],q[11];\nrz(pi*0.250000) q[16];\nrz(pi*1.750000) q[11];\ncx q[17],q[16];\ncx q[5],q[11];\ncx q[6],q[17];\ncx q[16],q[15];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[11];\nrz(pi*1.750000) q[17];\ncx q[15],q[14];\ncx q[5],q[17];\ncx q[14],q[13];\nrz(pi*0.250000) q[17];\ncx q[13],q[12];\ncx q[6],q[17];\nrz(pi*1.750000) q[17];\ncx q[5],q[17];\ncx q[5],q[6];\nrz(pi*0.250000) q[17];\nrz(pi*1.750000) q[6];\ncx q[7],q[17];\ncx q[5],q[6];\nrz(pi*0.250000) q[17];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[6];\ncx q[4],q[17];\ncx q[6],q[16];\nrz(pi*1.750000) q[17];\nrz(pi*0.250000) q[16];\ncx q[7],q[17];\nrz(pi*0.250000) q[17];\ncx q[4],q[17];\ncx q[4],q[7];\nrz(pi*1.750000) q[17];\nrz(pi*0.250000) q[7];\ncx q[8],q[17];\ncx q[4],q[7];\nrz(pi*1.750000) q[17];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[7];\ncx q[3],q[17];\ncx q[4],q[16];\nrz(pi*0.250000) q[17];\nrz(pi*1.750000) q[16];\ncx q[8],q[17];\ncx q[6],q[16];\nrz(pi*1.750000) q[17];\nrz(pi*0.250000) q[16];\ncx q[3],q[17];\ncx q[4],q[16];\ncx q[3],q[8];\nrz(pi*0.250000) q[17];\ncx q[4],q[6];\nrz(pi*1.750000) q[16];\nrz(pi*1.750000) q[8];\ncx q[9],q[17];\nrz(pi*0.250000) q[6];\ncx q[7],q[16];\ncx q[3],q[8];\nrz(pi*0.250000) q[17];\ncx q[4],q[6];\nrz(pi*1.750000) q[16];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[8];\ncx q[2],q[17];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[6];\ncx q[3],q[16];\nrz(pi*1.750000) q[17];\ncx q[6],q[15];\nrz(pi*0.250000) q[16];\ncx q[9],q[17];\nrz(pi*1.750000) q[15];\ncx q[7],q[16];\nrz(pi*0.250000) q[17];\nrz(pi*1.750000) q[16];\ncx q[2],q[17];\ncx q[3],q[16];\ncx q[2],q[9];\nrz(pi*1.750000) q[17];\ncx q[3],q[7];\nrz(pi*0.250000) q[16];\nrz(pi*0.250000) q[9];\ncx q[10],q[17];\nrz(pi*1.750000) q[7];\ncx q[8],q[16];\ncx q[2],q[9];\nrz(pi*0.250000) q[17];\ncx q[3],q[7];\nrz(pi*0.250000) q[16];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[9];\ncx q[1],q[17];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[7];\ncx q[2],q[16];\nrz(pi*1.750000) q[17];\ncx q[3],q[15];\nrz(pi*1.750000) q[16];\ncx q[10],q[17];\nrz(pi*0.250000) q[15];\ncx q[8],q[16];\nrz(pi*0.250000) q[17];\ncx q[6],q[15];\nrz(pi*0.250000) q[16];\ncx q[1],q[17];\nrz(pi*1.750000) q[15];\ncx q[2],q[16];\ncx q[1],q[10];\nrz(pi*1.750000) q[17];\ncx q[3],q[15];\ncx q[2],q[8];\nrz(pi*1.750000) q[16];\nrz(pi*0.250000) q[10];\ncx q[11],q[17];\ncx q[3],q[6];\nrz(pi*0.250000) q[15];\nrz(pi*0.250000) q[8];\ncx q[9],q[16];\ncx q[1],q[10];\nrz(pi*1.750000) q[17];\nrz(pi*1.750000) q[6];\ncx q[7],q[15];\ncx q[2],q[8];\nrz(pi*1.750000) q[16];\nrz(pi*1.750000) q[1];\nrz(pi*1.750000) q[10];\ncx q[0],q[17];\ncx q[3],q[6];\nrz(pi*0.250000) q[15];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[8];\ncx q[1],q[16];\nrz(pi*0.250000) q[17];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[6];\ncx q[2],q[15];\nrz(pi*0.250000) q[16];\ncx q[11],q[17];\ncx q[6],q[14];\nrz(pi*1.750000) q[15];\ncx q[9],q[16];\nrz(pi*1.750000) q[17];\nrz(pi*0.250000) q[14];\ncx q[7],q[15];\nrz(pi*1.750000) q[16];\ncx q[0],q[17];\nrz(pi*0.250000) q[15];\ncx q[1],q[16];\ncx q[0],q[11];\nrz(pi*0.250000) q[17];\ncx q[2],q[15];\ncx q[1],q[9];\nrz(pi*0.250000) q[16];\nrz(pi*1.750000) q[11];\nh q[17];\ncx q[2],q[7];\nrz(pi*1.750000) q[15];\nrz(pi*1.750000) q[9];\ncx q[10],q[16];\ncx q[0],q[11];\nrz(pi*0.250000) q[7];\ncx q[8],q[15];\ncx q[1],q[9];\nrz(pi*1.750000) q[16];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[11];\ncx q[2],q[7];\nrz(pi*0.250000) q[15];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[9];\ncx q[0],q[16];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[7];\ncx q[1],q[15];\nrz(pi*0.250000) q[16];\ncx q[2],q[14];\nrz(pi*1.750000) q[15];\ncx q[10],q[16];\nrz(pi*1.750000) q[14];\ncx q[8],q[15];\nrz(pi*1.750000) q[16];\ncx q[6],q[14];\nrz(pi*0.250000) q[15];\ncx q[0],q[16];\nrz(pi*0.250000) q[14];\ncx q[1],q[15];\ncx q[0],q[10];\nrz(pi*0.250000) q[16];\ncx q[2],q[14];\ncx q[1],q[8];\nrz(pi*1.750000) q[15];\nrz(pi*1.750000) q[10];\nh q[16];\ncx q[2],q[6];\nrz(pi*1.750000) q[14];\nrz(pi*0.250000) q[8];\ncx q[9],q[15];\ncx q[0],q[10];\nrz(pi*0.250000) q[6];\ncx q[7],q[14];\ncx q[1],q[8];\nrz(pi*1.750000) q[15];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[10];\ncx q[2],q[6];\nrz(pi*1.750000) q[14];\nrz(pi*1.750000) q[1];\nrz(pi*1.750000) q[8];\ncx q[0],q[15];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[6];\ncx q[1],q[14];\nrz(pi*0.250000) q[15];\ncx q[6],q[13];\nrz(pi*0.250000) q[14];\ncx q[9],q[15];\nrz(pi*0.250000) q[13];\ncx q[7],q[14];\nrz(pi*1.750000) q[15];\nrz(pi*1.750000) q[14];\ncx q[0],q[15];\ncx q[1],q[14];\ncx q[0],q[9];\nrz(pi*0.250000) q[15];\ncx q[1],q[7];\nrz(pi*0.250000) q[14];\nrz(pi*1.750000) q[9];\nh q[15];\nrz(pi*1.750000) q[7];\ncx q[8],q[14];\ncx q[0],q[9];\ncx q[1],q[7];\nrz(pi*1.750000) q[14];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[9];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[7];\ncx q[0],q[14];\ncx q[1],q[13];\nrz(pi*0.250000) q[14];\nrz(pi*1.750000) q[13];\ncx q[8],q[14];\ncx q[6],q[13];\nrz(pi*1.750000) q[14];\nrz(pi*0.250000) q[13];\ncx q[0],q[14];\ncx q[1],q[13];\ncx q[0],q[8];\nrz(pi*0.250000) q[14];\ncx q[1],q[6];\nrz(pi*1.750000) q[13];\nrz(pi*1.750000) q[8];\nh q[14];\nrz(pi*0.250000) q[6];\ncx q[7],q[13];\ncx q[0],q[8];\ncx q[1],q[6];\nrz(pi*1.750000) q[13];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[8];\nrz(pi*1.750000) q[1];\nrz(pi*1.750000) q[6];\ncx q[0],q[13];\ncx q[6],q[12];\nrz(pi*0.250000) q[13];\nrz(pi*1.750000) q[12];\ncx q[7],q[13];\nrz(pi*1.750000) q[13];\ncx q[0],q[13];\ncx q[0],q[7];\nrz(pi*0.250000) q[13];\nrz(pi*1.750000) q[7];\nh q[13];\ncx q[0],q[7];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[7];\ncx q[0],q[12];\nrz(pi*0.250000) q[12];\ncx q[6],q[12];\nrz(pi*1.750000) q[12];\ncx q[0],q[12];\ncx q[0],q[6];\nrz(pi*0.250000) q[12];\nrz(pi*1.750000) q[6];\nh q[12];\ncx q[0],q[6];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[6];\n"
+    }
+  },
+  "best_so_far": {
+    "episode_depth": 0,
+    "gate_count": 58,
+    "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[5];\nh q[4];\ncx q[3],q[4];\nrz(pi*1.750000) q[4];\ncx q[2],q[4];\nrz(pi*0.250000) q[4];\ncx q[3],q[4];\nrz(pi*1.750000) q[4];\ncx q[2],q[4];\ncx q[2],q[3];\nrz(pi*0.250000) q[4];\nrz(pi*1.750000) q[3];\ncx q[2],q[3];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[3];\nh q[3];\ncx q[1],q[3];\nrz(pi*1.750000) q[3];\ncx q[0],q[3];\nrz(pi*0.250000) q[3];\ncx q[1],q[3];\nrz(pi*1.750000) q[3];\ncx q[0],q[3];\ncx q[0],q[1];\nrz(pi*0.250000) q[3];\nrz(pi*1.750000) q[1];\nh q[3];\ncx q[0],q[1];\ncx q[3],q[4];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[4];\ncx q[2],q[4];\nrz(pi*1.750000) q[4];\ncx q[3],q[4];\nrz(pi*0.250000) q[4];\ncx q[2],q[4];\ncx q[2],q[3];\nrz(pi*1.750000) q[4];\nrz(pi*0.250000) q[3];\nh q[4];\ncx q[2],q[3];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[3];\nh q[3];\ncx q[1],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\nrz(pi*1.750000) q[3];\ncx q[1],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\ncx q[0],q[1];\nrz(pi*1.750000) q[3];\nrz(pi*0.250000) q[1];\nh q[3];\ncx q[0],q[1];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\n"
+  },
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "peak_cuda_allocated_gib": 0.15402889251708984,
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-ppo-rollout-benchmark-v1",
+  "rejected_action_cache": {
+    "actions": 32,
+    "enabled": true,
+    "states": 28
+  },
+  "replay_pool": {
+    "barenco_tof_3.qasm": {
+      "max_gate_count": 64,
+      "min_gate_count": 58,
+      "retained_states": 64,
+      "unique_states_seen": 231
+    },
+    "barenco_tof_4.qasm": {
+      "max_gate_count": 115,
+      "min_gate_count": 114,
+      "retained_states": 64,
+      "unique_states_seen": 242
+    },
+    "gf2^4_mult.qasm": {
+      "max_gate_count": 225,
+      "min_gate_count": 219,
+      "retained_states": 64,
+      "unique_states_seen": 212
+    },
+    "gf2^6_mult.qasm": {
+      "max_gate_count": 493,
+      "min_gate_count": 485,
+      "retained_states": 64,
+      "unique_states_seen": 189
+    }
+  },
+  "stored_transition_count": 1057,
+  "summary": {
+    "accepted_rewrites": 1024,
+    "accepted_rewrites_per_second": 382.66847415705945,
+    "committed_gate_delta_histogram": {
+      "-2": 125,
+      "0": 882,
+      "1": 17
+    },
+    "cycle_actions": 24,
+    "cycle_xfers": {
+      "120": 1,
+      "121": 1,
+      "1746": 1,
+      "38": 6,
+      "39": 3,
+      "44": 8,
+      "4413": 1,
+      "46": 1,
+      "4682": 1,
+      "914": 1
+    },
+    "episodes": 64,
+    "exact_refresh_seconds_recorded": 0.5761990018654615,
+    "exact_refreshes": 1057,
+    "exact_replay_actions": 952,
+    "improved_episodes": 32,
+    "initial_gate_count": 58,
+    "initial_gate_count_histogram": {
+      "114": 16,
+      "225": 16,
+      "495": 16,
+      "58": 16
+    },
+    "invalid_actions": 9,
+    "invalid_xfers": {
+      "1482": 1,
+      "1508": 1,
+      "1608": 4,
+      "4361": 1,
+      "4397": 1,
+      "4407": 1
+    },
+    "legal_actions": 1048,
+    "maximum_initial_gate_count": 495,
+    "maximum_total_reward": 9.68,
+    "mean_best_gate_count": 219.09375,
+    "mean_candidates": 38.270147354446166,
+    "mean_initial_gate_count": 223.0,
+    "mean_policy_entropy": 2.5458011197816965,
+    "mean_total_reward": 2.6643749999999997,
+    "minimum_best_gate_count": 58,
+    "minimum_final_gate_count": 58,
+    "minimum_initial_gate_count": 58,
+    "minimum_total_reward": -12.32,
+    "selected_xfers_top20": {
+      "120": 6,
+      "121": 6,
+      "1497": 2,
+      "1608": 4,
+      "1657": 2,
+      "1718": 7,
+      "21": 15,
+      "27": 84,
+      "3286": 3,
+      "340": 12,
+      "3417": 3,
+      "38": 15,
+      "39": 209,
+      "4397": 2,
+      "44": 43,
+      "4407": 4,
+      "45": 583,
+      "46": 5,
+      "4652": 9,
+      "4656": 17
+    },
+    "termination_reasons": {
+      "horizon": 64
+    },
+    "timing": {
+      "cache_advance_seconds": 0.3701414850074798,
+      "eligible_actions": 40952.0,
+      "exact_rejection_retries": 33.0,
+      "hierarchical_match_seconds": 0.6981902627740055,
+      "lazy_apply_seconds": 0.16729528340511024,
+      "policy_preparation_seconds": 0.1265277739148587,
+      "policy_sample_seconds": 0.16882708272896707,
+      "proposal_seconds": 0.05879411567002535,
+      "refresh_seconds": 0.8653869132976979,
+      "rejected_action_cache_hits": 38.0,
+      "rejected_action_cache_inserts": 32.0,
+      "rejected_action_mask_seconds": 0.00637373561039567,
+      "selected_actions": 40952.0,
+      "stages": {
+        "cache_advance_seconds": {
+          "fraction": 0.13832175516605505,
+          "seconds": 0.3701414850074798
+        },
+        "hierarchical_match_seconds": {
+          "fraction": 0.2609134790303175,
+          "seconds": 0.6981902627740055
+        },
+        "lazy_apply_seconds": {
+          "fraction": 0.06251819417412731,
+          "seconds": 0.16729528340511024
+        },
+        "policy_preparation_seconds": {
+          "fraction": 0.047283388850086296,
+          "seconds": 0.1265277739148587
+        },
+        "policy_sample_seconds": {
+          "fraction": 0.06309062709402487,
+          "seconds": 0.16882708272896707
+        },
+        "proposal_seconds": {
+          "fraction": 0.0219713423172483,
+          "seconds": 0.05879411567002535
+        },
+        "refresh_seconds": {
+          "fraction": 0.3233948141280445,
+          "seconds": 0.8653869132976979
+        },
+        "rejected_action_mask_seconds": {
+          "fraction": 0.0023818629694439698,
+          "seconds": 0.00637373561039567
+        }
+      },
+      "total_seconds": 2.675945548573509
+    },
+    "transitions": 1057,
+    "transitions_per_second": 395.00056365626153,
+    "unique_selected_xfers": 46
+  },
+  "summary_by_circuit": {
+    "barenco_tof_3.qasm": {
+      "accepted_rewrites": 256,
+      "accepted_rewrites_per_second": 428.44541509392576,
+      "committed_gate_delta_histogram": {
+        "0": 241,
+        "1": 15
+      },
+      "cycle_actions": 21,
+      "cycle_xfers": {
+        "120": 1,
+        "121": 1,
+        "38": 6,
+        "39": 3,
+        "44": 7,
+        "4413": 1,
+        "4682": 1,
+        "914": 1
+      },
+      "episodes": 16,
+      "exact_refresh_seconds_recorded": 0.0511120930314064,
+      "exact_refreshes": 284,
+      "exact_replay_actions": 278,
+      "improved_episodes": 0,
+      "initial_gate_count": 58,
+      "initial_gate_count_histogram": {
+        "58": 16
+      },
+      "invalid_actions": 7,
+      "invalid_xfers": {
+        "1508": 1,
+        "1608": 3,
+        "4361": 1,
+        "4397": 1,
+        "4407": 1
+      },
+      "legal_actions": 277,
+      "maximum_initial_gate_count": 58,
+      "maximum_total_reward": -0.32,
+      "mean_best_gate_count": 58.0,
+      "mean_candidates": 48.72902691778466,
+      "mean_initial_gate_count": 58.0,
+      "mean_policy_entropy": 2.475694998018368,
+      "mean_total_reward": -3.445,
+      "minimum_best_gate_count": 58,
+      "minimum_final_gate_count": 58,
+      "minimum_initial_gate_count": 58,
+      "minimum_total_reward": -12.32,
+      "selected_xfers_top20": {
+        "120": 6,
+        "121": 5,
+        "1508": 1,
+        "1608": 3,
+        "3286": 3,
+        "340": 4,
+        "3423": 1,
+        "3429": 1,
+        "38": 11,
+        "39": 84,
+        "4347": 1,
+        "4362": 1,
+        "4396": 1,
+        "4397": 2,
+        "44": 35,
+        "4407": 4,
+        "4413": 1,
+        "45": 107,
+        "877": 1,
+        "914": 1
+      },
+      "termination_reasons": {
+        "horizon": 16
+      },
+      "timing": {
+        "cache_advance_seconds": 0.09739115508273244,
+        "eligible_actions": 14042.0,
+        "exact_rejection_retries": 28.0,
+        "hierarchical_match_seconds": 0.21197229949757457,
+        "lazy_apply_seconds": 0.02518945769406855,
+        "policy_preparation_seconds": 0.052565862657502294,
+        "policy_sample_seconds": 0.06657948973588645,
+        "proposal_seconds": 0.017349685775116086,
+        "refresh_seconds": 0.07556468900293112,
+        "rejected_action_cache_hits": 33.0,
+        "rejected_action_cache_inserts": 27.0,
+        "rejected_action_mask_seconds": 0.0053010559640824795,
+        "selected_actions": 14042.0,
+        "stages": {
+          "cache_advance_seconds": {
+            "fraction": 0.16299528853866482,
+            "seconds": 0.09739115508273244
+          },
+          "hierarchical_match_seconds": {
+            "fraction": 0.35475999940098546,
+            "seconds": 0.21197229949757457
+          },
+          "lazy_apply_seconds": {
+            "fraction": 0.04215745178799251,
+            "seconds": 0.02518945769406855
+          },
+          "policy_preparation_seconds": {
+            "fraction": 0.08797501111743695,
+            "seconds": 0.052565862657502294
+          },
+          "policy_sample_seconds": {
+            "fraction": 0.11142842623685016,
+            "seconds": 0.06657948973588645
+          },
+          "proposal_seconds": {
+            "fraction": 0.02903669267058121,
+            "seconds": 0.017349685775116086
+          },
+          "refresh_seconds": {
+            "fraction": 0.1264661896340009,
+            "seconds": 0.07556468900293112
+          },
+          "rejected_action_mask_seconds": {
+            "fraction": 0.008871926261591596,
+            "seconds": 0.0053010559640824795
+          }
+        },
+        "total_seconds": 0.5975090197753161
+      },
+      "transitions": 284,
+      "transitions_per_second": 475.3066323698239,
+      "unique_selected_xfers": 31
+    },
+    "barenco_tof_4.qasm": {
+      "accepted_rewrites": 256,
+      "accepted_rewrites_per_second": 533.2171298795158,
+      "committed_gate_delta_histogram": {
+        "0": 255,
+        "1": 1
+      },
+      "cycle_actions": 1,
+      "cycle_xfers": {
+        "44": 1
+      },
+      "episodes": 16,
+      "exact_refresh_seconds_recorded": 0.08500994276255369,
+      "exact_refreshes": 259,
+      "exact_replay_actions": 250,
+      "improved_episodes": 0,
+      "initial_gate_count": 114,
+      "initial_gate_count_histogram": {
+        "114": 16
+      },
+      "invalid_actions": 2,
+      "invalid_xfers": {
+        "1482": 1,
+        "1608": 1
+      },
+      "legal_actions": 257,
+      "maximum_initial_gate_count": 114,
+      "maximum_total_reward": -0.32,
+      "mean_best_gate_count": 114.0,
+      "mean_candidates": 36.115349264705884,
+      "mean_initial_gate_count": 114.0,
+      "mean_policy_entropy": 2.6546161572229776,
+      "mean_total_reward": -0.695,
+      "minimum_best_gate_count": 114,
+      "minimum_final_gate_count": 114,
+      "minimum_initial_gate_count": 114,
+      "minimum_total_reward": -2.32,
+      "selected_xfers_top20": {
+        "121": 1,
+        "1482": 1,
+        "1608": 1,
+        "340": 7,
+        "3417": 1,
+        "38": 3,
+        "39": 60,
+        "44": 4,
+        "45": 181
+      },
+      "termination_reasons": {
+        "horizon": 16
+      },
+      "timing": {
+        "cache_advance_seconds": 0.061230402207002044,
+        "eligible_actions": 9364.0,
+        "exact_rejection_retries": 3.0,
+        "hierarchical_match_seconds": 0.13252370501868427,
+        "lazy_apply_seconds": 0.030706987716257572,
+        "policy_preparation_seconds": 0.03420156333595514,
+        "policy_sample_seconds": 0.03323217062279582,
+        "proposal_seconds": 0.013794420985504985,
+        "refresh_seconds": 0.12674607569351792,
+        "rejected_action_cache_hits": 3.0,
+        "rejected_action_cache_inserts": 3.0,
+        "rejected_action_mask_seconds": 0.000586663605645299,
+        "selected_actions": 9364.0,
+        "stages": {
+          "cache_advance_seconds": {
+            "fraction": 0.12753554424291405,
+            "seconds": 0.061230402207002044
+          },
+          "hierarchical_match_seconds": {
+            "fraction": 0.27603089699633754,
+            "seconds": 0.13252370501868427
+          },
+          "lazy_apply_seconds": {
+            "fraction": 0.06395895256761097,
+            "seconds": 0.030706987716257572
+          },
+          "policy_preparation_seconds": {
+            "fraction": 0.07123773218511906,
+            "seconds": 0.03420156333595514
+          },
+          "policy_sample_seconds": {
+            "fraction": 0.06921860405919354,
+            "seconds": 0.03323217062279582
+          },
+          "proposal_seconds": {
+            "fraction": 0.02873211549312785,
+            "seconds": 0.013794420985504985
+          },
+          "refresh_seconds": {
+            "fraction": 0.26399679181558394,
+            "seconds": 0.12674607569351792
+          },
+          "rejected_action_mask_seconds": {
+            "fraction": 0.0012219495469021657,
+            "seconds": 0.000586663605645299
+          }
+        },
+        "total_seconds": 0.4801046059001237
+      },
+      "transitions": 259,
+      "transitions_per_second": 539.4657681202914,
+      "unique_selected_xfers": 9
+    },
+    "gf2^4_mult.qasm": {
+      "accepted_rewrites": 256,
+      "accepted_rewrites_per_second": 380.9506826309381,
+      "committed_gate_delta_histogram": {
+        "-2": 45,
+        "0": 211
+      },
+      "cycle_actions": 1,
+      "cycle_xfers": {
+        "1746": 1
+      },
+      "episodes": 16,
+      "exact_refresh_seconds_recorded": 0.14076995779760182,
+      "exact_refreshes": 257,
+      "exact_replay_actions": 216,
+      "improved_episodes": 16,
+      "initial_gate_count": 225,
+      "initial_gate_count_histogram": {
+        "225": 16
+      },
+      "invalid_actions": 0,
+      "invalid_xfers": {},
+      "legal_actions": 257,
+      "maximum_initial_gate_count": 225,
+      "maximum_total_reward": 5.68,
+      "mean_best_gate_count": 219.375,
+      "mean_candidates": 32.4563419117647,
+      "mean_initial_gate_count": 225.0,
+      "mean_policy_entropy": 2.6348441846271538,
+      "mean_total_reward": 5.2425,
+      "minimum_best_gate_count": 219,
+      "minimum_final_gate_count": 219,
+      "minimum_initial_gate_count": 225,
+      "minimum_total_reward": 3.68,
+      "selected_xfers_top20": {
+        "1643": 1,
+        "1718": 1,
+        "1746": 1,
+        "21": 13,
+        "27": 28,
+        "340": 1,
+        "39": 47,
+        "45": 158,
+        "46": 3,
+        "4652": 2,
+        "4656": 2
+      },
+      "termination_reasons": {
+        "horizon": 16
+      },
+      "timing": {
+        "cache_advance_seconds": 0.14932447439059615,
+        "eligible_actions": 8345.0,
+        "exact_rejection_retries": 1.0,
+        "hierarchical_match_seconds": 0.1478444472886622,
+        "lazy_apply_seconds": 0.04100497392937541,
+        "policy_preparation_seconds": 0.02051506075076759,
+        "policy_sample_seconds": 0.033291375963017344,
+        "proposal_seconds": 0.01380864018574357,
+        "refresh_seconds": 0.21338766533881426,
+        "rejected_action_cache_hits": 1.0,
+        "rejected_action_cache_inserts": 1.0,
+        "rejected_action_mask_seconds": 0.0002402723766863346,
+        "selected_actions": 8345.0,
+        "stages": {
+          "cache_advance_seconds": {
+            "fraction": 0.22220804864298296,
+            "seconds": 0.14932447439059615
+          },
+          "hierarchical_match_seconds": {
+            "fraction": 0.22000563717894378,
+            "seconds": 0.1478444472886622
+          },
+          "lazy_apply_seconds": {
+            "fraction": 0.06101903441273196,
+            "seconds": 0.04100497392937541
+          },
+          "policy_preparation_seconds": {
+            "fraction": 0.03052822811414093,
+            "seconds": 0.02051506075076759
+          },
+          "policy_sample_seconds": {
+            "fraction": 0.0495405171829479,
+            "seconds": 0.033291375963017344
+          },
+          "proposal_seconds": {
+            "fraction": 0.02054848009751569,
+            "seconds": 0.01380864018574357
+          },
+          "refresh_seconds": {
+            "fraction": 0.3175397530306385,
+            "seconds": 0.21338766533881426
+          },
+          "rejected_action_mask_seconds": {
+            "fraction": 0.00035754658560944167,
+            "seconds": 0.0002402723766863346
+          }
+        },
+        "total_seconds": 0.672002995852381
+      },
+      "transitions": 257,
+      "transitions_per_second": 382.4387712349652,
+      "unique_selected_xfers": 11
+    },
+    "gf2^6_mult.qasm": {
+      "accepted_rewrites": 256,
+      "accepted_rewrites_per_second": 276.359716862619,
+      "committed_gate_delta_histogram": {
+        "-2": 80,
+        "0": 175,
+        "1": 1
+      },
+      "cycle_actions": 1,
+      "cycle_xfers": {
+        "46": 1
+      },
+      "episodes": 16,
+      "exact_refresh_seconds_recorded": 0.29930700827389956,
+      "exact_refreshes": 257,
+      "exact_replay_actions": 208,
+      "improved_episodes": 16,
+      "initial_gate_count": 495,
+      "initial_gate_count_histogram": {
+        "495": 16
+      },
+      "invalid_actions": 0,
+      "invalid_xfers": {},
+      "legal_actions": 257,
+      "maximum_initial_gate_count": 495,
+      "maximum_total_reward": 9.68,
+      "mean_best_gate_count": 485.0,
+      "mean_candidates": 35.77987132352941,
+      "mean_initial_gate_count": 495.0,
+      "mean_policy_entropy": 2.4180491392582875,
+      "mean_total_reward": 9.555,
+      "minimum_best_gate_count": 485,
+      "minimum_final_gate_count": 485,
+      "minimum_initial_gate_count": 495,
+      "minimum_total_reward": 8.68,
+      "selected_xfers_top20": {
+        "1497": 1,
+        "1535": 1,
+        "1657": 2,
+        "1718": 6,
+        "1827": 1,
+        "21": 2,
+        "27": 56,
+        "3417": 1,
+        "38": 1,
+        "39": 18,
+        "44": 4,
+        "45": 137,
+        "46": 2,
+        "4652": 7,
+        "4656": 15,
+        "59": 1,
+        "82": 1,
+        "83": 1
+      },
+      "termination_reasons": {
+        "horizon": 16
+      },
+      "timing": {
+        "cache_advance_seconds": 0.06219545332714915,
+        "eligible_actions": 9201.0,
+        "exact_rejection_retries": 1.0,
+        "hierarchical_match_seconds": 0.2058498109690845,
+        "lazy_apply_seconds": 0.0703938640654087,
+        "policy_preparation_seconds": 0.019245287170633674,
+        "policy_sample_seconds": 0.03572404640726745,
+        "proposal_seconds": 0.013841368723660707,
+        "refresh_seconds": 0.4496884832624346,
+        "rejected_action_cache_hits": 1.0,
+        "rejected_action_cache_inserts": 1.0,
+        "rejected_action_mask_seconds": 0.0002457436639815569,
+        "selected_actions": 9201.0,
+        "stages": {
+          "cache_advance_seconds": {
+            "fraction": 0.06714186668606709,
+            "seconds": 0.06219545332714915
+          },
+          "hierarchical_match_seconds": {
+            "fraction": 0.22222107607671812,
+            "seconds": 0.2058498109690845
+          },
+          "lazy_apply_seconds": {
+            "fraction": 0.07599229821086735,
+            "seconds": 0.0703938640654087
+          },
+          "policy_preparation_seconds": {
+            "fraction": 0.020775867630531703,
+            "seconds": 0.019245287170633674
+          },
+          "policy_sample_seconds": {
+            "fraction": 0.0385651849621074,
+            "seconds": 0.03572404640726745
+          },
+          "proposal_seconds": {
+            "fraction": 0.014942174771335873,
+            "seconds": 0.013841368723660707
+          },
+          "refresh_seconds": {
+            "fraction": 0.4854522730890118,
+            "seconds": 0.4496884832624346
+          },
+          "rejected_action_mask_seconds": {
+            "fraction": 0.00026528769296377204,
+            "seconds": 0.0002457436639815569
+          }
+        },
+        "total_seconds": 0.926328927045688
+      },
+      "transitions": 257,
+      "transitions_per_second": 277.4392470066136,
+      "unique_selected_xfers": 18
+    }
+  },
+  "training_iterations": []
+}
