@@ -845,3 +845,62 @@ files are retained as `benchmark_results/online_self_improve_*`; controlled
 A/B outputs are `benchmark_results/*_mix_*.json`, and dataset/training logs are
 `benchmark_results/action_preferences_online_v1_iter*` and
 `benchmark_results/action_value_online_v1_iter*`.
+
+## Exact on-policy PPO pilot
+
+`train_paged_ppo.py` implements clipped PPO rather than another preference
+loss.  The frozen paged matcher supplies the candidate set and graph/action
+features; trainable policy-residual and critic heads are optimized from stored
+old log probabilities, GAE returns, clipped policy and value objectives, and
+an entropy bonus.  Every sampled `(xfer, binding)` is immediately executed by
+Quartz.  An illegal action receives a negative transition, is masked at the
+same exact graph, and the policy selects again.  No speculative invalid graph
+is used as the next state.
+
+Within an episode, predictions still use the initial full-graph encoding plus
+the verified action sequence and paged KV state.  A new episode selected from
+the exact best archive or replay pool starts with a full graph and calls
+`initialize_incremental` again, so no action history crosses episode roots.
+The bounded per-circuit replay pool is important: it lets the policy learn a
+gate-reducing inverse action from an elevated graph without accepting a cycle
+inside the trajectory.  The exact best QASM is a separate monotonic archive;
+after an improvement, later episodes default to that best graph.
+
+The H100 pilot trained one shared head on four circuits for 15 iterations and
+96 episodes per iteration.  It collected 24,691 exact transitions in 317.28
+seconds (77.82 transitions/s weighted), while all PPO updates took 9.02
+seconds.  There were 36 replay-root improvements.  The selected-action Quartz
+legality increased from 94.05% in iteration 0 to 98.97% in iteration 14.
+
+| training circuit | input | exact PPO best |
+|---|---:|---:|
+| `barenco_tof_3` | 58 | 58 |
+| `mod5_4` | 63 | **62** |
+| `tof_4` | 75 | 75 |
+| `vbe_adder_3` | 150 | **144** |
+
+The exported QASMs were independently parsed by Quartz and reproduced
+58/62/75/144 gates.  This run takes minutes rather than an eight-hour
+per-circuit fine-tune, but it is not yet evidence that the learned policy beats
+gate-first search on unseen circuits.
+
+For inference, PPO proposal scoring is fused into `build_gpu_proposals`: it
+reuses resident candidate tensors, normalizes logits per parent, and performs
+only the final compact device-to-host copy.  On a profiled `vbe_adder_3` run,
+the fused PPO policy stage is 0.073 seconds, or 1.01% of 7.23 seconds search
+time.  The earlier Python repack prototype spent about five seconds per run in
+policy ranking.
+
+A controlled beam-1000, depth-16 A/B uses an immediate-gate cost corrected by
+`0.25 * standardized PPO score`.  PPO and gate-first produce identical exact
+best counts on all six circuits, including held-out `hwb6` and
+`gf2^4_mult`: 58/62/75/148/255/219.  Aggregate search time is 44.52 seconds
+for PPO versus 43.76 seconds for gate-first (+1.7%).  Both configurations have
+384/384 valid independent Quartz replays and 384/384 exact topology matches.
+The pilot therefore establishes a correct, fast PPO path and non-regressing
+held-out behavior, but no held-out quality gain yet.
+
+Reproducibility artifacts are `ppo_core.py`, `train_paged_ppo.py`,
+`run_paged_ppo_training.sh`, `run_ppo_policy_ab.sh`,
+`benchmark_results/paged_ppo_replay_v1*`, and
+`benchmark_results/ppo_v3_*`.

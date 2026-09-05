@@ -6,6 +6,7 @@ import time
 import torch
 
 from beam_search_benchmark import BeamState, Proposal
+from ppo_core import build_policy_features, segmented_log_softmax
 from threshold_inference import CandidateTensors
 
 
@@ -82,10 +83,16 @@ def build_gpu_proposals(
     value_increase_cap: int = 0,
     value_exploration_fraction: float = 0.0,
     action_value_microbatch: int = 16384,
+    ppo_actor_critic=None,
+    ppo_model=None,
+    ppo_states: torch.Tensor | None = None,
+    ppo_live: torch.Tensor | None = None,
+    ppo_initial_gate_bias: float = 1.0,
+    ppo_policy_weight: float = 0.25,
     profile_stages: bool = False,
 ) -> tuple[list[Proposal], dict[str, float | int], dict[str, float]]:
     """Expand, cap, and globally rank actions before one compact D2H copy."""
-    if ranking_mode not in {"gate", "probability", "stochastic", "value"}:
+    if ranking_mode not in {"gate", "probability", "stochastic", "value", "ppo"}:
         raise ValueError(f"unknown proposal ranking mode: {ranking_mode}")
     if ranking_mode == "value" and (
         action_value_model is None
@@ -94,6 +101,15 @@ def build_gpu_proposals(
         or action_value_weight <= 0
     ):
         raise ValueError("value ranking requires model states and a positive weight")
+    if ranking_mode == "ppo" and (
+        ppo_actor_critic is None
+        or ppo_model is None
+        or ppo_states is None
+        or ppo_live is None
+    ):
+        raise ValueError("PPO ranking requires actor, model, and encoded states")
+    if ppo_policy_weight < 0:
+        raise ValueError("PPO policy weight must be nonnegative")
     if value_increase_cap < 0 or value_increase_cap > per_parent_cap:
         raise ValueError("value increase cap must be within the per-parent cap")
     if value_increase_cap and ranking_mode != "value":
@@ -158,7 +174,7 @@ def build_gpu_proposals(
     finish_timing("gpu_action_expansion_seconds", stage_started)
 
     stage_started = time.perf_counter()
-    if ranking_mode in {"gate", "value"}:
+    if ranking_mode in {"gate", "value", "ppo"}:
         rank_keys = [(next_gate_counts, False), (probabilities, True)]
     elif ranking_mode == "probability":
         rank_keys = [(probabilities, True), (next_gate_counts, False)]
@@ -252,7 +268,7 @@ def build_gpu_proposals(
             (next_gate_counts[parent_order], False),
             (probabilities[parent_order], True),
         ]
-    elif ranking_mode == "gate":
+    elif ranking_mode in {"gate", "ppo"}:
         global_rank_keys = [
             (next_gate_counts[parent_order], False),
             (probabilities[parent_order], True),
@@ -320,6 +336,47 @@ def build_gpu_proposals(
     )
     finish_timing("gpu_global_proposal_rank_seconds", stage_started)
 
+    if ranking_mode == "ppo":
+        stage_started = time.perf_counter()
+        with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
+            candidate_features = ppo_model.candidate_features(
+                ppo_states,
+                ppo_live,
+                xfer_ids[selected],
+                source_ids[selected],
+                bindings[selected],
+                parents[selected],
+            )
+            policy_features, matcher_logits = build_policy_features(
+                candidate_features,
+                probabilities[selected],
+                rule_index.gate_deltas[xfer_ids[selected]],
+                initial_gate_bias=ppo_initial_gate_bias,
+            )
+            policy_logits = ppo_actor_critic.policy_logits(
+                policy_features, matcher_logits
+            ).float()
+        policy_scores = segmented_log_softmax(
+            policy_logits, parents[selected], len(beam)
+        )
+        policy_mean = policy_scores.mean()
+        policy_std = policy_scores.std(unbiased=False).clamp_min(1e-6)
+        standardized_policy_scores = (policy_scores - policy_mean) / policy_std
+        ranking_cost = next_gate_counts[selected].float() - (
+            ppo_policy_weight * standardized_policy_scores
+        )
+        ppo_order = _stable_lexsort(
+            [
+                (ranking_cost, False),
+                (next_gate_counts[selected], False),
+                (policy_scores, True),
+                (probabilities[selected], True),
+            ]
+        )
+        selected = selected[ppo_order]
+        selected_value_scores = policy_scores[ppo_order]
+        finish_timing("gpu_ppo_policy_seconds", stage_started)
+
     stage_started = time.perf_counter()
     metadata = torch.stack(
         (
@@ -379,6 +436,16 @@ def build_gpu_proposals(
                 "selected_action_value_std": float(
                     selected_value_scores.std(unbiased=False).item()
                 ),
+            }
+        )
+    if ranking_mode == "ppo":
+        metrics.update(
+            {
+                "ppo_policy_candidates": int(selected_value_scores.numel()),
+                "selected_ppo_score_mean": float(
+                    selected_value_scores.mean().item()
+                ),
+                "ppo_policy_score_std": float(policy_std.item()),
             }
         )
     return proposals, metrics, timing

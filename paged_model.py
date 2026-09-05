@@ -208,7 +208,7 @@ class PagedActionBindingModel(S0ActionBindingModel):
                 nn.Linear(width, 1),
             )
 
-    def action_value_features(
+    def candidate_features(
         self,
         states: torch.Tensor,
         live: torch.Tensor,
@@ -218,8 +218,6 @@ class PagedActionBindingModel(S0ActionBindingModel):
         batch_ids: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Build candidate features from the current causal graph state."""
-        if not self.has_action_value_head:
-            raise RuntimeError("model checkpoint has no action-value head")
         if batch_ids is None:
             batch_ids = torch.arange(states.shape[0], device=states.device)
         binding_mask = binding_slots.ge(0)
@@ -238,6 +236,26 @@ class PagedActionBindingModel(S0ActionBindingModel):
         xfer_states = self.xfer_embedding(xfer_ids)
         return torch.cat(
             (xfer_states, source_states, bound_pool, graph_pool), dim=-1
+        )
+
+    def action_value_features(
+        self,
+        states: torch.Tensor,
+        live: torch.Tensor,
+        xfer_ids: torch.Tensor,
+        source_ids: torch.Tensor,
+        binding_slots: torch.Tensor,
+        batch_ids: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        if not self.has_action_value_head:
+            raise RuntimeError("model checkpoint has no action-value head")
+        return self.candidate_features(
+            states,
+            live,
+            xfer_ids,
+            source_ids,
+            binding_slots,
+            batch_ids,
         )
 
     def action_values(

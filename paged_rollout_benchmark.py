@@ -44,6 +44,7 @@ from lazy_rollout_benchmark import (
 )
 from model_factory import build_model
 from paged_cache import PagedKVCache, PrefixHandle
+from ppo_core import PagedPPOActorCritic
 from gpu_proposals import GpuRuleIndex, build_gpu_proposals
 from threshold_inference import (
     CandidateTensors,
@@ -904,7 +905,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--proposal-ranking",
-        choices=("gate", "probability", "stochastic", "value"),
+        choices=("gate", "probability", "stochastic", "value", "ppo"),
         default="gate",
         help=(
             "rank by immediate gate count for search, or by matcher probability "
@@ -916,6 +917,22 @@ def main() -> None:
         type=float,
         default=0.0,
         help="gate-count units assigned to one standard deviation of action value",
+    )
+    parser.add_argument(
+        "--ppo-checkpoint",
+        type=Path,
+        help="paged-ppo-v1 actor/critic checkpoint used by PPO proposal ranking",
+    )
+    parser.add_argument(
+        "--ppo-initial-gate-bias",
+        type=float,
+        help="override the immediate gate-delta prior stored by PPO training",
+    )
+    parser.add_argument(
+        "--ppo-policy-weight",
+        type=float,
+        default=0.25,
+        help="gate-count units assigned to one standard deviation of PPO score",
     )
     parser.add_argument(
         "--value-increase-actions-per-parent",
@@ -1074,8 +1091,19 @@ def main() -> None:
             parser.error("value proposal ranking requires --proposal-backend gpu")
         if args.action_value_weight <= 0:
             parser.error("value proposal ranking requires --action-value-weight > 0")
+    if args.proposal_ranking == "ppo":
+        if args.proposal_backend != "gpu":
+            parser.error("PPO proposal ranking requires --proposal-backend gpu")
+        if args.ppo_checkpoint is None:
+            parser.error("PPO proposal ranking requires --ppo-checkpoint")
+        if args.exploration_checkpoint is not None:
+            parser.error("PPO ranking does not support a second exploration model")
+    elif args.ppo_checkpoint is not None:
+        parser.error("--ppo-checkpoint requires --proposal-ranking ppo")
     if args.value_increase_actions_per_parent < 0:
         parser.error("value increase action quota must be nonnegative")
+    if args.ppo_policy_weight < 0:
+        parser.error("PPO policy weight must be nonnegative")
     if args.value_increase_actions_per_parent > args.max_actions_per_parent:
         parser.error("value increase action quota exceeds the per-parent cap")
     if args.value_increase_actions_per_parent and args.proposal_ranking != "value":
@@ -1122,6 +1150,31 @@ def main() -> None:
         parser.error("value proposal ranking requires an action-value checkpoint")
     model.eval()
     model.readout_attention_backend = args.readout_attention_backend
+    ppo_actor_critic = None
+    ppo_payload = None
+    if args.ppo_checkpoint is not None:
+        ppo_payload = torch.load(
+            args.ppo_checkpoint, map_location="cpu", weights_only=False
+        )
+        if ppo_payload.get("format") != "paged-ppo-v1":
+            parser.error("unsupported PPO checkpoint format")
+        if int(ppo_payload["width"]) != model.width:
+            parser.error("PPO checkpoint width differs from the base model")
+        expected_base = Path(ppo_payload["base_checkpoint"]).name
+        if expected_base != args.checkpoint.name:
+            parser.error(
+                "PPO checkpoint was trained on a different base model: "
+                f"expected {expected_base}, got {args.checkpoint.name}"
+            )
+        ppo_actor_critic = PagedPPOActorCritic(
+            model.width, hidden_size=int(ppo_payload["hidden_size"])
+        ).to(device)
+        ppo_actor_critic.load_state_dict(ppo_payload["actor_critic"])
+        ppo_actor_critic.eval()
+        if args.ppo_initial_gate_bias is None:
+            args.ppo_initial_gate_bias = float(
+                ppo_payload["args"].get("initial_gate_bias", 1.0)
+            )
     threshold_config = load_threshold_config(
         args.calibration,
         args.target_recall,
@@ -1305,7 +1358,7 @@ def main() -> None:
             gather_backend=args.cache_gather_backend,
         )
         exploration_handles = [exploration_arena.empty_handle()]
-    del payload, graph, checkpoint, exploration_checkpoint
+    del payload, graph, checkpoint, exploration_checkpoint, ppo_payload
     gc.collect()
     gc.disable()
 
@@ -1360,7 +1413,7 @@ def main() -> None:
             args.max_source_matches,
             state_batch_backend=args.state_batch_backend,
             candidate_backend="gpu" if use_gpu_proposals else "legacy",
-            return_encoded_states=args.proposal_ranking == "value",
+            return_encoded_states=args.proposal_ranking in {"value", "ppo"},
             profile_stages=args.profile_stages,
         )
         exploration_predicted = None
@@ -1413,6 +1466,20 @@ def main() -> None:
                 action_value_weight=args.action_value_weight,
                 value_increase_cap=args.value_increase_actions_per_parent,
                 value_exploration_fraction=args.value_exploration_fraction,
+                ppo_actor_critic=ppo_actor_critic,
+                ppo_model=model if args.proposal_ranking == "ppo" else None,
+                ppo_states=(
+                    action_value_states
+                    if args.proposal_ranking == "ppo"
+                    else None
+                ),
+                ppo_live=live if args.proposal_ranking == "ppo" else None,
+                ppo_initial_gate_bias=(
+                    args.ppo_initial_gate_bias
+                    if args.proposal_ranking == "ppo"
+                    else 1.0
+                ),
+                ppo_policy_weight=args.ppo_policy_weight,
                 profile_stages=args.profile_stages,
             )
             predicted_action_count = proposal_metrics["predicted_actions"]
@@ -1535,6 +1602,12 @@ def main() -> None:
         elif args.proposal_ranking == "gate" or not use_gpu_proposals:
             records.sort(key=lambda row: (row[0].gate_count, len(row[0].history)))
         records = records[:accepted_target]
+        accepted_ppo_score_mean = (
+            sum(proposal.value_score for _, proposal in records)
+            / max(1, len(records))
+            if args.proposal_ranking == "ppo"
+            else 0.0
+        )
         cache_result = advance_selected(
             slot_states,
             live,
@@ -1932,6 +2005,13 @@ def main() -> None:
             ),
             "selected_action_value_mean": selected_action_value_mean,
             "selected_action_value_std": selected_action_value_std,
+            "proposal_ppo_score_mean": (
+                sum(proposal.value_score for proposal in proposals)
+                / max(1, len(proposals))
+                if args.proposal_ranking == "ppo"
+                else 0.0
+            ),
+            "accepted_ppo_score_mean": accepted_ppo_score_mean,
             "exact_refresh_seconds": refresh_seconds,
             "exact_refresh_candidates": refresh_candidates,
             "exact_refresh_attempted": refresh_attempted,
@@ -2075,6 +2155,11 @@ def main() -> None:
         "state_batch_backend": args.state_batch_backend,
         "proposal_backend": args.proposal_backend,
         "proposal_ranking": args.proposal_ranking,
+        "ppo_checkpoint": (
+            str(args.ppo_checkpoint) if args.ppo_checkpoint is not None else None
+        ),
+        "ppo_initial_gate_bias": args.ppo_initial_gate_bias,
+        "ppo_policy_weight": args.ppo_policy_weight,
         "proposal_ranking_seed": args.proposal_ranking_seed,
         "action_value_weight": args.action_value_weight,
         "value_increase_actions_per_parent": (

@@ -36,6 +36,18 @@ class _XferValueModel:
         return xfer_ids.float()
 
 
+class _PPOFeatureModel:
+    def candidate_features(
+        self, states, live, xfer_ids, source_ids, bindings, batch_ids
+    ):
+        return xfer_ids.float().unsqueeze(-1)
+
+
+class _PPOActor:
+    def policy_logits(self, candidate_features, matcher_logits):
+        return matcher_logits + candidate_features[:, 0]
+
+
 def main() -> None:
     assert parse_topn("32,1,8,8") == (1, 8, 32)
     legality = summarize_legality_records(
@@ -204,6 +216,28 @@ def main() -> None:
     assert value_actual[0].xfer_id == 4
     assert value_metrics["action_value_candidates"] == 8
     assert value_actual[0].value_score > value_actual[-1].value_score
+
+    ppo_actual, ppo_metrics, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=8,
+        global_cap=8,
+        ranking_mode="ppo",
+        ppo_actor_critic=_PPOActor(),
+        ppo_model=_PPOFeatureModel(),
+        ppo_states=torch.zeros((3, 9, 1), device=device),
+        ppo_live=torch.ones((3, 9), dtype=torch.bool, device=device),
+        ppo_initial_gate_bias=0.0,
+    )
+    assert ppo_metrics["ppo_policy_candidates"] == 8
+    for parent in range(3):
+        probability_sum = sum(
+            torch.tensor(row.value_score).exp().item()
+            for row in ppo_actual
+            if row.parent == parent
+        )
+        assert abs(probability_sum - 1.0) < 1e-5
 
     increasing_rule_index = GpuRuleIndex.build(
         source_to_xfers,
