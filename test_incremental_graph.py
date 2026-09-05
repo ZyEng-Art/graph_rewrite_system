@@ -39,12 +39,15 @@ def main() -> None:
         for step in trajectory["steps"]:
             action = step["action"]
             xfer_id = int(action["xfer_id"])
-            circuit.apply(
-                sources[xfer_id],
-                destinations[xfer_id],
-                tuple(map(int, action["binding_slots"])),
-                tuple(map(int, action["dst_slots"])),
-            )
+            if "dst_types" in action:
+                circuit.apply_delta(step["delta"])
+            else:
+                circuit.apply(
+                    sources[xfer_id],
+                    destinations[xfer_id],
+                    tuple(map(int, action["binding_slots"])),
+                    tuple(map(int, action["dst_slots"])),
+                )
             apply_teacher_delta(expected_nodes, expected_edges, step["delta"])
             actual_nodes, actual_edges = circuit.snapshot_without_guids()
             if actual_nodes != expected_nodes or actual_edges != expected_edges:

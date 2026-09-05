@@ -387,16 +387,22 @@ class PagedActionBindingModel(S0ActionBindingModel):
         value = self.node_action_value(action_states).view(
             batch_size, -1, heads, head_width
         ).transpose(1, 2)
-        has_history = action_mask.any(1)[:, None, None, None]
+        has_history_rows = action_mask.any(1)
+        has_history = has_history_rows[:, None, None, None]
         if self.readout_attention_backend in {"sdpa", "sdpa_live", "paged"}:
+            # SDPA may return NaNs when every key is masked for a prefix-0 row.
+            # Give those rows one harmless padded key, then explicitly zero the
+            # result so mixed prefix-length training batches remain finite.
+            safe_action_mask = action_mask.clone()
+            safe_action_mask[:, 0] |= ~has_history_rows
             context = F.scaled_dot_product_attention(
                 query,
                 key,
                 value,
-                attn_mask=action_mask[:, None, None, :],
+                attn_mask=safe_action_mask[:, None, None, :],
                 dropout_p=0.0,
             )
-            context = context * has_history
+            context = torch.where(has_history, context, torch.zeros_like(context))
         else:
             scores = torch.einsum("bhnd,bhtd->bhnt", query, key)
             scores = scores / math.sqrt(head_width)

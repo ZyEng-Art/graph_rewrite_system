@@ -121,6 +121,7 @@ def replay_history(
     trajectory_id: int,
     circuit_name: str,
     terminal_only: bool,
+    eliminate_rotation: bool = False,
 ) -> dict | None:
     graph = quartz.PyGraph.from_qasm_str(context=context, qasm_str=initial_qasm)
     guid_to_slot: dict[int, int] = {}
@@ -144,7 +145,9 @@ def replay_history(
                 graph, context, xfer_to_source, guid_to_slot
             )
         source_slots = tuple(map(int, dumped_action["source_slots"]))
-        destination_slots = tuple(map(int, dumped_action["destination_slots"]))
+        declared_destination_slots = tuple(
+            map(int, dumped_action["destination_slots"])
+        )
         xfer_id = int(dumped_action["xfer_id"])
         slot_to_guid = {
             guid_to_slot[int(node.guid)]: int(node.guid) for node in graph.nodes
@@ -161,7 +164,7 @@ def replay_history(
         result = graph.apply_xfer_with_binding_trace(
             xfer=xfers[xfer_id],
             node=anchor_node,
-            eliminate_rotation=False,
+            eliminate_rotation=eliminate_rotation,
             predecessor_layers=1,
         )
         apply_ms = (time.perf_counter() - apply_started) * 1000.0
@@ -173,15 +176,37 @@ def replay_history(
         )
         if actual_source_slots != source_slots:
             break
-        if len(destination_guids) != len(destination_slots):
+        if len(destination_guids) != len(declared_destination_slots):
             break
-        for guid, slot in zip(destination_guids, destination_slots):
+        declared_destination_guids = tuple(map(int, destination_guids))
+        live_destination_types = {
+            int(node.guid): int(node.gate_tp) for node in next_graph.nodes
+        }
+        surviving_pairs = tuple(
+            (guid, slot)
+            for guid, slot in zip(
+                declared_destination_guids, declared_destination_slots
+            )
+            if guid in live_destination_types
+        )
+        normalized_away_destination_guids = tuple(
+            guid
+            for guid in declared_destination_guids
+            if guid not in live_destination_types
+        )
+        destination_guids = tuple(guid for guid, _ in surviving_pairs)
+        destination_slots = tuple(slot for _, slot in surviving_pairs)
+        for guid, slot in surviving_pairs:
             guid = int(guid)
             slot = int(slot)
             if guid in guid_to_slot and guid_to_slot[guid] != slot:
                 raise RuntimeError("destination GUID changed its persistent slot")
             guid_to_slot[guid] = slot
-        next_slot = max(next_slot, max(destination_slots, default=-1) + 1)
+        # Preserve the history's monotonically allocated slot namespace even
+        # when normalization removes a destination before it becomes live.
+        next_slot = max(
+            next_slot, max(declared_destination_slots, default=-1) + 1
+        )
         next_slot = update_slots(next_graph, guid_to_slot, next_slot)
         after = snapshot(next_graph, guid_to_slot)
         delta = graph_delta(before, after)
@@ -207,7 +232,13 @@ def replay_history(
             "binding_slots": source_slots,
             "binding_guids": tuple(map(int, source_guids)),
             "dst_slots": destination_slots,
-            "dst_guids": tuple(map(int, destination_guids)),
+            "dst_guids": destination_guids,
+            "dst_types": tuple(
+                live_destination_types[guid] for guid in destination_guids
+            ),
+            "declared_dst_guids": declared_destination_guids,
+            "normalized_away_dst_guids": normalized_away_destination_guids,
+            "effective_delta": delta,
         }
         trajectory["steps"].append(
             {
@@ -232,6 +263,7 @@ def replay_history(
     )
     trajectory["terminal_matches"] = terminal_matches
     trajectory["terminal_match_ms"] = terminal_ms
+    trajectory["terminal_graph_hash"] = int(graph.hash())
     trajectory["requested_history_length"] = len(history)
     trajectory["valid_history_length"] = len(trajectory["steps"])
     return trajectory
@@ -245,6 +277,11 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--max-histories-per-file", type=int, default=256)
     parser.add_argument("--terminal-only", action="store_true")
+    parser.add_argument(
+        "--eliminate-rotation",
+        action="store_true",
+        help="match Quarl action semantics by folding parameters and removing zero rotations",
+    )
     args = parser.parse_args()
 
     for optional_module in ("qiskit", "dgl"):
@@ -286,6 +323,7 @@ def main() -> None:
                 trajectory_id=len(trajectories),
                 circuit_name=Path(payload["qasm"]).name,
                 terminal_only=args.terminal_only,
+                eliminate_rotation=args.eliminate_rotation,
             )
             match_seconds += time.perf_counter() - started
             if trajectory is None:
@@ -318,6 +356,7 @@ def main() -> None:
         "history_files": [str(path) for path in args.histories],
         "attempted_histories": attempted,
         "invalid_histories": invalid,
+        "eliminate_rotation": args.eliminate_rotation,
         "collection_seconds": match_seconds,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

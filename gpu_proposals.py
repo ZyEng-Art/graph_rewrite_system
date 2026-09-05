@@ -278,6 +278,9 @@ def build_gpu_proposals(
     action_value_weight: float = 0.0,
     value_increase_cap: int = 0,
     value_exploration_fraction: float = 0.0,
+    preserve_parent_best: bool = False,
+    parent_diversity_actions: int = 1,
+    parent_diversity_parent_cap: int = 0,
     action_value_microbatch: int = 16384,
     ppo_actor_critic=None,
     ppo_model=None,
@@ -332,6 +335,10 @@ def build_gpu_proposals(
         raise ValueError("value exploration is only valid for value ranking")
     if not materialize_python_proposals and not return_selected_tensors:
         raise ValueError("deferred proposals require selected GPU tensors")
+    if parent_diversity_actions < 1:
+        raise ValueError("parent diversity actions must be positive")
+    if parent_diversity_parent_cap < 0:
+        raise ValueError("parent diversity parent cap must be nonnegative")
     device = candidates.sources.device
     timing: dict[str, float] = {}
 
@@ -531,6 +538,79 @@ def build_gpu_proposals(
             (parent_gate_counts[parents[parent_order]], False),
         ]
     )
+    parent_diverse_count = 0
+    if preserve_parent_best and global_order.numel():
+        # A purely global beam can discard every continuation from a useful
+        # prefix even when that prefix's best action is ranked first locally.
+        # Move the best-ranked action from every live parent to the front,
+        # retaining the configured global order within both partitions.
+        globally_ranked_parents = parents[parent_order[global_order]]
+        positions = torch.arange(global_order.numel(), device=device)
+        first_positions = torch.full(
+            (len(beam),),
+            global_order.numel(),
+            dtype=torch.long,
+            device=device,
+        )
+        first_positions.scatter_reduce_(
+            0,
+            globally_ranked_parents,
+            positions,
+            reduce="amin",
+            include_self=True,
+        )
+        first_round = torch.sort(
+            first_positions[first_positions < global_order.numel()]
+        ).values
+        if parent_diversity_parent_cap:
+            first_round = first_round[:parent_diversity_parent_cap]
+        diverse_positions_by_round = [first_round]
+        selected_parents = globally_ranked_parents[first_round]
+        available = torch.zeros(
+            global_order.numel(), dtype=torch.bool, device=device
+        )
+        available_parents = torch.zeros(
+            len(beam), dtype=torch.bool, device=device
+        )
+        available_parents[selected_parents] = True
+        available = available_parents[globally_ranked_parents]
+        available[first_round] = False
+        for _ in range(1, parent_diversity_actions):
+            next_positions = torch.full(
+                (len(beam),),
+                global_order.numel(),
+                dtype=torch.long,
+                device=device,
+            )
+            next_positions.scatter_reduce_(
+                0,
+                globally_ranked_parents[available],
+                positions[available],
+                reduce="amin",
+                include_self=True,
+            )
+            next_round = torch.sort(
+                next_positions[selected_parents][
+                    next_positions[selected_parents] < global_order.numel()
+                ]
+            ).values
+            if not next_round.numel():
+                break
+            diverse_positions_by_round.append(next_round)
+            available[next_round] = False
+        diverse_positions = torch.cat(diverse_positions_by_round)
+        remaining = torch.ones(
+            global_order.numel(), dtype=torch.bool, device=device
+        )
+        remaining[diverse_positions] = False
+        reordered_positions = torch.cat(
+            (diverse_positions, torch.where(remaining)[0])
+        )
+        global_order = global_order[reordered_positions]
+        parent_diverse_count = min(
+            int(diverse_positions.numel()),
+            global_cap,
+        )
     selection_count = min(global_cap, global_order.numel())
     selected_value_exploration = 0
     if value_exploration_fraction and selection_count > 1:
@@ -669,6 +749,8 @@ def build_gpu_proposals(
     }
     if preselect_matches:
         metrics["materialized_actions"] = materialized_count
+    if preserve_parent_best:
+        metrics["selected_parent_best_actions"] = parent_diverse_count
     if action_values is not None:
         metrics.update(
             {

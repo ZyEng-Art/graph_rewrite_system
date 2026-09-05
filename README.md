@@ -22,8 +22,10 @@ are recorded in `BASELINE_SHA256.txt`.
   `grover_5`.
 
 See `PAGED_RESULTS.md` for the final stage profiles and cross-circuit results,
-and `RESULTS.md` for the earlier model/data experiments.  The two recommended
-checkpoints and their calibration files are under `benchmark_results/`.
+`RESULTS.md` for the earlier model/data experiments, and
+`QUARL_TRAJECTORY_FINETUNING.md` for the held-out Barenco/GF trajectory
+hard-positive experiment.  The two recommended checkpoints and their
+calibration files are under `benchmark_results/`.
 
 ## Repository layout
 

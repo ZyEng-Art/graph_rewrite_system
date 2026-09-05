@@ -1,0 +1,1229 @@
+{
+  "actions": [
+    {
+      "anchor_slots": [
+        5
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 171,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": -2,
+      "source_candidates": 138,
+      "source_id": 36,
+      "source_match_covered": true,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 40
+    },
+    {
+      "anchor_slots": [
+        7
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": null,
+      "matching_anchor_count": 1,
+      "node_id": 7,
+      "reward": 0,
+      "source_candidates": 172,
+      "source_id": 838,
+      "source_match_covered": false,
+      "step": 1,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 896
+    },
+    {
+      "anchor_slots": [
+        9
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 2,
+      "source_candidates": 151,
+      "source_id": 3854,
+      "source_match_covered": true,
+      "step": 2,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 4676
+    },
+    {
+      "anchor_slots": [
+        2
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": null,
+      "matching_anchor_count": 1,
+      "node_id": 2,
+      "reward": -1,
+      "source_candidates": 127,
+      "source_id": 882,
+      "source_match_covered": false,
+      "step": 3,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 940
+    },
+    {
+      "anchor_slots": [
+        5
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 9,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": 0,
+      "source_candidates": 167,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 4,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        5
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 7,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": 0,
+      "source_candidates": 147,
+      "source_id": 40,
+      "source_match_covered": true,
+      "step": 5,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 44
+    },
+    {
+      "anchor_slots": [
+        6
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 8,
+      "matching_anchor_count": 1,
+      "node_id": 6,
+      "reward": 0,
+      "source_candidates": 167,
+      "source_id": 34,
+      "source_match_covered": true,
+      "step": 6,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 38
+    },
+    {
+      "anchor_slots": [
+        4
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 44,
+      "matching_anchor_count": 1,
+      "node_id": 4,
+      "reward": -1,
+      "source_candidates": 181,
+      "source_id": 764,
+      "source_match_covered": true,
+      "step": 7,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 822
+    },
+    {
+      "anchor_slots": [
+        2
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 14,
+      "matching_anchor_count": 1,
+      "node_id": 2,
+      "reward": 0,
+      "source_candidates": 158,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 8,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        5
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 36,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": 0,
+      "source_candidates": 154,
+      "source_id": 3767,
+      "source_match_covered": true,
+      "step": 9,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 4406
+    },
+    {
+      "anchor_slots": [
+        3
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 3,
+      "reward": 2,
+      "source_candidates": 174,
+      "source_id": 3854,
+      "source_match_covered": true,
+      "step": 10,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 4688
+    },
+    {
+      "anchor_slots": [
+        0
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 161,
+      "matching_anchor_count": 1,
+      "node_id": 0,
+      "reward": -2,
+      "source_candidates": 164,
+      "source_id": 20,
+      "source_match_covered": true,
+      "step": 11,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 24
+    },
+    {
+      "anchor_slots": [
+        0
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 0,
+      "reward": 2,
+      "source_candidates": 157,
+      "source_id": 19,
+      "source_match_covered": true,
+      "step": 12,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 23
+    },
+    {
+      "anchor_slots": [
+        1
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 111,
+      "matching_anchor_count": 1,
+      "node_id": 1,
+      "reward": -1,
+      "source_candidates": 164,
+      "source_id": 1482,
+      "source_match_covered": true,
+      "step": 13,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 1540
+    },
+    {
+      "anchor_slots": [
+        5
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 14,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": 0,
+      "source_candidates": 167,
+      "source_id": 117,
+      "source_match_covered": true,
+      "step": 14,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 121
+    },
+    {
+      "anchor_slots": [
+        4
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 4,
+      "reward": 2,
+      "source_candidates": 129,
+      "source_id": 3853,
+      "source_match_covered": true,
+      "step": 15,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 4664
+    }
+  ],
+  "config": {
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_onpolicy_v13_r8_lr5e5_epoch1_calibration.json",
+    "caps": [
+      64,
+      128,
+      256
+    ],
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_hard_holdout_r8_aw4_lw2_bw1_m1_lr2e5_s173.pt",
+    "data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/binding_longmix_16384_2048_v2.pt",
+    "device": "cuda",
+    "ecc_file": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/ecc_set/nam_ecc.json",
+    "max_action_rank": 256,
+    "max_gate_increase": 3,
+    "max_source_matches": 8192,
+    "microbatch": 16,
+    "ranking_mode": "gate",
+    "source_grouping": "first_gate",
+    "source_microbatch": 256,
+    "target_recall": 0.95,
+    "trajectories": [
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3"
+    ]
+  },
+  "proposal_metrics": {
+    "eligible_actions": 3640,
+    "predicted_actions": 3640,
+    "selected_actions": 3608,
+    "selected_value_exploration_proposals": 0,
+    "value_increase_candidates_after_parent_cap": 0
+  },
+  "sequence_conditioned": {
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3": {
+      "actions": [
+        {
+          "anchor_slots": [
+            5
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 2,
+          "gate_rank": 171,
+          "match_group": "far",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9982990622520447,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 15.205997467041016,
+          "matcher_raw_threshold": -9.36732292175293,
+          "matcher_unfiltered_probability_rank": 55,
+          "matching_anchor_count": 1,
+          "node_id": 5,
+          "reward": -2,
+          "source_candidates": 138,
+          "source_id": 36,
+          "source_match_covered": true,
+          "step": 0,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 40
+        },
+        {
+          "anchor_slots": [
+            41
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 37,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.07239135354757309,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -3.2598989009857178,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 169,
+          "matching_anchor_count": 1,
+          "node_id": 7,
+          "reward": 0,
+          "source_candidates": 152,
+          "source_id": 838,
+          "source_match_covered": true,
+          "step": 1,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 896
+        },
+        {
+          "anchor_slots": [
+            45
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": -2,
+          "gate_rank": 1,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.4311867952346802,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 1.0701967477798462,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 90,
+          "matching_anchor_count": 1,
+          "node_id": 9,
+          "reward": 2,
+          "source_candidates": 123,
+          "source_id": 3854,
+          "source_match_covered": true,
+          "step": 2,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 4676
+        },
+        {
+          "anchor_slots": [
+            2
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 1,
+          "gate_rank": null,
+          "match_group": "far",
+          "matcher_above_threshold": false,
+          "matcher_calibrated_probability": 0.005195811856538057,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -11.174241065979004,
+          "matcher_raw_threshold": -9.36732292175293,
+          "matcher_unfiltered_probability_rank": 658,
+          "matching_anchor_count": 1,
+          "node_id": 2,
+          "reward": -1,
+          "source_candidates": 132,
+          "source_id": 882,
+          "source_match_covered": false,
+          "step": 3,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 940
+        },
+        {
+          "anchor_slots": [
+            49
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 8,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9999384880065918,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 20.065595626831055,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 39,
+          "matching_anchor_count": 1,
+          "node_id": 5,
+          "reward": 0,
+          "source_candidates": 161,
+          "source_id": 35,
+          "source_match_covered": true,
+          "step": 4,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 39
+        },
+        {
+          "anchor_slots": [
+            50
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 4,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9997716546058655,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 17.566635131835938,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 48,
+          "matching_anchor_count": 1,
+          "node_id": 5,
+          "reward": 0,
+          "source_candidates": 142,
+          "source_id": 40,
+          "source_match_covered": true,
+          "step": 5,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 44
+        },
+        {
+          "anchor_slots": [
+            40
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 12,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.999270498752594,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 15.353556632995605,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 54,
+          "matching_anchor_count": 1,
+          "node_id": 6,
+          "reward": 0,
+          "source_candidates": 163,
+          "source_id": 34,
+          "source_match_covered": true,
+          "step": 6,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 38
+        },
+        {
+          "anchor_slots": [
+            48
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 1,
+          "gate_rank": 39,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9950717091560364,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 11.707015037536621,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 69,
+          "matching_anchor_count": 1,
+          "node_id": 4,
+          "reward": -1,
+          "source_candidates": 189,
+          "source_id": 764,
+          "source_match_covered": true,
+          "step": 7,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 822
+        },
+        {
+          "anchor_slots": [
+            46
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 4,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9999934434890747,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 24.315595626831055,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 27,
+          "matching_anchor_count": 1,
+          "node_id": 2,
+          "reward": 0,
+          "source_candidates": 180,
+          "source_id": 35,
+          "source_match_covered": true,
+          "step": 8,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 39
+        },
+        {
+          "anchor_slots": [
+            57
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 13,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.999411940574646,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 15.76426887512207,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 56,
+          "matching_anchor_count": 1,
+          "node_id": 5,
+          "reward": 0,
+          "source_candidates": 181,
+          "source_id": 3767,
+          "source_match_covered": true,
+          "step": 9,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 4406
+        },
+        {
+          "anchor_slots": [
+            60
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": -2,
+          "gate_rank": 2,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.7210087180137634,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 3.4061343669891357,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 89,
+          "matching_anchor_count": 1,
+          "node_id": 3,
+          "reward": 2,
+          "source_candidates": 197,
+          "source_id": 3854,
+          "source_match_covered": true,
+          "step": 10,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 4688
+        },
+        {
+          "anchor_slots": [
+            0
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 2,
+          "gate_rank": 153,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9999998807907104,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 31.358041763305664,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 8,
+          "matching_anchor_count": 1,
+          "node_id": 0,
+          "reward": -2,
+          "source_candidates": 172,
+          "source_id": 20,
+          "source_match_covered": true,
+          "step": 11,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 24
+        },
+        {
+          "anchor_slots": [
+            63
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": -2,
+          "gate_rank": 2,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9970254302024841,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 12.67232608795166,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 69,
+          "matching_anchor_count": 1,
+          "node_id": 0,
+          "reward": 2,
+          "source_candidates": 175,
+          "source_id": 19,
+          "source_match_covered": true,
+          "step": 12,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 23
+        },
+        {
+          "anchor_slots": [
+            68
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 1,
+          "gate_rank": 53,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.99455726146698,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 11.516901016235352,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 71,
+          "matching_anchor_count": 1,
+          "node_id": 1,
+          "reward": -1,
+          "source_candidates": 169,
+          "source_id": 1482,
+          "source_match_covered": true,
+          "step": 13,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 1540
+        },
+        {
+          "anchor_slots": [
+            73
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 23,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.4760502874851227,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 1.415190577507019,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 95,
+          "matching_anchor_count": 1,
+          "node_id": 5,
+          "reward": 0,
+          "source_candidates": 162,
+          "source_id": 117,
+          "source_match_covered": true,
+          "step": 14,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 121
+        },
+        {
+          "anchor_slots": [
+            72
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": -2,
+          "gate_rank": 1,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.8897269368171692,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 5.5744733810424805,
+          "matcher_raw_threshold": -8.184280395507812,
+          "matcher_unfiltered_probability_rank": 75,
+          "matching_anchor_count": 1,
+          "node_id": 4,
+          "reward": 2,
+          "source_candidates": 153,
+          "source_id": 3853,
+          "source_match_covered": true,
+          "step": 15,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 4664
+        }
+      ],
+      "probes": [
+        {
+          "anchor_slot": 2,
+          "before_step": 0,
+          "cost": 39,
+          "match_group": "far",
+          "matcher_calibrated_probability": 9.277110990524307e-08,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -35.98674011230469,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 1,
+          "cost": 41,
+          "match_group": "near",
+          "matcher_calibrated_probability": 0.0019334327662363648,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -10.299241065979004,
+          "matcher_raw_threshold": -8.184280395507812,
+          "quartz_available": true,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 2,
+          "cost": 41,
+          "match_group": "near",
+          "matcher_calibrated_probability": 0.0005940913688391447,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -12.549241065979004,
+          "matcher_raw_threshold": -8.184280395507812,
+          "quartz_available": true,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 3,
+          "cost": 39,
+          "match_group": "far",
+          "matcher_calibrated_probability": 0.005195811856538057,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -11.174241065979004,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": true,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 4,
+          "cost": 40,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 5,
+          "cost": 40,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 6,
+          "cost": 40,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 7,
+          "cost": 40,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 8,
+          "cost": 41,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 9,
+          "cost": 41,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 10,
+          "cost": 41,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 11,
+          "cost": 39,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 12,
+          "cost": 41,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 13,
+          "cost": 39,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 14,
+          "cost": 40,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        },
+        {
+          "anchor_slot": 2,
+          "before_step": 15,
+          "cost": 40,
+          "match_group": "far",
+          "matcher_calibrated_probability": null,
+          "matcher_eligible": false,
+          "matcher_raw_logit": null,
+          "matcher_raw_threshold": -9.36732292175293,
+          "quartz_available": false,
+          "source_id": 882,
+          "source_match_covered": false,
+          "xfer_id": 940
+        }
+      ],
+      "summary": {
+        "actions": 16,
+        "caps": {
+          "128": {
+            "covered": 13,
+            "missing_steps": [
+              0,
+              3,
+              11
+            ],
+            "recall": 0.8125,
+            "whole_trajectory_covered": false
+          },
+          "256": {
+            "covered": 15,
+            "missing_steps": [
+              3
+            ],
+            "recall": 0.9375,
+            "whole_trajectory_covered": false
+          },
+          "64": {
+            "covered": 13,
+            "missing_steps": [
+              0,
+              3,
+              11
+            ],
+            "recall": 0.8125,
+            "whole_trajectory_covered": false
+          }
+        },
+        "exact_action_available": 16,
+        "exact_transition_matches": 16,
+        "gate_rank": {
+          "max": 171,
+          "median": 12,
+          "min": 1,
+          "p90": 153,
+          "p95": 171
+        },
+        "missing_rank_steps": [
+          3
+        ],
+        "ranked_action_covered": 15,
+        "source_match_covered": 15
+      }
+    }
+  },
+  "summary": {
+    "actions": 16,
+    "caps": {
+      "128": {
+        "covered": 12,
+        "missing_steps": [
+          0,
+          1,
+          3,
+          11
+        ],
+        "recall": 0.75,
+        "whole_trajectory_covered": false
+      },
+      "256": {
+        "covered": 14,
+        "missing_steps": [
+          1,
+          3
+        ],
+        "recall": 0.875,
+        "whole_trajectory_covered": false
+      },
+      "64": {
+        "covered": 11,
+        "missing_steps": [
+          0,
+          1,
+          3,
+          11,
+          13
+        ],
+        "recall": 0.6875,
+        "whole_trajectory_covered": false
+      }
+    },
+    "exact_action_available": 16,
+    "exact_transition_matches": 16,
+    "gate_rank": {
+      "max": 171,
+      "median": 9,
+      "min": 1,
+      "p90": 161,
+      "p95": 171
+    },
+    "missing_rank_steps": [
+      1,
+      3
+    ],
+    "ranked_action_covered": 14,
+    "source_match_covered": 14
+  },
+  "timing": {
+    "model_match_seconds": 0.283928883029148,
+    "model_match_stages": {
+      "batch_collate_and_pad_seconds": 0.0006532669067382812,
+      "batch_host_to_device_seconds": 0.00015557999722659588,
+      "candidate_device_to_host_seconds": 0.0,
+      "candidate_gpu_pack_seconds": 0.006537115899845958,
+      "candidate_python_pack_seconds": 0.0,
+      "candidate_selection_and_ranking_seconds": 0.14271959802135825,
+      "incremental_graph_readout_seconds": 0.07211205386556685,
+      "match_group_compaction_seconds": 0.03780333884060383,
+      "match_logits_seconds": 0.010736869415268302,
+      "model_match_unattributed_seconds": 0.0005631530657410622,
+      "readout_cache_metadata_or_gather_seconds": 0.00018388498574495316,
+      "structural_binding_decode_seconds": 0.0124640220310539
+    },
+    "proposal_seconds": 0.00985676096752286,
+    "proposal_stages": {
+      "gpu_action_expansion_seconds": 0.0006228990387171507,
+      "gpu_global_proposal_rank_seconds": 0.0002514929510653019,
+      "gpu_match_preselection_seconds": 0.00109446095302701,
+      "gpu_per_parent_rank_seconds": 0.001581817865371704,
+      "proposal_device_to_host_and_pack_seconds": 0.006183275952935219
+    },
+    "qasm_load_and_exact_validation_seconds": 0.040497545851394534
+  },
+  "trajectories": {
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3": {
+      "actions": 16,
+      "caps": {
+        "128": {
+          "covered": 12,
+          "missing_steps": [
+            0,
+            1,
+            3,
+            11
+          ],
+          "recall": 0.75,
+          "whole_trajectory_covered": false
+        },
+        "256": {
+          "covered": 14,
+          "missing_steps": [
+            1,
+            3
+          ],
+          "recall": 0.875,
+          "whole_trajectory_covered": false
+        },
+        "64": {
+          "covered": 11,
+          "missing_steps": [
+            0,
+            1,
+            3,
+            11,
+            13
+          ],
+          "recall": 0.6875,
+          "whole_trajectory_covered": false
+        }
+      },
+      "exact_action_available": 16,
+      "exact_transition_matches": 16,
+      "gate_rank": {
+        "max": 171,
+        "median": 9,
+        "min": 1,
+        "p90": 161,
+        "p95": 171
+      },
+      "missing_rank_steps": [
+        1,
+        3
+      ],
+      "ranked_action_covered": 14,
+      "source_match_covered": 14
+    }
+  }
+}

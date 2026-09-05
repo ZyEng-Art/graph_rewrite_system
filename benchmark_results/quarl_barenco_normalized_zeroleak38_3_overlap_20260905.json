@@ -1,0 +1,10 @@
+{
+  "holdout_data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_barenco_holdout38_3_normalized_v2_20260905.pt",
+  "holdout_state_rows": 17,
+  "overlapping_graph_hashes": 0,
+  "overlaps": [],
+  "shared_action_keys": 0,
+  "train_data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_barenco_normalized_zeroleak38_3_r8_20260905.pt",
+  "train_paths_with_overlap": [],
+  "train_state_rows": 6768
+}

@@ -89,6 +89,37 @@ class RuleMetadata:
         )
 
 
+def action_destination_types(action: dict, rules: RuleMetadata) -> tuple[int, ...]:
+    """Return the post-normalization destination types for one concrete action.
+
+    Older datasets only store the rewrite id, so their destination is the
+    static ECC destination.  Newer trajectory data may contract that
+    destination during Quartz constant/zero-rotation elimination; in that case
+    ``dst_types`` records only nodes that survive in the returned graph.
+    """
+    if "dst_types" in action:
+        return tuple(map(int, action["dst_types"]))
+    effective_delta = action.get("effective_delta")
+    if effective_delta is not None:
+        added_by_slot = {
+            int(slot): int(gate_type)
+            for slot, gate_type, _ in effective_delta["added_nodes"]
+        }
+        destination_slots = tuple(map(int, action["dst_slots"]))
+        if set(destination_slots) != set(added_by_slot):
+            raise ValueError("effective destination slots differ from graph delta")
+        return tuple(added_by_slot[slot] for slot in destination_slots)
+    return rules.destination_gate_types[int(action["xfer_id"])]
+
+
+def action_with_effective_delta(step: dict) -> dict:
+    """Attach the authoritative post-action graph delta to a history action."""
+    action = step["action"]
+    if action.get("effective_delta") is step["delta"]:
+        return action
+    return {**action, "effective_delta": step["delta"]}
+
+
 def validate_trajectory(trajectory: dict, rules: RuleMetadata) -> None:
     live = {
         int(slot): int(gate_type)
@@ -98,7 +129,7 @@ def validate_trajectory(trajectory: dict, rules: RuleMetadata) -> None:
         action = step["action"]
         source_slots = tuple(map(int, action["binding_slots"]))
         destination_slots = tuple(map(int, action["dst_slots"]))
-        destination_types = rules.destination_gate_types[int(action["xfer_id"])]
+        destination_types = action_destination_types(action, rules)
         if len(destination_slots) != len(destination_types):
             raise ValueError("destination slot/type length mismatch")
         if sorted(source_slots) != list(map(int, step["delta"]["removed_slots"])):
@@ -166,11 +197,13 @@ class PrefixDataset(Dataset):
         return {
             "initial_graph": trajectory["initial_graph"],
             "actions": [
-                step["action"] for step in trajectory["steps"][:prefix_length]
+                action_with_effective_delta(step)
+                for step in trajectory["steps"][:prefix_length]
             ],
             "matches": (
                 trajectory["terminal_matches"] if terminal else target_step["matches"]
             ),
+            "target_action": None if terminal else target_step["action"],
             "local_streak": int(target_step["local_streak"]),
             "trajectory_id": int(trajectory["trajectory_id"]),
             "prefix_length": prefix_length,
@@ -238,12 +271,16 @@ def replay_with_locality(sample: dict, rules: RuleMetadata):
             src for src, dst, _, _ in before_edges if dst in source_set
         }
         destination_slots = tuple(map(int, action["dst_slots"]))
-        circuit.apply(
-            parse_pattern(rules.xfer_sources[xfer_id]),
-            parse_pattern(rules.xfer_destinations[xfer_id]),
-            source_slots,
-            destination_slots,
-        )
+        effective_delta = action.get("effective_delta")
+        if effective_delta is None:
+            circuit.apply(
+                parse_pattern(rules.xfer_sources[xfer_id]),
+                parse_pattern(rules.xfer_destinations[xfer_id]),
+                source_slots,
+                destination_slots,
+            )
+        else:
+            circuit.apply_delta(effective_delta)
         live_slots = set(circuit.nodes)
         changed_edges = before_edges.symmetric_difference(circuit.edges)
         last_core = {slot for slot in destination_slots if slot in live_slots}
@@ -370,6 +407,7 @@ def collate_current_graphs(samples: list[dict], rules: RuleMetadata) -> dict:
         ),
         "positives": positives,
         "positive_near": positive_near,
+        "target_actions": [sample.get("target_action") for sample in samples],
         "local_streak": torch.tensor(
             [sample["local_streak"] for sample in samples], dtype=torch.long
         ),
@@ -434,7 +472,7 @@ def collate_prefixes(samples: list[dict], rules: RuleMetadata) -> dict:
             action_sources[batch_index, action_index] = int(action["source_id"])
             src_slots = tuple(map(int, action["binding_slots"]))
             dst_slots = tuple(map(int, action["dst_slots"]))
-            dst_types = rules.destination_gate_types[xfer_id]
+            dst_types = action_destination_types(action, rules)
             binding_slots[batch_index, action_index, : len(src_slots)] = torch.tensor(
                 src_slots
             )
@@ -497,6 +535,7 @@ def collate_prefixes(samples: list[dict], rules: RuleMetadata) -> dict:
         "destination_types": destination_types,
         "positives": positives,
         "positive_near": positive_near,
+        "target_actions": [sample.get("target_action") for sample in samples],
         "incremental_circuits": incremental_circuits,
         "has_previous_rewrite": torch.tensor(
             [bool(sample["actions"]) for sample in samples], dtype=torch.bool

@@ -550,6 +550,7 @@ class S0ActionBindingModel(nn.Module):
         structural_hard_negatives: bool = False,
         locality_positive_weight: float = 0.0,
         locality_negative_weight: float = 0.0,
+        action_positive_weight: float = 0.0,
         topn_boundary_weight: float = 0.0,
         topn_boundary_margin: float = 0.0,
     ) -> torch.Tensor:
@@ -578,6 +579,32 @@ class S0ActionBindingModel(nn.Module):
                     device=logits.device,
                 )
                 positive_weights = positive_weights + locality_positive_weight * near
+            if action_positive_weight > 0:
+                if batch is None or "target_actions" not in batch:
+                    raise ValueError("action-positive weighting needs target actions")
+                target_action = batch["target_actions"][batch_index]
+                if target_action is not None:
+                    target_source = int(target_action["source_id"])
+                    target_binding = tuple(
+                        map(int, target_action["binding_slots"])
+                    )
+                    chosen_rows = [
+                        int(source) == target_source
+                        and tuple(map(int, binding)) == target_binding
+                        for source, binding in rows
+                    ]
+                    if not any(chosen_rows):
+                        raise ValueError(
+                            "target action is absent from exact positive matches"
+                        )
+                    chosen = torch.tensor(
+                        chosen_rows,
+                        dtype=positive_weights.dtype,
+                        device=positive_weights.device,
+                    )
+                    positive_weights = (
+                        positive_weights + action_positive_weight * chosen
+                    )
             negative_mask = eligible[batch_index] & ~target
             negative_logits = logits[batch_index][negative_mask]
             if positive_logits.numel() == 0 or negative_logits.numel() == 0:

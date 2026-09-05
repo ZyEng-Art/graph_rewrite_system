@@ -138,6 +138,30 @@ class IncrementalCircuit:
                     (predecessor[0], successor[0], predecessor[1], successor[1])
                 )
 
+    def apply_delta(self, delta: dict) -> None:
+        """Apply an exact saved graph delta, including Quartz normalization."""
+        removed_slots = {int(slot) for slot in delta["removed_slots"]}
+        if not removed_slots.issubset(self.nodes):
+            raise ValueError("graph delta removes a non-live slot")
+        removed_edges = {tuple(map(int, edge)) for edge in delta["removed_edges"]}
+        added_edges = {tuple(map(int, edge)) for edge in delta["added_edges"]}
+        if not removed_edges.issubset(self.edges):
+            raise ValueError("graph delta removes a non-live edge")
+
+        self.edges.difference_update(removed_edges)
+        for slot in removed_slots:
+            del self.nodes[slot]
+        for raw_slot, raw_gate_type, _ in delta["added_nodes"]:
+            slot = int(raw_slot)
+            if slot in self.nodes:
+                raise ValueError("graph delta reuses a live destination slot")
+            self.nodes[slot] = int(raw_gate_type)
+        self.edges.update(added_edges)
+
+        live = set(self.nodes)
+        if any(src not in live or dst not in live for src, dst, _, _ in self.edges):
+            raise ValueError("graph delta leaves an edge incident to a dead slot")
+
     def snapshot_without_guids(self) -> tuple[dict[int, int], set[tuple[int, ...]]]:
         return dict(self.nodes), set(self.edges)
 

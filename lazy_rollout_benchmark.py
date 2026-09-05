@@ -732,6 +732,7 @@ def replay_state(
     replay_cache: dict[tuple[LazyAction, ...], ExactReplayCacheEntry] | None = None,
     replay_cache_prefixes: set[tuple[LazyAction, ...]] | None = None,
     prefer_direct_binding: bool = True,
+    eliminate_rotation: bool = False,
 ):
     """Materialize one speculative trajectory in Quartz for an out-of-band audit."""
     def lookup_source_node_ids(action: LazyAction) -> list[int] | None:
@@ -850,7 +851,7 @@ def replay_state(
             result = graph.apply_xfer_with_guid_binding(
                 xfer=xfers[action.xfer_id],
                 source_node_guids=source_guids,
-                eliminate_rotation=False,
+                eliminate_rotation=eliminate_rotation,
             )
             add_seconds("quartz_apply_seconds", apply_started)
             add_count("quartz_apply_calls")
@@ -876,13 +877,13 @@ def replay_state(
                 result = graph.apply_xfer_with_node_id_binding(
                     xfer=xfers[action.xfer_id],
                     source_node_ids=source_node_ids,
-                    eliminate_rotation=False,
+                    eliminate_rotation=eliminate_rotation,
                 )
             else:
                 result = graph.apply_xfer_with_node_id_binding_trace(
                     xfer=xfers[action.xfer_id],
                     source_node_ids=source_node_ids,
-                    eliminate_rotation=False,
+                    eliminate_rotation=eliminate_rotation,
                     predecessor_layers=1,
                 )
             add_seconds("quartz_apply_seconds", apply_started)
@@ -915,7 +916,7 @@ def replay_state(
             result = graph.apply_xfer_with_binding_trace(
                 xfer=xfers[action.xfer_id],
                 node=node,
-                eliminate_rotation=False,
+                eliminate_rotation=eliminate_rotation,
                 predecessor_layers=1,
             )
             add_seconds("quartz_apply_seconds", apply_started)
@@ -958,7 +959,13 @@ def replay_state(
             break
         add_seconds("binding_validation_seconds", validation_started)
         update_started = now()
-        for guid, slot in zip(destination_guids, action.destination_slots):
+        live_guids = {int(node.guid) for node in next_graph.nodes}
+        surviving_destination_pairs = tuple(
+            (int(guid), int(slot))
+            for guid, slot in zip(destination_guids, action.destination_slots)
+            if int(guid) in live_guids
+        )
+        for guid, slot in surviving_destination_pairs:
             guid_to_slot[int(guid)] = int(slot)
             slot_to_guid[int(slot)] = int(guid)
         graph = next_graph
@@ -1027,6 +1034,14 @@ def main() -> None:
     parser.add_argument("--batch-sweep-repeats", type=int, default=2)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--best-qasm", type=Path)
+    parser.add_argument(
+        "--eliminate-rotation",
+        action="store_true",
+        help=(
+            "use Quarl-compatible zero-rotation normalization during exact replay; "
+            "the lazy speculative topology remains an upper-bound approximation"
+        ),
+    )
     args = parser.parse_args()
 
     import quartz
@@ -1270,7 +1285,12 @@ def main() -> None:
     best_valid_graph = None
     for state in beam[:audited]:
         exact_graph, failure_step, topology_ok = replay_state(
-            state, context, quartz.PyGraph, xfers, initial_qasm
+            state,
+            context,
+            quartz.PyGraph,
+            xfers,
+            initial_qasm,
+            eliminate_rotation=args.eliminate_rotation,
         )
         if exact_graph is None:
             failure_steps[int(failure_step)] += 1
@@ -1296,6 +1316,8 @@ def main() -> None:
     total_accepted = sum(row["accepted_actions"] for row in step_rows)
     total = {
         "mode": "lazy_model",
+        "eliminate_rotation": args.eliminate_rotation,
+        "speculative_normalization": False,
         "qasm": str(args.qasm),
         "beam_size": args.beam_size,
         "requested_depth": args.depth,

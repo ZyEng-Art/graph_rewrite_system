@@ -327,6 +327,43 @@ def main() -> None:
     assert value_metrics["action_value_candidates"] == 8
     assert value_actual[0].value_score > value_actual[-1].value_score
 
+    parent_diverse, parent_diverse_metrics, _, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=8,
+        global_cap=4,
+        ranking_mode="value",
+        action_value_model=_XferValueModel(),
+        action_value_states=torch.zeros((3, 9, 1), device=device),
+        action_value_live=torch.ones((3, 9), dtype=torch.bool, device=device),
+        action_value_weight=10.0,
+        preserve_parent_best=True,
+    )
+    assert {row.parent for row in parent_diverse[:3]} == {0, 1, 2}
+    assert parent_diverse_metrics["selected_parent_best_actions"] == 3
+
+    parent_top_two, parent_top_two_metrics, _, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=8,
+        global_cap=4,
+        ranking_mode="value",
+        action_value_model=_XferValueModel(),
+        action_value_states=torch.zeros((3, 9, 1), device=device),
+        action_value_live=torch.ones((3, 9), dtype=torch.bool, device=device),
+        action_value_weight=10.0,
+        preserve_parent_best=True,
+        parent_diversity_actions=2,
+        parent_diversity_parent_cap=2,
+    )
+    assert len({row.parent for row in parent_top_two[:2]}) == 2
+    assert {row.parent for row in parent_top_two[:4]} == {
+        row.parent for row in parent_top_two[:2]
+    }
+    assert parent_top_two_metrics["selected_parent_best_actions"] == 4
+
     ppo_actual, ppo_metrics, _, _ = build_gpu_proposals(
         candidates,
         beam,

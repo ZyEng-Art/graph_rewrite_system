@@ -1,0 +1,91 @@
+{
+  "date": "2026-09-05",
+  "trajectory": "barenco_tof_3/38_3",
+  "representation": {
+    "accepted_barenco_paths": 51,
+    "unique_action_states": 919,
+    "formerly_unrepresentable_normalized_transitions": 35,
+    "holdout_steps": 16,
+    "holdout_exact_successor_hashes": 16,
+    "holdout_initial_gate_count": 39,
+    "holdout_final_gate_count": 38
+  },
+  "leak_audits": {
+    "all_state_zero_leak": {
+      "paths": 46,
+      "unique_action_states": 800,
+      "overlapping_graph_hashes": 0,
+      "shared_action_keys": 0
+    },
+    "supervised_state_zero_leak": {
+      "paths": 49,
+      "unique_action_states": 877,
+      "overlapping_supervised_graph_hashes": 0,
+      "shared_action_keys": 0,
+      "terminal_only_overlapping_graph_hashes": 2
+    }
+  },
+  "holdout_matcher": {
+    "target_recall_0_95": {
+      "source_covered": 13,
+      "actions": 16,
+      "missing_steps": [1, 3, 13]
+    },
+    "target_recall_0_99": {
+      "source_covered": 16,
+      "actions": 16,
+      "probability_rank_max": 342,
+      "minimum_whole_trajectory_cap": 512
+    }
+  },
+  "heldout_behavior_head": {
+    "target_in_training": false,
+    "target_recall": 0.99,
+    "exact_full_action_covered_at_512": 16,
+    "exact_full_action_rank_min": 25,
+    "exact_full_action_rank_median": 118,
+    "exact_full_action_rank_max": 331
+  },
+  "teacher_included_margin_head": {
+    "target_in_training": true,
+    "diagnostic_role": "memorization/reproducibility upper bound",
+    "train_preferences": 54864,
+    "independent_path_test_preferences": 4960,
+    "test_pair_accuracy": 0.917137086391449,
+    "rank_margin": 4.0,
+    "causal_exact_full_action_top1": 16,
+    "causal_actions": 16,
+    "independent_state_top128": 12,
+    "independent_state_rank_median": 60,
+    "independent_state_rank_max": 306
+  },
+  "free_search_from_39": {
+    "beam": 1000,
+    "depth": 16,
+    "target_recall": 0.99,
+    "max_source_matches": 8192,
+    "max_actions_per_parent": 512,
+    "action_value_weight": 4.0,
+    "preserve_parent_best": true,
+    "best_exact_gate_count": 38,
+    "best_exact_depth": 16,
+    "final_beam_size": 740,
+    "final_valid_trajectories": 740,
+    "final_audited_trajectories": 740,
+    "exact_topology_matches": 740,
+    "unique_exact_graph_hashes": 106,
+    "search_seconds_excluding_audit": 7.8537878759671,
+    "peak_cuda_allocated_gib": 0.9753823280334473
+  },
+  "free_search_from_original_58": {
+    "beam": 1000,
+    "depth": 64,
+    "best_exact_archive_gate_count": 58,
+    "final_audit_best_gate_count": 59,
+    "search_seconds_excluding_audit": 41.64261462399736,
+    "peak_cuda_allocated_gib": 1.977968692779541,
+    "original_graph_hash": 15253231274084015289,
+    "original_graph_hash_training_hits": 0
+  },
+  "remote_best_checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_barenco_teacherincluded38_3_value_margin4_s174.pt"
+}

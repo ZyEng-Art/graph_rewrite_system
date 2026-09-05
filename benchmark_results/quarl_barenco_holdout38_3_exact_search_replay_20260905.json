@@ -1,0 +1,172 @@
+{
+  "all_successor_hashes_exact": true,
+  "data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_barenco_holdout38_3_normalized_v2_20260905.pt",
+  "final_gate_count": 38,
+  "initial_gate_count": 39,
+  "normalization_contracted_steps": 0,
+  "qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/38_3/0_39_-2_5_40.qasm",
+  "rows": [
+    {
+      "anchor_slot": 5,
+      "declared_destination_nodes": 4,
+      "gate_count": 41,
+      "graph_hash": 18222452454881953708,
+      "normalized_destination_nodes": 4,
+      "source_size": 2,
+      "step": 0,
+      "xfer_id": 40
+    },
+    {
+      "anchor_slot": 41,
+      "declared_destination_nodes": 3,
+      "gate_count": 41,
+      "graph_hash": 3183361418021559187,
+      "normalized_destination_nodes": 3,
+      "source_size": 3,
+      "step": 1,
+      "xfer_id": 896
+    },
+    {
+      "anchor_slot": 45,
+      "declared_destination_nodes": 0,
+      "gate_count": 39,
+      "graph_hash": 1675225134996452981,
+      "normalized_destination_nodes": 0,
+      "source_size": 2,
+      "step": 2,
+      "xfer_id": 4676
+    },
+    {
+      "anchor_slot": 2,
+      "declared_destination_nodes": 4,
+      "gate_count": 40,
+      "graph_hash": 1175108022415203025,
+      "normalized_destination_nodes": 4,
+      "source_size": 3,
+      "step": 3,
+      "xfer_id": 940
+    },
+    {
+      "anchor_slot": 49,
+      "declared_destination_nodes": 2,
+      "gate_count": 40,
+      "graph_hash": 12411570418676066321,
+      "normalized_destination_nodes": 2,
+      "source_size": 2,
+      "step": 4,
+      "xfer_id": 39
+    },
+    {
+      "anchor_slot": 50,
+      "declared_destination_nodes": 2,
+      "gate_count": 40,
+      "graph_hash": 1175108022415203025,
+      "normalized_destination_nodes": 2,
+      "source_size": 2,
+      "step": 5,
+      "xfer_id": 44
+    },
+    {
+      "anchor_slot": 40,
+      "declared_destination_nodes": 2,
+      "gate_count": 40,
+      "graph_hash": 4931208864243427253,
+      "normalized_destination_nodes": 2,
+      "source_size": 2,
+      "step": 6,
+      "xfer_id": 38
+    },
+    {
+      "anchor_slot": 48,
+      "declared_destination_nodes": 3,
+      "gate_count": 41,
+      "graph_hash": 6896482049582475207,
+      "normalized_destination_nodes": 3,
+      "source_size": 2,
+      "step": 7,
+      "xfer_id": 822
+    },
+    {
+      "anchor_slot": 46,
+      "declared_destination_nodes": 2,
+      "gate_count": 41,
+      "graph_hash": 9925506473351679990,
+      "normalized_destination_nodes": 2,
+      "source_size": 2,
+      "step": 8,
+      "xfer_id": 39
+    },
+    {
+      "anchor_slot": 57,
+      "declared_destination_nodes": 2,
+      "gate_count": 41,
+      "graph_hash": 18433467459199616640,
+      "normalized_destination_nodes": 2,
+      "source_size": 2,
+      "step": 9,
+      "xfer_id": 4406
+    },
+    {
+      "anchor_slot": 60,
+      "declared_destination_nodes": 0,
+      "gate_count": 39,
+      "graph_hash": 1655097772961193046,
+      "normalized_destination_nodes": 0,
+      "source_size": 2,
+      "step": 10,
+      "xfer_id": 4688
+    },
+    {
+      "anchor_slot": 0,
+      "declared_destination_nodes": 4,
+      "gate_count": 41,
+      "graph_hash": 13654576052970803007,
+      "normalized_destination_nodes": 4,
+      "source_size": 2,
+      "step": 11,
+      "xfer_id": 24
+    },
+    {
+      "anchor_slot": 63,
+      "declared_destination_nodes": 2,
+      "gate_count": 39,
+      "graph_hash": 1655097772961193046,
+      "normalized_destination_nodes": 2,
+      "source_size": 4,
+      "step": 12,
+      "xfer_id": 23
+    },
+    {
+      "anchor_slot": 68,
+      "declared_destination_nodes": 5,
+      "gate_count": 40,
+      "graph_hash": 8785474192385248194,
+      "normalized_destination_nodes": 5,
+      "source_size": 4,
+      "step": 13,
+      "xfer_id": 1540
+    },
+    {
+      "anchor_slot": 73,
+      "declared_destination_nodes": 3,
+      "gate_count": 40,
+      "graph_hash": 11693607027987527540,
+      "normalized_destination_nodes": 3,
+      "source_size": 3,
+      "step": 14,
+      "xfer_id": 121
+    },
+    {
+      "anchor_slot": 72,
+      "declared_destination_nodes": 0,
+      "gate_count": 38,
+      "graph_hash": 1699361807580057371,
+      "normalized_destination_nodes": 0,
+      "source_size": 2,
+      "step": 15,
+      "xfer_id": 4664
+    }
+  ],
+  "steps": 16,
+  "trajectory_index": 0
+}

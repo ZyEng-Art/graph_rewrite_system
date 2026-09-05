@@ -1,0 +1,141 @@
+{
+  "date": "2026-09-05",
+  "held_out_trajectories": {
+    "barenco_tof_3": "38_3",
+    "gf2^6_mult": "370_2"
+  },
+  "data": {
+    "initial_barenco": {
+      "accepted_unique_paths": 19,
+      "unique_action_states": 328,
+      "repeat": 8,
+      "repeated_action_states": 2624
+    },
+    "segmented_barenco": {
+      "accepted_unique_paths": 51,
+      "segments": 65,
+      "unique_action_states": 884,
+      "repeat": 8,
+      "repeated_action_states": 7072,
+      "omitted_unrepresentable_transitions": 35,
+      "xfer_940_unique_actions": 10,
+      "max_local_streak": 11
+    },
+    "barenco_and_gf_windows": {
+      "accepted_unique_paths": 99,
+      "unique_action_states": 2635,
+      "repeat": 4,
+      "repeated_action_states": 10540,
+      "windows": 460,
+      "window_actions": 64
+    }
+  },
+  "held_out_metrics": {
+    "base": {
+      "full_binding_topn": 0.8683539,
+      "near_full_binding_topn": 0.8294187,
+      "non_near_full_binding_topn": 0.8740177
+    },
+    "initial_barenco_action_weight_4": {
+      "full_binding_topn": 0.8702452864945299,
+      "near_full_binding_topn": 0.8224786749856828,
+      "non_near_full_binding_topn": 0.8771937132143184
+    },
+    "initial_barenco_action_weight_16": {
+      "full_binding_topn": 0.8701586838308999,
+      "near_full_binding_topn": 0.8227499472526147,
+      "non_near_full_binding_topn": 0.8770550518500331
+    },
+    "segmented_barenco_action_weight_4": {
+      "full_binding_topn": 0.8679381149805862,
+      "near_full_binding_topn": 0.8180102179220544,
+      "non_near_full_binding_topn": 0.8752009356627711
+    },
+    "barenco_and_gf_action_weight_4": {
+      "full_binding_topn": 0.8808758830720501,
+      "near_full_binding_topn": 0.825123579588269,
+      "non_near_full_binding_topn": 0.8889859579335401
+    }
+  },
+  "barenco_38_3": {
+    "actions": 16,
+    "base_xfer_940_raw_logit": -16.737,
+    "segmented_model": {
+      "target_recall": 0.95,
+      "top_256_covered": 16,
+      "top_128_covered": 14,
+      "xfer_940_raw_logit": -6.924449920654297,
+      "xfer_940_raw_threshold": -8.38923168182373,
+      "xfer_940_unfiltered_probability_rank": 265,
+      "xfer_940_final_gate_rank": 87,
+      "max_target_gate_rank": 181
+    },
+    "all_path_model": {
+      "target_recall_0_95_top_256_covered": 15,
+      "target_recall_0_99_top_256_covered": 16,
+      "xfer_940_raw_logit": -7.955514907836914
+    }
+  },
+  "gf_370_2_windowed_causal": {
+    "actions": 271,
+    "target_recall": 0.95,
+    "base": {
+      "source_covered": 253,
+      "top_512_covered": 215
+    },
+    "all_path_model": {
+      "source_covered": 266,
+      "top_512_covered": 189,
+      "top_1024_covered": 238,
+      "top_2048_covered": 254,
+      "top_4096_covered": 265,
+      "maximum_retained_target_rank": 3708
+    }
+  },
+  "barenco_search_from_58": [
+    {
+      "matcher": "initial_barenco_action_weight_4",
+      "ranking": "gate_best_root_restart",
+      "target_recall": 0.98,
+      "beam": 1000,
+      "actions_per_parent": 256,
+      "depth": 64,
+      "best_exact_gate_count": 58,
+      "search_seconds_excluding_audit": 17.403132813051343
+    },
+    {
+      "matcher": "initial_barenco_action_weight_4",
+      "ranking": "stochastic",
+      "target_recall": 0.98,
+      "beam": 1000,
+      "actions_per_parent": 256,
+      "depth": 64,
+      "best_exact_gate_count": 58,
+      "search_seconds_excluding_audit": 25.78026486793533
+    },
+    {
+      "matcher": "segmented_barenco_action_weight_4",
+      "ranking": "gate",
+      "target_recall": 0.95,
+      "beam": 1000,
+      "actions_per_parent": 256,
+      "depth": 64,
+      "best_exact_gate_count": 58,
+      "search_seconds_excluding_audit": 22.001681776018813
+    },
+    {
+      "matcher": "segmented_barenco_action_weight_4",
+      "ranking": "probability",
+      "target_recall": 0.95,
+      "beam": 1000,
+      "actions_per_parent": 512,
+      "depth": 64,
+      "best_exact_gate_count": 58,
+      "search_seconds_excluding_audit": 30.861226981971413
+    }
+  ],
+  "remote_checkpoints": {
+    "barenco_candidate_coverage": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_barenco_segments_holdout_r8_aw4_lw2_bw1_m1_lr2e5_s173.pt",
+    "best_general_metric": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt"
+  }
+}

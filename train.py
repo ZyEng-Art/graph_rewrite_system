@@ -312,6 +312,12 @@ def main() -> None:
     parser.add_argument("--locality-features", action="store_true")
     parser.add_argument("--locality-positive-weight", type=float, default=0.0)
     parser.add_argument("--locality-negative-weight", type=float, default=0.0)
+    parser.add_argument(
+        "--action-positive-weight",
+        type=float,
+        default=0.0,
+        help="extra classification weight for the trajectory's chosen exact action",
+    )
     parser.add_argument("--topn-boundary-weight", type=float, default=0.0)
     parser.add_argument("--topn-boundary-margin", type=float, default=0.0)
     parser.add_argument("--init-checkpoint", type=Path)
@@ -322,6 +328,14 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    for name in (
+        "locality_positive_weight",
+        "locality_negative_weight",
+        "action_positive_weight",
+        "topn_boundary_weight",
+    ):
+        if getattr(args, name) < 0:
+            parser.error(f"--{name.replace('_', '-')} must be nonnegative")
     if args.locality_features and not args.state_only:
         parser.error("--locality-features currently requires --state-only")
     if args.architecture == "paged_action" and args.state_only:
@@ -442,6 +456,7 @@ def main() -> None:
                     structural_hard_negatives=args.structural_hard_negatives,
                     locality_positive_weight=args.locality_positive_weight,
                     locality_negative_weight=args.locality_negative_weight,
+                    action_positive_weight=args.action_positive_weight,
                     topn_boundary_weight=args.topn_boundary_weight,
                     topn_boundary_margin=args.topn_boundary_margin,
                 )

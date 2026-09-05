@@ -1,0 +1,1022 @@
+{
+  "actions": [
+    {
+      "anchor_slots": [
+        5
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 234,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": -2,
+      "source_candidates": 168,
+      "source_id": 36,
+      "source_match_covered": true,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 40
+    },
+    {
+      "anchor_slots": [
+        7
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": null,
+      "matching_anchor_count": 1,
+      "node_id": 7,
+      "reward": 0,
+      "source_candidates": 233,
+      "source_id": 838,
+      "source_match_covered": false,
+      "step": 1,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 896
+    },
+    {
+      "anchor_slots": [
+        9
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 4,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 2,
+      "source_candidates": 194,
+      "source_id": 3854,
+      "source_match_covered": true,
+      "step": 2,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 4676
+    },
+    {
+      "anchor_slots": [
+        2
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": null,
+      "matching_anchor_count": 1,
+      "node_id": 2,
+      "reward": -1,
+      "source_candidates": 170,
+      "source_id": 882,
+      "source_match_covered": false,
+      "step": 3,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 940
+    },
+    {
+      "anchor_slots": [
+        5
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 9,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": 0,
+      "source_candidates": 211,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 4,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        5
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 4,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": 0,
+      "source_candidates": 197,
+      "source_id": 40,
+      "source_match_covered": true,
+      "step": 5,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 44
+    },
+    {
+      "anchor_slots": [
+        6
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 8,
+      "matching_anchor_count": 1,
+      "node_id": 6,
+      "reward": 0,
+      "source_candidates": 211,
+      "source_id": 34,
+      "source_match_covered": true,
+      "step": 6,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 38
+    },
+    {
+      "anchor_slots": [
+        4
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 60,
+      "matching_anchor_count": 1,
+      "node_id": 4,
+      "reward": -1,
+      "source_candidates": 229,
+      "source_id": 764,
+      "source_match_covered": true,
+      "step": 7,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 822
+    },
+    {
+      "anchor_slots": [
+        2
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 20,
+      "matching_anchor_count": 1,
+      "node_id": 2,
+      "reward": 0,
+      "source_candidates": 226,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 8,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        5
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 16,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": 0,
+      "source_candidates": 222,
+      "source_id": 3767,
+      "source_match_covered": true,
+      "step": 9,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 4406
+    },
+    {
+      "anchor_slots": [
+        3
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 3,
+      "reward": 2,
+      "source_candidates": 235,
+      "source_id": 3854,
+      "source_match_covered": true,
+      "step": 10,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 4688
+    },
+    {
+      "anchor_slots": [
+        0
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 232,
+      "matching_anchor_count": 1,
+      "node_id": 0,
+      "reward": -2,
+      "source_candidates": 207,
+      "source_id": 20,
+      "source_match_covered": true,
+      "step": 11,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 24
+    },
+    {
+      "anchor_slots": [
+        0
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 0,
+      "reward": 2,
+      "source_candidates": 205,
+      "source_id": 19,
+      "source_match_covered": true,
+      "step": 12,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 23
+    },
+    {
+      "anchor_slots": [
+        1
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": null,
+      "matching_anchor_count": 1,
+      "node_id": 1,
+      "reward": -1,
+      "source_candidates": 207,
+      "source_id": 1482,
+      "source_match_covered": false,
+      "step": 13,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 1540
+    },
+    {
+      "anchor_slots": [
+        5
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 12,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": 0,
+      "source_candidates": 214,
+      "source_id": 117,
+      "source_match_covered": true,
+      "step": 14,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 121
+    },
+    {
+      "anchor_slots": [
+        4
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 4,
+      "reward": 2,
+      "source_candidates": 196,
+      "source_id": 3853,
+      "source_match_covered": true,
+      "step": 15,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+      "xfer_id": 4664
+    }
+  ],
+  "config": {
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "caps": [
+      64,
+      128,
+      256
+    ],
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/binding_longmix_16384_2048_v2.pt",
+    "device": "cuda",
+    "ecc_file": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/ecc_set/nam_ecc.json",
+    "max_action_rank": 256,
+    "max_gate_increase": 3,
+    "max_source_matches": 8192,
+    "microbatch": 16,
+    "ranking_mode": "gate",
+    "source_grouping": "first_gate",
+    "source_microbatch": 256,
+    "target_recall": 0.99,
+    "trajectories": [
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3"
+    ]
+  },
+  "proposal_metrics": {
+    "eligible_actions": 5296,
+    "predicted_actions": 5296,
+    "selected_actions": 4084,
+    "selected_value_exploration_proposals": 0,
+    "value_increase_candidates_after_parent_cap": 0
+  },
+  "sequence_conditioned": {
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3": {
+      "actions": [
+        {
+          "anchor_slots": [
+            5
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 2,
+          "gate_rank": 234,
+          "match_group": "far",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9825286865234375,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 7.924649715423584,
+          "matcher_raw_threshold": -8.337146759033203,
+          "matcher_unfiltered_probability_rank": 76,
+          "matching_anchor_count": 1,
+          "node_id": 5,
+          "reward": -2,
+          "sequence_window_start": 0,
+          "source_candidates": 168,
+          "source_id": 36,
+          "source_match_covered": true,
+          "step": 0,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 40
+        },
+        {
+          "anchor_slots": [
+            41
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 24,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.5506688952445984,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 2.1459579467773438,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 108,
+          "matching_anchor_count": 1,
+          "node_id": 7,
+          "reward": 0,
+          "sequence_window_start": 0,
+          "source_candidates": 216,
+          "source_id": 838,
+          "source_match_covered": true,
+          "step": 1,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 896
+        },
+        {
+          "anchor_slots": [
+            45
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": -2,
+          "gate_rank": 1,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.3905663788318634,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 1.0740689039230347,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 95,
+          "matching_anchor_count": 1,
+          "node_id": 9,
+          "reward": 2,
+          "sequence_window_start": 0,
+          "source_candidates": 198,
+          "source_id": 3854,
+          "source_match_covered": true,
+          "step": 2,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 4676
+        },
+        {
+          "anchor_slots": [
+            2
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 1,
+          "gate_rank": 159,
+          "match_group": "far",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.006542682647705078,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -7.955514907836914,
+          "matcher_raw_threshold": -8.337146759033203,
+          "matcher_unfiltered_probability_rank": 414,
+          "matching_anchor_count": 1,
+          "node_id": 2,
+          "reward": -1,
+          "sequence_window_start": 0,
+          "source_candidates": 173,
+          "source_id": 882,
+          "source_match_covered": true,
+          "step": 3,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 940
+        },
+        {
+          "anchor_slots": [
+            49
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 7,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9999977350234985,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 23.316591262817383,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 25,
+          "matching_anchor_count": 1,
+          "node_id": 5,
+          "reward": 0,
+          "sequence_window_start": 0,
+          "source_candidates": 197,
+          "source_id": 35,
+          "source_match_covered": true,
+          "step": 4,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 39
+        },
+        {
+          "anchor_slots": [
+            50
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 4,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9999839067459106,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 20.062103271484375,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 37,
+          "matching_anchor_count": 1,
+          "node_id": 5,
+          "reward": 0,
+          "sequence_window_start": 0,
+          "source_candidates": 178,
+          "source_id": 40,
+          "source_match_covered": true,
+          "step": 5,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 44
+        },
+        {
+          "anchor_slots": [
+            40
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 12,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9997110962867737,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 15.28350830078125,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 49,
+          "matching_anchor_count": 1,
+          "node_id": 6,
+          "reward": 0,
+          "sequence_window_start": 0,
+          "source_candidates": 201,
+          "source_id": 34,
+          "source_match_covered": true,
+          "step": 6,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 38
+        },
+        {
+          "anchor_slots": [
+            48
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 1,
+          "gate_rank": 63,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9975862503051758,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 11.769854545593262,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 66,
+          "matching_anchor_count": 1,
+          "node_id": 4,
+          "reward": -1,
+          "sequence_window_start": 0,
+          "source_candidates": 224,
+          "source_id": 764,
+          "source_match_covered": true,
+          "step": 7,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 822
+        },
+        {
+          "anchor_slots": [
+            46
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 5,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9999986886978149,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 24.191591262817383,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 26,
+          "matching_anchor_count": 1,
+          "node_id": 2,
+          "reward": 0,
+          "sequence_window_start": 0,
+          "source_candidates": 208,
+          "source_id": 35,
+          "source_match_covered": true,
+          "step": 8,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 39
+        },
+        {
+          "anchor_slots": [
+            57
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 15,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9993031024932861,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 13.826814651489258,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 59,
+          "matching_anchor_count": 1,
+          "node_id": 5,
+          "reward": 0,
+          "sequence_window_start": 0,
+          "source_candidates": 207,
+          "source_id": 3767,
+          "source_match_covered": true,
+          "step": 9,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 4406
+        },
+        {
+          "anchor_slots": [
+            60
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": -2,
+          "gate_rank": 2,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.6884901523590088,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 3.120943784713745,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 97,
+          "matching_anchor_count": 1,
+          "node_id": 3,
+          "reward": 2,
+          "sequence_window_start": 0,
+          "source_candidates": 223,
+          "source_id": 3854,
+          "source_match_covered": true,
+          "step": 10,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 4688
+        },
+        {
+          "anchor_slots": [
+            0
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 2,
+          "gate_rank": 218,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 1.0,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 30.10920524597168,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 14,
+          "matching_anchor_count": 1,
+          "node_id": 0,
+          "reward": -2,
+          "sequence_window_start": 0,
+          "source_candidates": 206,
+          "source_id": 20,
+          "source_match_covered": true,
+          "step": 11,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 24
+        },
+        {
+          "anchor_slots": [
+            63
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": -2,
+          "gate_rank": 2,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9958168864250183,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 10.85777473449707,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 72,
+          "matching_anchor_count": 1,
+          "node_id": 0,
+          "reward": 2,
+          "sequence_window_start": 0,
+          "source_candidates": 203,
+          "source_id": 19,
+          "source_match_covered": true,
+          "step": 12,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 23
+        },
+        {
+          "anchor_slots": [
+            68
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 1,
+          "gate_rank": 54,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9988641738891602,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 13.01826286315918,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 60,
+          "matching_anchor_count": 1,
+          "node_id": 1,
+          "reward": -1,
+          "sequence_window_start": 0,
+          "source_candidates": 200,
+          "source_id": 1482,
+          "source_match_covered": true,
+          "step": 13,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 1540
+        },
+        {
+          "anchor_slots": [
+            73
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 0,
+          "gate_rank": 17,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.25720474123954773,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 0.056228406727313995,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 91,
+          "matching_anchor_count": 1,
+          "node_id": 5,
+          "reward": 0,
+          "sequence_window_start": 0,
+          "source_candidates": 211,
+          "source_id": 117,
+          "source_match_covered": true,
+          "step": 14,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 121
+        },
+        {
+          "anchor_slots": [
+            72
+          ],
+          "cost": 40,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": -2,
+          "gate_rank": 1,
+          "match_group": "near",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9293124675750732,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 6.069077014923096,
+          "matcher_raw_threshold": -11.009002685546875,
+          "matcher_unfiltered_probability_rank": 75,
+          "matching_anchor_count": 1,
+          "node_id": 4,
+          "reward": 2,
+          "sequence_window_start": 0,
+          "source_candidates": 198,
+          "source_id": 3853,
+          "source_match_covered": true,
+          "step": 15,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3",
+          "xfer_id": 4664
+        }
+      ],
+      "probes": [],
+      "summary": {
+        "actions": 16,
+        "caps": {
+          "128": {
+            "covered": 13,
+            "missing_steps": [
+              0,
+              3,
+              11
+            ],
+            "recall": 0.8125,
+            "whole_trajectory_covered": false
+          },
+          "256": {
+            "covered": 16,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "64": {
+            "covered": 13,
+            "missing_steps": [
+              0,
+              3,
+              11
+            ],
+            "recall": 0.8125,
+            "whole_trajectory_covered": false
+          }
+        },
+        "exact_action_available": 16,
+        "exact_transition_matches": 16,
+        "gate_rank": {
+          "max": 234,
+          "median": 12,
+          "min": 1,
+          "p90": 218,
+          "p95": 234
+        },
+        "missing_rank_steps": [],
+        "ranked_action_covered": 16,
+        "source_match_covered": 16
+      }
+    }
+  },
+  "summary": {
+    "actions": 16,
+    "caps": {
+      "128": {
+        "covered": 11,
+        "missing_steps": [
+          0,
+          1,
+          3,
+          11,
+          13
+        ],
+        "recall": 0.6875,
+        "whole_trajectory_covered": false
+      },
+      "256": {
+        "covered": 13,
+        "missing_steps": [
+          1,
+          3,
+          13
+        ],
+        "recall": 0.8125,
+        "whole_trajectory_covered": false
+      },
+      "64": {
+        "covered": 11,
+        "missing_steps": [
+          0,
+          1,
+          3,
+          11,
+          13
+        ],
+        "recall": 0.6875,
+        "whole_trajectory_covered": false
+      }
+    },
+    "exact_action_available": 16,
+    "exact_transition_matches": 16,
+    "gate_rank": {
+      "max": 234,
+      "median": 9,
+      "min": 1,
+      "p90": 232,
+      "p95": 234
+    },
+    "missing_rank_steps": [
+      1,
+      3,
+      13
+    ],
+    "ranked_action_covered": 13,
+    "source_match_covered": 13
+  },
+  "timing": {
+    "model_match_seconds": 0.4496646770276129,
+    "model_match_stages": {
+      "batch_collate_and_pad_seconds": 0.0006762989796698093,
+      "batch_host_to_device_seconds": 0.00012885709293186665,
+      "candidate_device_to_host_seconds": 0.0,
+      "candidate_gpu_pack_seconds": 0.006634437944740057,
+      "candidate_python_pack_seconds": 0.0,
+      "candidate_selection_and_ranking_seconds": 0.35567479813471437,
+      "incremental_graph_readout_seconds": 0.027022602036595345,
+      "match_group_compaction_seconds": 0.03773689619265497,
+      "match_logits_seconds": 0.008352994685992599,
+      "model_match_unattributed_seconds": 0.0005735580343753099,
+      "readout_cache_metadata_or_gather_seconds": 0.00016115186735987663,
+      "structural_binding_decode_seconds": 0.01270308205857873
+    },
+    "proposal_seconds": 0.05444406880997121,
+    "proposal_stages": {
+      "gpu_action_expansion_seconds": 0.0006769578903913498,
+      "gpu_global_proposal_rank_seconds": 0.000409706961363554,
+      "gpu_match_preselection_seconds": 0.044584246817976236,
+      "gpu_per_parent_rank_seconds": 0.001589055871590972,
+      "proposal_device_to_host_and_pack_seconds": 0.007053741021081805
+    },
+    "qasm_load_and_exact_validation_seconds": 0.039405259070917964
+  },
+  "trajectories": {
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_trajectory_audit_20260905/barenco_38_3": {
+      "actions": 16,
+      "caps": {
+        "128": {
+          "covered": 11,
+          "missing_steps": [
+            0,
+            1,
+            3,
+            11,
+            13
+          ],
+          "recall": 0.6875,
+          "whole_trajectory_covered": false
+        },
+        "256": {
+          "covered": 13,
+          "missing_steps": [
+            1,
+            3,
+            13
+          ],
+          "recall": 0.8125,
+          "whole_trajectory_covered": false
+        },
+        "64": {
+          "covered": 11,
+          "missing_steps": [
+            0,
+            1,
+            3,
+            11,
+            13
+          ],
+          "recall": 0.6875,
+          "whole_trajectory_covered": false
+        }
+      },
+      "exact_action_available": 16,
+      "exact_transition_matches": 16,
+      "gate_rank": {
+        "max": 234,
+        "median": 9,
+        "min": 1,
+        "p90": 232,
+        "p95": 234
+      },
+      "missing_rank_steps": [
+        1,
+        3,
+        13
+      ],
+      "ranked_action_covered": 13,
+      "source_match_covered": 13
+    }
+  }
+}

@@ -208,7 +208,14 @@ def model_matches(
     return output, time.perf_counter() - started
 
 
-def make_child(parent: BeamState, proposal: Proposal, context, xfers) -> BeamState | None:
+def make_child(
+    parent: BeamState,
+    proposal: Proposal,
+    context,
+    xfers,
+    *,
+    eliminate_rotation: bool = False,
+) -> BeamState | None:
     slot_to_guid = {
         parent.guid_to_slot[int(node.guid)]: int(node.guid)
         for node in parent.graph.nodes
@@ -221,7 +228,7 @@ def make_child(parent: BeamState, proposal: Proposal, context, xfers) -> BeamSta
     result = parent.graph.apply_xfer_with_binding_trace(
         xfer=xfers[proposal.xfer_id],
         node=node,
-        eliminate_rotation=False,
+        eliminate_rotation=eliminate_rotation,
         predecessor_layers=1,
     )
     if result is None or result[0] is None:
@@ -233,13 +240,22 @@ def make_child(parent: BeamState, proposal: Proposal, context, xfers) -> BeamSta
     if proposal.binding is not None and source_slots != proposal.binding:
         return None
 
+    live_guids = {int(node.guid) for node in graph.nodes}
+    surviving_destination_guids = tuple(
+        int(guid) for guid in destination_guids if int(guid) in live_guids
+    )
     guid_to_slot = dict(parent.guid_to_slot)
-    next_slot = update_slots(graph, guid_to_slot, parent.next_slot, destination_guids)
+    next_slot = update_slots(
+        graph,
+        guid_to_slot,
+        parent.next_slot,
+        surviving_destination_guids,
+    )
     after = snapshot(graph, guid_to_slot)
     removed, changed_edges = graph_delta(parent.snapshot, after)
     live = {int(row[0]) for row in after["nodes"]}
     destination_slots = {
-        guid_to_slot[int(guid)] for guid in destination_guids if int(guid) in guid_to_slot
+        guid_to_slot[guid] for guid in surviving_destination_guids
     }
     core = set(destination_slots)
     for src, dst, _, _ in changed_edges:
@@ -263,7 +279,7 @@ def make_child(parent: BeamState, proposal: Proposal, context, xfers) -> BeamSta
     continued = proposal.anchor_slot in parent.previous_preferred
     local_streak = parent.local_streak + 1 if continued else 0
     gate_count = int(graph.gate_count)
-    if gate_count != proposal.next_gate_count:
+    if not eliminate_rotation and gate_count != proposal.next_gate_count:
         raise RuntimeError(
             f"gate delta mismatch: expected {proposal.next_gate_count}, got {gate_count}"
         )
@@ -302,6 +318,11 @@ def main() -> None:
     parser.add_argument("--refresh-count", type=int, default=100)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--best-qasm", type=Path)
+    parser.add_argument(
+        "--eliminate-rotation",
+        action="store_true",
+        help="fold parameter expressions and remove zero rotations after each Quartz rewrite",
+    )
     args = parser.parse_args()
     if args.mode == "model" and (args.checkpoint is None or args.calibration is None):
         parser.error("model mode requires --checkpoint and --calibration")
@@ -489,7 +510,13 @@ def main() -> None:
             if len(children) >= args.beam_size:
                 break
             attempted += 1
-            child = make_child(beam[proposal.parent], proposal, context, xfers)
+            child = make_child(
+                beam[proposal.parent],
+                proposal,
+                context,
+                xfers,
+                eliminate_rotation=args.eliminate_rotation,
+            )
             if child is None:
                 invalid += 1
                 continue
@@ -553,6 +580,7 @@ def main() -> None:
     )
     result = {
         "mode": args.mode,
+        "eliminate_rotation": args.eliminate_rotation,
         "qasm": str(args.qasm),
         "beam_size": args.beam_size,
         "requested_depth": args.depth,

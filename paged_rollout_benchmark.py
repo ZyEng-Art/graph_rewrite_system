@@ -386,6 +386,7 @@ def audit_proposal_legality(
     quartz,
     xfers,
     replay_initial_qasm: str,
+    eliminate_rotation: bool,
     destination_patterns,
     xfer_to_source,
 ) -> dict:
@@ -429,6 +430,7 @@ def audit_proposal_legality(
             replay_initial_qasm,
             replay_cache=replay_cache,
             replay_cache_prefixes=replay_prefixes,
+            eliminate_rotation=eliminate_rotation,
         )
         action_depth = len(audit_state.history)
         parent_valid = failure_step is None or int(failure_step) == action_depth
@@ -1012,6 +1014,29 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--preserve-parent-best",
+        action="store_true",
+        help=(
+            "place each beam parent's best-ranked action before the remaining "
+            "global proposals so a global top-k cannot erase every continuation"
+        ),
+    )
+    parser.add_argument(
+        "--parent-diversity-actions",
+        type=int,
+        default=1,
+        help="number of top actions reserved for each preserved parent",
+    )
+    parser.add_argument(
+        "--parent-diversity-parent-cap",
+        type=int,
+        default=0,
+        help=(
+            "preserve only this many parents ordered by their best proposal; "
+            "zero preserves every parent"
+        ),
+    )
+    parser.add_argument(
         "--proposal-ranking-seed",
         type=int,
         default=73,
@@ -1053,6 +1078,14 @@ def main() -> None:
         help="over-generate this many beam widths before an exact refresh",
     )
     parser.add_argument("--audit-count", type=int, default=1000)
+    parser.add_argument(
+        "--eliminate-rotation",
+        action="store_true",
+        help=(
+            "use Quartz parameter folding and zero-rotation elimination for "
+            "exact refreshes and final replay audits"
+        ),
+    )
     parser.add_argument(
         "--checkpoint-audit-count",
         type=int,
@@ -1175,6 +1208,10 @@ def main() -> None:
         parser.error("--ppo-checkpoint requires --proposal-ranking ppo")
     if args.value_increase_actions_per_parent < 0:
         parser.error("value increase action quota must be nonnegative")
+    if args.parent_diversity_actions < 1:
+        parser.error("parent diversity action count must be positive")
+    if args.parent_diversity_parent_cap < 0:
+        parser.error("parent diversity parent cap must be nonnegative")
     if args.ppo_policy_weight < 0:
         parser.error("PPO policy weight must be nonnegative")
     if args.value_increase_actions_per_parent > args.max_actions_per_parent:
@@ -1569,6 +1606,9 @@ def main() -> None:
                 action_value_weight=args.action_value_weight,
                 value_increase_cap=args.value_increase_actions_per_parent,
                 value_exploration_fraction=args.value_exploration_fraction,
+                preserve_parent_best=args.preserve_parent_best,
+                parent_diversity_actions=args.parent_diversity_actions,
+                parent_diversity_parent_cap=args.parent_diversity_parent_cap,
                 ppo_actor_critic=ppo_actor_critic,
                 ppo_model=model if args.proposal_ranking == "ppo" else None,
                 ppo_states=(
@@ -1666,6 +1706,7 @@ def main() -> None:
                 quartz=quartz,
                 xfers=xfers,
                 replay_initial_qasm=replay_initial_qasm,
+                eliminate_rotation=args.eliminate_rotation,
                 destination_patterns=destination_patterns,
                 xfer_to_source=rules.xfer_to_source,
             )
@@ -1814,6 +1855,7 @@ def main() -> None:
                     ),
                     replay_cache=refresh_replay_cache,
                     replay_cache_prefixes=refresh_shared_prefixes,
+                    eliminate_rotation=args.eliminate_rotation,
                 )
                 if (
                     checkpoint_audited < args.checkpoint_audit_count
@@ -1832,6 +1874,7 @@ def main() -> None:
                         replay_initial_qasm,
                         return_checkpoint=True,
                         ignore_checkpoint=True,
+                        eliminate_rotation=args.eliminate_rotation,
                         profile_timing=(
                             refresh_profile_seconds if args.profile_stages else None
                         ),
@@ -2213,6 +2256,7 @@ def main() -> None:
             replay_initial_qasm,
             ignore_checkpoint=True,
             prefer_direct_binding=False,
+            eliminate_rotation=args.eliminate_rotation,
         )
         if exact_graph is None:
             failure_steps[int(failure_step)] += 1
@@ -2240,6 +2284,8 @@ def main() -> None:
     }
     total = {
         "mode": "paged_action_lazy",
+        "eliminate_rotation": args.eliminate_rotation,
+        "speculative_normalization": False,
         "qasm": str(args.qasm),
         "beam_size": args.beam_size,
         "requested_depth": args.depth,
@@ -2279,6 +2325,9 @@ def main() -> None:
             args.value_increase_actions_per_parent
         ),
         "value_exploration_fraction": args.value_exploration_fraction,
+        "preserve_parent_best": args.preserve_parent_best,
+        "parent_diversity_actions": args.parent_diversity_actions,
+        "parent_diversity_parent_cap": args.parent_diversity_parent_cap,
         "allocated_cache_pages": arena.allocated_pages,
         "cache_capacity_pages": arena.capacity,
         "exploration_checkpoint": (

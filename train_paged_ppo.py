@@ -2093,6 +2093,14 @@ def main() -> None:
     parser.add_argument("--hidden-size", type=int)
     parser.add_argument("--initial-gate-bias", type=float, default=1.0)
     parser.add_argument("--ppo-epochs", type=int, default=4)
+    parser.add_argument(
+        "--skip-ppo-updates",
+        action="store_true",
+        help=(
+            "collect fixed-policy search trajectories without running PPO updates; "
+            "useful for candidate-cap and replay-policy audits"
+        ),
+    )
     parser.add_argument("--minibatch-size", type=int, default=64)
     parser.add_argument("--actor-learning-rate", type=float, default=3e-4)
     parser.add_argument("--critic-learning-rate", type=float, default=5e-4)
@@ -2449,22 +2457,32 @@ def main() -> None:
             raise RuntimeError("PPO collection produced no transitions")
 
         update_started = time.perf_counter()
-        update_metrics = ppo_update(
-            actor_critic,
-            optimizer,
-            transitions,
-            device=device,
-            epochs=args.ppo_epochs,
-            minibatch_size=args.minibatch_size,
-            clip_epsilon=args.clip_epsilon,
-            value_coefficient=args.value_coefficient,
-            entropy_coefficient=args.entropy_coefficient,
-            legality_coefficient=args.legality_coefficient,
-            reference_kl_coefficient=args.reference_kl_coefficient,
-            target_kl=args.target_kl,
-            max_grad_norm=args.max_grad_norm,
-            seed=args.seed + iteration,
-        )
+        if args.skip_ppo_updates:
+            update_metrics = {
+                "skipped": True,
+                "legality_label_rate": sum(row.legal for row in transitions)
+                / len(transitions),
+                "batches": 0,
+                "completed_epochs": 0,
+                "target_kl_early_stopped": False,
+            }
+        else:
+            update_metrics = ppo_update(
+                actor_critic,
+                optimizer,
+                transitions,
+                device=device,
+                epochs=args.ppo_epochs,
+                minibatch_size=args.minibatch_size,
+                clip_epsilon=args.clip_epsilon,
+                value_coefficient=args.value_coefficient,
+                entropy_coefficient=args.entropy_coefficient,
+                legality_coefficient=args.legality_coefficient,
+                reference_kl_coefficient=args.reference_kl_coefficient,
+                target_kl=args.target_kl,
+                max_grad_norm=args.max_grad_norm,
+                seed=args.seed + iteration,
+            )
         update_seconds = time.perf_counter() - update_started
         collection_metrics = aggregate_episodes(episode_rows)
         evaluation_metrics = (
@@ -2492,7 +2510,9 @@ def main() -> None:
             ),
             "update_seconds": update_seconds,
             "update_samples_per_second": (
-                len(transitions) * args.ppo_epochs / update_seconds
+                0.0
+                if args.skip_ppo_updates
+                else len(transitions) * args.ppo_epochs / update_seconds
             ),
             "collection": collection_metrics,
             "update": update_metrics,
