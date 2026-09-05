@@ -188,11 +188,88 @@ def audit_recall(
 
             teacher = cpu_batch["target_actions"][batch_index]
             teacher_key = None
+            teacher_details = None
             if teacher is not None:
                 teacher_key = (
                     int(teacher["source_id"]),
                     tuple(map(int, teacher["binding_slots"])),
                 )
+                teacher_source, teacher_binding = teacher_key
+                teacher_anchor = teacher_binding[0]
+                teacher_eligible = bool(
+                    eligible[
+                        batch_index,
+                        teacher_anchor,
+                        teacher_source,
+                    ].item()
+                )
+                teacher_raw_logit = float(
+                    logits[
+                        batch_index,
+                        teacher_anchor,
+                        teacher_source,
+                    ].float().item()
+                )
+                teacher_calibrated_logit = float(
+                    calibrated_logits[
+                        batch_index,
+                        teacher_anchor,
+                        teacher_source,
+                    ].item()
+                )
+                teacher_above_threshold = bool(
+                    above[
+                        batch_index,
+                        teacher_anchor,
+                        teacher_source,
+                    ].item()
+                )
+                eligible_scores = calibrated_logits[batch_index][
+                    eligible[batch_index]
+                ]
+                above_scores = calibrated_logits[batch_index][above[batch_index]]
+                teacher_details = {
+                    "xfer_id": int(teacher["xfer_id"]),
+                    "source_id": teacher_source,
+                    "binding_slots": list(teacher_binding),
+                    "anchor_slot": teacher_anchor,
+                    "group": (
+                        "near"
+                        if bool(near_anchor[batch_index, teacher_anchor].item())
+                        else "far"
+                    ),
+                    "eligible": teacher_eligible,
+                    "raw_logit": teacher_raw_logit,
+                    "raw_threshold": float(
+                        threshold[batch_index, teacher_anchor].item()
+                    ),
+                    "calibrated_logit": teacher_calibrated_logit,
+                    "eligible_rank": (
+                        1
+                        + int(
+                            eligible_scores.gt(teacher_calibrated_logit)
+                            .sum()
+                            .item()
+                        )
+                        if teacher_eligible
+                        else None
+                    ),
+                    "above_threshold": teacher_above_threshold,
+                    "above_threshold_rank": (
+                        1
+                        + int(
+                            above_scores.gt(teacher_calibrated_logit).sum().item()
+                        )
+                        if teacher_above_threshold
+                        else None
+                    ),
+                    "after_source_cap": (
+                        teacher_source,
+                        teacher_anchor,
+                    )
+                    in capped_pairs,
+                    "final_retained": teacher_key in decoded,
+                }
 
             row_totals = empty_totals()
             row_totals.update(
@@ -286,6 +363,7 @@ def audit_recall(
                     "state": state_index,
                     "prefix_length": int(cpu_batch["prefix_length"][batch_index]),
                     **row_totals,
+                    "teacher": teacher_details,
                     "groups": state_groups,
                 }
             )

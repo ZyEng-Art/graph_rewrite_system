@@ -69,6 +69,12 @@ class RefreshRebaseTest(unittest.TestCase):
         self.assertEqual(rebased["prefix_length"], 1)
         self.assertEqual(rebased["actions"], actions[-1:])
 
+        fully_refreshed = rebase_prefix_sample(sample, 0)
+        self.assertEqual(fully_refreshed["initial_graph"], original_current)
+        self.assertEqual(fully_refreshed["actions"], [])
+        self.assertEqual(fully_refreshed["prefix_length"], 0)
+        self.assertEqual(fully_refreshed["target_action"], target)
+
 
 class RefreshConsistencyLossTest(unittest.TestCase):
     def test_identical_views_have_zero_loss(self) -> None:
@@ -104,6 +110,22 @@ class RefreshConsistencyLossTest(unittest.TestCase):
         self.assertGreater(float(loss.detach()), 0.0)
         self.assertGreater(float(base.grad.abs().sum().detach()), 0.0)
         self.assertGreater(float(refreshed.grad.abs().sum().detach()), 0.0)
+
+    def test_positive_consistency_only_raises_weaker_view(self) -> None:
+        base = torch.tensor([[[2.0]]], requires_grad=True)
+        refreshed = torch.tensor([[[-2.0]]], requires_grad=True)
+        eligible = torch.ones_like(base, dtype=torch.bool)
+        loss = matcher_refresh_consistency_loss(
+            base,
+            refreshed,
+            eligible,
+            eligible,
+            [[(0, (0,))]],
+            max_hard_pairs=0,
+        )
+        loss.backward()
+        self.assertEqual(float(base.grad.item()), 0.0)
+        self.assertLess(float(refreshed.grad.item()), 0.0)
 
     def test_rejects_misaligned_shapes(self) -> None:
         with self.assertRaisesRegex(ValueError, "identical matcher shapes"):

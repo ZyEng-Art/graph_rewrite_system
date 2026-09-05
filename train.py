@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import nullcontext
+from functools import partial
 import json
 from pathlib import Path
 import time
@@ -58,7 +59,10 @@ def matcher_refresh_consistency_loss(
         common = eligible[batch_index] & refreshed_eligible[batch_index]
         if not bool(common.any()):
             continue
-        selected = []
+        state_losses = []
+        positive_positions = torch.empty(
+            0, dtype=torch.long, device=logits.device
+        )
         if rows:
             anchors = torch.tensor(
                 [int(binding[0]) for _, binding in rows],
@@ -70,7 +74,42 @@ def matcher_refresh_consistency_loss(
                 dtype=torch.long,
                 device=logits.device,
             )
-            selected.append(anchors * logits.shape[-1] + sources)
+            positive_positions = torch.unique(
+                anchors * logits.shape[-1] + sources
+            )
+            base_positive = (
+                logits[batch_index]
+                .flatten()[positive_positions]
+                .float()
+                .clamp(-20, 20)
+            )
+            refreshed_positive = (
+                refreshed_logits[batch_index]
+                .flatten()[positive_positions]
+                .float()
+                .clamp(-20, 20)
+            )
+            # Do not average a correctly high positive down toward a failed
+            # refresh view.  The stronger view acts as a stop-gradient target,
+            # so consistency can only raise the weaker positive score.
+            positive_target = torch.maximum(
+                base_positive, refreshed_positive
+            ).detach()
+            state_losses.append(
+                0.5
+                * (
+                    F.smooth_l1_loss(
+                        base_positive,
+                        positive_target,
+                        reduction="none",
+                    )
+                    + F.smooth_l1_loss(
+                        refreshed_positive,
+                        positive_target,
+                        reduction="none",
+                    )
+                )
+            )
         if max_hard_pairs:
             common_positions = common.flatten().nonzero(
                 as_tuple=False
@@ -82,29 +121,57 @@ def matcher_refresh_consistency_loss(
                     refreshed_logits[batch_index].float(),
                 ).flatten()[common_positions]
                 hard = common_positions[boundary_scores.topk(hard_count).indices]
-            selected.append(hard)
-        if not selected:
+            if positive_positions.numel():
+                hard = hard[~torch.isin(hard, positive_positions)]
+            if hard.numel():
+                base_hard = (
+                    logits[batch_index].flatten()[hard].float().clamp(-20, 20)
+                )
+                refreshed_hard = (
+                    refreshed_logits[batch_index]
+                    .flatten()[hard]
+                    .float()
+                    .clamp(-20, 20)
+                )
+                state_losses.append(
+                    F.smooth_l1_loss(
+                        base_hard,
+                        refreshed_hard,
+                        reduction="none",
+                    )
+                )
+        if not state_losses:
             continue
-        positions = torch.unique(torch.cat(selected))
-        base_values = logits[batch_index].flatten()[positions].float().clamp(-20, 20)
-        refreshed_values = (
-            refreshed_logits[batch_index]
-            .flatten()[positions]
-            .float()
-            .clamp(-20, 20)
-        )
-        losses.append(F.smooth_l1_loss(base_values, refreshed_values))
+        losses.append(torch.cat(state_losses).mean())
     if not losses:
         return logits.sum() * 0
     return torch.stack(losses).mean()
 
 
-def collate_refresh_views(samples: list[dict], rules, max_actions: int) -> dict:
+def collate_refresh_views(
+    samples: list[dict],
+    rules,
+    max_actions: int,
+    min_actions: int | None = None,
+) -> dict:
     """Collate aligned long- and short-prefix views of identical states."""
 
     base = collate_prefixes(samples, rules)
+    if min_actions is None:
+        retained_actions = [max_actions] * len(samples)
+    else:
+        if not 0 <= min_actions <= max_actions:
+            raise ValueError("refresh action range must satisfy 0 <= min <= max")
+        retained_actions = torch.randint(
+            min_actions,
+            max_actions + 1,
+            (len(samples),),
+        ).tolist()
     refresh = collate_prefixes(
-        [rebase_prefix_sample(sample, max_actions) for sample in samples],
+        [
+            rebase_prefix_sample(sample, retained)
+            for sample, retained in zip(samples, retained_actions)
+        ],
         rules,
     )
     slots = max(base["initial_types"].shape[1], refresh["initial_types"].shape[1])
@@ -370,6 +437,18 @@ def main() -> None:
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--eval-batch-size", type=int, default=2)
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=0,
+        help="background workers for replaying and collating training prefixes",
+    )
+    parser.add_argument(
+        "--prefetch-factor",
+        type=int,
+        default=2,
+        help="training batches prefetched by each background worker",
+    )
     parser.add_argument("--width", type=int, default=192)
     parser.add_argument("--retrieval-width", type=int, default=128)
     parser.add_argument("--graph-layers", type=int, default=3)
@@ -426,6 +505,14 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--refresh-augmentation-min-actions",
+        type=int,
+        help=(
+            "randomly retain between this many and --refresh-augmentation-actions "
+            "for each state; omitted keeps the fixed-length behavior"
+        ),
+    )
+    parser.add_argument(
         "--refresh-supervision-weight",
         type=float,
         default=1.0,
@@ -461,6 +548,8 @@ def main() -> None:
     ):
         if getattr(args, name) < 0:
             parser.error(f"--{name.replace('_', '-')} must be nonnegative")
+    if args.num_workers < 0 or args.prefetch_factor < 1:
+        parser.error("worker count must be nonnegative and prefetch must be positive")
     if args.locality_features and not args.state_only:
         parser.error("--locality-features currently requires --state-only")
     if args.architecture == "paged_action" and args.state_only:
@@ -469,6 +558,22 @@ def main() -> None:
         parser.error("paged_action does not consume materialized locality features")
     if args.refresh_augmentation_actions < 0:
         parser.error("--refresh-augmentation-actions must be nonnegative")
+    if args.refresh_augmentation_min_actions is not None and not (
+        0
+        <= args.refresh_augmentation_min_actions
+        <= args.refresh_augmentation_actions
+    ):
+        parser.error(
+            "--refresh-augmentation-min-actions must be between zero and "
+            "--refresh-augmentation-actions"
+        )
+    if (
+        args.refresh_augmentation_min_actions is not None
+        and not args.refresh_augmentation_actions
+    ):
+        parser.error(
+            "--refresh-augmentation-min-actions requires refresh augmentation"
+        )
     if args.refresh_consistency_pairs < 0:
         parser.error("--refresh-consistency-pairs must be nonnegative")
     if args.refresh_consistency_weight and not args.refresh_augmentation_actions:
@@ -487,14 +592,16 @@ def main() -> None:
         include_train_terminal=args.include_train_terminal,
         train_terminal_repeat=args.train_terminal_repeat,
     )
-    collate = lambda samples: (
-        collate_current_graphs(samples, rules)
-        if args.state_only
-        else collate_prefixes(samples, rules)
+    collate = partial(
+        collate_current_graphs if args.state_only else collate_prefixes,
+        rules=rules,
     )
     if args.refresh_augmentation_actions:
-        train_collate = lambda samples: collate_refresh_views(
-            samples, rules, args.refresh_augmentation_actions
+        train_collate = partial(
+            collate_refresh_views,
+            rules=rules,
+            max_actions=args.refresh_augmentation_actions,
+            min_actions=args.refresh_augmentation_min_actions,
         )
     else:
         train_collate = collate
@@ -504,8 +611,14 @@ def main() -> None:
         batch_size=args.batch_size,
         sampler=sampler,
         collate_fn=train_collate,
-        num_workers=0,
+        num_workers=args.num_workers,
         pin_memory=device.type == "cuda",
+        persistent_workers=args.num_workers > 0,
+        **(
+            {"prefetch_factor": args.prefetch_factor}
+            if args.num_workers > 0
+            else {}
+        ),
     )
     test_loader = DataLoader(
         test_dataset,
