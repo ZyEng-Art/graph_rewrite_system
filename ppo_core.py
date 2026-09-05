@@ -522,8 +522,18 @@ class HierarchicalPPOActorCritic(nn.Module):
         self,
         candidate_features: torch.Tensor,
         matcher_logits: torch.Tensor,
+        prefix_states: torch.Tensor | None = None,
+        state_features: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        residual = self.pattern(self.pattern_norm(candidate_features)).squeeze(-1)
+        hidden = self.pattern[0](self.pattern_norm(candidate_features))
+        if prefix_states is not None or state_features is not None:
+            prefix_states, state_features = self._context(
+                prefix_states, state_features
+            )
+            context = self.node_prefix_projection(prefix_states)
+            context = context + self.node_state_projection(state_features)
+            hidden = hidden + context.unsqueeze(1)
+        residual = self.pattern[2](self.pattern[1](hidden)).squeeze(-1)
         return matcher_logits + residual
 
     def stop_policy_logits(
@@ -549,7 +559,10 @@ class HierarchicalPPOActorCritic(nn.Module):
             node_features, node_mask, prefix_states, state_features
         )
         candidate_logits = self.candidate_policy_logits(
-            candidate_features, matcher_logits
+            candidate_features,
+            matcher_logits,
+            prefix_states,
+            state_features,
         )
         stop_logits = (
             self.stop_policy_logits(prefix_states, state_features)

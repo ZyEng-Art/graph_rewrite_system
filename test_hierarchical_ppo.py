@@ -12,6 +12,30 @@ from ppo_core import (
 
 
 class HierarchicalPolicyTest(unittest.TestCase):
+    def test_pattern_policy_is_conditioned_on_prefix(self) -> None:
+        actor = HierarchicalPPOActorCritic(width=4, hidden_size=4)
+        with torch.no_grad():
+            actor.pattern[0].weight.zero_()
+            actor.pattern[0].bias.zero_()
+            actor.pattern[2].weight.fill_(1.0)
+            actor.pattern[2].bias.zero_()
+            actor.node_prefix_projection.weight.copy_(torch.eye(4))
+            actor.node_state_projection.weight.zero_()
+        candidates = torch.zeros(2, 1, actor.policy_feature_dim)
+        matcher_logits = torch.zeros(2, 1)
+        prefixes = torch.tensor(
+            [[0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0]]
+        )
+        states = torch.zeros(2, actor.state_feature_dim)
+
+        logits = actor.candidate_policy_logits(
+            candidates, matcher_logits, prefixes, states
+        )
+
+        self.assertEqual(tuple(logits.shape), (2, 1))
+        self.assertEqual(float(logits[0, 0]), 0.0)
+        self.assertGreater(float(logits[1, 0]), 0.0)
+
     def test_factorized_policy_is_normalized(self) -> None:
         result = hierarchical_policy_log_probs(
             node_logits=torch.tensor([[2.0, 1.0, -3.0]]),
