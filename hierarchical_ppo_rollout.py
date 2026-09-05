@@ -691,6 +691,8 @@ def collect_hierarchical_episode_batch(
             replay_capacity_per_circuit=replay_capacity_per_circuit,
             best_by_circuit=best_by_circuit,
             replay_pool=replay_pool,
+            profile_timing=timing,
+            profile_counts=timing,
         )
         exact_retry_indices = set()
         for parent_index, (

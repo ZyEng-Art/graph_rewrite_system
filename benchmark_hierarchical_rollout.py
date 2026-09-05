@@ -28,7 +28,11 @@ from model_factory import build_model
 from ppo_core import HierarchicalPPOActorCritic
 from threshold_inference import load_threshold_config
 from train import autocast_context
-from train_paged_ppo import make_replay_bucket, replay_pool_metrics
+from train_paged_ppo import (
+    make_replay_bucket,
+    replay_pool_metrics,
+    serializable_replay_pool,
+)
 
 
 def allocate_circuit_episodes(
@@ -542,7 +546,7 @@ def main() -> None:
                 "args": vars(args),
                 "training_iterations": iteration_results,
                 "best_so_far": best_by_circuit,
-                "replay_pool": replay_pool,
+                "replay_pool": serializable_replay_pool(replay_pool),
                 "rejected_action_cache": rejected_action_cache,
             },
             args.ppo_output,

@@ -959,12 +959,18 @@ def replay_state(
             break
         add_seconds("binding_validation_seconds", validation_started)
         update_started = now()
-        live_guids = {int(node.guid) for node in next_graph.nodes}
-        surviving_destination_pairs = tuple(
-            (int(guid), int(slot))
-            for guid, slot in zip(destination_guids, action.destination_slots)
-            if int(guid) in live_guids
-        )
+        if eliminate_rotation:
+            live_guids = {int(node.guid) for node in next_graph.nodes}
+            surviving_destination_pairs = tuple(
+                (int(guid), int(slot))
+                for guid, slot in zip(destination_guids, action.destination_slots)
+                if int(guid) in live_guids
+            )
+        else:
+            surviving_destination_pairs = tuple(
+                (int(guid), int(slot))
+                for guid, slot in zip(destination_guids, action.destination_slots)
+            )
         for guid, slot in surviving_destination_pairs:
             guid_to_slot[int(guid)] = int(slot)
             slot_to_guid[int(slot)] = int(guid)
