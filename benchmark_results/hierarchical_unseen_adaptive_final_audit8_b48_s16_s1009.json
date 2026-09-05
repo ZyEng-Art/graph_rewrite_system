@@ -1,0 +1,1052 @@
+{
+  "args": {
+    "additional_qasm": [
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/hwb6.qasm",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/grover_5.qasm"
+    ],
+    "batch_size": 48,
+    "best_start_probability": 0.25,
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "cycle_reward": -1.0,
+    "data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "disable_candidate_fallback": false,
+    "disable_rejected_action_cache": false,
+    "ecc_file": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/ecc_set/nam_ecc.json",
+    "fallback_min_candidates": 16,
+    "fallback_node_k": 64,
+    "fallback_pattern_k": 32,
+    "fallback_target_recall": 0.99,
+    "gae_lambda": 0.95,
+    "gamma": 0.99,
+    "greedy": false,
+    "initial_gate_bias": 1.0,
+    "invalid_reward": -2.0,
+    "max_actions": 256,
+    "max_exact_rejections_per_episode": 8,
+    "max_rejected_actions_per_step": 4,
+    "max_steps": 16,
+    "node_checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/hierarchical_multicircuit_ppo_i20_b64_s16_s1002.pt",
+    "node_k": 16,
+    "output": "benchmark_results/hierarchical_unseen_adaptive_final_audit8_b48_s16_s1009.json",
+    "page_size": 8,
+    "pattern_k": 16,
+    "ppo_clip_epsilon": 0.2,
+    "ppo_entropy_coefficient": 0.01,
+    "ppo_epochs": 4,
+    "ppo_iterations": 0,
+    "ppo_learning_rate": 0.0001,
+    "ppo_max_grad_norm": 1.0,
+    "ppo_minibatch_size": 128,
+    "ppo_output": null,
+    "ppo_target_kl": 0.02,
+    "ppo_value_coefficient": 0.5,
+    "qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/vbe_adder_3.qasm",
+    "refresh_interval": 1,
+    "replay_start_probability": 0.25,
+    "resume_search_state": false,
+    "seed": 1009,
+    "start_from_best": false,
+    "step_penalty": 0.02,
+    "target_recall": 0.95,
+    "terminate_on_improvement": false,
+    "topology_audit_interval": 8,
+    "use_replay_starts": false,
+    "warmup_episodes": 6,
+    "warmup_steps": 2
+  },
+  "artifacts": {
+    "actor_checkpoint_format": "hierarchical-ppo-v1",
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "node_checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/hierarchical_multicircuit_ppo_i20_b64_s16_s1002.pt",
+    "qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/vbe_adder_3.qasm",
+    "qasm_paths": [
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/vbe_adder_3.qasm",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/hwb6.qasm",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/circs/nam_circs/grover_5.qasm"
+    ]
+  },
+  "best_by_circuit": {
+    "grover_5.qasm": {
+      "episode_depth": 12,
+      "gate_count": 825,
+      "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[9];\nh q[0];\nh q[1];\nh q[2];\nh q[3];\nh q[4];\nx q[5];\nh q[6];\nh q[7];\nh q[8];\nx q[0];\nx q[1];\nx q[4];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\nrz(pi*0.250000) q[6];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[1];\nh q[6];\ncx q[0],q[1];\ncx q[6],q[7];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\nrz(pi*0.250000) q[7];\ncx q[6],q[7];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[6];\nh q[7];\ncx q[2],q[6];\ncx q[7],q[8];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[8];\ncx q[3],q[8];\nrz(pi*0.250000) q[8];\ncx q[7],q[8];\nrz(pi*1.750000) q[8];\ncx q[3],q[8];\ncx q[3],q[7];\nrz(pi*0.250000) q[8];\nrz(pi*1.750000) q[7];\nh q[8];\ncx q[3],q[7];\ncx q[8],q[5];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\nrz(pi*0.250000) q[5];\ncx q[8],q[5];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\ncx q[4],q[8];\nrz(pi*0.250000) q[5];\nrz(pi*1.750000) q[8];\ncx q[4],q[8];\nrz(pi*0.250000) q[4];\nrz(pi*0.250000) q[8];\nh q[4];\nh q[8];\nx q[4];\ncx q[7],q[8];\nrz(pi*0.250000) q[8];\ncx q[3],q[8];\nrz(pi*1.750000) q[8];\ncx q[7],q[8];\nrz(pi*0.250000) q[8];\ncx q[3],q[8];\ncx q[3],q[7];\nrz(pi*1.750000) q[8];\nrz(pi*0.250000) q[7];\nh q[8];\ncx q[3],q[7];\nh q[8];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[7];\nh q[3];\nh q[7];\nx q[3];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\nrz(pi*1.750000) q[7];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*1.750000) q[7];\nrz(pi*0.250000) q[6];\nh q[7];\ncx q[2],q[6];\nh q[7];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[6];\nh q[2];\nh q[6];\nx q[2];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\nrz(pi*1.750000) q[6];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[1];\nh q[6];\ncx q[0],q[1];\nh q[6];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\nx q[0];\nx q[1];\nh q[0];\nh q[1];\nx q[0];\nx q[1];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\nrz(pi*0.250000) q[6];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[1];\nh q[6];\ncx q[0],q[1];\ncx q[6],q[7];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\nrz(pi*0.250000) q[7];\ncx q[6],q[7];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[6];\ncx q[4],q[7];\ncx q[2],q[6];\nh q[7];\nh q[4];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[6];\nx q[4];\nrz(pi*1.750000) q[4];\ncx q[3],q[4];\nrz(pi*0.250000) q[4];\ncx q[7],q[4];\nrz(pi*1.750000) q[4];\ncx q[3],q[4];\ncx q[3],q[7];\nrz(pi*0.250000) q[4];\nrz(pi*1.750000) q[7];\nh q[4];\ncx q[3],q[7];\nx q[4];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[7];\nh q[4];\nx q[3];\nh q[7];\nx q[4];\nh q[3];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\nrz(pi*1.750000) q[7];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*1.750000) q[7];\nrz(pi*0.250000) q[6];\nh q[7];\ncx q[2],q[6];\nh q[7];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[6];\nx q[2];\nh q[6];\nh q[2];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\nrz(pi*1.750000) q[6];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[1];\nh q[6];\ncx q[0],q[1];\nh q[6];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\nx q[0];\nx q[1];\nh q[0];\nh q[1];\nx q[0];\nx q[1];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\nrz(pi*0.250000) q[6];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[1];\nh q[6];\ncx q[0],q[1];\ncx q[6],q[7];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\nrz(pi*0.250000) q[7];\ncx q[6],q[7];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[6];\nh q[7];\ncx q[2],q[6];\ncx q[7],q[8];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[8];\ncx q[3],q[8];\nrz(pi*0.250000) q[8];\ncx q[7],q[8];\nrz(pi*1.750000) q[8];\ncx q[3],q[8];\ncx q[3],q[7];\nrz(pi*0.250000) q[8];\nrz(pi*1.750000) q[7];\nh q[8];\ncx q[3],q[7];\ncx q[8],q[5];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\nrz(pi*0.250000) q[5];\ncx q[8],q[5];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\ncx q[4],q[8];\nrz(pi*0.250000) q[5];\nrz(pi*1.750000) q[8];\ncx q[4],q[8];\nrz(pi*0.250000) q[4];\nrz(pi*0.250000) q[8];\nx q[4];\nh q[8];\nh q[4];\ncx q[7],q[8];\nx q[4];\nrz(pi*0.250000) q[8];\nh q[4];\ncx q[3],q[8];\nrz(pi*1.750000) q[8];\ncx q[7],q[8];\nrz(pi*0.250000) q[8];\ncx q[3],q[8];\ncx q[3],q[7];\nrz(pi*1.750000) q[8];\nrz(pi*0.250000) q[7];\nh q[8];\ncx q[3],q[7];\nh q[8];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[7];\nh q[3];\nh q[7];\nx q[3];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\nrz(pi*1.750000) q[7];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*1.750000) q[7];\nrz(pi*0.250000) q[6];\nh q[7];\ncx q[2],q[6];\nh q[7];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[6];\nh q[2];\nh q[6];\nx q[2];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\nrz(pi*1.750000) q[6];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[1];\nh q[6];\ncx q[0],q[1];\nh q[6];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\nx q[0];\nx q[1];\nh q[0];\nh q[1];\nx q[0];\nx q[1];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\nrz(pi*0.250000) q[6];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[1];\nh q[6];\ncx q[0],q[1];\ncx q[6],q[7];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\nrz(pi*0.250000) q[7];\ncx q[6],q[7];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[6];\nh q[7];\ncx q[2],q[6];\ncx q[7],q[4];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[4];\ncx q[3],q[4];\nrz(pi*0.250000) q[4];\ncx q[7],q[4];\nrz(pi*1.750000) q[4];\ncx q[3],q[4];\ncx q[3],q[7];\nrz(pi*0.250000) q[4];\nrz(pi*1.750000) q[7];\nh q[4];\ncx q[3],q[7];\nx q[4];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[7];\nh q[4];\nx q[3];\nh q[7];\nx q[4];\nh q[3];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\nrz(pi*1.750000) q[7];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*1.750000) q[7];\nrz(pi*0.250000) q[6];\nh q[7];\ncx q[2],q[6];\nh q[7];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[6];\nx q[2];\nh q[6];\nh q[2];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\nrz(pi*1.750000) q[6];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[1];\nh q[6];\ncx q[0],q[1];\nh q[6];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\nx q[0];\nx q[1];\nh q[0];\nh q[1];\nx q[0];\nx q[1];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\nrz(pi*0.250000) q[6];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[1];\nh q[6];\ncx q[0],q[1];\ncx q[6],q[7];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\nrz(pi*0.250000) q[7];\ncx q[6],q[7];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[6];\nh q[7];\ncx q[2],q[6];\ncx q[7],q[8];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[8];\ncx q[3],q[8];\nrz(pi*0.250000) q[8];\ncx q[7],q[8];\nrz(pi*1.750000) q[8];\ncx q[3],q[8];\ncx q[3],q[7];\nrz(pi*0.250000) q[8];\nrz(pi*1.750000) q[7];\nh q[8];\ncx q[3],q[7];\ncx q[8],q[5];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\nrz(pi*0.250000) q[5];\ncx q[8],q[5];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\ncx q[4],q[8];\nrz(pi*0.250000) q[5];\nrz(pi*1.750000) q[8];\nh q[5];\ncx q[4],q[8];\nh q[5];\nrz(pi*0.250000) q[4];\nrz(pi*0.250000) q[8];\nh q[4];\nh q[8];\nx q[4];\ncx q[7],q[8];\nrz(pi*0.250000) q[8];\ncx q[3],q[8];\nrz(pi*1.750000) q[8];\ncx q[7],q[8];\nrz(pi*0.250000) q[8];\ncx q[3],q[8];\ncx q[3],q[7];\nrz(pi*1.750000) q[8];\nrz(pi*0.250000) q[7];\nh q[8];\ncx q[3],q[7];\nh q[8];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[7];\nh q[3];\nh q[7];\nx q[3];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\nrz(pi*1.750000) q[7];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*1.750000) q[7];\nrz(pi*0.250000) q[6];\nh q[7];\ncx q[2],q[6];\nh q[7];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[6];\nh q[2];\nh q[6];\nx q[2];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\nrz(pi*1.750000) q[6];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[1];\nh q[6];\ncx q[0],q[1];\nh q[6];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\nx q[0];\nx q[1];\nh q[0];\nh q[1];\nx q[0];\nx q[1];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\nrz(pi*0.250000) q[6];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[1];\nh q[6];\ncx q[0],q[1];\ncx q[6],q[7];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\nrz(pi*0.250000) q[7];\ncx q[6],q[7];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[6];\ncx q[4],q[7];\ncx q[2],q[6];\nh q[7];\nh q[4];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[6];\nx q[4];\nrz(pi*1.750000) q[4];\ncx q[3],q[4];\nrz(pi*0.250000) q[4];\ncx q[7],q[4];\nrz(pi*1.750000) q[4];\ncx q[3],q[4];\ncx q[3],q[7];\nrz(pi*0.250000) q[4];\nrz(pi*1.750000) q[7];\nh q[4];\ncx q[3],q[7];\nx q[4];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[7];\nh q[4];\nx q[3];\nh q[7];\nx q[4];\nh q[3];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\nrz(pi*1.750000) q[7];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*1.750000) q[7];\nrz(pi*0.250000) q[6];\nh q[7];\ncx q[2],q[6];\nh q[7];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[6];\nx q[2];\nh q[6];\nh q[2];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\nrz(pi*1.750000) q[6];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[1];\nh q[6];\ncx q[0],q[1];\nh q[6];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\nx q[0];\nx q[1];\nh q[0];\nh q[1];\nx q[0];\nx q[1];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\nrz(pi*0.250000) q[6];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[1];\nh q[6];\ncx q[0],q[1];\ncx q[6],q[7];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\nrz(pi*0.250000) q[7];\ncx q[6],q[7];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[6];\nh q[7];\ncx q[2],q[6];\ncx q[7],q[8];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[8];\ncx q[3],q[8];\nrz(pi*0.250000) q[8];\ncx q[7],q[8];\nrz(pi*1.750000) q[8];\ncx q[3],q[8];\ncx q[3],q[7];\nrz(pi*0.250000) q[8];\nrz(pi*1.750000) q[7];\nh q[8];\ncx q[3],q[7];\ncx q[8],q[5];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\nrz(pi*0.250000) q[5];\ncx q[8],q[5];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\ncx q[4],q[8];\nrz(pi*0.250000) q[5];\nrz(pi*1.750000) q[8];\nh q[5];\ncx q[4],q[8];\nrz(pi*0.250000) q[4];\nrz(pi*0.250000) q[8];\nx q[4];\nh q[8];\nh q[4];\ncx q[7],q[8];\nx q[4];\nrz(pi*0.250000) q[8];\ncx q[3],q[8];\nrz(pi*1.750000) q[8];\ncx q[7],q[8];\nrz(pi*0.250000) q[8];\ncx q[3],q[8];\ncx q[3],q[7];\nrz(pi*1.750000) q[8];\nrz(pi*0.250000) q[7];\nh q[8];\ncx q[3],q[7];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[7];\nh q[3];\nh q[7];\nx q[3];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\nrz(pi*1.750000) q[7];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*1.750000) q[7];\nrz(pi*0.250000) q[6];\nh q[7];\ncx q[2],q[6];\nh q[7];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[6];\nh q[2];\nh q[6];\nx q[2];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\nrz(pi*1.750000) q[6];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[1];\nh q[6];\ncx q[0],q[1];\nh q[6];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\nx q[0];\nx q[1];\nh q[0];\nh q[1];\nx q[0];\nx q[1];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\nrz(pi*0.250000) q[6];\ncx q[1],q[6];\nrz(pi*1.750000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[1];\nh q[6];\ncx q[0],q[1];\ncx q[6],q[7];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\nrz(pi*0.250000) q[7];\ncx q[6],q[7];\nrz(pi*1.750000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*0.250000) q[7];\nrz(pi*1.750000) q[6];\ncx q[4],q[7];\ncx q[2],q[6];\nh q[7];\nh q[4];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[4];\ncx q[3],q[4];\nrz(pi*0.250000) q[4];\ncx q[7],q[4];\nrz(pi*1.750000) q[4];\ncx q[3],q[4];\ncx q[3],q[7];\nrz(pi*0.250000) q[4];\nrz(pi*1.750000) q[7];\nh q[4];\ncx q[3],q[7];\nx q[4];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[7];\nh q[4];\nx q[3];\nh q[7];\nh q[3];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\nrz(pi*1.750000) q[7];\ncx q[6],q[7];\nrz(pi*0.250000) q[7];\ncx q[2],q[7];\ncx q[2],q[6];\nrz(pi*1.750000) q[7];\nrz(pi*0.250000) q[6];\nh q[7];\ncx q[2],q[6];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[6];\nx q[2];\nh q[6];\nh q[2];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\nrz(pi*1.750000) q[6];\ncx q[1],q[6];\nrz(pi*0.250000) q[6];\ncx q[0],q[6];\ncx q[0],q[1];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[1];\nh q[6];\ncx q[0],q[1];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[1];\nx q[0];\nx q[1];\nh q[0];\nh q[1];\n"
+    },
+    "hwb6.qasm": {
+      "episode_depth": 7,
+      "gate_count": 256,
+      "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[7];\nx q[0];\ncx q[5],q[3];\nh q[6];\ncx q[2],q[0];\ncx q[4],q[5];\nh q[2];\nh q[5];\ncx q[1],q[2];\nrz(pi*1.750000) q[2];\ncx q[0],q[2];\nrz(pi*0.250000) q[2];\ncx q[1],q[2];\nrz(pi*1.750000) q[2];\ncx q[0],q[2];\ncx q[0],q[1];\nrz(pi*0.250000) q[2];\nrz(pi*1.750000) q[1];\nh q[2];\ncx q[0],q[1];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[1];\nh q[1];\ncx q[2],q[1];\nrz(pi*0.250000) q[1];\ncx q[0],q[1];\nrz(pi*1.750000) q[1];\ncx q[2],q[1];\nrz(pi*0.250000) q[1];\ncx q[0],q[1];\ncx q[0],q[2];\nrz(pi*1.750000) q[1];\nrz(pi*0.250000) q[2];\nh q[1];\ncx q[0],q[2];\ncx q[1],q[3];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[2];\nx q[1];\ncx q[2],q[5];\nrz(pi*1.750000) q[5];\ncx q[0],q[5];\nrz(pi*0.250000) q[5];\ncx q[2],q[5];\nrz(pi*1.750000) q[5];\ncx q[0],q[5];\ncx q[0],q[2];\nrz(pi*0.250000) q[5];\nrz(pi*1.750000) q[2];\ncx q[3],q[5];\ncx q[0],q[2];\nrz(pi*1.750000) q[5];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[2];\ncx q[1],q[5];\nx q[2];\nrz(pi*0.250000) q[5];\nx q[2];\ncx q[3],q[5];\nrz(pi*1.750000) q[5];\ncx q[1],q[5];\ncx q[1],q[3];\nrz(pi*0.250000) q[5];\nrz(pi*1.750000) q[3];\nh q[5];\ncx q[1],q[3];\ncx q[5],q[4];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[3];\ncx q[0],q[1];\nh q[3];\ncx q[1],q[0];\ncx q[2],q[3];\ncx q[0],q[4];\nrz(pi*1.750000) q[3];\ncx q[0],q[1];\ncx q[1],q[3];\nrz(pi*0.250000) q[3];\ncx q[2],q[3];\nrz(pi*1.750000) q[3];\ncx q[1],q[3];\ncx q[1],q[2];\nrz(pi*0.250000) q[3];\nrz(pi*1.750000) q[2];\nh q[3];\ncx q[1],q[2];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[2];\ncx q[1],q[5];\nh q[2];\nx q[5];\nh q[1];\ncx q[5],q[2];\nrz(pi*1.750000) q[2];\ncx q[4],q[2];\nrz(pi*0.250000) q[2];\ncx q[5],q[2];\nrz(pi*1.750000) q[2];\ncx q[4],q[2];\ncx q[4],q[5];\nrz(pi*0.250000) q[2];\nrz(pi*1.750000) q[5];\nh q[2];\ncx q[4],q[5];\nrz(pi*0.250000) q[4];\nrz(pi*0.250000) q[5];\ncx q[4],q[6];\ncx q[5],q[1];\nrz(pi*0.250000) q[6];\nrz(pi*0.250000) q[1];\ncx q[2],q[6];\nrz(pi*1.750000) q[6];\ncx q[4],q[6];\nrz(pi*0.250000) q[6];\ncx q[2],q[6];\ncx q[2],q[4];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[4];\nh q[6];\ncx q[2],q[4];\ncx q[6],q[1];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[1];\ncx q[5],q[1];\nrz(pi*0.250000) q[1];\ncx q[6],q[1];\ncx q[6],q[5];\nrz(pi*1.750000) q[1];\nrz(pi*0.250000) q[5];\nh q[1];\ncx q[6],q[5];\nrz(pi*1.750000) q[6];\nrz(pi*1.750000) q[5];\nh q[6];\ncx q[5],q[0];\ncx q[4],q[6];\ncx q[0],q[3];\nrz(pi*1.750000) q[6];\ncx q[2],q[6];\nrz(pi*0.250000) q[6];\ncx q[4],q[6];\nrz(pi*1.750000) q[6];\ncx q[2],q[6];\ncx q[2],q[4];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[4];\nh q[6];\ncx q[2],q[4];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[4];\ncx q[5],q[2];\ncx q[3],q[4];\nh q[5];\ncx q[4],q[0];\ncx q[2],q[5];\nrz(pi*1.750000) q[5];\ncx q[1],q[5];\nrz(pi*0.250000) q[5];\ncx q[2],q[5];\nrz(pi*1.750000) q[5];\ncx q[1],q[5];\ncx q[1],q[2];\nrz(pi*0.250000) q[5];\nrz(pi*1.750000) q[2];\ncx q[4],q[5];\ncx q[1],q[2];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[2];\ncx q[3],q[1];\ncx q[2],q[5];\nh q[3];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\nrz(pi*0.250000) q[5];\ncx q[2],q[5];\ncx q[2],q[4];\nrz(pi*1.750000) q[5];\nrz(pi*0.250000) q[4];\nh q[5];\ncx q[2],q[4];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[4];\ncx q[5],q[2];\ncx q[4],q[5];\nh q[5];\ncx q[4],q[3];\nrz(pi*1.750000) q[3];\ncx q[1],q[3];\nrz(pi*0.250000) q[3];\ncx q[4],q[3];\nrz(pi*1.750000) q[3];\ncx q[1],q[3];\ncx q[1],q[4];\nrz(pi*0.250000) q[3];\nrz(pi*1.750000) q[4];\nh q[3];\ncx q[1],q[4];\ncx q[3],q[5];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[4];\nrz(pi*1.750000) q[5];\ncx q[0],q[5];\nrz(pi*0.250000) q[5];\ncx q[3],q[5];\nrz(pi*1.750000) q[5];\ncx q[0],q[5];\ncx q[0],q[3];\nrz(pi*0.250000) q[5];\nrz(pi*1.750000) q[3];\nh q[5];\ncx q[0],q[3];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[3];\ncx q[0],q[2];\ncx q[3],q[2];\nx q[0];\nx q[2];\nh q[0];\ncx q[4],q[0];\nrz(pi*0.250000) q[0];\ncx q[1],q[0];\nrz(pi*1.750000) q[0];\ncx q[4],q[0];\nrz(pi*0.250000) q[0];\ncx q[1],q[0];\ncx q[1],q[4];\nrz(pi*1.750000) q[0];\nrz(pi*0.250000) q[4];\nh q[0];\ncx q[1],q[4];\nrz(pi*1.750000) q[1];\nrz(pi*1.750000) q[4];\nh q[1];\ncx q[2],q[1];\nrz(pi*1.750000) q[1];\ncx q[0],q[1];\nrz(pi*0.250000) q[1];\ncx q[2],q[1];\nrz(pi*1.750000) q[1];\ncx q[0],q[1];\ncx q[0],q[2];\nrz(pi*0.250000) q[1];\nrz(pi*1.750000) q[2];\nh q[1];\ncx q[0],q[2];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[2];\ncx q[1],q[0];\ncx q[2],q[4];\nx q[2];\ncx q[3],q[4];\ncx q[1],q[2];\ncx q[5],q[3];\ncx q[0],q[1];\nx q[5];\n"
+    },
+    "vbe_adder_3.qasm": {
+      "episode_depth": 0,
+      "gate_count": 150,
+      "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[10];\nh q[3];\nh q[6];\nh q[9];\ncx q[2],q[3];\ncx q[5],q[6];\ncx q[8],q[9];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[6];\nrz(pi*1.750000) q[9];\ncx q[1],q[3];\ncx q[4],q[6];\ncx q[7],q[9];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[6];\nrz(pi*0.250000) q[9];\ncx q[2],q[3];\ncx q[5],q[6];\ncx q[8],q[9];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[6];\nrz(pi*1.750000) q[9];\ncx q[1],q[3];\ncx q[4],q[6];\ncx q[7],q[9];\ncx q[1],q[2];\nrz(pi*0.250000) q[3];\ncx q[4],q[5];\nrz(pi*0.250000) q[6];\ncx q[7],q[8];\nrz(pi*0.250000) q[9];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[5];\nrz(pi*1.750000) q[8];\ncx q[1],q[2];\ncx q[4],q[5];\ncx q[7],q[8];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[4];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[7];\nrz(pi*0.250000) q[8];\ncx q[1],q[2];\ncx q[4],q[5];\ncx q[7],q[8];\ncx q[2],q[3];\ncx q[5],q[6];\ncx q[8],q[9];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[6];\nrz(pi*1.750000) q[9];\ncx q[0],q[3];\nrz(pi*0.250000) q[3];\ncx q[2],q[3];\nrz(pi*1.750000) q[3];\ncx q[0],q[3];\ncx q[0],q[2];\nrz(pi*0.250000) q[3];\nrz(pi*1.750000) q[2];\nh q[3];\ncx q[0],q[2];\ncx q[3],q[6];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[6];\ncx q[5],q[6];\nrz(pi*1.750000) q[6];\ncx q[3],q[6];\ncx q[3],q[5];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[5];\nh q[6];\ncx q[3],q[5];\ncx q[6],q[9];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[9];\ncx q[8],q[9];\nrz(pi*1.750000) q[9];\ncx q[6],q[9];\ncx q[6],q[8];\nrz(pi*0.250000) q[9];\nrz(pi*1.750000) q[8];\nh q[9];\ncx q[6],q[8];\nrz(pi*0.250000) q[6];\nrz(pi*0.250000) q[8];\ncx q[6],q[8];\nh q[6];\ncx q[5],q[6];\nrz(pi*0.250000) q[6];\ncx q[3],q[6];\nrz(pi*1.750000) q[6];\ncx q[5],q[6];\nrz(pi*0.250000) q[6];\ncx q[3],q[6];\ncx q[3],q[5];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[5];\ncx q[3],q[5];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\ncx q[5],q[6];\nrz(pi*0.250000) q[6];\ncx q[4],q[6];\nrz(pi*1.750000) q[6];\ncx q[5],q[6];\nrz(pi*0.250000) q[6];\ncx q[4],q[6];\ncx q[4],q[5];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[5];\nh q[6];\ncx q[4],q[5];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[5];\ncx q[3],q[5];\ncx q[4],q[5];\nh q[3];\ncx q[2],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\nrz(pi*1.750000) q[3];\ncx q[2],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\ncx q[0],q[2];\nrz(pi*1.750000) q[3];\nrz(pi*0.250000) q[2];\ncx q[0],q[2];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[2];\ncx q[1],q[2];\ncx q[2],q[3];\nrz(pi*0.250000) q[3];\ncx q[1],q[3];\nrz(pi*1.750000) q[3];\ncx q[2],q[3];\nrz(pi*0.250000) q[3];\ncx q[1],q[3];\ncx q[1],q[2];\nrz(pi*1.750000) q[3];\nrz(pi*0.250000) q[2];\nh q[3];\ncx q[1],q[2];\nrz(pi*1.750000) q[1];\nrz(pi*1.750000) q[2];\ncx q[0],q[2];\ncx q[1],q[2];\n"
+    }
+  },
+  "best_so_far": {
+    "episode_depth": 0,
+    "gate_count": 150,
+    "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[10];\nh q[3];\nh q[6];\nh q[9];\ncx q[2],q[3];\ncx q[5],q[6];\ncx q[8],q[9];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[6];\nrz(pi*1.750000) q[9];\ncx q[1],q[3];\ncx q[4],q[6];\ncx q[7],q[9];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[6];\nrz(pi*0.250000) q[9];\ncx q[2],q[3];\ncx q[5],q[6];\ncx q[8],q[9];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[6];\nrz(pi*1.750000) q[9];\ncx q[1],q[3];\ncx q[4],q[6];\ncx q[7],q[9];\ncx q[1],q[2];\nrz(pi*0.250000) q[3];\ncx q[4],q[5];\nrz(pi*0.250000) q[6];\ncx q[7],q[8];\nrz(pi*0.250000) q[9];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[5];\nrz(pi*1.750000) q[8];\ncx q[1],q[2];\ncx q[4],q[5];\ncx q[7],q[8];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[4];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[7];\nrz(pi*0.250000) q[8];\ncx q[1],q[2];\ncx q[4],q[5];\ncx q[7],q[8];\ncx q[2],q[3];\ncx q[5],q[6];\ncx q[8],q[9];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[6];\nrz(pi*1.750000) q[9];\ncx q[0],q[3];\nrz(pi*0.250000) q[3];\ncx q[2],q[3];\nrz(pi*1.750000) q[3];\ncx q[0],q[3];\ncx q[0],q[2];\nrz(pi*0.250000) q[3];\nrz(pi*1.750000) q[2];\nh q[3];\ncx q[0],q[2];\ncx q[3],q[6];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[2];\nrz(pi*0.250000) q[6];\ncx q[5],q[6];\nrz(pi*1.750000) q[6];\ncx q[3],q[6];\ncx q[3],q[5];\nrz(pi*0.250000) q[6];\nrz(pi*1.750000) q[5];\nh q[6];\ncx q[3],q[5];\ncx q[6],q[9];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[9];\ncx q[8],q[9];\nrz(pi*1.750000) q[9];\ncx q[6],q[9];\ncx q[6],q[8];\nrz(pi*0.250000) q[9];\nrz(pi*1.750000) q[8];\nh q[9];\ncx q[6],q[8];\nrz(pi*0.250000) q[6];\nrz(pi*0.250000) q[8];\ncx q[6],q[8];\nh q[6];\ncx q[5],q[6];\nrz(pi*0.250000) q[6];\ncx q[3],q[6];\nrz(pi*1.750000) q[6];\ncx q[5],q[6];\nrz(pi*0.250000) q[6];\ncx q[3],q[6];\ncx q[3],q[5];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[5];\ncx q[3],q[5];\nrz(pi*1.750000) q[3];\nrz(pi*1.750000) q[5];\ncx q[4],q[5];\ncx q[5],q[6];\nrz(pi*0.250000) q[6];\ncx q[4],q[6];\nrz(pi*1.750000) q[6];\ncx q[5],q[6];\nrz(pi*0.250000) q[6];\ncx q[4],q[6];\ncx q[4],q[5];\nrz(pi*1.750000) q[6];\nrz(pi*0.250000) q[5];\nh q[6];\ncx q[4],q[5];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[5];\ncx q[3],q[5];\ncx q[4],q[5];\nh q[3];\ncx q[2],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\nrz(pi*1.750000) q[3];\ncx q[2],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\ncx q[0],q[2];\nrz(pi*1.750000) q[3];\nrz(pi*0.250000) q[2];\ncx q[0],q[2];\nrz(pi*1.750000) q[0];\nrz(pi*1.750000) q[2];\ncx q[1],q[2];\ncx q[2],q[3];\nrz(pi*0.250000) q[3];\ncx q[1],q[3];\nrz(pi*1.750000) q[3];\ncx q[2],q[3];\nrz(pi*0.250000) q[3];\ncx q[1],q[3];\ncx q[1],q[2];\nrz(pi*1.750000) q[3];\nrz(pi*0.250000) q[2];\nh q[3];\ncx q[1],q[2];\nrz(pi*1.750000) q[1];\nrz(pi*1.750000) q[2];\ncx q[0],q[2];\ncx q[1],q[2];\n"
+  },
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "peak_cuda_allocated_gib": 0.20013761520385742,
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-ppo-rollout-benchmark-v1",
+  "rejected_action_cache": {
+    "actions": 74,
+    "enabled": true,
+    "states": 52
+  },
+  "replay_pool": {
+    "grover_5.qasm": {
+      "max_gate_count": 832,
+      "min_gate_count": 825,
+      "retained_states": 64,
+      "unique_states_seen": 197
+    },
+    "hwb6.qasm": {
+      "max_gate_count": 270,
+      "min_gate_count": 256,
+      "retained_states": 64,
+      "unique_states_seen": 226
+    },
+    "vbe_adder_3.qasm": {
+      "max_gate_count": 153,
+      "min_gate_count": 150,
+      "retained_states": 64,
+      "unique_states_seen": 242
+    }
+  },
+  "stored_transition_count": 788,
+  "summary": {
+    "accepted_rewrites": 714,
+    "accepted_rewrites_per_second": 253.81948626382572,
+    "committed_gate_delta_histogram": {
+      "-1": 1,
+      "-2": 56,
+      "0": 516,
+      "1": 141
+    },
+    "cycle_actions": 57,
+    "cycle_xfers": {
+      "1001": 1,
+      "1006": 1,
+      "120": 1,
+      "290": 1,
+      "314": 1,
+      "3328": 1,
+      "3336": 3,
+      "350": 2,
+      "39": 3,
+      "430": 3,
+      "45": 3,
+      "46": 2,
+      "4652": 1,
+      "4654": 1,
+      "4656": 1,
+      "4657": 1,
+      "4658": 2,
+      "4660": 2,
+      "4664": 2,
+      "4682": 2,
+      "4699": 2,
+      "58": 2,
+      "59": 2,
+      "68": 1,
+      "69": 9,
+      "82": 3,
+      "83": 3,
+      "966": 1
+    },
+    "episodes": 48,
+    "exact_refresh_seconds_recorded": 0.3891406755428761,
+    "exact_refreshes": 788,
+    "exact_replay_actions": 750,
+    "improved_episodes": 26,
+    "initial_gate_count": 150,
+    "initial_gate_count_histogram": {
+      "150": 16,
+      "259": 16,
+      "831": 16
+    },
+    "invalid_actions": 17,
+    "invalid_xfers": {
+      "1001": 3,
+      "1608": 1,
+      "3434": 1,
+      "3572": 4,
+      "4363": 1,
+      "4383": 2,
+      "4397": 1,
+      "4407": 2,
+      "4409": 1,
+      "989": 1
+    },
+    "legal_actions": 771,
+    "maximum_initial_gate_count": 831,
+    "maximum_total_reward": 4.72,
+    "mean_best_gate_count": 412.0,
+    "mean_candidates": 47.85690602889471,
+    "mean_initial_gate_count": 413.3333333333333,
+    "mean_policy_entropy": 2.268468216620419,
+    "mean_total_reward": -2.776666666666667,
+    "minimum_best_gate_count": 150,
+    "minimum_final_gate_count": 150,
+    "minimum_initial_gate_count": 150,
+    "minimum_total_reward": -17.32,
+    "selected_xfers_top20": {
+      "1006": 17,
+      "120": 7,
+      "121": 11,
+      "136": 12,
+      "27": 19,
+      "30": 18,
+      "3336": 7,
+      "3417": 7,
+      "349": 15,
+      "38": 16,
+      "380": 56,
+      "39": 31,
+      "44": 75,
+      "45": 142,
+      "46": 7,
+      "4652": 7,
+      "4656": 25,
+      "69": 23,
+      "82": 107,
+      "986": 11
+    },
+    "termination_reasons": {
+      "exact_cycle": 1,
+      "horizon": 36,
+      "no_candidates": 11
+    },
+    "timing": {
+      "cache_advance_seconds": 0.5672416207380593,
+      "candidate_fallback_states": 233.0,
+      "eligible_actions": 40083.0,
+      "exact_rejection_retries": 73.0,
+      "hierarchical_match_seconds": 0.9484099326655269,
+      "lazy_apply_seconds": 0.16923917969688773,
+      "policy_preparation_seconds": 0.1661901935003698,
+      "policy_sample_seconds": 0.12412240728735924,
+      "proposal_seconds": 0.048859258415177464,
+      "refresh_group_count": 696.0,
+      "refresh_grouping_seconds": 0.0007128336001187563,
+      "refresh_prefix_analysis_seconds": 0.00486260955221951,
+      "refresh_profiled_total_seconds": 0.6059947065077722,
+      "refresh_replay_actions_applied": 733.0,
+      "refresh_replay_actions_attempted": 750.0,
+      "refresh_replay_actions_planned": 788.0,
+      "refresh_replay_actions_reused_from_cache": 38.0,
+      "refresh_replay_binding_validation_seconds": 0.0012115368153899908,
+      "refresh_replay_failed_states": 17.0,
+      "refresh_replay_init_from_checkpoint_seconds": 0.023437543539330363,
+      "refresh_replay_init_from_checkpoint_states": 788.0,
+      "refresh_replay_quartz_apply_calls": 750.0,
+      "refresh_replay_quartz_apply_failures": 17.0,
+      "refresh_replay_quartz_apply_seconds": 0.2865258613601327,
+      "refresh_replay_quartz_direct_guid_apply_calls": 750.0,
+      "refresh_replay_replay_cache_entries": 17.0,
+      "refresh_replay_replay_cache_hits": 38.0,
+      "refresh_replay_replay_cache_lookup_seconds": 0.0013965500984340906,
+      "refresh_replay_replay_cache_misses": 750.0,
+      "refresh_replay_replay_states_total": 788.0,
+      "refresh_replay_slot_update_and_graph_swap_seconds": 0.004411375615745783,
+      "refresh_replay_source_guid_lookup_seconds": 0.0014466766733676195,
+      "refresh_replay_topology_audits": 96.0,
+      "refresh_replay_topology_audits_skipped": 675.0,
+      "refresh_replay_topology_signature_compare_seconds": 0.059268300887197256,
+      "refresh_replay_total_seconds": 0.3891406755428761,
+      "refresh_replay_valid_states": 771.0,
+      "refresh_result_archive_seconds": 0.01865017949603498,
+      "refresh_result_best_qasm_seconds": 0.004201061092317104,
+      "refresh_result_graph_hash_seconds": 0.18146699597127736,
+      "refresh_result_processing_seconds": 0.20561953424476087,
+      "refresh_runtime_count": 788.0,
+      "refresh_seconds": 0.6114140963181853,
+      "refresh_shared_prefix_count": 17.0,
+      "rejected_action_cache_hits": 100.0,
+      "rejected_action_cache_inserts": 74.0,
+      "rejected_action_mask_seconds": 0.01428554393351078,
+      "selected_actions": 40083.0,
+      "stages": {
+        "cache_advance_seconds": {
+          "fraction": 0.2016484268392074,
+          "seconds": 0.5672416207380593
+        },
+        "hierarchical_match_seconds": {
+          "fraction": 0.337149750527554,
+          "seconds": 0.9484099326655269
+        },
+        "lazy_apply_seconds": {
+          "fraction": 0.06016274740388702,
+          "seconds": 0.16923917969688773
+        },
+        "policy_preparation_seconds": {
+          "fraction": 0.05907886489684825,
+          "seconds": 0.1661901935003698
+        },
+        "policy_sample_seconds": {
+          "fraction": 0.04412420959594798,
+          "seconds": 0.12412240728735924
+        },
+        "proposal_seconds": {
+          "fraction": 0.017368952199120234,
+          "seconds": 0.048859258415177464
+        },
+        "refresh_grouping_seconds": {
+          "fraction": 0.0002534048433805828,
+          "seconds": 0.0007128336001187563
+        },
+        "refresh_prefix_analysis_seconds": {
+          "fraction": 0.0017286065244340725,
+          "seconds": 0.00486260955221951
+        },
+        "refresh_profiled_total_seconds": {
+          "fraction": 0.21542474101456666,
+          "seconds": 0.6059947065077722
+        },
+        "refresh_replay_binding_validation_seconds": {
+          "fraction": 0.000430688588336133,
+          "seconds": 0.0012115368153899908
+        },
+        "refresh_replay_init_from_checkpoint_seconds": {
+          "fraction": 0.008331800084648292,
+          "seconds": 0.023437543539330363
+        },
+        "refresh_replay_quartz_apply_seconds": {
+          "fraction": 0.10185692847581097,
+          "seconds": 0.2865258613601327
+        },
+        "refresh_replay_replay_cache_lookup_seconds": {
+          "fraction": 0.0004964588634821234,
+          "seconds": 0.0013965500984340906
+        },
+        "refresh_replay_slot_update_and_graph_swap_seconds": {
+          "fraction": 0.0015681976085509279,
+          "seconds": 0.004411375615745783
+        },
+        "refresh_replay_source_guid_lookup_seconds": {
+          "fraction": 0.0005142783333669883,
+          "seconds": 0.0014466766733676195
+        },
+        "refresh_replay_topology_signature_compare_seconds": {
+          "fraction": 0.02106925725898915,
+          "seconds": 0.059268300887197256
+        },
+        "refresh_replay_total_seconds": {
+          "fraction": 0.13833541505693406,
+          "seconds": 0.3891406755428761
+        },
+        "refresh_result_archive_seconds": {
+          "fraction": 0.006629942546795147,
+          "seconds": 0.01865017949603498
+        },
+        "refresh_result_best_qasm_seconds": {
+          "fraction": 0.0014934330087043052,
+          "seconds": 0.004201061092317104
+        },
+        "refresh_result_graph_hash_seconds": {
+          "fraction": 0.0645096074107414,
+          "seconds": 0.18146699597127736
+        },
+        "refresh_result_processing_seconds": {
+          "fraction": 0.07309558059917692,
+          "seconds": 0.20561953424476087
+        },
+        "refresh_seconds": {
+          "fraction": 0.21735127706154492,
+          "seconds": 0.6114140963181853
+        },
+        "rejected_action_mask_seconds": {
+          "fraction": 0.005078360535298345,
+          "seconds": 0.01428554393351078
+        }
+      },
+      "total_seconds": 2.813022792339325
+    },
+    "transitions": 788,
+    "transitions_per_second": 280.1257075292643,
+    "unique_selected_xfers": 91
+  },
+  "summary_by_circuit": {
+    "grover_5.qasm": {
+      "accepted_rewrites": 207,
+      "accepted_rewrites_per_second": 146.4902767084658,
+      "committed_gate_delta_histogram": {
+        "-2": 26,
+        "0": 166,
+        "1": 15
+      },
+      "cycle_actions": 14,
+      "cycle_xfers": {
+        "350": 2,
+        "430": 3,
+        "46": 2,
+        "58": 2,
+        "59": 2,
+        "69": 1,
+        "82": 2
+      },
+      "episodes": 16,
+      "exact_refresh_seconds_recorded": 0.22909037093631923,
+      "exact_refreshes": 222,
+      "exact_replay_actions": 212,
+      "improved_episodes": 14,
+      "initial_gate_count": 831,
+      "initial_gate_count_histogram": {
+        "831": 16
+      },
+      "invalid_actions": 1,
+      "invalid_xfers": {
+        "989": 1
+      },
+      "legal_actions": 221,
+      "maximum_initial_gate_count": 831,
+      "maximum_total_reward": 4.72,
+      "mean_best_gate_count": 828.1875,
+      "mean_candidates": 12.599325230797755,
+      "mean_initial_gate_count": 831.0,
+      "mean_policy_entropy": 1.3829387909794508,
+      "mean_total_reward": 1.05375,
+      "minimum_best_gate_count": 825,
+      "minimum_final_gate_count": 826,
+      "minimum_initial_gate_count": 831,
+      "minimum_total_reward": -2.32,
+      "selected_xfers_top20": {
+        "136": 12,
+        "27": 11,
+        "28": 1,
+        "30": 2,
+        "3362": 1,
+        "349": 15,
+        "350": 2,
+        "380": 56,
+        "430": 6,
+        "46": 6,
+        "4652": 1,
+        "4654": 1,
+        "4655": 3,
+        "4656": 12,
+        "4660": 1,
+        "58": 2,
+        "59": 6,
+        "69": 6,
+        "82": 77,
+        "989": 1
+      },
+      "termination_reasons": {
+        "horizon": 5,
+        "no_candidates": 11
+      },
+      "timing": {
+        "cache_advance_seconds": 0.2739455900155008,
+        "candidate_fallback_states": 233.0,
+        "eligible_actions": 2624.0,
+        "exact_rejection_retries": 15.0,
+        "hierarchical_match_seconds": 0.5496122166514397,
+        "lazy_apply_seconds": 0.08302403008565307,
+        "policy_preparation_seconds": 0.022481439169496298,
+        "policy_sample_seconds": 0.037396004190668464,
+        "proposal_seconds": 0.015042092185467482,
+        "refresh_group_count": 196.0,
+        "refresh_grouping_seconds": 0.00015611783601343632,
+        "refresh_prefix_analysis_seconds": 0.0015777831431478262,
+        "refresh_profiled_total_seconds": 0.36100706551223993,
+        "refresh_replay_actions_applied": 211.0,
+        "refresh_replay_actions_attempted": 212.0,
+        "refresh_replay_actions_planned": 222.0,
+        "refresh_replay_actions_reused_from_cache": 10.0,
+        "refresh_replay_binding_validation_seconds": 0.0004819328896701336,
+        "refresh_replay_failed_states": 1.0,
+        "refresh_replay_init_from_checkpoint_seconds": 0.013695181114599109,
+        "refresh_replay_init_from_checkpoint_states": 222.0,
+        "refresh_replay_quartz_apply_calls": 212.0,
+        "refresh_replay_quartz_apply_failures": 1.0,
+        "refresh_replay_quartz_apply_seconds": 0.17110331798903644,
+        "refresh_replay_quartz_direct_guid_apply_calls": 212.0,
+        "refresh_replay_replay_cache_entries": 6.0,
+        "refresh_replay_replay_cache_hits": 10.0,
+        "refresh_replay_replay_cache_lookup_seconds": 0.00043821707367897034,
+        "refresh_replay_replay_cache_misses": 212.0,
+        "refresh_replay_replay_states_total": 222.0,
+        "refresh_replay_slot_update_and_graph_swap_seconds": 0.0016311167273670435,
+        "refresh_replay_source_guid_lookup_seconds": 0.000517900800332427,
+        "refresh_replay_topology_audits": 26.0,
+        "refresh_replay_topology_audits_skipped": 195.0,
+        "refresh_replay_topology_signature_compare_seconds": 0.03601830219849944,
+        "refresh_replay_total_seconds": 0.22909037093631923,
+        "refresh_replay_valid_states": 221.0,
+        "refresh_result_archive_seconds": 0.010096790734678507,
+        "refresh_result_best_qasm_seconds": 0.0036185060162097216,
+        "refresh_result_graph_hash_seconds": 0.11402346868999302,
+        "refresh_result_processing_seconds": 0.12818508222699165,
+        "refresh_runtime_count": 222.0,
+        "refresh_seconds": 0.36403922527097166,
+        "refresh_shared_prefix_count": 6.0,
+        "rejected_action_cache_hits": 21.0,
+        "rejected_action_cache_inserts": 15.0,
+        "rejected_action_mask_seconds": 0.002234634943306446,
+        "selected_actions": 2624.0,
+        "stages": {
+          "cache_advance_seconds": {
+            "fraction": 0.19386649895862146,
+            "seconds": 0.2739455900155008
+          },
+          "hierarchical_match_seconds": {
+            "fraction": 0.38895094540880515,
+            "seconds": 0.5496122166514397
+          },
+          "lazy_apply_seconds": {
+            "fraction": 0.05875465285361985,
+            "seconds": 0.08302403008565307
+          },
+          "policy_preparation_seconds": {
+            "fraction": 0.015909720989101712,
+            "seconds": 0.022481439169496298
+          },
+          "policy_sample_seconds": {
+            "fraction": 0.026464497592666527,
+            "seconds": 0.037396004190668464
+          },
+          "proposal_seconds": {
+            "fraction": 0.010645025345523588,
+            "seconds": 0.015042092185467482
+          },
+          "refresh_grouping_seconds": {
+            "fraction": 0.00011048185988760955,
+            "seconds": 0.00015611783601343632
+          },
+          "refresh_prefix_analysis_seconds": {
+            "fraction": 0.0011165695131675267,
+            "seconds": 0.0015777831431478262
+          },
+          "refresh_profiled_total_seconds": {
+            "fraction": 0.2554783812589337,
+            "seconds": 0.36100706551223993
+          },
+          "refresh_replay_binding_validation_seconds": {
+            "fraction": 0.0003410554703511517,
+            "seconds": 0.0004819328896701336
+          },
+          "refresh_replay_init_from_checkpoint_seconds": {
+            "fraction": 0.00969183995676415,
+            "seconds": 0.013695181114599109
+          },
+          "refresh_replay_quartz_apply_seconds": {
+            "fraction": 0.12108682317850515,
+            "seconds": 0.17110331798903644
+          },
+          "refresh_replay_replay_cache_lookup_seconds": {
+            "fraction": 0.00031011855256814745,
+            "seconds": 0.00043821707367897034
+          },
+          "refresh_replay_slot_update_and_graph_swap_seconds": {
+            "fraction": 0.001154312757177804,
+            "seconds": 0.0016311167273670435
+          },
+          "refresh_replay_source_guid_lookup_seconds": {
+            "fraction": 0.00036650933115088476,
+            "seconds": 0.000517900800332427
+          },
+          "refresh_replay_topology_signature_compare_seconds": {
+            "fraction": 0.02548952200786148,
+            "seconds": 0.03601830219849944
+          },
+          "refresh_replay_total_seconds": {
+            "fraction": 0.1621232455541376,
+            "seconds": 0.22909037093631923
+          },
+          "refresh_result_archive_seconds": {
+            "fraction": 0.007145322070485644,
+            "seconds": 0.010096790734678507
+          },
+          "refresh_result_best_qasm_seconds": {
+            "fraction": 0.0025607533699797606,
+            "seconds": 0.0036185060162097216
+          },
+          "refresh_result_graph_hash_seconds": {
+            "fraction": 0.08069241294519887,
+            "seconds": 0.11402346868999302
+          },
+          "refresh_result_processing_seconds": {
+            "fraction": 0.09071433896294422,
+            "seconds": 0.12818508222699165
+          },
+          "refresh_seconds": {
+            "fraction": 0.25762418764579786,
+            "seconds": 0.36403922527097166
+          },
+          "rejected_action_mask_seconds": {
+            "fraction": 0.0015814120347215851,
+            "seconds": 0.002234634943306446
+          }
+        },
+        "total_seconds": 1.413063069107011
+      },
+      "transitions": 222,
+      "transitions_per_second": 157.10551415110828,
+      "unique_selected_xfers": 20
+    },
+    "hwb6.qasm": {
+      "accepted_rewrites": 256,
+      "accepted_rewrites_per_second": 341.9588147118871,
+      "committed_gate_delta_histogram": {
+        "-1": 1,
+        "-2": 30,
+        "0": 106,
+        "1": 119
+      },
+      "cycle_actions": 31,
+      "cycle_xfers": {
+        "1001": 1,
+        "1006": 1,
+        "290": 1,
+        "314": 1,
+        "3328": 1,
+        "3336": 3,
+        "39": 2,
+        "45": 2,
+        "4658": 1,
+        "4660": 1,
+        "4664": 1,
+        "4682": 1,
+        "4699": 1,
+        "68": 1,
+        "69": 8,
+        "82": 1,
+        "83": 3,
+        "966": 1
+      },
+      "episodes": 16,
+      "exact_refresh_seconds_recorded": 0.10099894017912447,
+      "exact_refreshes": 293,
+      "exact_replay_actions": 272,
+      "improved_episodes": 12,
+      "initial_gate_count": 259,
+      "initial_gate_count_histogram": {
+        "259": 16
+      },
+      "invalid_actions": 6,
+      "invalid_xfers": {
+        "1001": 3,
+        "3434": 1,
+        "4383": 2
+      },
+      "legal_actions": 287,
+      "maximum_initial_gate_count": 259,
+      "maximum_total_reward": -1.32,
+      "mean_best_gate_count": 257.8125,
+      "mean_candidates": 87.3133505764746,
+      "mean_initial_gate_count": 259.0,
+      "mean_policy_entropy": 2.4128817820915573,
+      "mean_total_reward": -6.6325,
+      "minimum_best_gate_count": 256,
+      "minimum_final_gate_count": 256,
+      "minimum_initial_gate_count": 259,
+      "minimum_total_reward": -17.32,
+      "selected_xfers_top20": {
+        "1001": 5,
+        "1006": 17,
+        "2534": 5,
+        "27": 8,
+        "30": 16,
+        "3336": 7,
+        "3417": 7,
+        "3434": 7,
+        "3441": 6,
+        "38": 7,
+        "4372": 4,
+        "44": 35,
+        "45": 8,
+        "4652": 5,
+        "4656": 12,
+        "69": 17,
+        "82": 30,
+        "820": 4,
+        "972": 4,
+        "986": 11
+      },
+      "termination_reasons": {
+        "horizon": 16
+      },
+      "timing": {
+        "cache_advance_seconds": 0.11799017922021449,
+        "candidate_fallback_states": 0.0,
+        "eligible_actions": 25341.0,
+        "exact_rejection_retries": 37.0,
+        "hierarchical_match_seconds": 0.21001392928883433,
+        "lazy_apply_seconds": 0.05211871024221182,
+        "policy_preparation_seconds": 0.09127361979335546,
+        "policy_sample_seconds": 0.04454728029668331,
+        "proposal_seconds": 0.017913913819938898,
+        "refresh_group_count": 251.0,
+        "refresh_grouping_seconds": 0.0001779552549123764,
+        "refresh_prefix_analysis_seconds": 0.0018421399872750044,
+        "refresh_profiled_total_seconds": 0.15407486911863089,
+        "refresh_replay_actions_applied": 266.0,
+        "refresh_replay_actions_attempted": 272.0,
+        "refresh_replay_actions_planned": 293.0,
+        "refresh_replay_actions_reused_from_cache": 21.0,
+        "refresh_replay_binding_validation_seconds": 0.0003956847358494997,
+        "refresh_replay_failed_states": 6.0,
+        "refresh_replay_init_from_checkpoint_seconds": 0.005943536525592208,
+        "refresh_replay_init_from_checkpoint_states": 293.0,
+        "refresh_replay_quartz_apply_calls": 272.0,
+        "refresh_replay_quartz_apply_failures": 6.0,
+        "refresh_replay_quartz_apply_seconds": 0.07214283011853695,
+        "refresh_replay_quartz_direct_guid_apply_calls": 272.0,
+        "refresh_replay_replay_cache_entries": 6.0,
+        "refresh_replay_replay_cache_hits": 21.0,
+        "refresh_replay_replay_cache_lookup_seconds": 0.0005270568653941154,
+        "refresh_replay_replay_cache_misses": 272.0,
+        "refresh_replay_replay_states_total": 293.0,
+        "refresh_replay_slot_update_and_graph_swap_seconds": 0.0019207021687179804,
+        "refresh_replay_source_guid_lookup_seconds": 0.0005035100039094687,
+        "refresh_replay_topology_audits": 38.0,
+        "refresh_replay_topology_audits_skipped": 249.0,
+        "refresh_replay_topology_signature_compare_seconds": 0.015676341019570827,
+        "refresh_replay_total_seconds": 0.10099894017912447,
+        "refresh_replay_valid_states": 287.0,
+        "refresh_result_archive_seconds": 0.004857028601691127,
+        "refresh_result_best_qasm_seconds": 0.0005825550761073828,
+        "refresh_result_graph_hash_seconds": 0.04322232445701957,
+        "refresh_result_processing_seconds": 0.04910784540697932,
+        "refresh_runtime_count": 293.0,
+        "refresh_seconds": 0.15559698175638914,
+        "refresh_shared_prefix_count": 6.0,
+        "rejected_action_cache_hits": 51.0,
+        "rejected_action_cache_inserts": 37.0,
+        "rejected_action_mask_seconds": 0.00803564372472465,
+        "selected_actions": 25341.0,
+        "stages": {
+          "cache_advance_seconds": {
+            "fraction": 0.15760852278823312,
+            "seconds": 0.11799017922021449
+          },
+          "hierarchical_match_seconds": {
+            "fraction": 0.2805316966117026,
+            "seconds": 0.21001392928883433
+          },
+          "lazy_apply_seconds": {
+            "fraction": 0.06961895460444939,
+            "seconds": 0.05211871024221182
+          },
+          "policy_preparation_seconds": {
+            "fraction": 0.1219211673398409,
+            "seconds": 0.09127361979335546
+          },
+          "policy_sample_seconds": {
+            "fraction": 0.05950521550348448,
+            "seconds": 0.04454728029668331
+          },
+          "proposal_seconds": {
+            "fraction": 0.02392898725280156,
+            "seconds": 0.017913913819938898
+          },
+          "refresh_grouping_seconds": {
+            "fraction": 0.00023770846891245297,
+            "seconds": 0.0001779552549123764
+          },
+          "refresh_prefix_analysis_seconds": {
+            "fraction": 0.002460687525710669,
+            "seconds": 0.0018421399872750044
+          },
+          "refresh_profiled_total_seconds": {
+            "fraction": 0.20580960789334435,
+            "seconds": 0.15407486911863089
+          },
+          "refresh_replay_binding_validation_seconds": {
+            "fraction": 0.0005285464190260979,
+            "seconds": 0.0003956847358494997
+          },
+          "refresh_replay_init_from_checkpoint_seconds": {
+            "fraction": 0.007939237130813745,
+            "seconds": 0.005943536525592208
+          },
+          "refresh_replay_quartz_apply_seconds": {
+            "fraction": 0.0963667057706872,
+            "seconds": 0.07214283011853695
+          },
+          "refresh_replay_replay_cache_lookup_seconds": {
+            "fraction": 0.0007040302381872435,
+            "seconds": 0.0005270568653941154
+          },
+          "refresh_replay_slot_update_and_graph_swap_seconds": {
+            "fraction": 0.0025656290508959045,
+            "seconds": 0.0019207021687179804
+          },
+          "refresh_replay_source_guid_lookup_seconds": {
+            "fraction": 0.0006725768911424201,
+            "seconds": 0.0005035100039094687
+          },
+          "refresh_replay_topology_signature_compare_seconds": {
+            "fraction": 0.020940089820592873,
+            "seconds": 0.015676341019570827
+          },
+          "refresh_replay_total_seconds": {
+            "fraction": 0.13491202293285232,
+            "seconds": 0.10099894017912447
+          },
+          "refresh_result_archive_seconds": {
+            "fraction": 0.006487905248656375,
+            "seconds": 0.004857028601691127
+          },
+          "refresh_result_best_qasm_seconds": {
+            "fraction": 0.0007781634505081008,
+            "seconds": 0.0005825550761073828
+          },
+          "refresh_result_graph_hash_seconds": {
+            "fraction": 0.057735370470371174,
+            "seconds": 0.04322232445701957
+          },
+          "refresh_result_processing_seconds": {
+            "fraction": 0.06559711175166108,
+            "seconds": 0.04910784540697932
+          },
+          "refresh_seconds": {
+            "fraction": 0.20784281036782012,
+            "seconds": 0.15559698175638914
+          },
+          "rejected_action_mask_seconds": {
+            "fraction": 0.010733825013882247,
+            "seconds": 0.00803564372472465
+          }
+        },
+        "total_seconds": 0.7486281651072204
+      },
+      "transitions": 293,
+      "transitions_per_second": 391.3825496507145,
+      "unique_selected_xfers": 65
+    },
+    "vbe_adder_3.qasm": {
+      "accepted_rewrites": 251,
+      "accepted_rewrites_per_second": 385.36440752621013,
+      "committed_gate_delta_histogram": {
+        "0": 244,
+        "1": 7
+      },
+      "cycle_actions": 12,
+      "cycle_xfers": {
+        "120": 1,
+        "39": 1,
+        "45": 1,
+        "4652": 1,
+        "4654": 1,
+        "4656": 1,
+        "4657": 1,
+        "4658": 1,
+        "4660": 1,
+        "4664": 1,
+        "4682": 1,
+        "4699": 1
+      },
+      "episodes": 16,
+      "exact_refresh_seconds_recorded": 0.05905136442743242,
+      "exact_refreshes": 273,
+      "exact_replay_actions": 266,
+      "improved_episodes": 0,
+      "initial_gate_count": 150,
+      "initial_gate_count_histogram": {
+        "150": 16
+      },
+      "invalid_actions": 10,
+      "invalid_xfers": {
+        "1608": 1,
+        "3572": 4,
+        "4363": 1,
+        "4397": 1,
+        "4407": 2,
+        "4409": 1
+      },
+      "legal_actions": 263,
+      "maximum_initial_gate_count": 150,
+      "maximum_total_reward": -0.32,
+      "mean_best_gate_count": 150.0,
+      "mean_candidates": 43.65804227941177,
+      "mean_initial_gate_count": 150.0,
+      "mean_policy_entropy": 3.0095840767902486,
+      "mean_total_reward": -2.75125,
+      "minimum_best_gate_count": 150,
+      "minimum_final_gate_count": 150,
+      "minimum_initial_gate_count": 150,
+      "minimum_total_reward": -12.22,
+      "selected_xfers_top20": {
+        "120": 7,
+        "121": 11,
+        "1497": 3,
+        "1502": 1,
+        "1535": 4,
+        "1565": 5,
+        "1580": 2,
+        "1608": 1,
+        "340": 2,
+        "3572": 4,
+        "38": 9,
+        "39": 28,
+        "4363": 1,
+        "4382": 1,
+        "4384": 1,
+        "4396": 2,
+        "44": 40,
+        "4407": 2,
+        "45": 134,
+        "4699": 2
+      },
+      "termination_reasons": {
+        "exact_cycle": 1,
+        "horizon": 15
+      },
+      "timing": {
+        "cache_advance_seconds": 0.175305851502344,
+        "candidate_fallback_states": 0.0,
+        "eligible_actions": 12118.0,
+        "exact_rejection_retries": 21.0,
+        "hierarchical_match_seconds": 0.18878378672525287,
+        "lazy_apply_seconds": 0.034096439369022846,
+        "policy_preparation_seconds": 0.052435134537518024,
+        "policy_sample_seconds": 0.04217912280000746,
+        "proposal_seconds": 0.015903252409771085,
+        "refresh_group_count": 249.0,
+        "refresh_grouping_seconds": 0.0003787605091929436,
+        "refresh_prefix_analysis_seconds": 0.0014426864217966795,
+        "refresh_profiled_total_seconds": 0.09091277187690139,
+        "refresh_replay_actions_applied": 256.0,
+        "refresh_replay_actions_attempted": 266.0,
+        "refresh_replay_actions_planned": 273.0,
+        "refresh_replay_actions_reused_from_cache": 7.0,
+        "refresh_replay_binding_validation_seconds": 0.0003339191898703575,
+        "refresh_replay_failed_states": 10.0,
+        "refresh_replay_init_from_checkpoint_seconds": 0.0037988258991390467,
+        "refresh_replay_init_from_checkpoint_states": 273.0,
+        "refresh_replay_quartz_apply_calls": 266.0,
+        "refresh_replay_quartz_apply_failures": 10.0,
+        "refresh_replay_quartz_apply_seconds": 0.043279713252559304,
+        "refresh_replay_quartz_direct_guid_apply_calls": 266.0,
+        "refresh_replay_replay_cache_entries": 5.0,
+        "refresh_replay_replay_cache_hits": 7.0,
+        "refresh_replay_replay_cache_lookup_seconds": 0.00043127615936100483,
+        "refresh_replay_replay_cache_misses": 266.0,
+        "refresh_replay_replay_states_total": 273.0,
+        "refresh_replay_slot_update_and_graph_swap_seconds": 0.000859556719660759,
+        "refresh_replay_source_guid_lookup_seconds": 0.00042526586912572384,
+        "refresh_replay_topology_audits": 32.0,
+        "refresh_replay_topology_audits_skipped": 231.0,
+        "refresh_replay_topology_signature_compare_seconds": 0.0075736576691269875,
+        "refresh_replay_total_seconds": 0.05905136442743242,
+        "refresh_replay_valid_states": 263.0,
+        "refresh_result_archive_seconds": 0.003696360159665346,
+        "refresh_result_graph_hash_seconds": 0.024221202824264765,
+        "refresh_result_processing_seconds": 0.028326606610789895,
+        "refresh_runtime_count": 273.0,
+        "refresh_seconds": 0.09177788929082453,
+        "refresh_shared_prefix_count": 5.0,
+        "rejected_action_cache_hits": 28.0,
+        "rejected_action_cache_inserts": 22.0,
+        "rejected_action_mask_seconds": 0.004015265265479684,
+        "selected_actions": 12118.0,
+        "stages": {
+          "cache_advance_seconds": {
+            "fraction": 0.26914994262979514,
+            "seconds": 0.175305851502344
+          },
+          "hierarchical_match_seconds": {
+            "fraction": 0.28984283713916925,
+            "seconds": 0.18878378672525287
+          },
+          "lazy_apply_seconds": {
+            "fraction": 0.05234882133942963,
+            "seconds": 0.034096439369022846
+          },
+          "policy_preparation_seconds": {
+            "fraction": 0.0805045201378795,
+            "seconds": 0.052435134537518024
+          },
+          "policy_sample_seconds": {
+            "fraction": 0.06475829748127546,
+            "seconds": 0.04217912280000746
+          },
+          "proposal_seconds": {
+            "fraction": 0.024416523675821547,
+            "seconds": 0.015903252409771085
+          },
+          "refresh_grouping_seconds": {
+            "fraction": 0.0005815172080456748,
+            "seconds": 0.0003787605091929436
+          },
+          "refresh_prefix_analysis_seconds": {
+            "fraction": 0.0022149800724373925,
+            "seconds": 0.0014426864217966795
+          },
+          "refresh_profiled_total_seconds": {
+            "fraction": 0.13957986641795858,
+            "seconds": 0.09091277187690139
+          },
+          "refresh_replay_binding_validation_seconds": {
+            "fraction": 0.0005126715966773801,
+            "seconds": 0.0003339191898703575
+          },
+          "refresh_replay_init_from_checkpoint_seconds": {
+            "fraction": 0.0058323995693902045,
+            "seconds": 0.0037988258991390467
+          },
+          "refresh_replay_quartz_apply_seconds": {
+            "fraction": 0.06644805201385172,
+            "seconds": 0.043279713252559304
+          },
+          "refresh_replay_replay_cache_lookup_seconds": {
+            "fraction": 0.0006621453451487371,
+            "seconds": 0.00043127615936100483
+          },
+          "refresh_replay_slot_update_and_graph_swap_seconds": {
+            "fraction": 0.001319691498036817,
+            "seconds": 0.000859556719660759
+          },
+          "refresh_replay_source_guid_lookup_seconds": {
+            "fraction": 0.0006529176481942366,
+            "seconds": 0.00042526586912572384
+          },
+          "refresh_replay_topology_signature_compare_seconds": {
+            "fraction": 0.01162796055963928,
+            "seconds": 0.0075736576691269875
+          },
+          "refresh_replay_total_seconds": {
+            "fraction": 0.09066252616012675,
+            "seconds": 0.05905136442743242
+          },
+          "refresh_result_archive_seconds": {
+            "fraction": 0.005675082242760652,
+            "seconds": 0.003696360159665346
+          },
+          "refresh_result_graph_hash_seconds": {
+            "fraction": 0.037187209067509795,
+            "seconds": 0.024221202824264765
+          },
+          "refresh_result_processing_seconds": {
+            "fraction": 0.04349030268444253,
+            "seconds": 0.028326606610789895
+          },
+          "refresh_seconds": {
+            "fraction": 0.14090809534089524,
+            "seconds": 0.09177788929082453
+          },
+          "rejected_action_mask_seconds": {
+            "fraction": 0.006164702470486651,
+            "seconds": 0.004015265265479684
+          }
+        },
+        "total_seconds": 0.6513315581250936
+      },
+      "transitions": 273,
+      "transitions_per_second": 419.14136754842775,
+      "unique_selected_xfers": 33
+    }
+  },
+  "training_iterations": []
+}
