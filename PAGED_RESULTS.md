@@ -726,3 +726,26 @@ Reproducibility artifacts:
 - `benchmark_results/action_preferences_stochastic_s73_75_d16_support2_v2.metadata.json`;
 - `benchmark_results/action_value_d16_support2_v2_lr5e5.training.json`;
 - `benchmark_results/action_value_v2_ab_*`.
+
+## Exact best-so-far tracking
+
+Offline preference training did not maintain an optimization archive, and the
+rollout output previously derived `--best-qasm` only from the final independent
+audit prefix.  This could miss a better circuit confirmed at an earlier refresh
+or later in the final beam, especially when value ranking is not ordered by gate
+count.
+
+Paged rollout now maintains a separate monotonic `best_exact_gate_count` and
+`best_exact_depth`.  The archive starts with the input graph and is updated only
+by a Quartz refresh or independent replay whose topology matches the lazy state.
+Each step reports `best_exact_gate_count_so_far`; `--best-qasm` exports this
+confirmed archive even when `--audit-count 0`.  Speculative minima remain a
+separate metric and can never become a future training root without refresh.
+
+An H100 smoke run on `mod5_4` with beam 256, depth 8, and refresh interval 8
+records 63 gates through the speculative depths, then confirms and exports 62
+gates at depth 8.  Parsing the exported QASM independently with Quartz also
+returns 62 gates.  Search excluding audit takes 1.566 seconds.  The full result
+and exported circuit are retained as
+`benchmark_results/best_exact_tracking_smoke_mod5_b256_d8.json` and
+`benchmark_results/best_exact_tracking_smoke_mod5_b256_d8_best.qasm`.

@@ -846,6 +846,9 @@ def main() -> None:
     next_slot = update_slots(graph, guid_to_slot, 0)
     initial_snapshot = snapshot(graph, guid_to_slot)
     initial_gate_count = int(graph.gate_count)
+    best_exact_graph = graph
+    best_exact_gate_count = initial_gate_count
+    best_exact_depth = 0
     beam = [
         BeamState(
             graph=None,
@@ -1296,6 +1299,10 @@ def main() -> None:
                 state.exact_graph_checkpoint = exact_graph
                 state.exact_slot_checkpoint = exact_slots
                 state.exact_checkpoint_depth = len(state.history)
+                if state.gate_count < best_exact_gate_count:
+                    best_exact_graph = exact_graph
+                    best_exact_gate_count = state.gate_count
+                    best_exact_depth = len(state.history)
             refresh_seconds = time.perf_counter() - refresh_started
         else:
             keep_indices = list(range(min(args.beam_size, len(beam))))
@@ -1367,6 +1374,8 @@ def main() -> None:
             "best_speculative_gate_count": min(
                 state.gate_count for state in beam
             ),
+            "best_exact_gate_count_so_far": best_exact_gate_count,
+            "best_exact_depth_so_far": best_exact_depth,
             "predicted_actions": predicted_action_count,
             "eligible_actions_before_parent_cap": eligible_actions,
             "proposals_after_caps": len(proposals),
@@ -1486,6 +1495,10 @@ def main() -> None:
         if best_valid_gate_count is None or gate_count < best_valid_gate_count:
             best_valid_gate_count = gate_count
             best_valid_graph = exact_graph
+        if gate_count < best_exact_gate_count:
+            best_exact_graph = exact_graph
+            best_exact_gate_count = gate_count
+            best_exact_depth = len(state.history)
     audit = {
         "audited_states": audited,
         "valid_trajectories": valid,
@@ -1504,6 +1517,8 @@ def main() -> None:
         "completed_depth": len(step_rows),
         "initial_gate_count": initial_gate_count,
         "best_speculative_gate_count": min(state.gate_count for state in beam),
+        "best_exact_gate_count": best_exact_gate_count,
+        "best_exact_depth": best_exact_depth,
         "final_beam_size": len(beam),
         "dedup_mode": args.dedup_mode,
         "lazy_topology_backend": args.lazy_topology_backend,
@@ -1601,9 +1616,9 @@ def main() -> None:
         args.dump_beam_histories.write_text(
             json.dumps(history_payload, indent=2, sort_keys=True) + "\n"
         )
-    if args.best_qasm is not None and best_valid_graph is not None:
+    if args.best_qasm is not None:
         args.best_qasm.parent.mkdir(parents=True, exist_ok=True)
-        best_valid_graph.to_qasm(filename=str(args.best_qasm))
+        best_exact_graph.to_qasm(filename=str(args.best_qasm))
 
 
 if __name__ == "__main__":
