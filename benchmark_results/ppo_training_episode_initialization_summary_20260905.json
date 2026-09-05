@@ -1,0 +1,67 @@
+{
+  "format": "ppo-training-episode-initialization-ab-v1",
+  "machine": "h100-gpu5",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "protocol": {
+    "circuits": 14,
+    "episodes": 224,
+    "episodes_per_circuit": 16,
+    "max_steps": 16,
+    "refresh_interval": 8,
+    "max_actions": 64,
+    "source_grouping": "first_gate",
+    "proposal_expansion": "full",
+    "proposal_tensor_backend": "reuse",
+    "policy_padding_backend": "tensorized",
+    "transition_transfer_backend": "batched",
+    "ppo_epochs": 1
+  },
+  "seed_911_duplicated_first": {
+    "duplicated": {
+      "collection_seconds": 7.877724684076384,
+      "transitions": 3386,
+      "transitions_per_second": 429.8195400055401,
+      "selected_action_legality": 0.993502658003544,
+      "peak_cuda_allocated_gib": 0.21245098114013672
+    },
+    "deduplicated": {
+      "collection_seconds": 7.21504477201961,
+      "transitions": 3377,
+      "transitions_per_second": 468.0497636128628,
+      "selected_action_legality": 0.9931892212022505,
+      "peak_cuda_allocated_gib": 0.2133326530456543
+    }
+  },
+  "seed_912_deduplicated_first": {
+    "duplicated": {
+      "collection_seconds": 7.453872825950384,
+      "transitions": 3373,
+      "transitions_per_second": 452.5164406155448,
+      "selected_action_legality": 0.9928846723984583,
+      "peak_cuda_allocated_gib": 0.21129751205444336
+    },
+    "deduplicated": {
+      "collection_seconds": 7.270129333017394,
+      "transitions": 3374,
+      "transitions_per_second": 464.090780981974,
+      "selected_action_legality": 0.993479549496147,
+      "peak_cuda_allocated_gib": 0.2122230529785156
+    }
+  },
+  "mean": {
+    "duplicated_collection_seconds": 7.665798755013384,
+    "deduplicated_collection_seconds": 7.242587052518502,
+    "collection_time_reduction_percent": 5.520777625659745,
+    "duplicated_transitions_per_second": 441.16799031054245,
+    "deduplicated_transitions_per_second": 466.0702722974184,
+    "throughput_increase_percent": 5.644625751144594
+  },
+  "correctness": {
+    "initial_model_states_bitwise_equal": true,
+    "initial_topology_fingerprints_equal": true,
+    "best_gate_counts_equal_within_each_seed": true,
+    "selected_action_legality_max_difference_percentage_points": 0.059487709768864,
+    "note": "GPU candidate selection is not bitwise deterministic, so stochastic transition counts differ slightly between paired processes"
+  },
+  "microbenchmark": "ppo_episode_initialization_microbenchmark_h100.json"
+}

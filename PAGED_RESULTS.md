@@ -1207,3 +1207,34 @@ agreement, including interleaved parents and empty candidate sets. Raw logs and
 the compact result are in
 `benchmark_results/ppo_training_policy_padding_ab_*_h100.json` and
 `benchmark_results/ppo_training_policy_padding_summary_20260905.json`.
+
+## Deduplicated PPO episode initialization
+
+Each broad-training circuit contributes 16 episodes to a collector call. The
+old initializer independently parsed the same starting QASM, rebuilt its
+snapshot and indexed topology, and ran the initial graph encoder 16 times.
+`--episode-initialization-backend deduplicated` preserves every episode's
+replay-start sampling first, groups equal QASM strings, constructs and encodes
+each unique starting graph once, and expands the encoded rows back into the
+original episode order. Initial Quartz checkpoints and topology objects are
+read-only; accepted rewrites return new graph and topology objects.
+
+An isolated six-round H100 benchmark initialized 14 circuits with 16 episodes
+per circuit. Deduplication reduced mean initialization time from 0.380 to 0.040
+seconds (-89.4%). Initial model states were bitwise equal with zero maximum
+error, and live masks, gate types, topology fingerprints, and root hashes all
+matched. Raw snapshot dictionaries differ only because independent Quartz
+parses allocate different GUIDs; GUID-independent persistent-slot topology is
+identical.
+
+Two reversed-order end-to-end A/B pairs used the optimized tensorized policy
+padding path. Averaged across seeds 911 and 912, collection time fell from
+7.666 to 7.243 seconds (-5.5%) and throughput rose from 441.2 to 466.1
+transitions/s (+5.6%). All paired runs retained the same per-circuit best gate
+counts, selected-action legality stayed within 0.06 percentage points, and
+peak CUDA allocation remained about 0.212 GiB. The launcher now enables
+deduplicated initialization by default, while `duplicated` remains available
+for regression tests. Raw and summarized results are in
+`benchmark_results/ppo_training_init_ab_*_h100.json`,
+`benchmark_results/ppo_episode_initialization_microbenchmark_h100.json`, and
+`benchmark_results/ppo_training_episode_initialization_summary_20260905.json`.

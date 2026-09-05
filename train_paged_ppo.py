@@ -281,6 +281,26 @@ def initial_batch_many(snapshot_rows: list[dict]) -> dict:
     }
 
 
+def group_episode_starts(
+    starts: list[str | None], backend: str
+) -> tuple[list[str | None], list[int]]:
+    if backend == "duplicated":
+        return starts, list(range(len(starts)))
+    if backend != "deduplicated":
+        raise ValueError(f"unknown episode initialization backend: {backend}")
+    unique_starts: list[str | None] = []
+    template_by_start: dict[str | None, int] = {}
+    template_indices = []
+    for start in starts:
+        template_index = template_by_start.get(start)
+        if template_index is None:
+            template_index = len(unique_starts)
+            unique_starts.append(start)
+            template_by_start[start] = template_index
+        template_indices.append(template_index)
+    return unique_starts, template_indices
+
+
 def initialize_episode_batch(
     qasm: Path,
     batch_size: int,
@@ -291,6 +311,7 @@ def initialize_episode_batch(
     device: torch.device,
     max_steps: int,
     page_size: int,
+    initialization_backend: str,
     start_from_best: bool,
     use_replay_starts: bool,
     replay_start_probability: float,
@@ -304,8 +325,7 @@ def initialize_episode_batch(
     PagedKVCache,
     list,
 ]:
-    snapshots = []
-    runtimes = []
+    episode_starts = []
     for _ in range(batch_size):
         start_qasm = best_by_circuit[qasm.name]["qasm"] if start_from_best else None
         started_from_replay = False
@@ -316,6 +336,14 @@ def initialize_episode_batch(
         ):
             start_qasm = random.choice(replay_pool[qasm.name]["states"])["qasm"]
             started_from_replay = True
+        episode_starts.append((start_qasm, started_from_replay))
+
+    template_starts, template_indices = group_episode_starts(
+        [start for start, _ in episode_starts], initialization_backend
+    )
+    templates = []
+    snapshots = []
+    for start_qasm in template_starts:
         graph = (
             quartz.PyGraph.from_qasm_str(context=context, qasm_str=start_qasm)
             if start_qasm is not None
@@ -326,6 +354,29 @@ def initialize_episode_batch(
         next_slot = update_slots(graph, guid_to_slot, 0)
         initial_snapshot = snapshot(graph, guid_to_slot)
         topology = indexed_topology(initial_snapshot)
+        templates.append(
+            {
+                "graph": graph,
+                "initial_qasm": initial_qasm,
+                "guid_to_slot": guid_to_slot,
+                "next_slot": next_slot,
+                "snapshot": initial_snapshot,
+                "topology": topology,
+            }
+        )
+        snapshots.append(initial_snapshot)
+
+    runtimes = []
+    for template_index, (_, started_from_replay) in zip(
+        template_indices, episode_starts
+    ):
+        template = templates[template_index]
+        graph = template["graph"]
+        initial_qasm = template["initial_qasm"]
+        guid_to_slot = template["guid_to_slot"]
+        next_slot = template["next_slot"]
+        initial_snapshot = template["snapshot"]
+        topology = template["topology"]
         state = BeamState(
             graph=None,
             snapshot=initial_snapshot,
@@ -345,7 +396,6 @@ def initialize_episode_batch(
             exact_slot_checkpoint=dict(guid_to_slot),
             exact_checkpoint_depth=0,
         )
-        snapshots.append(initial_snapshot)
         runtimes.append(
             EpisodeRuntime(
                 circuit=qasm.name,
@@ -363,6 +413,11 @@ def initialize_episode_batch(
         states, live, gate_types = model.initialize_incremental(
             move_batch(initial_batch_many(snapshots), device)
         )
+        if template_indices != list(range(batch_size)):
+            episode_indices = torch.tensor(template_indices, device=device)
+            states = states.index_select(0, episode_indices)
+            live = live.index_select(0, episode_indices)
+            gate_types = gate_types.index_select(0, episode_indices)
     cache_pages = batch_size * (math.ceil(max_steps / page_size) + 2) + 4
     arena = PagedKVCache(
         layers=model.action_layers_count,
@@ -630,6 +685,7 @@ def collect_episode(
     transition_transfer_backend: str,
     proposal_tensor_backend: str,
     policy_padding_backend: str,
+    episode_initialization_backend: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -1065,6 +1121,7 @@ def collect_episode_batch(
     transition_transfer_backend: str,
     proposal_tensor_backend: str,
     policy_padding_backend: str,
+    episode_initialization_backend: str,
     max_actions: int,
     invalid_reward: float,
     cycle_reward: float,
@@ -1105,6 +1162,7 @@ def collect_episode_batch(
         device=device,
         max_steps=max_steps,
         page_size=page_size,
+        initialization_backend=episode_initialization_backend,
         start_from_best=start_from_best,
         use_replay_starts=use_replay_starts,
         replay_start_probability=replay_start_probability,
@@ -1870,6 +1928,12 @@ def main() -> None:
         default="loop",
         help="pack per-parent PPO candidate sets with one GPU scatter",
     )
+    parser.add_argument(
+        "--episode-initialization-backend",
+        choices=("duplicated", "deduplicated"),
+        default="duplicated",
+        help="share parsing, topology, and initial encoding across equal starts",
+    )
     parser.add_argument("--max-actions", type=int, default=128)
     parser.add_argument("--max-gate-increase", type=int, default=3)
     parser.add_argument("--page-size", type=int, default=8)
@@ -2118,6 +2182,7 @@ def main() -> None:
         "transition_transfer_backend": args.transition_transfer_backend,
         "proposal_tensor_backend": args.proposal_tensor_backend,
         "policy_padding_backend": args.policy_padding_backend,
+        "episode_initialization_backend": args.episode_initialization_backend,
         "max_actions": args.max_actions,
         "invalid_reward": args.invalid_reward,
         "cycle_reward": args.cycle_reward,

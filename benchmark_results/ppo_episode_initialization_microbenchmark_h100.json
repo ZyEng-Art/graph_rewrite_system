@@ -1,0 +1,48 @@
+{
+  "format": "ppo-episode-initialization-microbenchmark-v1",
+  "machine": "h100-gpu5",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "circuits": 14,
+  "episodes_per_circuit": 16,
+  "rounds": [
+    {
+      "duplicated": 0.46459906501695514,
+      "deduplicated": 0.04297852888703346
+    },
+    {
+      "duplicated": 0.3627578660380095,
+      "deduplicated": 0.03931540413759649
+    },
+    {
+      "duplicated": 0.3622382690664381,
+      "deduplicated": 0.03949928120709956
+    },
+    {
+      "duplicated": 0.36310318298637867,
+      "deduplicated": 0.04076201911084354
+    },
+    {
+      "duplicated": 0.3632819368503988,
+      "deduplicated": 0.03965664212591946
+    },
+    {
+      "duplicated": 0.3633481941651553,
+      "deduplicated": 0.03934400901198387
+    }
+  ],
+  "means": {
+    "duplicated": 0.3798880856872226,
+    "deduplicated": 0.0402593140800794
+  },
+  "time_reduction_percent": 89.40232252684372,
+  "tensor_checks": {
+    "states_equal": true,
+    "states_max_abs": 0.0,
+    "live_equal": true,
+    "gate_types_equal": true,
+    "topology_fingerprints_equal": true,
+    "root_hashes_equal": true,
+    "raw_snapshots_equal": false,
+    "raw_snapshot_note": "independent Quartz parses assign different GUIDs; persistent-slot topology and model inputs are identical"
+  }
+}
