@@ -1,0 +1,94 @@
+{
+  "date": "2026-09-05",
+  "host": "h100-gpu5",
+  "visible_gpu": 6,
+  "physical_gpu": "H100",
+  "note": "The GPU also held an idle vLLM allocation of approximately 47.9 GiB.",
+  "architecture": {
+    "name": "match_set",
+    "set_layers": 2,
+    "set_heads": 4,
+    "base_model_trainable": false,
+    "actor_inputs": [
+      "ordered complete-binding candidate features",
+      "calibrated matcher and immediate gate prior",
+      "full candidate set for the current state",
+      "latest causal action hidden state or root graph pooling",
+      "current graph mean/max pooling and exact gate count"
+    ],
+    "critic_inputs": [
+      "separate candidate-set encoder",
+      "attention-pooled current candidate set",
+      "latest causal action hidden state or root graph pooling",
+      "current graph mean/max pooling and exact gate count"
+    ],
+    "auxiliary_objective": "class-balanced selected-action legality BCE"
+  },
+  "protocol": {
+    "circuit": "barenco_tof_3.qasm",
+    "initial_gates": 58,
+    "episodes": 64,
+    "max_steps": 16,
+    "max_actions": 64,
+    "collector_batch_size": 64,
+    "refresh_interval": 8,
+    "ppo_epochs": 1,
+    "replay_start_probability": 0.0,
+    "seed": 773
+  },
+  "legacy_batched_reference": {
+    "architecture": "legacy",
+    "collection_seconds": 4.225653521949425,
+    "transitions": 908,
+    "transitions_per_second": 214.87800532711717,
+    "accepted_rewrites_per_second": 209.90835982946356,
+    "artifact": "ppo_collector_barenco_b64_r8_s773.training.json"
+  },
+  "match_set_runs": [
+    {
+      "collection_seconds": 3.338336562970653,
+      "transitions": 915,
+      "transitions_per_second": 274.08860153566354,
+      "accepted_rewrites": 891,
+      "accepted_rewrites_per_second": 266.899392315056,
+      "selected_action_legality": 0.9737704918032787,
+      "exact_refresh_seconds": 0.07799463625997305,
+      "best_gate_count": 58,
+      "artifact": "ppo_matchset_barenco_b64_r8_s773.training.json"
+    },
+    {
+      "collection_seconds": 3.7771118560340255,
+      "transitions": 915,
+      "transitions_per_second": 242.24858433521524,
+      "accepted_rewrites": 891,
+      "accepted_rewrites_per_second": 235.89452310675057,
+      "selected_action_legality": 0.9737704918032787,
+      "exact_refresh_seconds": 0.07443953747861087,
+      "best_gate_count": 58,
+      "update_samples_per_second": 2236.5792298997717,
+      "legality_label_rate": 0.9737704918032787,
+      "legality_balanced_accuracy_after_one_epoch": 0.4917929292929293,
+      "artifact": "ppo_matchset_barenco_b64_r8_balanced_s773.training.json"
+    }
+  ],
+  "comparison": {
+    "match_set_transitions_per_second_range": [
+      242.24858433521524,
+      274.08860153566354
+    ],
+    "match_set_pooled_transitions_per_second": 250.44099754000737,
+    "throughput_gain_range_over_legacy": [
+      1.1273772946953355,
+      1.275554476217367
+    ]
+  },
+  "rollout_smoke": {
+    "beam_size": 32,
+    "depth": 2,
+    "search_seconds_excluding_audit": 0.5464176759123802,
+    "audited_states": 8,
+    "valid_trajectories": 8,
+    "exact_topology_matches": 8,
+    "artifact": "ppo_matchset_rollout_barenco_b32_d2_smoke.json"
+  }
+}

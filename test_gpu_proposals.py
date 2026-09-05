@@ -38,14 +38,44 @@ class _XferValueModel:
 
 class _PPOFeatureModel:
     def candidate_features(
-        self, states, live, xfer_ids, source_ids, bindings, batch_ids
+        self,
+        states,
+        live,
+        xfer_ids,
+        source_ids,
+        bindings,
+        batch_ids,
+        ordered_roles=False,
     ):
         return xfer_ids.float().unsqueeze(-1)
 
 
 class _PPOActor:
+    match_set_aware = False
+
     def policy_logits(self, candidate_features, matcher_logits):
         return matcher_logits + candidate_features[:, 0]
+
+
+class _MatchSetPPOActor:
+    match_set_aware = True
+
+    def __init__(self) -> None:
+        self.candidate_counts = None
+
+    def policy_logits(
+        self,
+        candidate_features,
+        matcher_logits,
+        candidate_mask,
+        prefix_states,
+        state_features,
+    ):
+        assert candidate_features.ndim == 3
+        assert prefix_states.shape == (candidate_features.shape[0], 1)
+        assert state_features.shape == (candidate_features.shape[0], 3)
+        self.candidate_counts = candidate_mask.sum(1).tolist()
+        return matcher_logits + candidate_features[..., 0]
 
 
 def main() -> None:
@@ -238,6 +268,28 @@ def main() -> None:
             if row.parent == parent
         )
         assert abs(probability_sum - 1.0) < 1e-5
+
+    match_set_actor = _MatchSetPPOActor()
+    match_set_actual, match_set_metrics, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=8,
+        global_cap=8,
+        ranking_mode="ppo",
+        ppo_actor_critic=match_set_actor,
+        ppo_model=_PPOFeatureModel(),
+        ppo_states=torch.zeros((3, 9, 1), device=device),
+        ppo_live=torch.ones((3, 9), dtype=torch.bool, device=device),
+        ppo_prefix_states=torch.zeros((3, 1), device=device),
+        ppo_state_features=torch.zeros((3, 3), device=device),
+        ppo_initial_gate_bias=0.0,
+    )
+    assert match_set_metrics["ppo_policy_candidates"] == 8
+    assert match_set_actor.candidate_counts == [3, 3, 2]
+    assert list(map(simplify, match_set_actual)) == list(
+        map(simplify, ppo_actual)
+    )
 
     increasing_rule_index = GpuRuleIndex.build(
         source_to_xfers,

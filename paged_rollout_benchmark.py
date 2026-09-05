@@ -44,7 +44,7 @@ from lazy_rollout_benchmark import (
 )
 from model_factory import build_model
 from paged_cache import PagedKVCache, PrefixHandle
-from ppo_core import PagedPPOActorCritic
+from ppo_core import build_actor_critic, build_state_features
 from gpu_proposals import GpuRuleIndex, build_gpu_proposals
 from threshold_inference import (
     CandidateTensors,
@@ -921,7 +921,7 @@ def main() -> None:
     parser.add_argument(
         "--ppo-checkpoint",
         type=Path,
-        help="paged-ppo-v1 actor/critic checkpoint used by PPO proposal ranking",
+        help="paged PPO actor/critic checkpoint used by PPO proposal ranking",
     )
     parser.add_argument(
         "--ppo-initial-gate-bias",
@@ -1156,7 +1156,7 @@ def main() -> None:
         ppo_payload = torch.load(
             args.ppo_checkpoint, map_location="cpu", weights_only=False
         )
-        if ppo_payload.get("format") != "paged-ppo-v1":
+        if ppo_payload.get("format") not in {"paged-ppo-v1", "paged-ppo-v2"}:
             parser.error("unsupported PPO checkpoint format")
         if int(ppo_payload["width"]) != model.width:
             parser.error("PPO checkpoint width differs from the base model")
@@ -1166,8 +1166,12 @@ def main() -> None:
                 "PPO checkpoint was trained on a different base model: "
                 f"expected {expected_base}, got {args.checkpoint.name}"
             )
-        ppo_actor_critic = PagedPPOActorCritic(
-            model.width, hidden_size=int(ppo_payload["hidden_size"])
+        ppo_actor_critic = build_actor_critic(
+            ppo_payload.get("actor_critic_architecture", "legacy"),
+            model.width,
+            hidden_size=int(ppo_payload["hidden_size"]),
+            set_layers=int(ppo_payload.get("set_layers", 2)),
+            set_heads=int(ppo_payload.get("set_heads", 4)),
         ).to(device)
         ppo_actor_critic.load_state_dict(ppo_payload["actor_critic"])
         ppo_actor_critic.eval()
@@ -1450,6 +1454,25 @@ def main() -> None:
         )
         gpu_proposal_timing: dict[str, float] = {}
         if use_gpu_proposals:
+            ppo_prefix_states = None
+            ppo_state_features = None
+            if args.proposal_ranking == "ppo":
+                last_actions, prefix_present = arena.last_actions(handles)
+                live_float = live.unsqueeze(-1)
+                root_states = (action_value_states * live_float).sum(1)
+                root_states = root_states / live_float.sum(1).clamp_min(1)
+                ppo_prefix_states = torch.where(
+                    prefix_present.unsqueeze(-1),
+                    last_actions.to(root_states.dtype),
+                    root_states,
+                )
+                ppo_state_features = build_state_features(
+                    action_value_states,
+                    live,
+                    torch.tensor(
+                        [state.gate_count for state in beam], device=device
+                    ),
+                )
             proposals, proposal_metrics, gpu_proposal_timing = build_gpu_proposals(
                 predicted,
                 beam,
@@ -1474,6 +1497,8 @@ def main() -> None:
                     else None
                 ),
                 ppo_live=live if args.proposal_ranking == "ppo" else None,
+                ppo_prefix_states=ppo_prefix_states,
+                ppo_state_features=ppo_state_features,
                 ppo_initial_gate_bias=(
                     args.ppo_initial_gate_bias
                     if args.proposal_ranking == "ppo"

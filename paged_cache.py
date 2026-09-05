@@ -384,3 +384,37 @@ class PagedKVCache:
         actions = flat_actions[token_indices]
         actions = actions.masked_fill(~mask.unsqueeze(-1), 0)
         return actions, mask
+
+    def last_actions(
+        self, handles: list[PrefixHandle]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Read only the final causal action state for each prefix."""
+        if not handles:
+            return (
+                torch.empty(
+                    (0, self.model_width),
+                    device=self.device,
+                    dtype=self.dtype,
+                ),
+                torch.empty(0, device=self.device, dtype=torch.bool),
+            )
+        present = torch.tensor(
+            [handle.length > 0 for handle in handles],
+            device=self.device,
+            dtype=torch.bool,
+        )
+        page_ids = torch.tensor(
+            [handle.blocks[-1] if handle.length else 0 for handle in handles],
+            device=self.device,
+            dtype=torch.long,
+        )
+        offsets = torch.tensor(
+            [
+                (handle.length - 1) % self.page_size if handle.length else 0
+                for handle in handles
+            ],
+            device=self.device,
+            dtype=torch.long,
+        )
+        actions = self.actions[page_ids, offsets]
+        return actions.masked_fill(~present.unsqueeze(-1), 0), present

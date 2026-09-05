@@ -40,7 +40,7 @@ from paged_rollout_benchmark import (
     paged_model_matches,
 )
 from ppo_core import (
-    PagedPPOActorCritic,
+    build_actor_critic,
     build_policy_features,
     build_state_features,
     clipped_ppo_objective,
@@ -66,6 +66,7 @@ class PPOTransition:
     legal: bool
     xfer_id: int
     matcher_probability: float
+    prefix_state: torch.Tensor | None = None
     history_depth: int = 0
     committed_action: bool = False
     repeated_state: bool = False
@@ -389,6 +390,7 @@ def proposal_features(
     rules: RuleMetadata,
     device: torch.device,
     initial_gate_bias: float,
+    ordered_roles: bool = False,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     count = len(proposals)
     xfer_ids = torch.tensor(
@@ -411,6 +413,7 @@ def proposal_features(
         source_ids,
         bindings,
         torch.zeros(count, dtype=torch.long, device=device),
+        ordered_roles=ordered_roles,
     )
     probabilities = torch.tensor(
         [proposal.probability for proposal in proposals], device=device
@@ -437,6 +440,7 @@ def batched_proposal_features(
     rules: RuleMetadata,
     device: torch.device,
     initial_gate_bias: float,
+    ordered_roles: bool = False,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     count = len(proposals)
     parent_ids = torch.tensor(
@@ -462,6 +466,7 @@ def batched_proposal_features(
         source_ids,
         bindings,
         parent_ids,
+        ordered_roles=ordered_roles,
     )
     probabilities = torch.tensor(
         [proposal.probability for proposal in proposals], device=device
@@ -514,6 +519,21 @@ def pad_batched_policy_inputs(
     return padded_features, padded_logits, mask, grouped_proposals
 
 
+def current_prefix_states(
+    encoded: torch.Tensor,
+    live: torch.Tensor,
+    arena: PagedKVCache,
+    handles: list,
+) -> torch.Tensor:
+    """Use the final causal token, with graph pooling as the root BOS state."""
+    last_actions, present = arena.last_actions(handles)
+    live_float = live.unsqueeze(-1)
+    root_states = (encoded * live_float).sum(1)
+    root_states = root_states / live_float.sum(1).clamp_min(1)
+    last_actions = last_actions.to(root_states.dtype)
+    return torch.where(present.unsqueeze(-1), last_actions, root_states)
+
+
 def finalize_episode(transitions: list[PPOTransition], gamma: float, gae_lambda: float) -> None:
     if not transitions:
         return
@@ -543,7 +563,7 @@ def collect_episode(
     destination_patterns,
     rule_index: GpuRuleIndex,
     model,
-    actor_critic: PagedPPOActorCritic,
+    actor_critic: torch.nn.Module,
     device: torch.device,
     threshold_config: dict,
     source_vectors: torch.Tensor,
@@ -643,9 +663,13 @@ def collect_episode(
             rules,
             device,
             initial_gate_bias,
+            ordered_roles=actor_critic.match_set_aware,
         )
         state_features = build_state_features(
             encoded, live, torch.tensor([state.gate_count], device=device)
+        )
+        prefix_states = current_prefix_states(
+            encoded, live, arena, handles
         )
         candidate_mask = torch.ones(
             (1, len(proposals)), dtype=torch.bool, device=device
@@ -658,6 +682,8 @@ def collect_episode(
                     policy_features.unsqueeze(0),
                     matcher_logits.unsqueeze(0),
                     candidate_mask,
+                    prefix_states=prefix_states,
+                    state_features=state_features,
                 )
                 action = (
                     distribution.logits.argmax(-1)
@@ -666,7 +692,14 @@ def collect_episode(
                 )
                 action_index = int(action.item())
                 old_log_prob = float(distribution.log_prob(action).item())
-                old_value = float(actor_critic.state_values(state_features).item())
+                old_value = float(
+                    actor_critic.state_values(
+                        state_features,
+                        policy_features.unsqueeze(0),
+                        candidate_mask,
+                        prefix_states,
+                    ).item()
+                )
                 entropies.append(float(distribution.entropy().item()))
             proposal = proposals[action_index]
             candidate_counts.append(int(candidate_mask.sum().item()))
@@ -733,6 +766,7 @@ def collect_episode(
                     legal=legal,
                     xfer_id=proposal.xfer_id,
                     matcher_probability=proposal.probability,
+                    prefix_state=prefix_states[0].float().cpu(),
                 )
             )
             if legal:
@@ -942,7 +976,7 @@ def collect_episode_batch(
     destination_patterns,
     rule_index: GpuRuleIndex,
     model,
-    actor_critic: PagedPPOActorCritic,
+    actor_critic: torch.nn.Module,
     device: torch.device,
     threshold_config: dict,
     source_vectors: torch.Tensor,
@@ -1032,6 +1066,7 @@ def collect_episode_batch(
                 rules,
                 device,
                 initial_gate_bias,
+                ordered_roles=actor_critic.match_set_aware,
             )
             (
                 policy_features,
@@ -1061,39 +1096,65 @@ def collect_episode_batch(
                 [runtime.state.gate_count for runtime in active], device=device
             ),
         )
+        prefix_states = current_prefix_states(encoded, live, arena, handles)
         with torch.no_grad():
-            old_values = actor_critic.state_values(state_features)
+            if proposals:
+                value_mask = candidate_mask.clone()
+                value_mask[~value_mask.any(1), 0] = True
+                old_values = actor_critic.state_values(
+                    state_features,
+                    policy_features,
+                    value_mask,
+                    prefix_states,
+                )
+            else:
+                old_values = state_features.new_zeros(len(active))
 
         advance_records: dict[int, tuple[BeamState, Proposal]] = {}
         refresh_indices = set()
         for parent_index, runtime in enumerate(active):
-            rows = grouped_proposals[parent_index]
-            if not rows:
+            if not grouped_proposals[parent_index]:
                 runtime.terminated_reason = "no_candidates"
                 runtime.stopped = True
                 if runtime.pending_transition_indices:
                     refresh_indices.add(parent_index)
-                continue
-
-            local_mask = candidate_mask[parent_index].clone()
-            accepted = False
-            for rejected_count in range(max_rejected_actions_per_step + 1):
-                with torch.no_grad():
-                    distribution = masked_policy_distribution(
-                        actor_critic,
-                        policy_features[parent_index : parent_index + 1],
-                        matcher_logits[parent_index : parent_index + 1],
-                        local_mask.unsqueeze(0),
-                    )
-                    action = (
-                        distribution.logits.argmax(-1)
-                        if greedy
-                        else distribution.sample()
-                    )
-                action_index = int(action.item())
+        unresolved = [
+            index for index, rows in enumerate(grouped_proposals) if rows
+        ]
+        rejected_counts = {index: 0 for index in unresolved}
+        while unresolved:
+            unresolved_tensor = torch.tensor(
+                unresolved, dtype=torch.long, device=device
+            )
+            with torch.no_grad():
+                distribution = masked_policy_distribution(
+                    actor_critic,
+                    policy_features.index_select(0, unresolved_tensor),
+                    matcher_logits.index_select(0, unresolved_tensor),
+                    candidate_mask.index_select(0, unresolved_tensor),
+                    prefix_states=prefix_states.index_select(
+                        0, unresolved_tensor
+                    ),
+                    state_features=state_features.index_select(
+                        0, unresolved_tensor
+                    ),
+                )
+                actions = (
+                    distribution.logits.argmax(-1)
+                    if greedy
+                    else distribution.sample()
+                )
+                log_probs = distribution.log_prob(actions)
+                entropies = distribution.entropy()
+            retry = []
+            for row_index, parent_index in enumerate(unresolved):
+                runtime = active[parent_index]
+                rows = grouped_proposals[parent_index]
+                action_index = int(actions[row_index].item())
                 proposal = rows[action_index]
-                old_log_prob = float(distribution.log_prob(action).item())
-                entropy = float(distribution.entropy().item())
+                old_log_prob = float(log_probs[row_index].item())
+                entropy = float(entropies[row_index].item())
+                local_mask = candidate_mask[parent_index]
                 candidate_count = int(local_mask.sum().item())
                 child, fingerprint, duplicate = lazy_child(
                     runtime.state,
@@ -1108,7 +1169,8 @@ def collect_episode_batch(
                 rejected = child is None
                 can_retry = (
                     rejected
-                    and rejected_count < max_rejected_actions_per_step
+                    and rejected_counts[parent_index]
+                    < max_rejected_actions_per_step
                     and candidate_count > 1
                 )
                 legal = bool(duplicate or child is not None)
@@ -1139,6 +1201,7 @@ def collect_episode_batch(
                     legal=legal,
                     xfer_id=proposal.xfer_id,
                     matcher_probability=proposal.probability,
+                    prefix_state=prefix_states[parent_index].float().cpu(),
                     history_depth=runtime.state.depth + 1,
                     committed_action=child is not None,
                     repeated_state=bool(duplicate),
@@ -1149,8 +1212,10 @@ def collect_episode_batch(
                 )
                 runtime.transitions.append(transition)
                 if rejected:
-                    local_mask[action_index] = False
+                    candidate_mask[parent_index, action_index] = False
                     if can_retry:
+                        rejected_counts[parent_index] += 1
+                        retry.append(parent_index)
                         continue
                     runtime.terminated_reason = (
                         "cycle_actions_exhausted"
@@ -1160,9 +1225,8 @@ def collect_episode_batch(
                     runtime.stopped = True
                     if runtime.pending_transition_indices:
                         refresh_indices.add(parent_index)
-                    break
+                    continue
 
-                accepted = True
                 runtime.pending_transition_indices.append(
                     len(runtime.transitions) - 1
                 )
@@ -1186,9 +1250,7 @@ def collect_episode_batch(
                     or improved_global
                 ):
                     refresh_indices.add(parent_index)
-                break
-            if not accepted and not runtime.stopped:
-                raise RuntimeError("PPO action retry loop exited without a successor")
+            unresolved = retry
 
         refresh_speculative_runtimes(
             [active[index] for index in sorted(refresh_indices)],
@@ -1300,6 +1362,14 @@ def collate_transitions(
         candidate_mask[index, :count] = row.candidate_mask
     return {
         "state_features": torch.stack([row.state_features for row in rows]).to(device),
+        "prefix_states": torch.stack(
+            [
+                row.prefix_state
+                if row.prefix_state is not None
+                else torch.zeros((policy_width - 2) // 4)
+                for row in rows
+            ]
+        ).to(device),
         "candidate_features": candidate_features.to(device),
         "matcher_logits": matcher_logits.to(device),
         "candidate_mask": candidate_mask.to(device),
@@ -1318,11 +1388,14 @@ def collate_transitions(
         "returns": torch.tensor(
             [row.return_value for row in rows], device=device
         ),
+        "legal": torch.tensor(
+            [row.legal for row in rows], dtype=torch.float, device=device
+        ),
     }
 
 
 def ppo_update(
-    actor_critic: PagedPPOActorCritic,
+    actor_critic: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
     transitions: list[PPOTransition],
     *,
@@ -1332,6 +1405,7 @@ def ppo_update(
     clip_epsilon: float,
     value_coefficient: float,
     entropy_coefficient: float,
+    legality_coefficient: float,
     max_grad_norm: float,
     seed: int,
 ) -> dict:
@@ -1343,6 +1417,7 @@ def ppo_update(
         row.advantage = float(advantage)
 
     generator = torch.Generator().manual_seed(seed)
+    legality_rate = sum(row.legal for row in transitions) / len(transitions)
     totals: dict[str, float] = defaultdict(float)
     batches = 0
     actor_critic.train()
@@ -1357,9 +1432,16 @@ def ppo_update(
                 batch["candidate_features"],
                 batch["matcher_logits"],
                 batch["candidate_mask"],
+                prefix_states=batch["prefix_states"],
+                state_features=batch["state_features"],
             )
             new_log_probs = distribution.log_prob(batch["actions"])
-            new_values = actor_critic.state_values(batch["state_features"])
+            new_values = actor_critic.state_values(
+                batch["state_features"],
+                batch["candidate_features"],
+                batch["candidate_mask"],
+                batch["prefix_states"],
+            )
             objective = clipped_ppo_objective(
                 new_log_probs,
                 batch["old_log_probs"],
@@ -1372,16 +1454,59 @@ def ppo_update(
                 value_coefficient=value_coefficient,
                 entropy_coefficient=entropy_coefficient,
             )
+            legality_logits = actor_critic.candidate_legality_logits(
+                batch["candidate_features"],
+                batch["candidate_mask"],
+                batch["prefix_states"],
+                batch["state_features"],
+            )
+            if legality_logits is None:
+                legality_loss = objective.loss.new_zeros(())
+                legality_accuracy = objective.loss.new_zeros(())
+            else:
+                selected_legality = legality_logits.gather(
+                    1, batch["actions"].unsqueeze(1)
+                ).squeeze(1)
+                legality_losses = F.binary_cross_entropy_with_logits(
+                    selected_legality, batch["legal"], reduction="none"
+                )
+                if 0.0 < legality_rate < 1.0:
+                    legality_weights = torch.where(
+                        batch["legal"].bool(),
+                        0.5 / legality_rate,
+                        0.5 / (1.0 - legality_rate),
+                    )
+                    legality_loss = (legality_losses * legality_weights).mean()
+                else:
+                    legality_loss = legality_losses.mean()
+                legality_accuracy = (
+                    selected_legality.ge(0).eq(batch["legal"].bool())
+                ).float().mean()
+                legal_predictions = selected_legality.ge(0)
+                totals["legality_legal_correct"] += float(
+                    (legal_predictions & batch["legal"].bool()).sum()
+                )
+                totals["legality_legal_count"] += float(batch["legal"].sum())
+                totals["legality_invalid_correct"] += float(
+                    (~legal_predictions & ~batch["legal"].bool()).sum()
+                )
+                totals["legality_invalid_count"] += float(
+                    (~batch["legal"].bool()).sum()
+                )
+            loss = objective.loss + legality_coefficient * legality_loss
             optimizer.zero_grad(set_to_none=True)
-            objective.loss.backward()
+            loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(
                 actor_critic.parameters(), max_grad_norm
             )
             optimizer.step()
             for key, value in (
-                ("loss", objective.loss),
+                ("loss", loss),
+                ("ppo_loss", objective.loss),
                 ("policy_loss", objective.policy_loss),
                 ("value_loss", objective.value_loss),
+                ("legality_loss", legality_loss),
+                ("legality_accuracy", legality_accuracy),
                 ("entropy", objective.entropy),
                 ("approximate_kl", objective.approximate_kl),
                 ("clip_fraction", objective.clip_fraction),
@@ -1389,9 +1514,21 @@ def ppo_update(
                 totals[key] += float(value.detach())
             totals["grad_norm"] += float(grad_norm)
             batches += 1
-    return {key: value / max(1, batches) for key, value in totals.items()} | {
-        "batches": batches
-    }
+    legal_count = totals.pop("legality_legal_count", 0.0)
+    legal_correct = totals.pop("legality_legal_correct", 0.0)
+    invalid_count = totals.pop("legality_invalid_count", 0.0)
+    invalid_correct = totals.pop("legality_invalid_correct", 0.0)
+    result = {key: value / max(1, batches) for key, value in totals.items()}
+    if legal_count and invalid_count:
+        result["legality_legal_recall"] = legal_correct / legal_count
+        result["legality_invalid_recall"] = invalid_correct / invalid_count
+        result["legality_balanced_accuracy"] = 0.5 * (
+            result["legality_legal_recall"]
+            + result["legality_invalid_recall"]
+        )
+    result["legality_label_rate"] = legality_rate
+    result["batches"] = batches
+    return result
 
 
 def aggregate_episodes(rows: list[EpisodeMetrics]) -> dict:
@@ -1500,6 +1637,13 @@ def main() -> None:
     parser.add_argument("--max-gate-increase", type=int, default=3)
     parser.add_argument("--page-size", type=int, default=8)
     parser.add_argument(
+        "--actor-critic",
+        choices=("legacy", "match_set"),
+        default="legacy",
+    )
+    parser.add_argument("--set-layers", type=int, default=2)
+    parser.add_argument("--set-heads", type=int, default=4)
+    parser.add_argument(
         "--collector-batch-size",
         type=int,
         default=1,
@@ -1523,6 +1667,7 @@ def main() -> None:
     parser.add_argument("--clip-epsilon", type=float, default=0.2)
     parser.add_argument("--value-coefficient", type=float, default=0.5)
     parser.add_argument("--entropy-coefficient", type=float, default=0.01)
+    parser.add_argument("--legality-coefficient", type=float, default=0.1)
     parser.add_argument("--invalid-reward", type=float, default=-1.0)
     parser.add_argument("--cycle-reward", type=float, default=-1.0)
     parser.add_argument("--step-penalty", type=float, default=0.01)
@@ -1554,6 +1699,10 @@ def main() -> None:
         parser.error("max steps and max actions must be positive")
     if args.collector_batch_size < 1 or args.refresh_interval < 1:
         parser.error("collector batch size and refresh interval must be positive")
+    if args.set_layers < 0 or args.set_heads < 1:
+        parser.error("set layers must be nonnegative and set heads positive")
+    if args.legality_coefficient < 0:
+        parser.error("legality coefficient must be nonnegative")
     if not 0 <= args.gamma <= 1 or not 0 <= args.gae_lambda <= 1:
         parser.error("gamma and GAE lambda must be within [0, 1]")
     if args.step_penalty < 0:
@@ -1588,19 +1737,21 @@ def main() -> None:
     for parameter in model.parameters():
         parameter.requires_grad = False
 
-    actor_critic = PagedPPOActorCritic(
-        model.width, hidden_size=args.hidden_size
+    actor_critic = build_actor_critic(
+        args.actor_critic,
+        model.width,
+        hidden_size=args.hidden_size,
+        set_layers=args.set_layers,
+        set_heads=args.set_heads,
     ).to(device)
     optimizer = torch.optim.AdamW(
         [
             {
-                "params": list(actor_critic.policy_norm.parameters())
-                + list(actor_critic.policy.parameters()),
+                "params": list(actor_critic.actor_parameters()),
                 "lr": args.actor_learning_rate,
             },
             {
-                "params": list(actor_critic.value_norm.parameters())
-                + list(actor_critic.value.parameters()),
+                "params": list(actor_critic.critic_parameters()),
                 "lr": args.critic_learning_rate,
             },
         ],
@@ -1611,8 +1762,13 @@ def main() -> None:
     resume_replay_pool = None
     if args.resume is not None:
         resume = torch.load(args.resume, map_location=device, weights_only=False)
-        if resume.get("format") != "paged-ppo-v1":
+        if resume.get("format") not in {"paged-ppo-v1", "paged-ppo-v2"}:
             raise ValueError("unsupported PPO checkpoint")
+        resume_architecture = resume.get("actor_critic_architecture", "legacy")
+        if resume_architecture != args.actor_critic:
+            raise ValueError(
+                "resume actor/critic architecture differs from --actor-critic"
+            )
         if int(resume["width"]) != model.width:
             raise ValueError("resume PPO width differs from the base model")
         if int(resume["hidden_size"]) != actor_critic.hidden_size:
@@ -1783,6 +1939,7 @@ def main() -> None:
             clip_epsilon=args.clip_epsilon,
             value_coefficient=args.value_coefficient,
             entropy_coefficient=args.entropy_coefficient,
+            legality_coefficient=args.legality_coefficient,
             max_grad_norm=args.max_grad_norm,
             seed=args.seed + iteration,
         )
@@ -1822,12 +1979,19 @@ def main() -> None:
         print(json.dumps(row, sort_keys=True), flush=True)
         torch.save(
             {
-                "format": "paged-ppo-v1",
+                "format": (
+                    "paged-ppo-v2"
+                    if args.actor_critic == "match_set"
+                    else "paged-ppo-v1"
+                ),
                 "iteration": iteration,
                 "actor_critic": actor_critic.state_dict(),
+                "actor_critic_architecture": args.actor_critic,
                 "optimizer": optimizer.state_dict(),
                 "width": model.width,
                 "hidden_size": actor_critic.hidden_size,
+                "set_layers": args.set_layers,
+                "set_heads": args.set_heads,
                 "base_checkpoint": str(args.checkpoint),
                 "best_by_circuit": best_by_circuit,
                 "replay_pool": replay_pool,

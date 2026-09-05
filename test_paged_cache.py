@@ -75,6 +75,11 @@ def main() -> None:
     assert ragged_mask[1, :2].all() and not ragged_mask[1, 2:].any()
     assert ragged_mask[2].all()
     assert not ragged_actions[~ragged_mask].any()
+    last_actions, last_present = arena.last_actions(ragged)
+    assert torch.equal(last_present, torch.tensor([False, True, True], device=device))
+    assert not last_actions[0].any()
+    assert torch.all(last_actions[1] == 2.5)
+    assert torch.all(last_actions[2] == 5.5)
 
     arena.gather_backend = "loop"
     loop_keys, loop_values, loop_actions, loop_mask = arena.gather(ragged)

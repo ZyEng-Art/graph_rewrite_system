@@ -944,3 +944,34 @@ that online PPO is improving the policy.
 The complete curves, exact QASM audits, configurations, source hashes, and raw
 logs are recorded in
 `benchmark_results/quarl_original_rollout_findings_20260905.md`.
+
+## Sequence-conditioned match-set PPO
+
+The PPO head now consumes the information already maintained by the paged
+world model instead of scoring each action independently. The actor attends
+over the full set of retained complete bindings, including ordered binding
+roles, and conditions them on the current graph summary plus the final causal
+action hidden state from `PagedKVCache`. The latter already represents the
+preceding action sequence. The critic uses a separate candidate-set encoder and
+attention pool to produce one state value. No action-prefix replay or full-graph
+regeneration was added.
+
+The actor starts exactly at the calibrated matcher plus gate-delta prior and
+the critic starts at zero. An auxiliary selected-action legality head uses a
+class-balanced loss and reports per-class recall; raw accuracy was misleading
+because 97.38% of collected actions were legal.
+
+On H100 GPU 6, `barenco_tof_3`, 64 episodes, `B=64`, `R=8`, and 64 candidates,
+two match-set runs measured 242.25 and 274.09 transitions/s. The old batched MLP
+reference measured 214.88 transitions/s, so the observed range is 1.13x to
+1.28x faster. Cross-episode actor batching offsets the larger attention head.
+The one-epoch run stayed at 58 gates and is an implementation benchmark, not a
+policy-quality result.
+
+`paged_rollout_benchmark.py` now loads both `paged-ppo-v1` and
+`paged-ppo-v2`, reconstructs per-parent match sets entirely on GPU, and supplies
+the same prefix and graph context used during training. A beam-32, depth-2 smoke
+run produced 8/8 valid Quartz replays and 8/8 exact topology matches. Full logs
+and configurations are in
+`benchmark_results/ppo_matchset_actor_findings_20260905.md` and
+`benchmark_results/ppo_matchset_actor_summary_20260905.json`.

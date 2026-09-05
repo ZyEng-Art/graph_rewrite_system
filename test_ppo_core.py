@@ -5,6 +5,7 @@ import math
 import torch
 
 from ppo_core import (
+    MatchSetPPOActorCritic,
     PagedPPOActorCritic,
     build_policy_features,
     build_state_features,
@@ -108,6 +109,51 @@ def main() -> None:
         torch.tensor([4.0, 3.0, 3.0, 4.0]),
     )
     assert actor_critic.state_values(state_features).item() == 0.0
+
+    match_set = MatchSetPPOActorCritic(
+        width, hidden_size=8, set_layers=2, set_heads=2
+    )
+    set_features = torch.randn(2, 3, 4 * width + 2)
+    set_logits = torch.tensor([[0.1, 0.3, -2.0], [0.4, -1.0, -1.0]])
+    set_mask = torch.tensor([[True, True, True], [True, False, False]])
+    prefix_states = torch.randn(2, width)
+    set_state_features = torch.randn(2, 2 * width + 1)
+    set_distribution = masked_policy_distribution(
+        match_set,
+        set_features,
+        set_logits,
+        set_mask,
+        prefix_states=prefix_states,
+        state_features=set_state_features,
+    )
+    expected_set = set_logits.masked_fill(~set_mask, -torch.inf).softmax(-1)
+    assert torch.allclose(set_distribution.probs, expected_set)
+    set_values = match_set.state_values(
+        set_state_features,
+        set_features,
+        set_mask,
+        prefix_states,
+    )
+    assert torch.equal(set_values, torch.zeros(2))
+    legality_logits = match_set.candidate_legality_logits(
+        set_features, set_mask, prefix_states, set_state_features
+    )
+    assert torch.equal(legality_logits, torch.zeros_like(set_logits))
+
+    permutation = torch.tensor([2, 0, 1])
+    permuted_distribution = masked_policy_distribution(
+        match_set,
+        set_features[:, permutation],
+        set_logits[:, permutation],
+        set_mask[:, permutation],
+        prefix_states=prefix_states,
+        state_features=set_state_features,
+    )
+    assert torch.allclose(
+        permuted_distribution.probs,
+        set_distribution.probs[:, permutation],
+        atol=1e-6,
+    )
 
     assert shaped_transition_reward(
         58,

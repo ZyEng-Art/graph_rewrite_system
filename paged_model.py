@@ -216,6 +216,7 @@ class PagedActionBindingModel(S0ActionBindingModel):
         source_ids: torch.Tensor,
         binding_slots: torch.Tensor,
         batch_ids: torch.Tensor | None = None,
+        ordered_roles: bool = False,
     ) -> torch.Tensor:
         """Build candidate features from the current causal graph state."""
         if batch_ids is None:
@@ -226,6 +227,10 @@ class PagedActionBindingModel(S0ActionBindingModel):
         flat_indices = batch_ids.unsqueeze(1) * num_slots + safe_bindings
         bound_states = states.reshape(-1, self.width)[flat_indices]
         bound_states = bound_states.masked_fill(~binding_mask.unsqueeze(-1), 0)
+        if ordered_roles:
+            bound_states = self._ordered_bound_states(
+                bound_states, binding_mask
+            )
         bound_pool = bound_states.sum(1)
         bound_pool = bound_pool / binding_mask.sum(1, keepdim=True).clamp_min(1)
         live_states = states.masked_fill(~live.unsqueeze(-1), 0)

@@ -66,6 +66,58 @@ def _stable_lexsort(
     return order
 
 
+def _match_set_policy_logits(
+    actor_critic,
+    candidate_features: torch.Tensor,
+    matcher_logits: torch.Tensor,
+    parent_ids: torch.Tensor,
+    prefix_states: torch.Tensor,
+    state_features: torch.Tensor,
+) -> torch.Tensor:
+    """Run a padded candidate-set actor and restore the flattened row order."""
+    active_parents, parent_rows = torch.unique(
+        parent_ids, sorted=True, return_inverse=True
+    )
+    order = torch.argsort(parent_rows, stable=True)
+    sorted_parent_rows = parent_rows[order]
+    positions = torch.arange(order.numel(), device=order.device)
+    new_parent = torch.ones(
+        order.numel(), dtype=torch.bool, device=order.device
+    )
+    new_parent[1:] = sorted_parent_rows[1:] != sorted_parent_rows[:-1]
+    group_starts = torch.where(new_parent, positions, 0)
+    group_starts = torch.cummax(group_starts, dim=0).values
+    sorted_offsets = positions - group_starts
+    offsets = torch.empty_like(sorted_offsets)
+    offsets[order] = sorted_offsets
+    max_candidates = int(
+        torch.bincount(parent_rows, minlength=active_parents.numel()).max().item()
+    )
+
+    padded_features = candidate_features.new_zeros(
+        (active_parents.numel(), max_candidates, candidate_features.shape[-1])
+    )
+    padded_logits = matcher_logits.new_zeros(
+        (active_parents.numel(), max_candidates)
+    )
+    candidate_mask = torch.zeros(
+        (active_parents.numel(), max_candidates),
+        dtype=torch.bool,
+        device=parent_ids.device,
+    )
+    padded_features[parent_rows, offsets] = candidate_features
+    padded_logits[parent_rows, offsets] = matcher_logits
+    candidate_mask[parent_rows, offsets] = True
+    logits = actor_critic.policy_logits(
+        padded_features,
+        padded_logits,
+        candidate_mask,
+        prefix_states.index_select(0, active_parents),
+        state_features.index_select(0, active_parents),
+    )
+    return logits[parent_rows, offsets]
+
+
 @torch.no_grad()
 def build_gpu_proposals(
     candidates: CandidateTensors,
@@ -87,6 +139,8 @@ def build_gpu_proposals(
     ppo_model=None,
     ppo_states: torch.Tensor | None = None,
     ppo_live: torch.Tensor | None = None,
+    ppo_prefix_states: torch.Tensor | None = None,
+    ppo_state_features: torch.Tensor | None = None,
     ppo_initial_gate_bias: float = 1.0,
     ppo_policy_weight: float = 0.25,
     profile_stages: bool = False,
@@ -108,6 +162,12 @@ def build_gpu_proposals(
         or ppo_live is None
     ):
         raise ValueError("PPO ranking requires actor, model, and encoded states")
+    if (
+        ranking_mode == "ppo"
+        and getattr(ppo_actor_critic, "match_set_aware", False)
+        and (ppo_prefix_states is None or ppo_state_features is None)
+    ):
+        raise ValueError("match-set PPO ranking requires prefix and state features")
     if ppo_policy_weight < 0:
         raise ValueError("PPO policy weight must be nonnegative")
     if value_increase_cap < 0 or value_increase_cap > per_parent_cap:
@@ -346,6 +406,9 @@ def build_gpu_proposals(
                 source_ids[selected],
                 bindings[selected],
                 parents[selected],
+                ordered_roles=getattr(
+                    ppo_actor_critic, "match_set_aware", False
+                ),
             )
             policy_features, matcher_logits = build_policy_features(
                 candidate_features,
@@ -353,9 +416,19 @@ def build_gpu_proposals(
                 rule_index.gate_deltas[xfer_ids[selected]],
                 initial_gate_bias=ppo_initial_gate_bias,
             )
-            policy_logits = ppo_actor_critic.policy_logits(
-                policy_features, matcher_logits
-            ).float()
+            if getattr(ppo_actor_critic, "match_set_aware", False):
+                policy_logits = _match_set_policy_logits(
+                    ppo_actor_critic,
+                    policy_features,
+                    matcher_logits,
+                    parents[selected],
+                    ppo_prefix_states,
+                    ppo_state_features,
+                ).float()
+            else:
+                policy_logits = ppo_actor_critic.policy_logits(
+                    policy_features, matcher_logits
+                ).float()
         policy_scores = segmented_log_softmax(
             policy_logits, parents[selected], len(beam)
         )
