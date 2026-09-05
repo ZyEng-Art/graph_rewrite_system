@@ -155,6 +155,7 @@ def main() -> None:
     parser.add_argument("--pattern-k", type=int, default=16)
     parser.add_argument("--max-actions", type=int, default=256)
     parser.add_argument("--refresh-interval", type=int, default=8)
+    parser.add_argument("--topology-audit-interval", type=int, default=1)
     parser.add_argument("--page-size", type=int, default=8)
     parser.add_argument("--target-recall", type=float, default=0.95)
     parser.add_argument("--max-rejected-actions-per-step", type=int, default=4)
@@ -335,6 +336,7 @@ def main() -> None:
             replay_pool=run_replay,
             replay_capacity_per_circuit=64,
             refresh_interval=min(args.refresh_interval, run_max_steps),
+            topology_audit_interval=args.topology_audit_interval,
             rejected_action_cache=run_rejected_cache,
             max_exact_rejections_per_episode=(
                 args.max_exact_rejections_per_episode

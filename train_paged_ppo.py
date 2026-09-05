@@ -221,6 +221,20 @@ def replay_pool_metrics(replay_pool: dict[str, dict]) -> dict:
     }
 
 
+def topology_audit_required(
+    runtime: EpisodeRuntime,
+    best_by_circuit: dict[str, dict],
+    interval: int,
+) -> bool:
+    state = runtime.state
+    return (
+        interval == 1
+        or runtime.stopped
+        or state.depth % interval == 0
+        or state.gate_count < best_by_circuit[runtime.circuit]["gate_count"]
+    )
+
+
 def initialize_episode(
     qasm: Path,
     *,
@@ -1100,10 +1114,14 @@ def refresh_speculative_runtimes(
     replay_capacity_per_circuit: int,
     best_by_circuit: dict[str, dict],
     replay_pool: dict[str, dict],
+    topology_audit_interval: int = 1,
     profile_timing: dict[str, float] | None = None,
     profile_counts: dict[str, float] | None = None,
 ) -> None:
     """Validate pending action suffixes and advance exact checkpoints."""
+    if topology_audit_interval < 1:
+        raise ValueError("topology audit interval must be positive")
+
     def add_seconds(name: str, started: float) -> None:
         if profile_timing is not None:
             profile_timing[name] = (
@@ -1138,6 +1156,9 @@ def refresh_speculative_runtimes(
         replay_cache: dict[tuple, ExactReplayCacheEntry] = {}
         for runtime in group:
             state = runtime.state
+            validate_topology = topology_audit_required(
+                runtime, best_by_circuit, topology_audit_interval
+            )
             replay_counts: dict[str, int] = {}
             replay_timing: dict[str, float] = {}
             started = time.perf_counter()
@@ -1152,6 +1173,7 @@ def refresh_speculative_runtimes(
                 profile_counts=replay_counts,
                 replay_cache=replay_cache,
                 replay_cache_prefixes=replay_prefixes,
+                validate_topology=validate_topology,
             )
             replay_seconds = time.perf_counter() - started
             runtime.exact_refresh_seconds += replay_seconds

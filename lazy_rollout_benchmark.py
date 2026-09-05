@@ -733,6 +733,7 @@ def replay_state(
     replay_cache_prefixes: set[tuple[LazyAction, ...]] | None = None,
     prefer_direct_binding: bool = True,
     eliminate_rotation: bool = False,
+    validate_topology: bool = True,
 ):
     """Materialize one speculative trajectory in Quartz for an out-of-band audit."""
     def lookup_source_node_ids(action: LazyAction) -> list[int] | None:
@@ -991,15 +992,20 @@ def replay_state(
         add_count("failed_states")
         result = (None, failure_step, False)
         return (*result, None) if return_checkpoint else result
-    signature_started = now()
-    exact_signature = graph_topology_signature(graph, guid_to_slot)
-    expected_signature = (
-        indexed_topology_signature(state.topology_index)
-        if state.topology_index is not None
-        else snapshot_signature(state.snapshot)
-    )
-    topology_matches = exact_signature == expected_signature
-    add_seconds("topology_signature_compare_seconds", signature_started)
+    if validate_topology:
+        signature_started = now()
+        exact_signature = graph_topology_signature(graph, guid_to_slot)
+        expected_signature = (
+            indexed_topology_signature(state.topology_index)
+            if state.topology_index is not None
+            else snapshot_signature(state.snapshot)
+        )
+        topology_matches = exact_signature == expected_signature
+        add_seconds("topology_signature_compare_seconds", signature_started)
+        add_count("topology_audits")
+    else:
+        topology_matches = True
+        add_count("topology_audits_skipped")
     add_count("valid_states")
     if not topology_matches:
         add_count("topology_mismatch_states")

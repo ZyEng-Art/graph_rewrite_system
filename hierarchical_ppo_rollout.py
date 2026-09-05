@@ -362,6 +362,7 @@ def collect_hierarchical_episode_batch(
     replay_pool: dict[str, dict],
     replay_capacity_per_circuit: int,
     refresh_interval: int,
+    topology_audit_interval: int = 1,
     rejected_action_cache: RejectedActionCache | None = None,
     max_exact_rejections_per_episode: int = 8,
     start_from_best: bool = False,
@@ -691,6 +692,7 @@ def collect_hierarchical_episode_batch(
             replay_capacity_per_circuit=replay_capacity_per_circuit,
             best_by_circuit=best_by_circuit,
             replay_pool=replay_pool,
+            topology_audit_interval=topology_audit_interval,
             profile_timing=timing,
             profile_counts=timing,
         )
