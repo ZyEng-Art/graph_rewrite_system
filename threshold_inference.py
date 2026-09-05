@@ -295,3 +295,133 @@ def threshold_candidate_tensors(
         bindings=bindings[structurally_valid],
         probabilities=probabilities[structurally_valid],
     )
+
+
+@torch.no_grad()
+def threshold_candidate_tensors_chunked(
+    model,
+    batch: dict,
+    node_vectors: torch.Tensor,
+    live: torch.Tensor,
+    gate_types: torch.Tensor,
+    source_vectors: torch.Tensor,
+    config: dict,
+    *,
+    source_chunk_size: int,
+    max_candidates_per_state: int = 2048,
+    batch_offset: int = 0,
+    timing: dict[str, float] | None = None,
+) -> CandidateTensors:
+    """Select the exact global top-k without materializing all source logits."""
+    if source_chunk_size <= 0:
+        raise ValueError("source_chunk_size must be positive")
+    device = node_vectors.device
+
+    def finish_timing(name: str, started: float) -> None:
+        if timing is None:
+            return
+        if device.type == "cuda":
+            torch.cuda.synchronize(device)
+        timing[name] = timing.get(name, 0.0) + time.perf_counter() - started
+
+    stage_started = time.perf_counter()
+    distance = batch["current_rewrite_distance"]
+    near_anchor = distance.le(2)
+    near = config["groups"]["near"]
+    far = config["groups"]["far"]
+    scale = torch.where(
+        near_anchor,
+        torch.tensor(near["scale"], device=device),
+        torch.tensor(far["scale"], device=device),
+    )
+    bias = torch.where(
+        near_anchor,
+        torch.tensor(near["bias"], device=device),
+        torch.tensor(far["bias"], device=device),
+    )
+    threshold = torch.where(
+        near_anchor,
+        torch.tensor(near["raw_threshold"], device=device),
+        torch.tensor(far["raw_threshold"], device=device),
+    )
+    finish_timing("threshold_and_calibration_seconds", stage_started)
+
+    best_scores = None
+    best_anchors = None
+    best_sources = None
+    for source_begin in range(0, model.num_sources, source_chunk_size):
+        source_end = min(model.num_sources, source_begin + source_chunk_size)
+        stage_started = time.perf_counter()
+        logits, eligible = model.match_logits_from_node_vectors(
+            node_vectors,
+            live,
+            gate_types,
+            source_vectors,
+            source_begin=source_begin,
+            source_end=source_end,
+        )
+        finish_timing("match_logits_seconds", stage_started)
+
+        stage_started = time.perf_counter()
+        calibrated_logits = logits.float() * scale.unsqueeze(-1) + bias.unsqueeze(-1)
+        selected = eligible & logits.ge(threshold.unsqueeze(-1))
+        flat_scores = calibrated_logits.flatten(1).masked_fill(
+            ~selected.flatten(1), -torch.inf
+        )
+        count = min(max_candidates_per_state, flat_scores.shape[1])
+        chunk_scores, flat_positions = flat_scores.topk(count, dim=1)
+        chunk_sources = flat_positions.remainder(source_end - source_begin)
+        chunk_anchors = torch.div(
+            flat_positions, source_end - source_begin, rounding_mode="floor"
+        )
+        chunk_sources = chunk_sources + source_begin
+        if best_scores is None:
+            best_scores = chunk_scores
+            best_anchors = chunk_anchors
+            best_sources = chunk_sources
+        else:
+            merged_scores = torch.cat((best_scores, chunk_scores), dim=1)
+            merged_anchors = torch.cat((best_anchors, chunk_anchors), dim=1)
+            merged_sources = torch.cat((best_sources, chunk_sources), dim=1)
+            count = min(max_candidates_per_state, merged_scores.shape[1])
+            best_scores, order = merged_scores.topk(count, dim=1)
+            best_anchors = merged_anchors.gather(1, order)
+            best_sources = merged_sources.gather(1, order)
+        finish_timing("candidate_selection_and_ranking_seconds", stage_started)
+
+    if best_scores is None or best_anchors is None or best_sources is None:
+        raise RuntimeError("model has no source patterns")
+
+    stage_started = time.perf_counter()
+    present = best_scores.isfinite()
+    batch_ids = (
+        torch.arange(node_vectors.shape[0], device=device)
+        .unsqueeze(1)
+        .expand_as(best_scores)[present]
+    )
+    scores = best_scores[present]
+    anchors = best_anchors[present]
+    sources = best_sources[present]
+    probabilities = scores.sigmoid()
+    finish_timing("candidate_gpu_pack_seconds", stage_started)
+
+    stage_started = time.perf_counter()
+    bindings, structurally_valid = model.structural_decode(
+        batch,
+        batch["current_types"],
+        batch["current_types"].ge(0),
+        batch_ids,
+        sources,
+        anchors,
+    )
+    finish_timing("structural_binding_decode_seconds", stage_started)
+    if timing is not None:
+        timing.setdefault("candidate_device_to_host_seconds", 0.0)
+        timing.setdefault("candidate_python_pack_seconds", 0.0)
+    return CandidateTensors(
+        batch_ids=batch_ids[structurally_valid] + batch_offset,
+        sources=sources[structurally_valid],
+        anchors=anchors[structurally_valid],
+        bindings=bindings[structurally_valid],
+        probabilities=probabilities[structurally_valid],
+    )

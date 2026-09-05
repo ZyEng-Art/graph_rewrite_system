@@ -998,3 +998,21 @@ policy regularization in large-model RL, and `--target-kl` stops remaining PPO
 epochs after excessive movement from the rollout policy. An H100 forced-stop
 smoke completed one of four requested epochs and logged both KL values; see
 `benchmark_results/ppo_reference_kl_findings_20260905.md`.
+
+## Source-pattern chunking
+
+The match stage no longer needs to materialize the full `[state, slot, source]`
+tensor. `--source-microbatch` projects graph nodes once, scores source patterns
+in bounded chunks, and maintains the exact global per-state Top-K with a
+streaming GPU merge before one structural decode. A deterministic unit test
+compares all retained source IDs, anchors, bindings, and probabilities against
+the original full-logit path.
+
+On one H100, `grover_5`, beam 1000, depth 16, and gate-first ranking, source
+chunks of 256 reduced peak allocated memory from 8.224 GiB to 4.638 GiB and
+peak reserved memory from 30.389 GiB to 13.590 GiB at state microbatch 128.
+Search time was unchanged within run noise (23.482 versus 23.155 seconds), and
+both runs found the same exact 817-gate best from 831 gates. State microbatch
+512, which previously OOMed while allocating the full logits, now completes in
+24.035 seconds with 5.551 GiB peak allocated memory and the same 817-gate best.
+The measured JSON logs are `benchmark_results/source_chunk_grover5_*_h100.json`.

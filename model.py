@@ -379,12 +379,38 @@ class S0ActionBindingModel(nn.Module):
         gate_types: torch.Tensor,
         source_vectors: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        node_vectors = self.retrieval_node(states)
+        node_vectors = self.match_node_vectors(states)
         if source_vectors is None:
             source_vectors = self.retrieval_source(self.source_representations())
-        logits = torch.einsum("bsd,vd->bsv", node_vectors, source_vectors)
-        logits = logits / math.sqrt(self.retrieval_width) + self.source_bias
-        first_types = self.source_types[:, 0]
+        return self.match_logits_from_node_vectors(
+            node_vectors,
+            live,
+            gate_types,
+            source_vectors,
+        )
+
+    def match_node_vectors(self, states: torch.Tensor) -> torch.Tensor:
+        return self.retrieval_node(states)
+
+    def match_logits_from_node_vectors(
+        self,
+        node_vectors: torch.Tensor,
+        live: torch.Tensor,
+        gate_types: torch.Tensor,
+        source_vectors: torch.Tensor,
+        *,
+        source_begin: int = 0,
+        source_end: int | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        if source_end is None:
+            source_end = self.num_sources
+        selected_sources = source_vectors[source_begin:source_end]
+        logits = torch.einsum("bsd,vd->bsv", node_vectors, selected_sources)
+        logits = (
+            logits / math.sqrt(self.retrieval_width)
+            + self.source_bias[source_begin:source_end]
+        )
+        first_types = self.source_types[source_begin:source_end, 0]
         eligible = live.unsqueeze(-1) & gate_types.unsqueeze(-1).eq(first_types)
         return logits.masked_fill(~eligible, -1e4), eligible
 

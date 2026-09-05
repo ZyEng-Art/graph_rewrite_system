@@ -51,6 +51,7 @@ from threshold_inference import (
     load_threshold_config,
     threshold_candidates,
     threshold_candidate_tensors,
+    threshold_candidate_tensors_chunked,
 )
 from tensorized_batch import collate_paged_states
 from train import autocast_context, move_batch
@@ -544,6 +545,7 @@ def paged_model_matches(
     source_vectors: torch.Tensor,
     microbatch: int,
     max_candidates: int,
+    source_microbatch: int = 0,
     state_batch_backend: str = "legacy",
     candidate_backend: str = "legacy",
     return_encoded_states: bool = False,
@@ -635,6 +637,29 @@ def paged_model_matches(
         if return_encoded_states:
             encoded_chunks.append(encoded)
         finish_timing("incremental_graph_readout_seconds", stage_started)
+
+        if candidate_backend == "gpu" and source_microbatch:
+            stage_started = time.perf_counter()
+            with autocast_context(device):
+                node_vectors = model.match_node_vectors(encoded)
+            finish_timing("match_logits_seconds", stage_started)
+            with autocast_context(device):
+                candidate_chunks.append(
+                    threshold_candidate_tensors_chunked(
+                        model,
+                        batch,
+                        node_vectors,
+                        selected_live,
+                        selected_types,
+                        source_vectors,
+                        threshold_config,
+                        source_chunk_size=source_microbatch,
+                        max_candidates_per_state=max_candidates,
+                        batch_offset=begin,
+                        timing=timing if profile_stages else None,
+                    )
+                )
+            continue
 
         stage_started = time.perf_counter()
         with autocast_context(device):
@@ -880,6 +905,12 @@ def main() -> None:
     parser.add_argument("--beam-size", type=int, default=1000)
     parser.add_argument("--depth", type=int, default=64)
     parser.add_argument("--microbatch", type=int, default=512)
+    parser.add_argument(
+        "--source-microbatch",
+        type=int,
+        default=0,
+        help="score this many source patterns at once in the GPU proposal path",
+    )
     parser.add_argument("--page-size", type=int, default=8)
     parser.add_argument(
         "--cache-gather-backend",
@@ -1054,6 +1085,10 @@ def main() -> None:
         parser.error(str(error))
     if args.refresh_interval < 0:
         parser.error("--refresh-interval must be nonnegative")
+    if args.source_microbatch < 0:
+        parser.error("--source-microbatch must be nonnegative")
+    if args.source_microbatch and args.proposal_backend != "gpu":
+        parser.error("--source-microbatch requires --proposal-backend gpu")
     if args.refresh_factor < 1:
         parser.error("--refresh-factor must be at least one")
     if args.checkpoint_audit_count < 0:
@@ -1374,6 +1409,8 @@ def main() -> None:
         seen = set()
 
     step_rows = []
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
     total_started = time.perf_counter()
     for step in range(args.depth):
         step_started = time.perf_counter()
@@ -1415,6 +1452,7 @@ def main() -> None:
             source_vectors,
             args.microbatch,
             args.max_source_matches,
+            source_microbatch=args.source_microbatch,
             state_batch_backend=args.state_batch_backend,
             candidate_backend="gpu" if use_gpu_proposals else "legacy",
             return_encoded_states=args.proposal_ranking in {"value", "ppo"},
@@ -1442,6 +1480,7 @@ def main() -> None:
                 exploration_source_vectors,
                 args.microbatch,
                 args.max_source_matches,
+                source_microbatch=0,
                 state_batch_backend=args.state_batch_backend,
                 candidate_backend="legacy",
                 return_encoded_states=False,
@@ -2206,10 +2245,21 @@ def main() -> None:
             else 0
         ),
         "search_seconds_excluding_audit": search_seconds,
+        "peak_cuda_allocated_gib": (
+            torch.cuda.max_memory_allocated(device) / (1024**3)
+            if device.type == "cuda"
+            else 0.0
+        ),
+        "peak_cuda_reserved_gib": (
+            torch.cuda.max_memory_reserved(device) / (1024**3)
+            if device.type == "cuda"
+            else 0.0
+        ),
         "profile_stages": args.profile_stages,
         "target_recall": args.target_recall,
         "target_recall_by_group": threshold_config["target_recall_by_group"],
         "microbatch": args.microbatch,
+        "source_microbatch": args.source_microbatch,
         "refresh_interval": args.refresh_interval,
         "refresh_factor": args.refresh_factor,
         "checkpoint_audit_count": args.checkpoint_audit_count,
