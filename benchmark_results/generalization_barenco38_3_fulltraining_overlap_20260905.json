@@ -1,0 +1,248 @@
+{
+  "holdout_data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_barenco_holdout38_3_normalized_v2_20260905.pt",
+  "holdout_state_rows": 17,
+  "overlapping_graph_hashes": 2,
+  "overlapping_supervised_graph_hashes": 0,
+  "overlaps": [
+    {
+      "graph_hash": 1655097772961193046,
+      "holdout": [
+        {
+          "graph_hash": 1655097772961193046,
+          "source_id": 20,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/38_3#segment=0",
+          "step": 11,
+          "terminal": false,
+          "xfer_id": 24
+        },
+        {
+          "graph_hash": 1655097772961193046,
+          "source_id": 1482,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/38_3#segment=0",
+          "step": 13,
+          "terminal": false,
+          "xfer_id": 1540
+        }
+      ],
+      "shared_action_keys": [],
+      "train": [
+        {
+          "graph_hash": 1655097772961193046,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_4#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 1655097772961193046,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_4#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 1655097772961193046,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_4#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 1655097772961193046,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_4#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 1655097772961193046,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_4#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 1655097772961193046,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_4#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 1655097772961193046,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_4#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 1655097772961193046,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_4#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        }
+      ]
+    },
+    {
+      "graph_hash": 7175310554145768493,
+      "holdout": [
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": 36,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/38_3#segment=0",
+          "step": 0,
+          "terminal": false,
+          "xfer_id": 40
+        }
+      ],
+      "shared_action_keys": [],
+      "train": [
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_3#segment=0",
+          "step": 9,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_5#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_3#segment=0",
+          "step": 9,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_5#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_3#segment=0",
+          "step": 9,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_5#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_3#segment=0",
+          "step": 9,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_5#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_3#segment=0",
+          "step": 9,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_5#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_3#segment=0",
+          "step": 9,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_5#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_3#segment=0",
+          "step": 9,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_5#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_3#segment=0",
+          "step": 9,
+          "terminal": true,
+          "xfer_id": null
+        },
+        {
+          "graph_hash": 7175310554145768493,
+          "source_id": null,
+          "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_5#segment=0",
+          "step": 34,
+          "terminal": true,
+          "xfer_id": null
+        }
+      ]
+    }
+  ],
+  "shared_action_keys": 0,
+  "train_data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/binding_longmix_quarl_barenco_normalized_supervisedzeroleak38_3_r8_20260905.pt",
+  "train_paths_with_overlap": [
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_3#segment=0",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_4#segment=0",
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_5#segment=0"
+  ],
+  "train_state_rows": 25840
+}
