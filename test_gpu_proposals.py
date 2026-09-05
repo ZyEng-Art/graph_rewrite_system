@@ -4,7 +4,12 @@ import torch
 
 from beam_search_benchmark import BeamState
 from gpu_proposals import GpuRuleIndex, build_gpu_proposals
-from paged_rollout_benchmark import build_legacy_proposals, should_restart_best_root
+from paged_rollout_benchmark import (
+    build_legacy_proposals,
+    parse_topn,
+    should_restart_best_root,
+    summarize_legality_records,
+)
 from threshold_inference import CandidateTensors
 
 
@@ -32,6 +37,47 @@ class _XferValueModel:
 
 
 def main() -> None:
+    assert parse_topn("32,1,8,8") == (1, 8, 32)
+    legality = summarize_legality_records(
+        [
+            {
+                "parent": 0,
+                "parent_valid": True,
+                "legal": False,
+                "probability": 0.9,
+                "value_score": 2.0,
+                "gate_delta": 0,
+            },
+            {
+                "parent": 0,
+                "parent_valid": True,
+                "legal": True,
+                "probability": 0.7,
+                "value_score": 1.0,
+                "gate_delta": -1,
+            },
+            {
+                "parent": 1,
+                "parent_valid": False,
+                "legal": False,
+                "probability": 0.5,
+                "value_score": 0.0,
+                "gate_delta": 1,
+            },
+        ],
+        (1, 3),
+    )["topn"]
+    assert legality[0]["sequence_precision"] == 0.0
+    assert legality[0]["conditional_action_precision"] == 0.0
+    assert legality[1]["sequence_precision"] == 1 / 3
+    assert legality[1]["conditional_action_precision"] == 0.5
+    assert legality[1]["valid_parent_hit_rate"] == 1.0
+    assert legality[1]["score_groups"]["current_action_invalid"] == {
+        "count": 1,
+        "mean_probability": 0.9,
+        "mean_value_score": 2.0,
+        "mean_gate_delta": 0.0,
+    }
     assert should_restart_best_root(
         scheduled=False,
         beam_exhausted=True,

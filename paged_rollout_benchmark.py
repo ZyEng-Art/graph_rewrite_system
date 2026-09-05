@@ -4,6 +4,7 @@ import argparse
 from collections import defaultdict
 import ctypes
 import ctypes.util
+from dataclasses import replace
 import gc
 import importlib.util
 import json
@@ -32,6 +33,7 @@ from dataset import RuleMetadata
 from incremental_graph import parse_pattern
 from lazy_rollout_benchmark import (
     ExactReplayCacheEntry,
+    LazyAction,
     indexed_topology,
     lazy_child,
     raw_topology_hash,
@@ -289,6 +291,242 @@ def should_restart_best_root(
         and has_remaining_steps
         and not stopped_for_staleness
     )
+
+
+def parse_topn(value: str) -> tuple[int, ...]:
+    if not value.strip():
+        return ()
+    result = tuple(sorted(set(int(item) for item in value.split(","))))
+    if any(item <= 0 for item in result):
+        raise ValueError("proposal audit Top-N values must be positive")
+    return result
+
+
+def summarize_proposal_scores(records: list[dict]) -> dict:
+    if not records:
+        return {
+            "count": 0,
+            "mean_probability": None,
+            "mean_value_score": None,
+            "mean_gate_delta": None,
+        }
+    return {
+        "count": len(records),
+        "mean_probability": sum(float(row["probability"]) for row in records)
+        / len(records),
+        "mean_value_score": sum(float(row["value_score"]) for row in records)
+        / len(records),
+        "mean_gate_delta": sum(int(row["gate_delta"]) for row in records)
+        / len(records),
+    }
+
+
+def proposal_score_groups(records: list[dict]) -> dict:
+    return {
+        "all": summarize_proposal_scores(records),
+        "parent_valid": summarize_proposal_scores(
+            [row for row in records if row["parent_valid"]]
+        ),
+        "legal": summarize_proposal_scores(
+            [row for row in records if row["legal"]]
+        ),
+        "current_action_invalid": summarize_proposal_scores(
+            [
+                row
+                for row in records
+                if row["parent_valid"] and not row["legal"]
+            ]
+        ),
+        "prefix_invalid": summarize_proposal_scores(
+            [row for row in records if not row["parent_valid"]]
+        ),
+    }
+
+
+def summarize_legality_records(records: list[dict], topn: tuple[int, ...]) -> dict:
+    summaries = []
+    for requested in topn:
+        selected = records[:requested]
+        parent_valid = sum(bool(row["parent_valid"]) for row in selected)
+        legal = sum(bool(row["legal"]) for row in selected)
+        parent_ids = {
+            int(row["parent"]) for row in selected if bool(row["parent_valid"])
+        }
+        parents_with_legal = {
+            int(row["parent"]) for row in selected if bool(row["legal"])
+        }
+        summaries.append(
+            {
+                "requested_n": requested,
+                "selected": len(selected),
+                "parent_valid_proposals": parent_valid,
+                "prefix_invalid_proposals": len(selected) - parent_valid,
+                "legal_proposals": legal,
+                "sequence_precision": legal / max(1, len(selected)),
+                "conditional_action_precision": legal / max(1, parent_valid),
+                "valid_parents_represented": len(parent_ids),
+                "valid_parents_with_legal_action": len(parents_with_legal),
+                "valid_parent_hit_rate": len(parents_with_legal)
+                / max(1, len(parent_ids)),
+                "score_groups": proposal_score_groups(selected),
+            }
+        )
+    return {"topn": summaries}
+
+
+def audit_proposal_legality(
+    proposals: list[Proposal],
+    beam: list[BeamState],
+    topn: tuple[int, ...],
+    *,
+    context,
+    quartz,
+    xfers,
+    replay_initial_qasm: str,
+    destination_patterns,
+    xfer_to_source,
+) -> dict:
+    started = time.perf_counter()
+    selected = proposals[: max(topn)]
+    replay_cache: dict[tuple, ExactReplayCacheEntry] = {}
+    replay_prefixes = {
+        beam[proposal.parent].history
+        for proposal in selected
+        if beam[proposal.parent].history
+    }
+    records = []
+    failure_steps: dict[int, int] = defaultdict(int)
+    xfer_records: dict[int, list[dict]] = defaultdict(list)
+    source_records: dict[int, list[dict]] = defaultdict(list)
+    for proposal in selected:
+        if proposal.binding is None:
+            raise ValueError("proposal legality audit requires predicted bindings")
+        parent = beam[proposal.parent]
+        destination_slots = tuple(
+            range(
+                parent.next_slot,
+                parent.next_slot + len(destination_patterns[proposal.xfer_id]),
+            )
+        )
+        action = LazyAction(
+            xfer_id=proposal.xfer_id,
+            source_slots=proposal.binding,
+            destination_slots=destination_slots,
+        )
+        audit_state = replace(
+            parent,
+            depth=parent.depth + 1,
+            history=parent.history + (action,),
+        )
+        exact_graph, failure_step, _ = replay_state(
+            audit_state,
+            context,
+            quartz.PyGraph,
+            xfers,
+            replay_initial_qasm,
+            replay_cache=replay_cache,
+            replay_cache_prefixes=replay_prefixes,
+        )
+        action_depth = len(audit_state.history)
+        parent_valid = failure_step is None or int(failure_step) == action_depth
+        legal = exact_graph is not None
+        if failure_step is not None:
+            failure_steps[int(failure_step)] += 1
+        source_id = int(xfer_to_source[proposal.xfer_id])
+        record = {
+            "parent": proposal.parent,
+            "parent_valid": parent_valid,
+            "legal": legal,
+            "probability": proposal.probability,
+            "value_score": proposal.value_score,
+            "gate_delta": proposal.next_gate_count - parent.gate_count,
+        }
+        records.append(record)
+        xfer_records[int(proposal.xfer_id)].append(record)
+        source_records[source_id].append(record)
+
+    def grouped_records(rows_by_key: dict[int, list[dict]]) -> dict:
+        result = {}
+        for key, rows in sorted(rows_by_key.items()):
+            parent_valid = sum(bool(row["parent_valid"]) for row in rows)
+            legal = sum(bool(row["legal"]) for row in rows)
+            result[str(key)] = {
+                "selected": len(rows),
+                "parent_valid": parent_valid,
+                "legal": legal,
+                "current_action_invalid": parent_valid - legal,
+                "score_groups": proposal_score_groups(rows),
+            }
+        return result
+
+    result = summarize_legality_records(records, topn)
+    result.update(
+        {
+            "audited_proposals": len(records),
+            "failure_steps": dict(sorted(failure_steps.items())),
+            "by_xfer": grouped_records(xfer_records),
+            "by_source": grouped_records(source_records),
+            "seconds": time.perf_counter() - started,
+        }
+    )
+    return result
+
+
+def aggregate_legality_audits(step_rows: list[dict], topn: tuple[int, ...]) -> dict:
+    result = []
+    for index, requested in enumerate(topn):
+        rows = [
+            row["proposal_legality_audit"]["topn"][index]
+            for row in step_rows
+            if row.get("proposal_legality_audit") is not None
+        ]
+        selected = sum(int(row["selected"]) for row in rows)
+        parent_valid = sum(int(row["parent_valid_proposals"]) for row in rows)
+        legal = sum(int(row["legal_proposals"]) for row in rows)
+
+        score_groups = {}
+        for group in (
+            "all",
+            "parent_valid",
+            "legal",
+            "current_action_invalid",
+            "prefix_invalid",
+        ):
+            groups = [row["score_groups"][group] for row in rows]
+            count = sum(int(item["count"]) for item in groups)
+            score_groups[group] = {
+                "count": count,
+                **{
+                    field: (
+                        sum(
+                            int(item["count"]) * float(item[field])
+                            for item in groups
+                            if item[field] is not None
+                        )
+                        / count
+                        if count
+                        else None
+                    )
+                    for field in (
+                        "mean_probability",
+                        "mean_value_score",
+                        "mean_gate_delta",
+                    )
+                },
+            }
+        result.append(
+            {
+                "requested_n": requested,
+                "selected": selected,
+                "parent_valid_proposals": parent_valid,
+                "prefix_invalid_proposals": selected - parent_valid,
+                "legal_proposals": legal,
+                "sequence_precision": legal / max(1, selected),
+                "conditional_action_precision": legal / max(1, parent_valid),
+                "score_groups": score_groups,
+            }
+        )
+    return {"topn": result}
 
 
 @torch.no_grad()
@@ -719,6 +957,14 @@ def main() -> None:
     )
     parser.add_argument("--structural-recheck", action="store_true")
     parser.add_argument(
+        "--audit-proposal-topn",
+        default="",
+        help=(
+            "comma-separated ranked proposal cutoffs to replay with Quartz at "
+            "every step; diagnostics only"
+        ),
+    )
+    parser.add_argument(
         "--refresh-interval",
         type=int,
         default=0,
@@ -785,6 +1031,10 @@ def main() -> None:
         help="write every actual per-depth beam as JSONL for strict cache A/B",
     )
     args = parser.parse_args()
+    try:
+        args.audit_proposal_topn = parse_topn(args.audit_proposal_topn)
+    except ValueError as error:
+        parser.error(str(error))
     if args.refresh_interval < 0:
         parser.error("--refresh-interval must be nonnegative")
     if args.refresh_factor < 1:
@@ -1228,6 +1478,20 @@ def main() -> None:
             action_expand_seconds = proposal_metrics["action_expansion_seconds"]
             proposal_seconds = proposal_metrics["proposal_seconds"]
 
+        proposal_legality_audit = None
+        if args.audit_proposal_topn:
+            proposal_legality_audit = audit_proposal_legality(
+                proposals,
+                beam,
+                args.audit_proposal_topn,
+                context=context,
+                quartz=quartz,
+                xfers=xfers,
+                replay_initial_qasm=replay_initial_qasm,
+                destination_patterns=destination_patterns,
+                xfer_to_source=rules.xfer_to_source,
+            )
+
         update_started = time.perf_counter()
         records: list[tuple[BeamState, Proposal]] = []
         attempted = invalid = duplicates = 0
@@ -1607,6 +1871,11 @@ def main() -> None:
             stage_seconds["exact_quartz_refresh_seconds"] = refresh_seconds
             stage_seconds["beam_prune_and_reindex_seconds"] = beam_prune_seconds
             stage_seconds["best_root_restart_seconds"] = restart_seconds
+            stage_seconds["proposal_legality_audit_seconds"] = (
+                0.0
+                if proposal_legality_audit is None
+                else proposal_legality_audit["seconds"]
+            )
             stage_seconds["step_unattributed_seconds"] = max(
                 0.0, elapsed - sum(stage_seconds.values())
             )
@@ -1638,6 +1907,7 @@ def main() -> None:
             "predicted_actions": predicted_action_count,
             "eligible_actions_before_parent_cap": eligible_actions,
             "proposals_after_caps": len(proposals),
+            "proposal_legality_audit": proposal_legality_audit,
             "attempted_actions": attempted,
             "accepted_actions": accepted_beam_size,
             "invalid_structural_actions": invalid,
@@ -1833,6 +2103,11 @@ def main() -> None:
         "refresh_interval": args.refresh_interval,
         "refresh_factor": args.refresh_factor,
         "checkpoint_audit_count": args.checkpoint_audit_count,
+        "proposal_legality_audit": (
+            aggregate_legality_audits(step_rows, args.audit_proposal_topn)
+            if args.audit_proposal_topn
+            else None
+        ),
         "steps": step_rows,
         "quartz_replay_audit": audit,
     }
