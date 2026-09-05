@@ -31,6 +31,26 @@ from train import autocast_context
 from train_paged_ppo import make_replay_bucket, replay_pool_metrics
 
 
+def allocate_circuit_episodes(
+    circuits: list[Path], total_episodes: int, *, offset: int = 0
+) -> list[tuple[Path, int]]:
+    if total_episodes < 1:
+        raise ValueError("total episodes must be positive")
+    if not circuits:
+        raise ValueError("at least one circuit is required")
+    counts = [total_episodes // len(circuits)] * len(circuits)
+    for index in range(total_episodes % len(circuits)):
+        counts[(offset + index) % len(circuits)] += 1
+    return list(zip(circuits, counts))
+
+
+def merge_collector_timing(
+    destination: dict[str, float], source: dict[str, float]
+) -> None:
+    for key, value in source.items():
+        destination[key] = destination.get(key, 0.0) + value
+
+
 def summarize_metrics(metrics, transitions, timing: dict[str, float]) -> dict:
     total_seconds = timing["total_seconds"]
     stages = {
@@ -121,6 +141,7 @@ def main() -> None:
     parser.add_argument("--calibration", type=Path, required=True)
     parser.add_argument("--ecc-file", type=Path, required=True)
     parser.add_argument("--qasm", type=Path, required=True)
+    parser.add_argument("--additional-qasm", type=Path, action="append", default=[])
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--max-steps", type=int, default=16)
@@ -233,13 +254,21 @@ def main() -> None:
     destination_patterns = tuple(
         parse_pattern(pattern) for pattern in rules.xfer_destinations
     )
-    graph = quartz.PyGraph.from_qasm(context=context, filename=str(args.qasm))
-    circuit_name = args.qasm.name
-    saved_best = None
-    if args.resume_search_state:
-        saved_best = node_checkpoint.get("best_so_far", {}).get(circuit_name)
-    best_by_circuit = {
-        circuit_name: (
+    qasm_paths = [args.qasm, *args.additional_qasm]
+    circuit_names = [path.name for path in qasm_paths]
+    if len(set(circuit_names)) != len(circuit_names):
+        raise ValueError("QASM file names must be unique across circuits")
+    graphs = {
+        path.name: quartz.PyGraph.from_qasm(context=context, filename=str(path))
+        for path in qasm_paths
+    }
+    saved_best_by_circuit = (
+        node_checkpoint.get("best_so_far", {}) if args.resume_search_state else {}
+    )
+    best_by_circuit = {}
+    for circuit_name, graph in graphs.items():
+        saved_best = saved_best_by_circuit.get(circuit_name)
+        best_by_circuit[circuit_name] = (
             dict(saved_best)
             if saved_best is not None
             and int(saved_best["gate_count"]) <= int(graph.gate_count)
@@ -249,15 +278,17 @@ def main() -> None:
                 "episode_depth": 0,
             }
         )
-    }
     saved_replay_pool = node_checkpoint.get("replay_pool", {})
-    replay_pool = (
-        saved_replay_pool
-        if args.resume_search_state and circuit_name in saved_replay_pool
-        else {circuit_name: make_replay_bucket(graph)}
-    )
+    replay_pool = {}
+    for circuit_name, graph in graphs.items():
+        replay_pool[circuit_name] = (
+            saved_replay_pool[circuit_name]
+            if args.resume_search_state and circuit_name in saved_replay_pool
+            else make_replay_bucket(graph)
+        )
 
     def collect(
+        run_qasm: Path,
         run_batch_size: int,
         run_max_steps: int,
         run_best: dict,
@@ -267,7 +298,7 @@ def main() -> None:
         run_rejected_cache,
     ):
         return collect_hierarchical_episode_batch(
-            args.qasm,
+            run_qasm,
             run_batch_size,
             context=context,
             quartz=quartz,
@@ -311,6 +342,44 @@ def main() -> None:
             collector_timing=run_timing,
         )
 
+    def collect_across_circuits(
+        total_episodes: int,
+        run_max_steps: int,
+        run_best: dict,
+        run_replay: dict,
+        run_timing: dict[str, float],
+        run_greedy: bool,
+        run_rejected_cache,
+        *,
+        offset: int = 0,
+    ):
+        all_transitions = []
+        all_metrics = []
+        per_circuit = {}
+        for run_qasm, episode_count in allocate_circuit_episodes(
+            qasm_paths, total_episodes, offset=offset
+        ):
+            if not episode_count:
+                continue
+            circuit_timing: dict[str, float] = {}
+            circuit_transitions, circuit_metrics = collect(
+                run_qasm,
+                episode_count,
+                run_max_steps,
+                run_best,
+                run_replay,
+                circuit_timing,
+                run_greedy,
+                run_rejected_cache,
+            )
+            all_transitions.extend(circuit_transitions)
+            all_metrics.extend(circuit_metrics)
+            merge_collector_timing(run_timing, circuit_timing)
+            per_circuit[run_qasm.name] = summarize_metrics(
+                circuit_metrics, circuit_transitions, circuit_timing
+            )
+        return all_transitions, all_metrics, per_circuit
+
     if args.warmup_episodes and args.warmup_steps:
         warmup_best = {
             circuit_name: {
@@ -318,12 +387,16 @@ def main() -> None:
                 "qasm": graph.to_qasm_str(),
                 "episode_depth": 0,
             }
+            for circuit_name, graph in graphs.items()
         }
-        collect(
+        collect_across_circuits(
             args.warmup_episodes,
             args.warmup_steps,
             warmup_best,
-            {circuit_name: make_replay_bucket(graph)},
+            {
+                circuit_name: make_replay_bucket(graph)
+                for circuit_name, graph in graphs.items()
+            },
             {},
             args.greedy,
             {},
@@ -350,7 +423,11 @@ def main() -> None:
         for iteration in range(1, args.ppo_iterations + 1):
             actor.eval()
             iteration_timing: dict[str, float] = {}
-            iteration_transitions, iteration_metrics = collect(
+            (
+                iteration_transitions,
+                iteration_metrics,
+                iteration_by_circuit,
+            ) = collect_across_circuits(
                 args.batch_size,
                 args.max_steps,
                 best_by_circuit,
@@ -358,6 +435,7 @@ def main() -> None:
                 iteration_timing,
                 args.greedy,
                 rejected_action_cache,
+                offset=iteration - 1,
             )
             update = hierarchical_ppo_update(
                 actor,
@@ -378,14 +456,18 @@ def main() -> None:
                 "rollout": summarize_metrics(
                     iteration_metrics, iteration_transitions, iteration_timing
                 ),
+                "rollout_by_circuit": iteration_by_circuit,
                 "update": update,
-                "best_gate_count": best_by_circuit[circuit_name]["gate_count"],
+                "best_gate_count": best_by_circuit[args.qasm.name]["gate_count"],
+                "best_gate_count_by_circuit": {
+                    name: row["gate_count"] for name, row in best_by_circuit.items()
+                },
             }
             iteration_results.append(row)
             print(json.dumps(row, sort_keys=True), flush=True)
         actor.eval()
         timing = {}
-        transitions, metrics = collect(
+        transitions, metrics, summary_by_circuit = collect_across_circuits(
             args.batch_size,
             args.max_steps,
             best_by_circuit,
@@ -396,7 +478,7 @@ def main() -> None:
         )
     else:
         timing = {}
-        transitions, metrics = collect(
+        transitions, metrics, summary_by_circuit = collect_across_circuits(
             args.batch_size,
             args.max_steps,
             best_by_circuit,
@@ -424,10 +506,13 @@ def main() -> None:
             "actor_checkpoint_format": actor_checkpoint_format,
             "calibration": str(args.calibration),
             "qasm": str(args.qasm),
+            "qasm_paths": [str(path) for path in qasm_paths],
         },
         "args": vars(args),
         "summary": summarize_metrics(metrics, transitions, timing),
-        "best_so_far": best_by_circuit[circuit_name],
+        "summary_by_circuit": summary_by_circuit,
+        "best_so_far": best_by_circuit[args.qasm.name],
+        "best_by_circuit": best_by_circuit,
         "stored_transition_count": len(transitions),
         "rejected_action_cache": {
             "enabled": rejected_action_cache is not None,
