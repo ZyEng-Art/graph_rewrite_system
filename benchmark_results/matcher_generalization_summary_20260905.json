@@ -65,5 +65,17 @@
     "missing_teacher_binding_retained": true,
     "known_gf_teacher_chain_coverage_after_union": [271, 271],
     "post_hoc_rescue_not_unbiased_generalization": true
+  },
+  "production_candidate_audit": {
+    "implementation": "paged_model_matches union with GPU deduplication",
+    "cli": "--near-source-reserve 16384",
+    "default_reserve": 0,
+    "target_recall": 0.99,
+    "standard_source_cap": 8192,
+    "source_grouping": "first_gate",
+    "sequence_window": 64,
+    "barenco_causal_teacher_coverage": [16, 16],
+    "gf_causal_teacher_coverage": [271, 271],
+    "gf_independent_teacher_coverage": [264, 271]
   }
 }

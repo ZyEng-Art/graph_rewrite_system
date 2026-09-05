@@ -548,6 +548,7 @@ def paged_model_matches(
     source_vectors: torch.Tensor,
     microbatch: int,
     max_candidates: int,
+    near_source_reserve: int = 0,
     source_microbatch: int = 0,
     source_grouping: str = "none",
     state_batch_backend: str = "legacy",
@@ -560,6 +561,25 @@ def paged_model_matches(
     dict[str, float],
     torch.Tensor | None,
 ]:
+    if near_source_reserve < 0:
+        raise ValueError("near source reserve must be nonnegative")
+
+    reserve_threshold_config = None
+    if near_source_reserve:
+        reserve_threshold_config = {
+            **threshold_config,
+            "groups": {
+                "near": {
+                    **threshold_config["groups"]["near"],
+                    "raw_threshold": float("-inf"),
+                },
+                "far": {
+                    **threshold_config["groups"]["far"],
+                    "raw_threshold": float("inf"),
+                },
+            },
+        }
+
     output = []
     candidate_chunks: list[CandidateTensors] = []
     encoded_chunks = []
@@ -670,6 +690,22 @@ def paged_model_matches(
                         timing=timing if profile_stages else None,
                     )
                 )
+                if reserve_threshold_config is not None:
+                    candidate_chunks.append(
+                        threshold_function(
+                            model,
+                            batch,
+                            node_vectors,
+                            selected_live,
+                            selected_types,
+                            source_vectors,
+                            reserve_threshold_config,
+                            source_chunk_size=source_microbatch,
+                            max_candidates_per_state=near_source_reserve,
+                            batch_offset=begin,
+                            timing=timing if profile_stages else None,
+                        )
+                    )
             continue
 
         stage_started = time.perf_counter()
@@ -691,18 +727,54 @@ def paged_model_matches(
                     timing=timing if profile_stages else None,
                 )
             )
+            if reserve_threshold_config is not None:
+                candidate_chunks.append(
+                    threshold_candidate_tensors(
+                        model,
+                        batch,
+                        logits,
+                        eligible,
+                        reserve_threshold_config,
+                        max_candidates_per_state=near_source_reserve,
+                        batch_offset=begin,
+                        timing=timing if profile_stages else None,
+                    )
+                )
         else:
-            output.extend(
-                threshold_candidates(
+            standard_rows = threshold_candidates(
+                model,
+                batch,
+                logits,
+                eligible,
+                threshold_config,
+                max_candidates_per_state=max_candidates,
+                timing=timing if profile_stages else None,
+            )
+            if reserve_threshold_config is None:
+                output.extend(standard_rows)
+            else:
+                reserve_rows = threshold_candidates(
                     model,
                     batch,
                     logits,
                     eligible,
-                    threshold_config,
-                    max_candidates_per_state=max_candidates,
+                    reserve_threshold_config,
+                    max_candidates_per_state=near_source_reserve,
                     timing=timing if profile_stages else None,
                 )
-            )
+                for primary, reserved in zip(standard_rows, reserve_rows):
+                    unique = {
+                        (source, anchor, binding): probability
+                        for source, anchor, binding, probability in primary
+                    }
+                    for source, anchor, binding, probability in reserved:
+                        unique.setdefault((source, anchor, binding), probability)
+                    output.append(
+                        [
+                            (source, anchor, binding, probability)
+                            for (source, anchor, binding), probability in unique.items()
+                        ]
+                    )
     if device.type == "cuda":
         torch.cuda.synchronize(device)
     elapsed = time.perf_counter() - started
@@ -710,11 +782,31 @@ def paged_model_matches(
         timing["model_match_unattributed_seconds"] = max(
             0.0, elapsed - sum(timing.values())
         )
-    candidates = (
-        CandidateTensors.cat(candidate_chunks)
-        if candidate_backend == "gpu"
-        else output
-    )
+    if candidate_backend == "gpu":
+        candidates = CandidateTensors.cat(candidate_chunks)
+        if near_source_reserve and candidates.sources.numel():
+            num_slots = gate_types.shape[1]
+            keys = (
+                (candidates.batch_ids * num_slots + candidates.anchors)
+                * model.num_sources
+                + candidates.sources
+            )
+            order = torch.argsort(keys, stable=True)
+            ordered_keys = keys[order]
+            unique = torch.ones(
+                order.numel(), dtype=torch.bool, device=order.device
+            )
+            unique[1:] = ordered_keys[1:] != ordered_keys[:-1]
+            selected = order[unique]
+            candidates = CandidateTensors(
+                batch_ids=candidates.batch_ids[selected],
+                sources=candidates.sources[selected],
+                anchors=candidates.anchors[selected],
+                bindings=candidates.bindings[selected],
+                probabilities=candidates.probabilities[selected],
+            )
+    else:
+        candidates = output
     encoded_states = torch.cat(encoded_chunks) if encoded_chunks else None
     return candidates, elapsed, timing, encoded_states
 
@@ -1044,6 +1136,16 @@ def main() -> None:
     )
     parser.add_argument("--cache-pages", type=int)
     parser.add_argument("--max-source-matches", type=int, default=2048)
+    parser.add_argument(
+        "--near-source-reserve",
+        type=int,
+        default=0,
+        help=(
+            "add this many highest-scoring near-anchor source candidates "
+            "without applying the probability threshold, then structurally "
+            "decode and deduplicate them with the standard candidate set"
+        ),
+    )
     parser.add_argument("--max-actions-per-parent", type=int, default=128)
     parser.add_argument("--proposal-factor", type=int, default=16)
     parser.add_argument("--max-gate-increase", type=int, default=1)
@@ -1148,6 +1250,8 @@ def main() -> None:
         parser.error("--refresh-interval must be nonnegative")
     if args.source_microbatch < 0:
         parser.error("--source-microbatch must be nonnegative")
+    if args.near_source_reserve < 0:
+        parser.error("--near-source-reserve must be nonnegative")
     if args.source_microbatch and args.proposal_backend != "gpu":
         parser.error("--source-microbatch requires --proposal-backend gpu")
     if args.source_grouping != "none" and args.proposal_backend != "gpu":
@@ -1527,6 +1631,7 @@ def main() -> None:
             source_vectors,
             args.microbatch,
             args.max_source_matches,
+            near_source_reserve=args.near_source_reserve,
             source_microbatch=args.source_microbatch,
             source_grouping=args.source_grouping,
             state_batch_backend=args.state_batch_backend,
@@ -1556,6 +1661,7 @@ def main() -> None:
                 exploration_source_vectors,
                 args.microbatch,
                 args.max_source_matches,
+                near_source_reserve=0,
                 source_microbatch=0,
                 source_grouping="none",
                 state_batch_backend=args.state_batch_backend,
@@ -2356,6 +2462,7 @@ def main() -> None:
         "profile_stages": args.profile_stages,
         "target_recall": args.target_recall,
         "target_recall_by_group": threshold_config["target_recall_by_group"],
+        "near_source_reserve": args.near_source_reserve,
         "microbatch": args.microbatch,
         "source_microbatch": args.source_microbatch,
         "source_grouping": args.source_grouping,

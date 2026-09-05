@@ -337,6 +337,7 @@ def audit_sequence_conditioned(
                     source_vectors,
                     microbatch=args.microbatch,
                     max_candidates=args.max_source_matches,
+                    near_source_reserve=args.near_source_reserve,
                     source_microbatch=args.source_microbatch,
                     source_grouping=args.source_grouping,
                     state_batch_backend="tensorized",
@@ -615,6 +616,15 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--target-recall", type=float, default=0.95)
     parser.add_argument("--max-source-matches", type=int, default=8192)
+    parser.add_argument(
+        "--near-source-reserve",
+        type=int,
+        default=0,
+        help=(
+            "union the standard candidates with this many unthresholded "
+            "near-anchor candidates before structural deduplication"
+        ),
+    )
     parser.add_argument("--max-action-rank", type=int, default=512)
     parser.add_argument("--caps", default="64,128,256,512")
     parser.add_argument("--microbatch", type=int, default=32)
@@ -660,6 +670,8 @@ def main() -> None:
         parser.error("--max-action-rank must be at least the largest candidate cap")
     if args.max_source_matches < 1 or args.microbatch < 1:
         parser.error("source-match and microbatch limits must be positive")
+    if args.near_source_reserve < 0:
+        parser.error("near source reserve must be nonnegative")
     if args.sequence_window < 0:
         parser.error("--sequence-window must be nonnegative")
 
@@ -835,6 +847,7 @@ def main() -> None:
             source_vectors,
             microbatch=args.microbatch,
             max_candidates=args.max_source_matches,
+            near_source_reserve=args.near_source_reserve,
             source_microbatch=args.source_microbatch,
             source_grouping=args.source_grouping,
             state_batch_backend="tensorized",
@@ -933,6 +946,7 @@ def main() -> None:
             "trajectories": [str(path) for path in args.trajectory],
             "target_recall": args.target_recall,
             "max_source_matches": args.max_source_matches,
+            "near_source_reserve": args.near_source_reserve,
             "max_action_rank": args.max_action_rank,
             "caps": caps,
             "microbatch": args.microbatch,

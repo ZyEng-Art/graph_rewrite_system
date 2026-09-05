@@ -93,7 +93,7 @@ near-only score rank      13,417 / 57,582
 它既低于概率阈值，也远超全局 8192 cap；只把 target recall 从 0.99 略微调高，
 但继续使用全局 8192 cap，仍不能恢复该动作。
 
-## Near reserve 救援探针
+## Near reserve 救援与实际候选路径验证
 
 对 state 84 保留标准候选，并额外把 near 组中不受概率阈值限制的 Top16384 送入
 结构解码：
@@ -111,6 +111,28 @@ GF 教师链从 270/271 补到 271/271。它没有改变动作排序，只改变
 其主要成本发生在结构解码之前：该状态需要额外检查 16,384 个 near 粗候选，但结构
 过滤后只增加 6 个最终 source/binding。
 
+该策略已经作为可选参数接入实际 `paged_model_matches`：
+
+```text
+--near-source-reserve 16384
+```
+
+默认值为 0，因此现有搜索行为不变。启用后，候选生成会计算标准阈值集合与
+unthresholded near reserve 的并集，并按 `(batch, anchor, source)` 在 GPU 上去重，
+随后才展开 xfer 和进入动作排序。
+
+使用实际 `audit_quarl_trajectory_candidates.py`、`source_grouping=first_gate` 和
+64 步因果窗口重新审计 GF：
+
+```text
+standard r=0.99, cap=8192                 270/271
+r=0.99, cap=8192, near reserve=16384      271/271
+```
+
+独立状态仍为 264/271，因为 `max_actions=1` 会把每个状态的 locality 重置为 far；
+near reserve 的目标是搜索已经连续执行局部动作时的因果候选召回，不是替代全局
+静态 matcher。
+
 这个 rescue 参数是在查看 GF holdout 漏点后确定的，所以不能算原始配置的无偏泛化
 成绩；它是下一分支设计候选生成方式时可直接采用和进一步验证的保守方案。要重新
 获得严格泛化结论，应在新的、未用于选择 reserve 大小的整条轨迹上固定参数再测。
@@ -124,5 +146,14 @@ GF 教师链从 270/271 补到 271/271。它没有改变动作排序，只改变
 3. 唯一 GF 因果漏点是 near 低分离群点。near Top16384 reserve 已实际恢复其完整
    binding，且结构解码后的去重候选只增加 6 个。
 4. 如果下一分支的目标只是保证已知高质量轨迹动作仍有机会被搜索到，应保留
-   `r=0.99` 标准集合，并增加独立的 near reserve；排序和 beam 生存可以在其后单独
-   优化。
+   `r=0.99` 标准集合，并启用 `--near-source-reserve 16384`；实际因果审计已经达到
+   Barenco 16/16、GF 271/271。排序和 beam 生存可以在其后单独优化。
+
+## 关键结果文件
+
+- `benchmark_results/generalization_barenco38_3_causal_all_matches_r95_r99_s8192_20260905.json`
+- `benchmark_results/generalization_barenco38_3_independent_all_matches_r95_r99_s8192_20260905.json`
+- `benchmark_results/generalization_gf370_2_causalw64_all_matches_r95_r99_s8192_20260905.json`
+- `benchmark_results/generalization_gf370_2_independent_all_matches_r95_r99_s8192_20260905.json`
+- `benchmark_results/generalization_gf370_2_nearreserve16384_r99_s8192_20260905.json`
+- `benchmark_results/matcher_generalization_summary_20260905.json`
