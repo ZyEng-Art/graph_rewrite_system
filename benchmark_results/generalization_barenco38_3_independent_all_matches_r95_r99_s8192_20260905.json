@@ -1,0 +1,1032 @@
+{
+  "config": {
+    "batch_size": 16,
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_barenco_normalized_supervisedzeroleak38_3_r8_aw4_lw2_bw1_m1_lr2e5_s173_calibration.json",
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_quarl_barenco_normalized_supervisedzeroleak38_3_r8_aw4_lw2_bw1_m1_lr2e5_s173.pt",
+    "checkpoint_init": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_onpolicy_v13_r8_lr5e5.pt",
+    "checkpoint_training_data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/binding_longmix_quarl_barenco_normalized_supervisedzeroleak38_3_r8_20260905.pt",
+    "data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_barenco38_3_normalized_w1_20260905.pt",
+    "device": "cuda",
+    "max_source_matches": 8192,
+    "states": 16,
+    "target_recalls": [
+      0.95,
+      0.99
+    ],
+    "trajectories": 16
+  },
+  "results": {
+    "0.9500": {
+      "above_threshold_pairs": 8132,
+      "after_source_cap_pairs": 8132,
+      "after_structural_decode": 2713,
+      "decoded_candidate_retained_fraction": 0.0031081304017083833,
+      "decoded_exact_precision": 0.5628455584224106,
+      "eligible_pairs": 872872,
+      "exact_above_threshold": 1527,
+      "exact_above_threshold_recall": 0.954375,
+      "exact_after_source_cap": 1527,
+      "exact_after_source_cap_recall": 0.954375,
+      "exact_eligible": 1600,
+      "exact_final_recall": 0.954375,
+      "exact_final_retained": 1527,
+      "exact_matches": 1600,
+      "groups": {
+        "far": {
+          "above_threshold_pairs": 8132,
+          "after_source_cap_pairs": 8132,
+          "after_structural_decode": 2713,
+          "decoded_candidate_retained_fraction": 0.0031081304017083833,
+          "decoded_exact_precision": 0.5628455584224106,
+          "eligible_pairs": 872872,
+          "exact_above_threshold": 1527,
+          "exact_above_threshold_recall": 0.954375,
+          "exact_after_source_cap": 1527,
+          "exact_after_source_cap_recall": 0.954375,
+          "exact_eligible": 1600,
+          "exact_final_recall": 0.954375,
+          "exact_final_retained": 1527,
+          "exact_matches": 1600,
+          "source_cap_candidate_retained_fraction": 0.009316371701692803,
+          "states": 16,
+          "states_with_all_exact_matches_retained": 10,
+          "teacher_actions": 16,
+          "teacher_final_retained": 13,
+          "threshold_candidate_filtered_fraction": 0.9906836282983073,
+          "threshold_candidate_retained_fraction": 0.009316371701692803
+        },
+        "near": {
+          "above_threshold_pairs": 0,
+          "after_source_cap_pairs": 0,
+          "after_structural_decode": 0,
+          "decoded_candidate_retained_fraction": null,
+          "decoded_exact_precision": null,
+          "eligible_pairs": 0,
+          "exact_above_threshold": 0,
+          "exact_above_threshold_recall": null,
+          "exact_after_source_cap": 0,
+          "exact_after_source_cap_recall": null,
+          "exact_eligible": 0,
+          "exact_final_recall": null,
+          "exact_final_retained": 0,
+          "exact_matches": 0,
+          "source_cap_candidate_retained_fraction": null,
+          "states": 16,
+          "states_with_all_exact_matches_retained": 16,
+          "teacher_actions": 0,
+          "teacher_final_retained": 0,
+          "threshold_candidate_filtered_fraction": null,
+          "threshold_candidate_retained_fraction": null
+        }
+      },
+      "source_cap_candidate_retained_fraction": 0.009316371701692803,
+      "states": 16,
+      "states_with_all_exact_matches_retained": 10,
+      "teacher_actions": 16,
+      "teacher_final_retained": 13,
+      "threshold_candidate_filtered_fraction": 0.9906836282983073,
+      "threshold_candidate_retained_fraction": 0.009316371701692803
+    },
+    "0.9900": {
+      "above_threshold_pairs": 28716,
+      "after_source_cap_pairs": 28716,
+      "after_structural_decode": 3377,
+      "decoded_candidate_retained_fraction": 0.003868837584433915,
+      "decoded_exact_precision": 0.4607639917086171,
+      "eligible_pairs": 872872,
+      "exact_above_threshold": 1556,
+      "exact_above_threshold_recall": 0.9725,
+      "exact_after_source_cap": 1556,
+      "exact_after_source_cap_recall": 0.9725,
+      "exact_eligible": 1600,
+      "exact_final_recall": 0.9725,
+      "exact_final_retained": 1556,
+      "exact_matches": 1600,
+      "groups": {
+        "far": {
+          "above_threshold_pairs": 28716,
+          "after_source_cap_pairs": 28716,
+          "after_structural_decode": 3377,
+          "decoded_candidate_retained_fraction": 0.003868837584433915,
+          "decoded_exact_precision": 0.4607639917086171,
+          "eligible_pairs": 872872,
+          "exact_above_threshold": 1556,
+          "exact_above_threshold_recall": 0.9725,
+          "exact_after_source_cap": 1556,
+          "exact_after_source_cap_recall": 0.9725,
+          "exact_eligible": 1600,
+          "exact_final_recall": 0.9725,
+          "exact_final_retained": 1556,
+          "exact_matches": 1600,
+          "source_cap_candidate_retained_fraction": 0.03289829436618427,
+          "states": 16,
+          "states_with_all_exact_matches_retained": 10,
+          "teacher_actions": 16,
+          "teacher_final_retained": 16,
+          "threshold_candidate_filtered_fraction": 0.9671017056338157,
+          "threshold_candidate_retained_fraction": 0.03289829436618427
+        },
+        "near": {
+          "above_threshold_pairs": 0,
+          "after_source_cap_pairs": 0,
+          "after_structural_decode": 0,
+          "decoded_candidate_retained_fraction": null,
+          "decoded_exact_precision": null,
+          "eligible_pairs": 0,
+          "exact_above_threshold": 0,
+          "exact_above_threshold_recall": null,
+          "exact_after_source_cap": 0,
+          "exact_after_source_cap_recall": null,
+          "exact_eligible": 0,
+          "exact_final_recall": null,
+          "exact_final_retained": 0,
+          "exact_matches": 0,
+          "source_cap_candidate_retained_fraction": null,
+          "states": 16,
+          "states_with_all_exact_matches_retained": 16,
+          "teacher_actions": 0,
+          "teacher_final_retained": 0,
+          "threshold_candidate_filtered_fraction": null,
+          "threshold_candidate_retained_fraction": null
+        }
+      },
+      "source_cap_candidate_retained_fraction": 0.03289829436618427,
+      "states": 16,
+      "states_with_all_exact_matches_retained": 10,
+      "teacher_actions": 16,
+      "teacher_final_retained": 16,
+      "threshold_candidate_filtered_fraction": 0.9671017056338157,
+      "threshold_candidate_retained_fraction": 0.03289829436618427
+    }
+  },
+  "states": {
+    "0.9500": [
+      {
+        "above_threshold_pairs": 341,
+        "after_source_cap_pairs": 341,
+        "after_structural_decode": 148,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 87,
+        "exact_after_source_cap": 87,
+        "exact_eligible": 87,
+        "exact_final_retained": 87,
+        "exact_matches": 87,
+        "groups": {
+          "far": {
+            "exact_final_retained": 87,
+            "exact_matches": 87
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 0,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 649,
+        "after_source_cap_pairs": 649,
+        "after_structural_decode": 182,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 98,
+        "exact_after_source_cap": 98,
+        "exact_eligible": 113,
+        "exact_final_retained": 98,
+        "exact_matches": 113,
+        "groups": {
+          "far": {
+            "exact_final_retained": 98,
+            "exact_matches": 113
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 1,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 0
+      },
+      {
+        "above_threshold_pairs": 375,
+        "after_source_cap_pairs": 375,
+        "after_structural_decode": 160,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 83,
+        "exact_after_source_cap": 83,
+        "exact_eligible": 96,
+        "exact_final_retained": 83,
+        "exact_matches": 96,
+        "groups": {
+          "far": {
+            "exact_final_retained": 83,
+            "exact_matches": 96
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 2,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 294,
+        "after_source_cap_pairs": 294,
+        "after_structural_decode": 147,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 79,
+        "exact_after_source_cap": 79,
+        "exact_eligible": 88,
+        "exact_final_retained": 79,
+        "exact_matches": 88,
+        "groups": {
+          "far": {
+            "exact_final_retained": 79,
+            "exact_matches": 88
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 3,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 0
+      },
+      {
+        "above_threshold_pairs": 427,
+        "after_source_cap_pairs": 427,
+        "after_structural_decode": 179,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 102,
+        "exact_after_source_cap": 102,
+        "exact_eligible": 102,
+        "exact_final_retained": 102,
+        "exact_matches": 102,
+        "groups": {
+          "far": {
+            "exact_final_retained": 102,
+            "exact_matches": 102
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 4,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 391,
+        "after_source_cap_pairs": 391,
+        "after_structural_decode": 164,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 84,
+        "exact_after_source_cap": 84,
+        "exact_eligible": 84,
+        "exact_final_retained": 84,
+        "exact_matches": 84,
+        "groups": {
+          "far": {
+            "exact_final_retained": 84,
+            "exact_matches": 84
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 5,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 427,
+        "after_source_cap_pairs": 427,
+        "after_structural_decode": 179,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 102,
+        "exact_after_source_cap": 102,
+        "exact_eligible": 102,
+        "exact_final_retained": 102,
+        "exact_matches": 102,
+        "groups": {
+          "far": {
+            "exact_final_retained": 102,
+            "exact_matches": 102
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 6,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 712,
+        "after_source_cap_pairs": 712,
+        "after_structural_decode": 192,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 103,
+        "exact_after_source_cap": 103,
+        "exact_eligible": 103,
+        "exact_final_retained": 103,
+        "exact_matches": 103,
+        "groups": {
+          "far": {
+            "exact_final_retained": 103,
+            "exact_matches": 103
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 7,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 650,
+        "after_source_cap_pairs": 650,
+        "after_structural_decode": 183,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 95,
+        "exact_after_source_cap": 95,
+        "exact_eligible": 95,
+        "exact_final_retained": 95,
+        "exact_matches": 95,
+        "groups": {
+          "far": {
+            "exact_final_retained": 95,
+            "exact_matches": 95
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 8,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 617,
+        "after_source_cap_pairs": 617,
+        "after_structural_decode": 172,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 94,
+        "exact_after_source_cap": 94,
+        "exact_eligible": 94,
+        "exact_final_retained": 94,
+        "exact_matches": 94,
+        "groups": {
+          "far": {
+            "exact_final_retained": 94,
+            "exact_matches": 94
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 9,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 694,
+        "after_source_cap_pairs": 694,
+        "after_structural_decode": 178,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 117,
+        "exact_after_source_cap": 117,
+        "exact_eligible": 117,
+        "exact_final_retained": 117,
+        "exact_matches": 117,
+        "groups": {
+          "far": {
+            "exact_final_retained": 117,
+            "exact_matches": 117
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 10,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 516,
+        "after_source_cap_pairs": 516,
+        "after_structural_decode": 173,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 101,
+        "exact_after_source_cap": 101,
+        "exact_eligible": 113,
+        "exact_final_retained": 101,
+        "exact_matches": 113,
+        "groups": {
+          "far": {
+            "exact_final_retained": 101,
+            "exact_matches": 113
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 11,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 729,
+        "after_source_cap_pairs": 729,
+        "after_structural_decode": 167,
+        "eligible_pairs": 52741,
+        "exact_above_threshold": 106,
+        "exact_after_source_cap": 106,
+        "exact_eligible": 118,
+        "exact_final_retained": 106,
+        "exact_matches": 118,
+        "groups": {
+          "far": {
+            "exact_final_retained": 106,
+            "exact_matches": 118
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 12,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 516,
+        "after_source_cap_pairs": 516,
+        "after_structural_decode": 173,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 101,
+        "exact_after_source_cap": 101,
+        "exact_eligible": 113,
+        "exact_final_retained": 101,
+        "exact_matches": 113,
+        "groups": {
+          "far": {
+            "exact_final_retained": 101,
+            "exact_matches": 113
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 13,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 0
+      },
+      {
+        "above_threshold_pairs": 511,
+        "after_source_cap_pairs": 511,
+        "after_structural_decode": 185,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 92,
+        "exact_after_source_cap": 92,
+        "exact_eligible": 92,
+        "exact_final_retained": 92,
+        "exact_matches": 92,
+        "groups": {
+          "far": {
+            "exact_final_retained": 92,
+            "exact_matches": 92
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 14,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 283,
+        "after_source_cap_pairs": 283,
+        "after_structural_decode": 131,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 83,
+        "exact_after_source_cap": 83,
+        "exact_eligible": 83,
+        "exact_final_retained": 83,
+        "exact_matches": 83,
+        "groups": {
+          "far": {
+            "exact_final_retained": 83,
+            "exact_matches": 83
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 15,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      }
+    ],
+    "0.9900": [
+      {
+        "above_threshold_pairs": 1010,
+        "after_source_cap_pairs": 1010,
+        "after_structural_decode": 175,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 87,
+        "exact_after_source_cap": 87,
+        "exact_eligible": 87,
+        "exact_final_retained": 87,
+        "exact_matches": 87,
+        "groups": {
+          "far": {
+            "exact_final_retained": 87,
+            "exact_matches": 87
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 0,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 2564,
+        "after_source_cap_pairs": 2564,
+        "after_structural_decode": 230,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 106,
+        "exact_after_source_cap": 106,
+        "exact_eligible": 113,
+        "exact_final_retained": 106,
+        "exact_matches": 113,
+        "groups": {
+          "far": {
+            "exact_final_retained": 106,
+            "exact_matches": 113
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 1,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1595,
+        "after_source_cap_pairs": 1595,
+        "after_structural_decode": 207,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 89,
+        "exact_after_source_cap": 89,
+        "exact_eligible": 96,
+        "exact_final_retained": 89,
+        "exact_matches": 96,
+        "groups": {
+          "far": {
+            "exact_final_retained": 89,
+            "exact_matches": 96
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 2,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 815,
+        "after_source_cap_pairs": 815,
+        "after_structural_decode": 180,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 82,
+        "exact_after_source_cap": 82,
+        "exact_eligible": 88,
+        "exact_final_retained": 82,
+        "exact_matches": 88,
+        "groups": {
+          "far": {
+            "exact_final_retained": 82,
+            "exact_matches": 88
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 3,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1516,
+        "after_source_cap_pairs": 1516,
+        "after_structural_decode": 213,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 102,
+        "exact_after_source_cap": 102,
+        "exact_eligible": 102,
+        "exact_final_retained": 102,
+        "exact_matches": 102,
+        "groups": {
+          "far": {
+            "exact_final_retained": 102,
+            "exact_matches": 102
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 4,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1368,
+        "after_source_cap_pairs": 1368,
+        "after_structural_decode": 198,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 84,
+        "exact_after_source_cap": 84,
+        "exact_eligible": 84,
+        "exact_final_retained": 84,
+        "exact_matches": 84,
+        "groups": {
+          "far": {
+            "exact_final_retained": 84,
+            "exact_matches": 84
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 5,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1516,
+        "after_source_cap_pairs": 1516,
+        "after_structural_decode": 213,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 102,
+        "exact_after_source_cap": 102,
+        "exact_eligible": 102,
+        "exact_final_retained": 102,
+        "exact_matches": 102,
+        "groups": {
+          "far": {
+            "exact_final_retained": 102,
+            "exact_matches": 102
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 6,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 2750,
+        "after_source_cap_pairs": 2750,
+        "after_structural_decode": 234,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 103,
+        "exact_after_source_cap": 103,
+        "exact_eligible": 103,
+        "exact_final_retained": 103,
+        "exact_matches": 103,
+        "groups": {
+          "far": {
+            "exact_final_retained": 103,
+            "exact_matches": 103
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 7,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 2345,
+        "after_source_cap_pairs": 2345,
+        "after_structural_decode": 226,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 95,
+        "exact_after_source_cap": 95,
+        "exact_eligible": 95,
+        "exact_final_retained": 95,
+        "exact_matches": 95,
+        "groups": {
+          "far": {
+            "exact_final_retained": 95,
+            "exact_matches": 95
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 8,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 2054,
+        "after_source_cap_pairs": 2054,
+        "after_structural_decode": 221,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 94,
+        "exact_after_source_cap": 94,
+        "exact_eligible": 94,
+        "exact_final_retained": 94,
+        "exact_matches": 94,
+        "groups": {
+          "far": {
+            "exact_final_retained": 94,
+            "exact_matches": 94
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 9,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 2519,
+        "after_source_cap_pairs": 2519,
+        "after_structural_decode": 234,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 117,
+        "exact_after_source_cap": 117,
+        "exact_eligible": 117,
+        "exact_final_retained": 117,
+        "exact_matches": 117,
+        "groups": {
+          "far": {
+            "exact_final_retained": 117,
+            "exact_matches": 117
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 10,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1711,
+        "after_source_cap_pairs": 1711,
+        "after_structural_decode": 214,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 106,
+        "exact_after_source_cap": 106,
+        "exact_eligible": 113,
+        "exact_final_retained": 106,
+        "exact_matches": 113,
+        "groups": {
+          "far": {
+            "exact_final_retained": 106,
+            "exact_matches": 113
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 11,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 2526,
+        "after_source_cap_pairs": 2526,
+        "after_structural_decode": 208,
+        "eligible_pairs": 52741,
+        "exact_above_threshold": 108,
+        "exact_after_source_cap": 108,
+        "exact_eligible": 118,
+        "exact_final_retained": 108,
+        "exact_matches": 118,
+        "groups": {
+          "far": {
+            "exact_final_retained": 108,
+            "exact_matches": 118
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 12,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1711,
+        "after_source_cap_pairs": 1711,
+        "after_structural_decode": 214,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 106,
+        "exact_after_source_cap": 106,
+        "exact_eligible": 113,
+        "exact_final_retained": 106,
+        "exact_matches": 113,
+        "groups": {
+          "far": {
+            "exact_final_retained": 106,
+            "exact_matches": 113
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 13,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 0,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1823,
+        "after_source_cap_pairs": 1823,
+        "after_structural_decode": 225,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 92,
+        "exact_after_source_cap": 92,
+        "exact_eligible": 92,
+        "exact_final_retained": 92,
+        "exact_matches": 92,
+        "groups": {
+          "far": {
+            "exact_final_retained": 92,
+            "exact_matches": 92
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 14,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 893,
+        "after_source_cap_pairs": 893,
+        "after_structural_decode": 185,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 83,
+        "exact_after_source_cap": 83,
+        "exact_eligible": 83,
+        "exact_final_retained": 83,
+        "exact_matches": 83,
+        "groups": {
+          "far": {
+            "exact_final_retained": 83,
+            "exact_matches": 83
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 15,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      }
+    ]
+  }
+}

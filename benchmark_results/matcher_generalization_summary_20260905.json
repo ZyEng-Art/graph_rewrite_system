@@ -1,0 +1,69 @@
+{
+  "date": "2026-09-05",
+  "scope": "source/binding candidate recall only; action ranking excluded",
+  "isolation": {
+    "barenco38_3": {
+      "checkpoint_data_state_rows": 25840,
+      "holdout_state_rows_including_terminal": 17,
+      "overlapping_graph_hashes": 2,
+      "overlapping_supervised_graph_hashes": 0,
+      "shared_action_keys": 0,
+      "overlaps_are_unlabeled_training_terminals_only": true
+    },
+    "gf370_2": {
+      "checkpoint_data_state_rows": 31020,
+      "holdout_state_rows_including_terminal": 272,
+      "overlapping_graph_hashes": 0,
+      "overlapping_supervised_graph_hashes": 0,
+      "shared_action_keys": 0
+    }
+  },
+  "teacher_action_coverage": {
+    "barenco_causal": {"r0_95": [16, 16], "r0_99": [16, 16]},
+    "barenco_independent": {"r0_95": [13, 16], "r0_99": [16, 16]},
+    "gf_causal_window64": {"r0_95": [266, 271], "r0_99": [270, 271]},
+    "gf_independent": {"r0_95": [210, 271], "r0_99": [264, 271]}
+  },
+  "all_exact_match_recall": {
+    "barenco_causal": {"r0_95": [1589, 1600], "r0_99": [1600, 1600]},
+    "barenco_independent": {"r0_95": [1527, 1600], "r0_99": [1556, 1600]},
+    "gf_causal_window64": {
+      "r0_95": [557116, 559524],
+      "r0_99": [559314, 559524]
+    },
+    "gf_independent": {
+      "r0_95": [553133, 559524],
+      "r0_99": [559313, 559524]
+    }
+  },
+  "gf_causal_r0_99_loss_stages": {
+    "exact_matches": 559524,
+    "below_probability_threshold": 107,
+    "removed_by_source_cap_8192": 103,
+    "removed_by_structural_decode_after_selection": 0
+  },
+  "gf_missing_teacher_probe": {
+    "zero_based_state": 84,
+    "one_based_step": 85,
+    "source_id": 3752,
+    "binding": [545, 515],
+    "group": "near",
+    "raw_logit": -16.90713882446289,
+    "r0_99_raw_threshold": -11.009002685546875,
+    "eligible_rank": 109624,
+    "eligible_pairs": 581340,
+    "near_rank": 13417,
+    "near_eligible_pairs": 57582
+  },
+  "near_reserve_probe": {
+    "standard_source_cap": 8192,
+    "near_predecode_reserve": 16384,
+    "standard_decoded_candidates": 2880,
+    "near_reserve_decoded_candidates": 287,
+    "deduplicated_union_candidates": 2886,
+    "additional_final_candidates": 6,
+    "missing_teacher_binding_retained": true,
+    "known_gf_teacher_chain_coverage_after_union": [271, 271],
+    "post_hoc_rescue_not_unbiased_generalization": true
+  }
+}

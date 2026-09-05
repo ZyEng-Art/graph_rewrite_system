@@ -1,0 +1,11 @@
+{
+  "holdout_data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_gf370_2_normalized_r1_20260905.pt",
+  "holdout_state_rows": 272,
+  "overlapping_graph_hashes": 0,
+  "overlapping_supervised_graph_hashes": 0,
+  "overlaps": [],
+  "shared_action_keys": 0,
+  "train_data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+  "train_paths_with_overlap": [],
+  "train_state_rows": 31020
+}
