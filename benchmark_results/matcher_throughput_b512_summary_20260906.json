@@ -1,0 +1,70 @@
+{
+  "date": "2026-09-06",
+  "historical_reference": {
+    "circuit": "hwb6",
+    "beam_size": 1000,
+    "microbatch": 512,
+    "model_states_per_second": 423.0,
+    "cpu_quartz_states_per_second": 9.72,
+    "matcher_speedup": 43.5,
+    "source": "PAGED_RESULTS.md"
+  },
+  "config": {
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311.pt",
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311_calibration_r999.json",
+    "target_recall": 0.999,
+    "max_source_matches": 8192,
+    "batch_size": 512,
+    "device": "NVIDIA H100 80GB HBM3",
+    "cpu_logical_count": 192,
+    "quartz_xfers": 4700
+  },
+  "results": {
+    "gf2^6_mult_370_2": {
+      "unique_input_states": 271,
+      "benchmark_states": 512,
+      "states_cyclically_repeated": true,
+      "cpu_original_xfer_anchor_states_per_second": 6.111259403157838,
+      "cpu_full_binding_states_per_second": 5.723728288032209,
+      "model_gpu_resident_states_per_second": 1990.5586651576057,
+      "model_gpu_resident_speedup": 325.71987766204705,
+      "model_host_materialized_states_per_second": 158.48628295496897,
+      "model_host_materialized_speedup": 25.933489727677934,
+      "model_gpu_resident_with_tensor_preparation_states_per_second": 119.37536129414481,
+      "model_gpu_resident_with_tensor_preparation_speedup": 19.53367602632947,
+      "model_host_materialized_with_tensor_preparation_states_per_second": 70.50067780151282,
+      "model_host_materialized_with_tensor_preparation_speedup": 11.536194612371288,
+      "model_source_binding_candidates_per_state": 2837.275390625,
+      "model_expanded_xfer_actions_per_state": 4843.353515625,
+      "cpu_xfer_anchor_actions_per_state": 3285.578125,
+      "remote_result": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/experiment/refresh_consistency_model_20260906/benchmark_results/matcher_throughput_gf370_2_b512_r999_s8192_h100_cpu_20260906.json",
+      "remote_result_sha256": "5c0a38ed9a6c27fcd88036eac21f6c70067581f37f2bd3e419b72dd29652e902"
+    },
+    "barenco_38_3": {
+      "unique_input_states": 16,
+      "benchmark_states": 512,
+      "states_cyclically_repeated": true,
+      "cpu_original_xfer_anchor_states_per_second": 67.53981591018113,
+      "cpu_full_binding_states_per_second": 65.97736017980998,
+      "model_gpu_resident_states_per_second": 10764.943617378101,
+      "model_gpu_resident_speedup": 159.38662953559168,
+      "model_host_materialized_states_per_second": 1256.4592359513563,
+      "model_host_materialized_speedup": 18.60323749804527,
+      "model_gpu_resident_with_tensor_preparation_states_per_second": 1183.9948889607938,
+      "model_gpu_resident_with_tensor_preparation_speedup": 17.530324490895083,
+      "model_host_materialized_with_tensor_preparation_states_per_second": 646.1653654780233,
+      "model_host_materialized_with_tensor_preparation_speedup": 9.567176883297051,
+      "model_source_binding_candidates_per_state": 196.375,
+      "model_expanded_xfer_actions_per_state": 307.3125,
+      "cpu_xfer_anchor_actions_per_state": 125.0625,
+      "remote_result": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/experiment/refresh_consistency_model_20260906/benchmark_results/matcher_throughput_barenco38_3_b512_r999_s8192_h100_cpu_20260906.json",
+      "remote_result_sha256": "f1732780b4368d388c9eee781521bec5f9a295f259ce0c0266b848835aff09bd"
+    }
+  },
+  "timing_boundaries": {
+    "cpu": "preloaded graph/context; all nodes plus original Quartz matching API",
+    "gpu_resident": "H2D, model encode and logits, r99.9 threshold, 8192 cap, structural decode; GPU tensor output",
+    "host_materialized": "gpu_resident logical stages plus D2H and Python row packing",
+    "tensor_preparation": "PrefixDataset history replay and CPU collation, charged once per 512-state pass"
+  }
+}
