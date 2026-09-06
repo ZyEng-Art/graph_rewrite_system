@@ -6,6 +6,7 @@ import ctypes
 import ctypes.util
 from dataclasses import dataclass
 import gc
+import heapq
 import importlib.util
 import json
 import math
@@ -61,6 +62,15 @@ class Proposal:
     probability: float
     next_gate_count: int
     value_score: float = 0.0
+
+
+@dataclass(frozen=True)
+class AppliedRewrite:
+    """A Quartz successor before expensive BeamState metadata is materialized."""
+
+    graph: Any
+    source_guids: tuple[int, ...]
+    destination_guids: tuple[int, ...]
 
 
 def update_slots(graph, guid_to_slot: dict[int, int], next_slot: int, preferred=()):
@@ -244,29 +254,157 @@ def model_matches(
     return output, time.perf_counter() - started
 
 
-def make_child(
+def rank_proposals(
+    beam: list[BeamState],
+    action_rows: list[list[tuple[int, int, tuple[int, ...] | None, float]]],
+    gate_deltas: list[int],
+    *,
+    beam_size: int,
+    max_actions_per_parent: int,
+    proposal_factor: int,
+    max_gate_increase: int,
+) -> tuple[list[Proposal], int]:
+    """Select stable bounded top-k actions before creating Proposal objects.
+
+    Large circuits can expose millions of legal source/xfer combinations per
+    layer, while the search consumes only a small per-parent and global prefix.
+    Selecting raw tuples first preserves the old stable sort order but avoids
+    allocating and sorting a Python dataclass for every discarded action.
+    """
+    effective_parent_cap = max(
+        max_actions_per_parent,
+        math.ceil(beam_size / max(1, len(beam))) * 2,
+    )
+    proposals = []
+    total_action_candidates = 0
+    for parent_index, (state, rows) in enumerate(zip(beam, action_rows)):
+        eligible_rows = [
+            row for row in rows if gate_deltas[row[0]] <= max_gate_increase
+        ]
+        total_action_candidates += len(eligible_rows)
+        selected_rows = heapq.nsmallest(
+            effective_parent_cap,
+            eligible_rows,
+            key=lambda row: (
+                state.gate_count + gate_deltas[row[0]],
+                -row[3],
+                row[0],
+            ),
+        )
+        proposals.extend(
+            Proposal(
+                parent=parent_index,
+                xfer_id=xfer_id,
+                anchor_slot=anchor,
+                binding=binding,
+                probability=probability,
+                next_gate_count=state.gate_count + gate_deltas[xfer_id],
+            )
+            for xfer_id, anchor, binding, probability in selected_rows
+        )
+
+    proposals = heapq.nsmallest(
+        beam_size * proposal_factor,
+        proposals,
+        key=lambda row: (
+            row.next_gate_count,
+            -row.probability,
+            beam[row.parent].gate_count,
+        ),
+    )
+    return proposals, total_action_candidates
+
+
+def apply_rewrite(
     parent: BeamState,
     proposal: Proposal,
-    context,
     xfers,
     *,
     eliminate_rotation: bool = False,
-) -> BeamState | None:
+    binding_backend: str = "auto",
+) -> AppliedRewrite | None:
+    """Apply one proposal without constructing metadata for duplicate children.
+
+    A patched Quartz can validate the model's complete ordered source binding
+    directly.  This avoids re-running anchor-based subgraph matching merely to
+    rediscover a binding the model already supplied.  Original Quartz actions
+    contain only an anchor and continue to use the original exact API.
+    """
     slot_to_guid = {
-        parent.guid_to_slot[int(node.guid)]: int(node.guid)
-        for node in parent.graph.nodes
+        int(slot): int(guid) for slot, _, guid in parent.snapshot["nodes"]
     }
-    if proposal.anchor_slot not in slot_to_guid:
-        return None
-    guid_to_id = {int(node.guid): index for index, node in enumerate(parent.graph.nodes)}
-    anchor_guid = slot_to_guid[proposal.anchor_slot]
-    node = parent.graph.get_node_from_id(id=guid_to_id[anchor_guid])
-    result = parent.graph.apply_xfer_with_binding_trace(
-        xfer=xfers[proposal.xfer_id],
-        node=node,
-        eliminate_rotation=eliminate_rotation,
-        predecessor_layers=1,
+    guid_direct_method = getattr(
+        parent.graph, "apply_xfer_with_guid_binding", None
     )
+    node_direct_method = getattr(
+        parent.graph, "apply_xfer_with_node_id_binding", None
+    )
+    use_direct = proposal.binding is not None and (
+        binding_backend in ("direct", "guid_direct", "node_direct")
+        or (
+            binding_backend == "auto"
+            and (guid_direct_method is not None or node_direct_method is not None)
+        )
+    )
+    if use_direct:
+        if guid_direct_method is None and node_direct_method is None:
+            raise RuntimeError(
+                "direct binding apply was requested, but the loaded Quartz "
+                "extension does not provide a direct binding API"
+            )
+        try:
+            source_guids = [slot_to_guid[slot] for slot in proposal.binding]
+        except KeyError:
+            return None
+        prefer_guid = binding_backend != "node_direct"
+        if guid_direct_method is not None and prefer_guid:
+            graph, destination_guids = guid_direct_method(
+                xfer=xfers[proposal.xfer_id],
+                source_node_guids=source_guids,
+                eliminate_rotation=eliminate_rotation,
+            )
+            if graph is None:
+                return None
+            return AppliedRewrite(
+                graph=graph,
+                source_guids=tuple(source_guids),
+                destination_guids=tuple(map(int, destination_guids)),
+            )
+
+        if node_direct_method is None:
+            raise RuntimeError(
+                "node-ID direct binding apply was selected, but the loaded "
+                "Quartz extension does not provide that API"
+            )
+        nodes = list(parent.graph.nodes)
+        guid_to_node_id = {
+            int(node.guid): node_id for node_id, node in enumerate(nodes)
+        }
+        try:
+            source_node_ids = [guid_to_node_id[guid] for guid in source_guids]
+        except KeyError:
+            return None
+        result = node_direct_method(
+            xfer=xfers[proposal.xfer_id],
+            source_node_ids=source_node_ids,
+            eliminate_rotation=eliminate_rotation,
+        )
+    else:
+        if proposal.anchor_slot not in slot_to_guid:
+            return None
+        nodes = list(parent.graph.nodes)
+        guid_to_node_id = {
+            int(node.guid): node_id for node_id, node in enumerate(nodes)
+        }
+        node = parent.graph.get_node_from_id(
+            id=guid_to_node_id[slot_to_guid[proposal.anchor_slot]]
+        )
+        result = parent.graph.apply_xfer_with_binding_trace(
+            xfer=xfers[proposal.xfer_id],
+            node=node,
+            eliminate_rotation=eliminate_rotation,
+            predecessor_layers=1,
+        )
     if result is None or result[0] is None:
         return None
     graph, _, source_guids, destination_guids = result
@@ -276,9 +414,29 @@ def make_child(
     if proposal.binding is not None and source_slots != proposal.binding:
         return None
 
+    return AppliedRewrite(
+        graph=graph,
+        source_guids=tuple(map(int, source_guids)),
+        destination_guids=tuple(map(int, destination_guids)),
+    )
+
+
+def materialize_child(
+    parent: BeamState,
+    proposal: Proposal,
+    applied: AppliedRewrite,
+    *,
+    eliminate_rotation: bool = False,
+) -> BeamState:
+    """Construct model/search metadata only after exact dedup accepts a graph."""
+    graph = applied.graph
+    source_slots = tuple(
+        parent.guid_to_slot[guid] for guid in applied.source_guids
+    )
+
     live_guids = {int(node.guid) for node in graph.nodes}
     surviving_destination_guids = tuple(
-        int(guid) for guid in destination_guids if int(guid) in live_guids
+        guid for guid in applied.destination_guids if guid in live_guids
     )
     guid_to_slot = dict(parent.guid_to_slot)
     next_slot = update_slots(
@@ -334,6 +492,34 @@ def make_child(
     )
 
 
+def make_child(
+    parent: BeamState,
+    proposal: Proposal,
+    context,
+    xfers,
+    *,
+    eliminate_rotation: bool = False,
+    binding_backend: str = "auto",
+) -> BeamState | None:
+    """Compatibility helper for callers that need a fully materialized child."""
+    del context  # Kept in the public signature for existing replay utilities.
+    applied = apply_rewrite(
+        parent,
+        proposal,
+        xfers,
+        eliminate_rotation=eliminate_rotation,
+        binding_backend=binding_backend,
+    )
+    if applied is None:
+        return None
+    return materialize_child(
+        parent,
+        proposal,
+        applied,
+        eliminate_rotation=eliminate_rotation,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=("model", "quartz"), required=True)
@@ -372,6 +558,15 @@ def main() -> None:
         "--eliminate-rotation",
         action="store_true",
         help="fold parameter expressions and remove zero rotations after each Quartz rewrite",
+    )
+    parser.add_argument(
+        "--model-apply-binding",
+        choices=("auto", "anchor", "direct"),
+        default="auto",
+        help=(
+            "apply model proposals through Quartz's direct ordered-binding API "
+            "when available, or force the original anchor rematch for A/B"
+        ),
     )
     args = parser.parse_args()
     if args.mode == "model" and (args.checkpoint is None or args.calibration is None):
@@ -417,6 +612,37 @@ def main() -> None:
         threshold_config = load_threshold_config(args.calibration, args.target_recall)
 
     graph = quartz.PyGraph.from_qasm(context=context, filename=str(args.qasm))
+    guid_direct_binding_available = hasattr(
+        graph, "apply_xfer_with_guid_binding"
+    )
+    node_direct_binding_available = hasattr(
+        graph, "apply_xfer_with_node_id_binding"
+    )
+    direct_binding_available = (
+        guid_direct_binding_available or node_direct_binding_available
+    )
+    if (
+        args.mode == "model"
+        and args.model_apply_binding == "direct"
+        and not direct_binding_available
+    ):
+        raise RuntimeError(
+            "--model-apply-binding direct requires the patched Quartz extension"
+        )
+    if (
+        args.mode == "model"
+        and args.model_apply_binding != "anchor"
+        and guid_direct_binding_available
+    ):
+        model_apply_backend = "guid_direct"
+    elif (
+        args.mode == "model"
+        and args.model_apply_binding != "anchor"
+        and node_direct_binding_available
+    ):
+        model_apply_backend = "node_direct"
+    else:
+        model_apply_backend = "anchor"
     guid_to_slot: dict[int, int] = {}
     next_slot = update_slots(graph, guid_to_slot, 0)
     initial_snapshot = snapshot(graph, guid_to_slot)
@@ -521,41 +747,15 @@ def main() -> None:
                 exact_seconds += time.perf_counter() - started
 
         proposal_started = time.perf_counter()
-        proposals = []
-        effective_parent_cap = max(
-            args.max_actions_per_parent,
-            math.ceil(args.beam_size / max(1, len(beam))) * 2,
+        proposals, total_action_candidates = rank_proposals(
+            beam,
+            action_rows,
+            gate_deltas,
+            beam_size=args.beam_size,
+            max_actions_per_parent=args.max_actions_per_parent,
+            proposal_factor=args.proposal_factor,
+            max_gate_increase=args.max_gate_increase,
         )
-        total_action_candidates = 0
-        for parent_index, (state, rows) in enumerate(zip(beam, action_rows)):
-            parent_proposals = []
-            for xfer_id, anchor, binding, probability in rows:
-                delta = gate_deltas[xfer_id]
-                if delta > args.max_gate_increase:
-                    continue
-                parent_proposals.append(
-                    Proposal(
-                        parent=parent_index,
-                        xfer_id=xfer_id,
-                        anchor_slot=anchor,
-                        binding=binding,
-                        probability=probability,
-                        next_gate_count=state.gate_count + delta,
-                    )
-                )
-            total_action_candidates += len(parent_proposals)
-            parent_proposals.sort(
-                key=lambda row: (row.next_gate_count, -row.probability, row.xfer_id)
-            )
-            proposals.extend(parent_proposals[:effective_parent_cap])
-        proposals.sort(
-            key=lambda row: (
-                row.next_gate_count,
-                -row.probability,
-                beam[row.parent].gate_count,
-            )
-        )
-        proposals = proposals[: args.beam_size * args.proposal_factor]
         proposal_seconds = time.perf_counter() - proposal_started
 
         apply_started = time.perf_counter()
@@ -565,19 +765,25 @@ def main() -> None:
             if len(children) >= args.beam_size:
                 break
             attempted += 1
-            child = make_child(
+            applied = apply_rewrite(
                 beam[proposal.parent],
                 proposal,
-                context,
                 xfers,
                 eliminate_rotation=args.eliminate_rotation,
+                binding_backend=model_apply_backend,
             )
-            if child is None:
+            if applied is None:
                 invalid += 1
                 continue
-            if not seen.register(child.graph):
+            if not seen.register(applied.graph):
                 duplicates += 1
                 continue
+            child = materialize_child(
+                beam[proposal.parent],
+                proposal,
+                applied,
+                eliminate_rotation=args.eliminate_rotation,
+            )
             children.append(child)
         apply_seconds = time.perf_counter() - apply_started
         if not children:
@@ -614,6 +820,7 @@ def main() -> None:
             "accepted_actions": len(beam),
             "invalid_model_actions": invalid,
             "duplicate_successors": duplicates,
+            "successor_metadata_skipped": duplicates,
             "model_match_seconds": model_seconds,
             "quartz_exact_match_seconds": exact_seconds,
             "exact_refresh_actions_added": exact_refresh_actions_added,
@@ -652,6 +859,10 @@ def main() -> None:
     )
     result = {
         "mode": args.mode,
+        "model_apply_backend": model_apply_backend,
+        "direct_binding_available": direct_binding_available,
+        "dedup_before_child_materialization": True,
+        "proposal_selection_backend": "stable_bounded_topk",
         "input_kind": "qasm_initial",
         "rule_metadata": str(args.data),
         "rule_metadata_role": "rewrite vocabulary only; not a search state",

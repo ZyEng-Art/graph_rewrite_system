@@ -24,6 +24,10 @@ are recorded in `BASELINE_SHA256.txt`.
   CPU Quartz on GF `370_2` and **129.62x** on Barenco `38_3`;
 - current long-path optimization: Barenco reproduces 39 -> 38, while GF
   completes 271 actions but remains 371 -> 371.
+- raw-QASM exact-apply optimization: Barenco reaches 58 -> 38 in **78.87 s**
+  versus **741.38 s** for same-host 32-thread CPU Quartz (**9.40x**), with the
+  same final QASM; the model implementation is **2.04x** faster than its prior
+  161.23 s path to 38.
 
 See `PAGED_RESULTS.md` for the final stage profiles and cross-circuit results,
 `RESULTS.md` for the earlier model/data experiments, and
@@ -139,6 +143,21 @@ physical wiring, and dependent order. A native Quartz patch is provided at
 correct but slower QASM fallback. The Barenco/GF duplicate diagnosis, H100 A/B,
 reference-trajectory safety audit, and rebuild instructions are in
 `benchmark_results/exact_identity_dedup_findings_20260906.md`.
+
+The exact-apply beam search also uses three circuit-independent hot-path
+optimizations. It selects the stable bounded top-k before allocating Python
+`Proposal` objects, applies a model-provided complete binding directly through
+Quartz GUIDs when the patched API is available, and checks exact identity
+before constructing snapshots, slot maps, distance maps, and history for a
+child. The last change is especially important when independent rewrite orders
+converge to the same circuit: at the Barenco 38-gate stopping point, 85.4% of
+validly applied successors were exact duplicates, so all of their child
+metadata is now skipped. These changes do not suppress or approximate any
+rewrite and contain no circuit-specific rules. `--model-apply-binding anchor`
+retains the original rematching path for controlled A/B tests, while `auto`
+falls back to it when the direct-binding Quartz patch is unavailable. Results,
+component timings, cross-circuit checks, and patch requirements are in
+`benchmark_results/exact_apply_hotpath_optimization_findings_20260906.md`.
 
 For history-conditioned models, `--refresh-dedup-scope level` removes exact
 duplicates inside each refreshed beam without permanently rejecting a circuit

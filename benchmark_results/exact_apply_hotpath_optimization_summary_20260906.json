@@ -1,0 +1,168 @@
+{
+  "date": "2026-09-06",
+  "scope": "circuit-independent exact-apply, proposal-selection, and duplicate-successor hot-path optimization",
+  "implementation": {
+    "stable_bounded_topk_before_proposal_allocation": true,
+    "direct_complete_binding_preference": "persistent Quartz GUIDs, then node IDs, then anchor-rematch fallback",
+    "exact_dedup_before_child_metadata": true,
+    "case_specific_rules": false,
+    "required_quartz_patches_for_fastest_path": [
+      "quartz_patches/exact_graph_key.patch",
+      "quartz_patches/direct_node_binding_apply.patch",
+      "quartz_patches/lazy_refresh_graph_binding.patch"
+    ]
+  },
+  "protocol": {
+    "host": "h100-gpu1",
+    "model_gpu": 4,
+    "beam_size": 1000,
+    "model_microbatch": 512,
+    "max_actions_per_parent": 128,
+    "proposal_factor": 16,
+    "max_gate_increase": 3,
+    "model_target_recall": 0.999,
+    "eliminate_rotation_after_every_apply": true,
+    "dedup_identity": "native collision-safe exact_key",
+    "cpu_quartz_threads": 32,
+    "search_root": "untouched input QASM"
+  },
+  "depth_8_staged_ab": {
+    "barenco_tof_3": {
+      "initial_gate_count": 58,
+      "best_gate_count_all_stages": 56,
+      "unique_graphs_seen_all_stages": 7116,
+      "best_qasm_sha256_all_stages": "658c2dcc80857b5d4edcd965c5bfffc63cc5cc37dd7dcbf245bf5479dba6eebb",
+      "old_workflow_native_exact": {
+        "total_seconds": 24.17640563705936,
+        "match_seconds": 4.7768472547177225,
+        "proposal_seconds": 2.343484738841653,
+        "apply_dedup_materialization_seconds": 16.129857083084062
+      },
+      "dedup_before_metadata_anchor_apply": {
+        "total_seconds": 18.90859564812854,
+        "match_seconds": 4.774650179082528,
+        "proposal_seconds": 2.3741418151184916,
+        "apply_dedup_materialization_seconds": 10.808619429823011
+      },
+      "dedup_before_metadata_guid_apply": {
+        "total_seconds": 15.254931942094117,
+        "match_seconds": 4.9267942507285625,
+        "proposal_seconds": 2.437302510254085,
+        "apply_dedup_materialization_seconds": 6.9807363236323
+      },
+      "final_with_bounded_topk": {
+        "total_seconds": 14.18005692306906,
+        "match_seconds": 4.725163416936994,
+        "proposal_seconds": 1.7141751109156758,
+        "apply_dedup_materialization_seconds": 6.864429459674284,
+        "attempted_actions": 44058,
+        "invalid_actions": 993,
+        "duplicate_successors": 35950,
+        "duplicate_fraction_of_valid_successors": 0.83478
+      },
+      "old_to_final_total_speedup": 1.7049582923554824,
+      "old_to_final_proposal_speedup": 1.3671209690997166,
+      "old_to_final_apply_speedup": 2.3497738854831822
+    },
+    "gf2_6_mult": {
+      "initial_gate_count": 495,
+      "best_gate_count_all_stages": 485,
+      "unique_graphs_seen_all_stages": 7864,
+      "best_qasm_sha256_all_stages": "99771cdbc7d741becb3e089099d7d0f9815324f5944de9f313acebaf74adf3ea",
+      "old_workflow_native_exact": {
+        "total_seconds": 98.86295144096948,
+        "match_seconds": 29.423151531489566,
+        "proposal_seconds": 17.709172482369468,
+        "apply_dedup_materialization_seconds": 44.33434477983974
+      },
+      "dedup_before_metadata_anchor_apply": {
+        "total_seconds": 91.78617843077518,
+        "match_seconds": 29.51562278601341,
+        "proposal_seconds": 17.5037999257911,
+        "apply_dedup_materialization_seconds": 37.451583239017054
+      },
+      "dedup_before_metadata_guid_apply": {
+        "total_seconds": 81.63188882311806,
+        "match_seconds": 29.590143346227705,
+        "proposal_seconds": 17.47667099046521,
+        "apply_dedup_materialization_seconds": 27.020402918104082
+      },
+      "final_with_bounded_topk": {
+        "total_seconds": 67.57849931390956,
+        "match_seconds": 29.656496966956183,
+        "proposal_seconds": 3.6098188050091267,
+        "apply_dedup_materialization_seconds": 27.24943870259449,
+        "attempted_actions": 14306,
+        "invalid_actions": 2,
+        "duplicate_successors": 6441,
+        "duplicate_fraction_of_valid_successors": 0.45029
+      },
+      "old_to_final_total_speedup": 1.462934993299277,
+      "old_to_final_proposal_speedup": 4.90583418142637,
+      "old_to_final_apply_speedup": 1.6269819449755694
+    }
+  },
+  "barenco_time_to_38": {
+    "initial_gate_count": 58,
+    "best_gate_count": 38,
+    "final_qasm_sha256_both_modes": "89914672f7b83d10378b5283c6e9cf4bd6f9084505a4d37573118d5b63edb627",
+    "old_model_implementation": {
+      "best_first_seen_step": 36,
+      "best_first_seen_seconds": 161.2333949021995
+    },
+    "optimized_model": {
+      "best_first_seen_step": 36,
+      "best_first_seen_seconds": 78.87113165901974,
+      "total_stop_seconds": 78.8854019138962,
+      "unique_graphs_seen": 34544,
+      "match_seconds": 27.23127776198089,
+      "proposal_seconds": 9.554619559785351,
+      "apply_dedup_materialization_seconds": 36.83480673749,
+      "attempted_actions": 294889,
+      "invalid_actions": 58203,
+      "duplicate_successors": 202143,
+      "duplicate_fraction_of_valid_successors": 0.85406
+    },
+    "same_host_cpu_quartz": {
+      "best_first_seen_step": 34,
+      "best_first_seen_seconds": 741.3822485669516,
+      "total_stop_seconds": 741.4038183540106,
+      "unique_graphs_seen": 33116,
+      "exact_match_seconds": 675.2713595009409,
+      "proposal_seconds": 6.806778823491186,
+      "apply_dedup_materialization_seconds": 57.18769252952188,
+      "attempted_actions": 262435,
+      "duplicate_successors": 229320,
+      "duplicate_fraction_of_valid_successors": 0.87382
+    },
+    "old_to_optimized_model_speedup": 2.044263744043303,
+    "same_host_cpu_to_optimized_model_speedup": 9.399918994089478,
+    "known_35_gate_target_reached": false
+  },
+  "cpu_thread_sweep_depth_3_seconds": {
+    "1": 106.65460061398335,
+    "4": 49.261984350159764,
+    "8": 35.685407500946894,
+    "16": 30.11475624819286,
+    "32": 30.014612417900935
+  },
+  "verification": {
+    "unit_tests": {
+      "passed": 55,
+      "failed": 0
+    },
+    "direct_binding_exact_successor_audit": {
+      "barenco_tof_3": {
+        "actions": 248,
+        "xfers": 49,
+        "all_equal": true
+      },
+      "gf2_6_mult": {
+        "actions": 512,
+        "xfers": 97,
+        "all_equal": true
+      },
+      "comparison": "anchor-rematch versus GUID-direct after rotation elimination; exact_key and gate_count must both match"
+    }
+  }
+}
