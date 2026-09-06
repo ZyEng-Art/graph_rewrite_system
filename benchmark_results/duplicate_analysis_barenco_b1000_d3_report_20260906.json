@@ -1,0 +1,3756 @@
+{
+  "action_sequence_uniqueness": {
+    "concrete_action_multisets": 893,
+    "concrete_sequences": 1000,
+    "same_final_same_concrete_multiset_excess": 106,
+    "same_final_same_xfer_multiset_excess": 205,
+    "top_adjacent_xfer_pairs": [
+      [
+        [
+          39,
+          38
+        ],
+        56
+      ],
+      [
+        [
+          38,
+          39
+        ],
+        45
+      ],
+      [
+        [
+          39,
+          39
+        ],
+        29
+      ],
+      [
+        [
+          3423,
+          39
+        ],
+        24
+      ],
+      [
+        [
+          38,
+          3822
+        ],
+        21
+      ],
+      [
+        [
+          38,
+          3256
+        ],
+        21
+      ],
+      [
+        [
+          38,
+          3306
+        ],
+        20
+      ],
+      [
+        [
+          3423,
+          4384
+        ],
+        20
+      ],
+      [
+        [
+          1510,
+          39
+        ],
+        20
+      ],
+      [
+        [
+          1542,
+          39
+        ],
+        19
+      ],
+      [
+        [
+          812,
+          951
+        ],
+        18
+      ],
+      [
+        [
+          39,
+          812
+        ],
+        18
+      ],
+      [
+        [
+          818,
+          39
+        ],
+        18
+      ],
+      [
+        [
+          3422,
+          39
+        ],
+        17
+      ],
+      [
+        [
+          812,
+          3432
+        ],
+        15
+      ],
+      [
+        [
+          3423,
+          1534
+        ],
+        15
+      ],
+      [
+        [
+          3423,
+          38
+        ],
+        14
+      ],
+      [
+        [
+          3422,
+          3432
+        ],
+        13
+      ],
+      [
+        [
+          39,
+          3317
+        ],
+        13
+      ],
+      [
+        [
+          38,
+          1499
+        ],
+        13
+      ]
+    ],
+    "top_xfer_ids": [
+      [
+        39,
+        430
+      ],
+      [
+        38,
+        416
+      ],
+      [
+        3423,
+        221
+      ],
+      [
+        812,
+        132
+      ],
+      [
+        1542,
+        98
+      ],
+      [
+        820,
+        96
+      ],
+      [
+        3422,
+        94
+      ],
+      [
+        1578,
+        94
+      ],
+      [
+        120,
+        84
+      ],
+      [
+        1510,
+        83
+      ],
+      [
+        4358,
+        80
+      ],
+      [
+        818,
+        69
+      ],
+      [
+        4382,
+        64
+      ],
+      [
+        3317,
+        42
+      ],
+      [
+        1534,
+        39
+      ],
+      [
+        45,
+        35
+      ],
+      [
+        3432,
+        33
+      ],
+      [
+        4406,
+        31
+      ],
+      [
+        3434,
+        28
+      ],
+      [
+        3433,
+        27
+      ]
+    ],
+    "top_xfer_ids_in_self_redundant_histories": [
+      [
+        38,
+        73
+      ],
+      [
+        39,
+        66
+      ],
+      [
+        3423,
+        34
+      ],
+      [
+        812,
+        28
+      ],
+      [
+        3422,
+        24
+      ],
+      [
+        3432,
+        24
+      ],
+      [
+        1578,
+        22
+      ],
+      [
+        1542,
+        17
+      ],
+      [
+        820,
+        16
+      ],
+      [
+        4358,
+        16
+      ],
+      [
+        1510,
+        15
+      ],
+      [
+        120,
+        11
+      ],
+      [
+        1579,
+        10
+      ],
+      [
+        818,
+        10
+      ],
+      [
+        4382,
+        9
+      ],
+      [
+        4384,
+        4
+      ],
+      [
+        3433,
+        4
+      ],
+      [
+        951,
+        3
+      ],
+      [
+        3572,
+        3
+      ],
+      [
+        1499,
+        3
+      ]
+    ],
+    "xfer_id_multisets": 679,
+    "xfer_id_sequences": 859
+  },
+  "canonical_duplicate_pair_analysis": {
+    "duplicate_pairs": 3626,
+    "order_variant_example_pairs": [
+      [
+        1,
+        3
+      ],
+      [
+        19,
+        24
+      ],
+      [
+        26,
+        84
+      ],
+      [
+        6,
+        17
+      ],
+      [
+        15,
+        83
+      ]
+    ],
+    "pairs_different_xfer_multiset": 3282,
+    "pairs_same_concrete_action_multiset": 150,
+    "pairs_same_xfer_multiset": 344,
+    "pairs_same_xfer_sequence": 14,
+    "states_with_observed_order_variant": 192
+  },
+  "cycles": {
+    "adjacent_inverse_pattern_pair": 131,
+    "canonical_uniqueness_after_removing_self_redundant_paths": {
+      "duplicate_excess": 516,
+      "duplicate_groups": 171,
+      "largest_group": 11,
+      "largest_group_sizes": [
+        11,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        9,
+        9,
+        9,
+        8,
+        8,
+        8,
+        8,
+        7,
+        7,
+        7,
+        7
+      ],
+      "unique": 319
+    },
+    "direct_inverse_on_previous_destination_occurrences": 81,
+    "direct_inverse_on_previous_destination_trajectories": 78,
+    "exact_two_step_cycle_occurrences": 156,
+    "exact_two_step_cycle_trajectories": 151,
+    "example_indices": [
+      0,
+      2,
+      4,
+      5,
+      7
+    ],
+    "final_equals_an_earlier_prefix": 114,
+    "final_equals_root": 13,
+    "inverse_example_indices": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "inverse_xfer_pairs_in_ecc": 4786,
+    "self_redundant_examples": [
+      {
+        "history_length": 3,
+        "index": 0,
+        "kept_action_positions": [
+          0
+        ],
+        "shortest_equivalent_subsequence_length": 1
+      },
+      {
+        "history_length": 3,
+        "index": 1,
+        "kept_action_positions": [
+          2
+        ],
+        "shortest_equivalent_subsequence_length": 1
+      },
+      {
+        "history_length": 3,
+        "index": 2,
+        "kept_action_positions": [
+          0
+        ],
+        "shortest_equivalent_subsequence_length": 1
+      },
+      {
+        "history_length": 3,
+        "index": 3,
+        "kept_action_positions": [
+          1
+        ],
+        "shortest_equivalent_subsequence_length": 1
+      },
+      {
+        "history_length": 3,
+        "index": 4,
+        "kept_action_positions": [
+          0
+        ],
+        "shortest_equivalent_subsequence_length": 1
+      },
+      {
+        "history_length": 3,
+        "index": 5,
+        "kept_action_positions": [
+          0
+        ],
+        "shortest_equivalent_subsequence_length": 1
+      },
+      {
+        "history_length": 3,
+        "index": 7,
+        "kept_action_positions": [
+          0
+        ],
+        "shortest_equivalent_subsequence_length": 1
+      },
+      {
+        "history_length": 3,
+        "index": 10,
+        "kept_action_positions": [
+          2
+        ],
+        "shortest_equivalent_subsequence_length": 1
+      },
+      {
+        "history_length": 3,
+        "index": 16,
+        "kept_action_positions": [
+          2
+        ],
+        "shortest_equivalent_subsequence_length": 1
+      },
+      {
+        "history_length": 3,
+        "index": 19,
+        "kept_action_positions": [
+          1
+        ],
+        "shortest_equivalent_subsequence_length": 1
+      }
+    ],
+    "self_redundant_trajectory_count": 165,
+    "shortest_equivalent_subsequence_length": {
+      "0": 13,
+      "1": 152,
+      "3": 835
+    }
+  },
+  "final_state_uniqueness": {
+    "canonical_qasm_dag": {
+      "duplicate_excess": 680,
+      "duplicate_groups": 173,
+      "largest_group": 24,
+      "largest_group_sizes": [
+        24,
+        24,
+        22,
+        22,
+        22,
+        21,
+        21,
+        21,
+        20,
+        20,
+        14,
+        13,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        9
+      ],
+      "unique": 320
+    },
+    "canonical_qasm_dag_without_parameters": {
+      "duplicate_excess": 680,
+      "duplicate_groups": 173,
+      "largest_group": 24,
+      "largest_group_sizes": [
+        24,
+        24,
+        22,
+        22,
+        22,
+        21,
+        21,
+        21,
+        20,
+        20,
+        14,
+        13,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        9
+      ],
+      "unique": 320
+    },
+    "quartz_graph_hash": {
+      "duplicate_excess": 688,
+      "duplicate_groups": 175,
+      "largest_group": 24,
+      "largest_group_sizes": [
+        24,
+        24,
+        22,
+        22,
+        22,
+        21,
+        21,
+        21,
+        20,
+        20,
+        14,
+        13,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10
+      ],
+      "unique": 312
+    },
+    "raw_qasm": {
+      "duplicate_excess": 620,
+      "duplicate_groups": 184,
+      "largest_group": 23,
+      "largest_group_sizes": [
+        23,
+        22,
+        21,
+        21,
+        20,
+        20,
+        19,
+        19,
+        18,
+        16,
+        13,
+        12,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        8,
+        7
+      ],
+      "unique": 380
+    }
+  },
+  "independent_action_ordering": {
+    "noncanonical_commutable_occurrences_by_concrete_key": 313,
+    "observed_same_final_same_concrete_multiset_excess": 106,
+    "observed_same_final_same_concrete_multiset_pairs": 150,
+    "observed_states_with_order_variant": 192,
+    "quartz_proven_commutable_adjacent_occurrences": 582,
+    "trajectories_with_commutable_adjacent_pair": 464,
+    "trajectories_with_noncanonical_commutable_pair": 306
+  },
+  "input": {
+    "histories": "benchmark_results/duplicate_analysis_barenco_b1000_d3_histories_20260906.json",
+    "history_depths": {
+      "3": 1000
+    },
+    "states": 1000,
+    "unique_serialized_histories": 1000
+  },
+  "largest_canonical_duplicate_examples": [
+    {
+      "canonical_digest": "1c0452b3d1b662cb",
+      "histories": [
+        [
+          {
+            "destination_pattern": "cx 2 1; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 1 0; cx 2 1;",
+            "source_slots": [
+              3,
+              5
+            ],
+            "xfer_id": 3423
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              6,
+              7
+            ],
+            "xfer_id": 38
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 39
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 2 1; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 1 0; cx 2 1;",
+            "source_slots": [
+              3,
+              5
+            ],
+            "xfer_id": 3423
+          },
+          {
+            "destination_pattern": "rz 1; cx 1 0;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "cx 1 0; rz 1;",
+            "source_slots": [
+              40,
+              6
+            ],
+            "xfer_id": 45
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 38
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 2 1; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 1 0; cx 2 1;",
+            "source_slots": [
+              3,
+              5
+            ],
+            "xfer_id": 3423
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              8,
+              9
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 38
+          }
+        ]
+      ],
+      "indices": [
+        93,
+        106,
+        112,
+        128,
+        156,
+        221,
+        310,
+        341,
+        350,
+        368
+      ],
+      "states": 24
+    },
+    {
+      "canonical_digest": "5206911d1568835b",
+      "histories": [
+        [
+          {
+            "destination_pattern": "cx 1 2; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 2 0; cx 1 2;",
+            "source_slots": [
+              3,
+              5
+            ],
+            "xfer_id": 818
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              6,
+              7
+            ],
+            "xfer_id": 38
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 39
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 1 2; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 2 0; cx 1 2;",
+            "source_slots": [
+              3,
+              5
+            ],
+            "xfer_id": 818
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              41,
+              6
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 38
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 1 2; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 2 0; cx 1 2;",
+            "source_slots": [
+              3,
+              5
+            ],
+            "xfer_id": 818
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              8,
+              9
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 38
+          }
+        ]
+      ],
+      "indices": [
+        94,
+        98,
+        109,
+        124,
+        153,
+        305,
+        311,
+        312,
+        317,
+        331
+      ],
+      "states": 24
+    },
+    {
+      "canonical_digest": "4d2e44422850111c",
+      "histories": [
+        [
+          {
+            "destination_pattern": "cx 2 0; cx 2 1; cx 1 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 1 0; cx 2 1;",
+            "source_slots": [
+              3,
+              5
+            ],
+            "xfer_id": 3422
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              6,
+              7
+            ],
+            "xfer_id": 38
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 39
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 2 0; cx 2 1; cx 1 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 1 0; cx 2 1;",
+            "source_slots": [
+              3,
+              5
+            ],
+            "xfer_id": 3422
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              41,
+              6
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 38
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 2 0; cx 2 1; cx 1 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 1 0; cx 2 1;",
+            "source_slots": [
+              3,
+              5
+            ],
+            "xfer_id": 3422
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              8,
+              9
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 38
+          }
+        ]
+      ],
+      "indices": [
+        92,
+        99,
+        116,
+        127,
+        155,
+        218,
+        222,
+        304,
+        327,
+        349
+      ],
+      "states": 22
+    },
+    {
+      "canonical_digest": "c9546a7a879f01d3",
+      "histories": [
+        [
+          {
+            "destination_pattern": "cx 2 0; cx 2 1; rz 1; cx 0 1; cx 2 1;",
+            "destination_slots": [
+              39,
+              40,
+              41,
+              42,
+              43
+            ],
+            "source_pattern": "cx 2 1; rz 1; cx 0 1; cx 2 0;",
+            "source_slots": [
+              1,
+              2,
+              3,
+              5
+            ],
+            "xfer_id": 1578
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              6,
+              7
+            ],
+            "xfer_id": 38
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              46,
+              47
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              44,
+              45
+            ],
+            "xfer_id": 39
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 2 0; cx 2 1; rz 1; cx 0 1; cx 2 1;",
+            "destination_slots": [
+              39,
+              40,
+              41,
+              42,
+              43
+            ],
+            "source_pattern": "cx 2 1; rz 1; cx 0 1; cx 2 0;",
+            "source_slots": [
+              1,
+              2,
+              3,
+              5
+            ],
+            "xfer_id": 1578
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              8,
+              9
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              46,
+              47
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              44,
+              45
+            ],
+            "xfer_id": 38
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 2 0; cx 2 1; rz 1; cx 0 1; cx 2 1;",
+            "destination_slots": [
+              39,
+              40,
+              41,
+              42,
+              43
+            ],
+            "source_pattern": "cx 2 1; rz 1; cx 0 1; cx 2 0;",
+            "source_slots": [
+              1,
+              2,
+              3,
+              5
+            ],
+            "xfer_id": 1578
+          },
+          {
+            "destination_pattern": "rz 1; cx 1 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "cx 1 0; rz 1;",
+            "source_slots": [
+              42,
+              6
+            ],
+            "xfer_id": 45
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              46,
+              47
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              44,
+              45
+            ],
+            "xfer_id": 38
+          }
+        ]
+      ],
+      "indices": [
+        96,
+        104,
+        121,
+        140,
+        143,
+        220,
+        242,
+        356,
+        372,
+        434
+      ],
+      "states": 22
+    },
+    {
+      "canonical_digest": "99d3c6709fefd939",
+      "histories": [
+        [
+          {
+            "destination_pattern": "cx 1 2; cx 1 0; cx 0 2;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 0 2; cx 1 0;",
+            "source_slots": [
+              7,
+              8
+            ],
+            "xfer_id": 812
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              40,
+              9
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 38
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 1 2; cx 1 0; cx 0 2;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 0 2; cx 1 0;",
+            "source_slots": [
+              7,
+              8
+            ],
+            "xfer_id": 812
+          },
+          {
+            "destination_pattern": "cx 1 2; cx 1 0;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "cx 1 0; cx 1 2;",
+            "source_slots": [
+              39,
+              40
+            ],
+            "xfer_id": 4394
+          },
+          {
+            "destination_pattern": "cx 0 2; cx 0 1;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "cx 0 1; cx 0 2;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 4358
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 1 2; cx 1 0; cx 0 2;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 0 2; cx 1 0;",
+            "source_slots": [
+              7,
+              8
+            ],
+            "xfer_id": 812
+          },
+          {
+            "destination_pattern": "cx 2 1; cx 2 0;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "cx 2 0; cx 2 1;",
+            "source_slots": [
+              5,
+              39
+            ],
+            "xfer_id": 4406
+          },
+          {
+            "destination_pattern": "cx 0 2; cx 0 1;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "cx 0 1; cx 0 2;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 4358
+          }
+        ]
+      ],
+      "indices": [
+        103,
+        211,
+        217,
+        261,
+        294,
+        345,
+        385,
+        407,
+        424,
+        453
+      ],
+      "states": 22
+    },
+    {
+      "canonical_digest": "f85f0b7134675d20",
+      "histories": [
+        [
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              39,
+              40
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              6,
+              7
+            ],
+            "xfer_id": 38
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              41,
+              42
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              39,
+              40
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              43,
+              44
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              41,
+              42
+            ],
+            "xfer_id": 38
+          }
+        ],
+        [
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              39,
+              40
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              8,
+              9
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              41,
+              42
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              39,
+              40
+            ],
+            "xfer_id": 38
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              43,
+              44
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              6,
+              7
+            ],
+            "xfer_id": 38
+          }
+        ],
+        [
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              39,
+              40
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              8,
+              9
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              41,
+              42
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              6,
+              7
+            ],
+            "xfer_id": 38
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              43,
+              44
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              39,
+              40
+            ],
+            "xfer_id": 38
+          }
+        ]
+      ],
+      "indices": [
+        0,
+        1,
+        3,
+        7,
+        9,
+        10,
+        16,
+        35,
+        36,
+        39
+      ],
+      "states": 21
+    },
+    {
+      "canonical_digest": "595ca056eee95496",
+      "histories": [
+        [
+          {
+            "destination_pattern": "cx 2 1; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 1 0; cx 2 1;",
+            "source_slots": [
+              7,
+              8
+            ],
+            "xfer_id": 3423
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              41,
+              9
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 38
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 2 1; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 1 0; cx 2 1;",
+            "source_slots": [
+              7,
+              8
+            ],
+            "xfer_id": 3423
+          },
+          {
+            "destination_pattern": "cx 1 0; rz 0; cx 1 0;",
+            "destination_slots": [
+              42,
+              43,
+              44
+            ],
+            "source_pattern": "cx 0 1; rz 1; cx 0 1;",
+            "source_slots": [
+              5,
+              6,
+              39
+            ],
+            "xfer_id": 120
+          },
+          {
+            "destination_pattern": "cx 1 0; rz 0; cx 1 0;",
+            "destination_slots": [
+              45,
+              46,
+              47
+            ],
+            "source_pattern": "cx 0 1; rz 1; cx 0 1;",
+            "source_slots": [
+              42,
+              43,
+              44
+            ],
+            "xfer_id": 120
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 2 1; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 1 0; cx 2 1;",
+            "source_slots": [
+              7,
+              8
+            ],
+            "xfer_id": 3423
+          },
+          {
+            "destination_pattern": "cx 1 0; cx 0 2; cx 1 0;",
+            "destination_slots": [
+              42,
+              43,
+              44
+            ],
+            "source_pattern": "cx 0 2; cx 1 2;",
+            "source_slots": [
+              40,
+              41
+            ],
+            "xfer_id": 4384
+          },
+          {
+            "destination_pattern": "cx 0 1; cx 2 1;",
+            "destination_slots": [
+              45,
+              46
+            ],
+            "source_pattern": "cx 2 0; cx 0 1; cx 2 0;",
+            "source_slots": [
+              42,
+              43,
+              44
+            ],
+            "xfer_id": 4355
+          }
+        ]
+      ],
+      "indices": [
+        118,
+        247,
+        285,
+        295,
+        318,
+        324,
+        346,
+        367,
+        378,
+        412
+      ],
+      "states": 21
+    },
+    {
+      "canonical_digest": "2bb7c413c3aaf73a",
+      "histories": [
+        [
+          {
+            "destination_pattern": "cx 0 2; cx 0 1; cx 2 1;",
+            "destination_slots": [
+              39,
+              40,
+              41
+            ],
+            "source_pattern": "cx 2 1; cx 0 2;",
+            "source_slots": [
+              7,
+              8
+            ],
+            "xfer_id": 820
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              42,
+              43
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              40,
+              9
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 38
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              39,
+              40
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              6,
+              7
+            ],
+            "xfer_id": 38
+          },
+          {
+            "destination_pattern": "rz 0; cx 1 2; cx 1 0; cx 0 2;",
+            "destination_slots": [
+              41,
+              42,
+              43,
+              44
+            ],
+            "source_pattern": "cx 0 2; rz 0; cx 1 0;",
+            "source_slots": [
+              39,
+              40,
+              8
+            ],
+            "xfer_id": 950
+          },
+          {
+            "destination_pattern": "cx 1 0; cx 1 2;",
+            "destination_slots": [
+              45,
+              46
+            ],
+            "source_pattern": "cx 1 2; cx 1 0;",
+            "source_slots": [
+              42,
+              43
+            ],
+            "xfer_id": 4397
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              39,
+              40
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              6,
+              7
+            ],
+            "xfer_id": 38
+          },
+          {
+            "destination_pattern": "cx 2 0; rz 1; cx 2 1; cx 1 0;",
+            "destination_slots": [
+              41,
+              42,
+              43,
+              44
+            ],
+            "source_pattern": "cx 1 0; rz 1; cx 2 1;",
+            "source_slots": [
+              39,
+              40,
+              8
+            ],
+            "xfer_id": 3572
+          },
+          {
+            "destination_pattern": "cx 1 2; cx 1 0;",
+            "destination_slots": [
+              45,
+              46
+            ],
+            "source_pattern": "cx 1 0; cx 1 2;",
+            "source_slots": [
+              41,
+              43
+            ],
+            "xfer_id": 4394
+          }
+        ]
+      ],
+      "indices": [
+        122,
+        174,
+        186,
+        244,
+        250,
+        286,
+        288,
+        293,
+        319,
+        325
+      ],
+      "states": 21
+    },
+    {
+      "canonical_digest": "25e7eebe336bd27c",
+      "histories": [
+        [
+          {
+            "destination_pattern": "cx 1 2; cx 1 0; rz 0; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41,
+              42,
+              43
+            ],
+            "source_pattern": "cx 1 0; rz 0; cx 2 0; cx 1 2;",
+            "source_slots": [
+              1,
+              2,
+              3,
+              5
+            ],
+            "xfer_id": 1510
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              6,
+              7
+            ],
+            "xfer_id": 38
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              46,
+              47
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              44,
+              45
+            ],
+            "xfer_id": 39
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 1 2; cx 1 0; rz 0; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41,
+              42,
+              43
+            ],
+            "source_pattern": "cx 1 0; rz 0; cx 2 0; cx 1 2;",
+            "source_slots": [
+              1,
+              2,
+              3,
+              5
+            ],
+            "xfer_id": 1510
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              43,
+              6
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              46,
+              47
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              44,
+              45
+            ],
+            "xfer_id": 38
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 1 2; cx 1 0; rz 0; cx 1 0; cx 2 0;",
+            "destination_slots": [
+              39,
+              40,
+              41,
+              42,
+              43
+            ],
+            "source_pattern": "cx 1 0; rz 0; cx 2 0; cx 1 2;",
+            "source_slots": [
+              1,
+              2,
+              3,
+              5
+            ],
+            "xfer_id": 1510
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              8,
+              9
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              46,
+              47
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              44,
+              45
+            ],
+            "xfer_id": 38
+          }
+        ]
+      ],
+      "indices": [
+        95,
+        102,
+        111,
+        142,
+        145,
+        241,
+        283,
+        316,
+        351,
+        391
+      ],
+      "states": 20
+    },
+    {
+      "canonical_digest": "8021be8af23baac7",
+      "histories": [
+        [
+          {
+            "destination_pattern": "cx 1 0; cx 2 1; rz 1; cx 2 1; cx 0 2;",
+            "destination_slots": [
+              39,
+              40,
+              41,
+              42,
+              43
+            ],
+            "source_pattern": "cx 1 2; rz 2; cx 0 2; cx 1 0;",
+            "source_slots": [
+              1,
+              2,
+              3,
+              5
+            ],
+            "xfer_id": 1542
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              6,
+              7
+            ],
+            "xfer_id": 38
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              46,
+              47
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              44,
+              45
+            ],
+            "xfer_id": 39
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 1 0; cx 2 1; rz 1; cx 2 1; cx 0 2;",
+            "destination_slots": [
+              39,
+              40,
+              41,
+              42,
+              43
+            ],
+            "source_pattern": "cx 1 2; rz 2; cx 0 2; cx 1 0;",
+            "source_slots": [
+              1,
+              2,
+              3,
+              5
+            ],
+            "xfer_id": 1542
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              43,
+              6
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              46,
+              47
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              44,
+              45
+            ],
+            "xfer_id": 38
+          }
+        ],
+        [
+          {
+            "destination_pattern": "cx 1 0; cx 2 1; rz 1; cx 2 1; cx 0 2;",
+            "destination_slots": [
+              39,
+              40,
+              41,
+              42,
+              43
+            ],
+            "source_pattern": "cx 1 2; rz 2; cx 0 2; cx 1 0;",
+            "source_slots": [
+              1,
+              2,
+              3,
+              5
+            ],
+            "xfer_id": 1542
+          },
+          {
+            "destination_pattern": "rz 0; cx 0 1;",
+            "destination_slots": [
+              44,
+              45
+            ],
+            "source_pattern": "cx 0 1; rz 0;",
+            "source_slots": [
+              8,
+              9
+            ],
+            "xfer_id": 39
+          },
+          {
+            "destination_pattern": "cx 0 1; rz 0;",
+            "destination_slots": [
+              46,
+              47
+            ],
+            "source_pattern": "rz 0; cx 0 1;",
+            "source_slots": [
+              44,
+              45
+            ],
+            "xfer_id": 38
+          }
+        ]
+      ],
+      "indices": [
+        97,
+        107,
+        115,
+        146,
+        149,
+        202,
+        328,
+        352,
+        364,
+        425
+      ],
+      "states": 20
+    }
+  ],
+  "observed_order_examples": [
+    {
+      "final_digest": "f85f0b7134675d20",
+      "indices": [
+        1,
+        3
+      ],
+      "left": [
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            39,
+            40
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            8,
+            9
+          ],
+          "xfer_id": 39
+        },
+        {
+          "destination_pattern": "cx 0 1; rz 0;",
+          "destination_slots": [
+            41,
+            42
+          ],
+          "source_pattern": "rz 0; cx 0 1;",
+          "source_slots": [
+            39,
+            40
+          ],
+          "xfer_id": 38
+        },
+        {
+          "destination_pattern": "cx 0 1; rz 0;",
+          "destination_slots": [
+            43,
+            44
+          ],
+          "source_pattern": "rz 0; cx 0 1;",
+          "source_slots": [
+            6,
+            7
+          ],
+          "xfer_id": 38
+        }
+      ],
+      "right": [
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            39,
+            40
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            8,
+            9
+          ],
+          "xfer_id": 39
+        },
+        {
+          "destination_pattern": "cx 0 1; rz 0;",
+          "destination_slots": [
+            41,
+            42
+          ],
+          "source_pattern": "rz 0; cx 0 1;",
+          "source_slots": [
+            6,
+            7
+          ],
+          "xfer_id": 38
+        },
+        {
+          "destination_pattern": "cx 0 1; rz 0;",
+          "destination_slots": [
+            43,
+            44
+          ],
+          "source_pattern": "rz 0; cx 0 1;",
+          "source_slots": [
+            39,
+            40
+          ],
+          "xfer_id": 38
+        }
+      ]
+    },
+    {
+      "final_digest": "ee3350f0b017cd7d",
+      "indices": [
+        19,
+        24
+      ],
+      "left": [
+        {
+          "destination_pattern": "cx 0 1; rz 0;",
+          "destination_slots": [
+            39,
+            40
+          ],
+          "source_pattern": "rz 0; cx 0 1;",
+          "source_slots": [
+            6,
+            7
+          ],
+          "xfer_id": 38
+        },
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            41,
+            42
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            8,
+            9
+          ],
+          "xfer_id": 39
+        },
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            43,
+            44
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            39,
+            40
+          ],
+          "xfer_id": 39
+        }
+      ],
+      "right": [
+        {
+          "destination_pattern": "cx 0 1; rz 0;",
+          "destination_slots": [
+            39,
+            40
+          ],
+          "source_pattern": "rz 0; cx 0 1;",
+          "source_slots": [
+            6,
+            7
+          ],
+          "xfer_id": 38
+        },
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            41,
+            42
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            39,
+            40
+          ],
+          "xfer_id": 39
+        },
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            43,
+            44
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            8,
+            9
+          ],
+          "xfer_id": 39
+        }
+      ]
+    },
+    {
+      "final_digest": "ee3350f0b017cd7d",
+      "indices": [
+        26,
+        84
+      ],
+      "left": [
+        {
+          "destination_pattern": "cx 2 0; cx 2 1; rz 1; cx 0 1; cx 2 1;",
+          "destination_slots": [
+            39,
+            40,
+            41,
+            42,
+            43
+          ],
+          "source_pattern": "cx 2 1; rz 1; cx 0 1; cx 2 0;",
+          "source_slots": [
+            1,
+            2,
+            3,
+            5
+          ],
+          "xfer_id": 1578
+        },
+        {
+          "destination_pattern": "cx 2 1; rz 1; cx 0 1; cx 2 0;",
+          "destination_slots": [
+            44,
+            45,
+            46,
+            47
+          ],
+          "source_pattern": "cx 2 0; cx 2 1; rz 1; cx 0 1; cx 2 1;",
+          "source_slots": [
+            39,
+            40,
+            41,
+            42,
+            43
+          ],
+          "xfer_id": 1579
+        },
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            48,
+            49
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            8,
+            9
+          ],
+          "xfer_id": 39
+        }
+      ],
+      "right": [
+        {
+          "destination_pattern": "cx 2 0; cx 2 1; rz 1; cx 0 1; cx 2 1;",
+          "destination_slots": [
+            39,
+            40,
+            41,
+            42,
+            43
+          ],
+          "source_pattern": "cx 2 1; rz 1; cx 0 1; cx 2 0;",
+          "source_slots": [
+            1,
+            2,
+            3,
+            5
+          ],
+          "xfer_id": 1578
+        },
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            44,
+            45
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            8,
+            9
+          ],
+          "xfer_id": 39
+        },
+        {
+          "destination_pattern": "cx 2 1; rz 1; cx 0 1; cx 2 0;",
+          "destination_slots": [
+            46,
+            47,
+            48,
+            49
+          ],
+          "source_pattern": "cx 2 0; cx 2 1; rz 1; cx 0 1; cx 2 1;",
+          "source_slots": [
+            39,
+            40,
+            41,
+            42,
+            43
+          ],
+          "xfer_id": 1579
+        }
+      ]
+    },
+    {
+      "final_digest": "ae5931dce8fde169",
+      "indices": [
+        6,
+        17
+      ],
+      "left": [
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            39,
+            40
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            8,
+            9
+          ],
+          "xfer_id": 39
+        },
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            41,
+            42
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            5,
+            39
+          ],
+          "xfer_id": 39
+        },
+        {
+          "destination_pattern": "cx 0 1; rz 0;",
+          "destination_slots": [
+            43,
+            44
+          ],
+          "source_pattern": "rz 0; cx 0 1;",
+          "source_slots": [
+            6,
+            7
+          ],
+          "xfer_id": 38
+        }
+      ],
+      "right": [
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            39,
+            40
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            8,
+            9
+          ],
+          "xfer_id": 39
+        },
+        {
+          "destination_pattern": "cx 0 1; rz 0;",
+          "destination_slots": [
+            41,
+            42
+          ],
+          "source_pattern": "rz 0; cx 0 1;",
+          "source_slots": [
+            6,
+            7
+          ],
+          "xfer_id": 38
+        },
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            43,
+            44
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            5,
+            39
+          ],
+          "xfer_id": 39
+        }
+      ]
+    },
+    {
+      "final_digest": "6d8e85a524077d22",
+      "indices": [
+        15,
+        83
+      ],
+      "left": [
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            39,
+            40
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            8,
+            9
+          ],
+          "xfer_id": 39
+        },
+        {
+          "destination_pattern": "rz 2; cx 2 1; rz 1; cx 0 1; cx 2 0;",
+          "destination_slots": [
+            41,
+            42,
+            43,
+            44,
+            45
+          ],
+          "source_pattern": "cx 2 1; rz 1; cx 0 1; cx 2 0; rz 2;",
+          "source_slots": [
+            1,
+            2,
+            3,
+            5,
+            39
+          ],
+          "xfer_id": 3317
+        },
+        {
+          "destination_pattern": "cx 0 1; rz 0;",
+          "destination_slots": [
+            46,
+            47
+          ],
+          "source_pattern": "rz 0; cx 0 1;",
+          "source_slots": [
+            6,
+            7
+          ],
+          "xfer_id": 38
+        }
+      ],
+      "right": [
+        {
+          "destination_pattern": "rz 0; cx 0 1;",
+          "destination_slots": [
+            39,
+            40
+          ],
+          "source_pattern": "cx 0 1; rz 0;",
+          "source_slots": [
+            8,
+            9
+          ],
+          "xfer_id": 39
+        },
+        {
+          "destination_pattern": "cx 0 1; rz 0;",
+          "destination_slots": [
+            41,
+            42
+          ],
+          "source_pattern": "rz 0; cx 0 1;",
+          "source_slots": [
+            6,
+            7
+          ],
+          "xfer_id": 38
+        },
+        {
+          "destination_pattern": "rz 2; cx 2 1; rz 1; cx 0 1; cx 2 0;",
+          "destination_slots": [
+            43,
+            44,
+            45,
+            46,
+            47
+          ],
+          "source_pattern": "cx 2 1; rz 1; cx 0 1; cx 2 0; rz 2;",
+          "source_slots": [
+            1,
+            2,
+            3,
+            5,
+            39
+          ],
+          "xfer_id": 3317
+        }
+      ]
+    }
+  ],
+  "prefix_uniqueness": [
+    {
+      "canonical_qasm_dag": {
+        "duplicate_excess": 0,
+        "duplicate_groups": 0,
+        "largest_group": 1,
+        "largest_group_sizes": [
+          1
+        ],
+        "unique": 1
+      },
+      "commutable_last_pair_examples": [],
+      "commutable_last_pair_noncanonical_by_source_xfer_key": 0,
+      "depth": 0,
+      "duplicate_pair_analysis": {
+        "duplicate_pairs": 0,
+        "order_variant_example_pairs": [],
+        "pairs_different_xfer_multiset": 0,
+        "pairs_same_concrete_action_multiset": 0,
+        "pairs_same_xfer_multiset": 0,
+        "pairs_same_xfer_sequence": 0,
+        "states_with_observed_order_variant": 0
+      },
+      "quartz_hash": {
+        "duplicate_excess": 0,
+        "duplicate_groups": 0,
+        "largest_group": 1,
+        "largest_group_sizes": [
+          1
+        ],
+        "unique": 1
+      },
+      "quartz_proven_commutable_last_pair_prefixes": 0,
+      "same_exact_parent_same_child_excess": 0,
+      "slot_sensitive_exact_topologies": {
+        "duplicate_excess": 0,
+        "duplicate_groups": 0,
+        "largest_group": 1,
+        "largest_group_sizes": [
+          1
+        ],
+        "unique": 1
+      },
+      "unique_action_prefixes": 1,
+      "unique_canonical_parent_child_transitions": 1
+    },
+    {
+      "canonical_qasm_dag": {
+        "duplicate_excess": 0,
+        "duplicate_groups": 0,
+        "largest_group": 1,
+        "largest_group_sizes": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "unique": 11
+      },
+      "commutable_last_pair_examples": [],
+      "commutable_last_pair_noncanonical_by_source_xfer_key": 0,
+      "depth": 1,
+      "duplicate_pair_analysis": {
+        "duplicate_pairs": 0,
+        "order_variant_example_pairs": [],
+        "pairs_different_xfer_multiset": 0,
+        "pairs_same_concrete_action_multiset": 0,
+        "pairs_same_xfer_multiset": 0,
+        "pairs_same_xfer_sequence": 0,
+        "states_with_observed_order_variant": 0
+      },
+      "quartz_hash": {
+        "duplicate_excess": 0,
+        "duplicate_groups": 0,
+        "largest_group": 1,
+        "largest_group_sizes": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "unique": 11
+      },
+      "quartz_proven_commutable_last_pair_prefixes": 0,
+      "same_exact_parent_same_child_excess": 0,
+      "slot_sensitive_exact_topologies": {
+        "duplicate_excess": 0,
+        "duplicate_groups": 0,
+        "largest_group": 1,
+        "largest_group_sizes": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "unique": 11
+      },
+      "unique_action_prefixes": 11,
+      "unique_canonical_parent_child_transitions": 11
+    },
+    {
+      "canonical_qasm_dag": {
+        "duplicate_excess": 41,
+        "duplicate_groups": 32,
+        "largest_group": 5,
+        "largest_group_sizes": [
+          5,
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "unique": 106
+      },
+      "commutable_last_pair_examples": [
+        {
+          "original": [
+            {
+              "destination_pattern": "cx 0 1; rz 0;",
+              "destination_slots": [
+                39,
+                40
+              ],
+              "source_pattern": "rz 0; cx 0 1;",
+              "source_slots": [
+                6,
+                7
+              ],
+              "xfer_id": 38
+            },
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                41,
+                42
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            }
+          ],
+          "original_keys": [
+            "(38, (6, 7))",
+            "(39, (8, 9))"
+          ],
+          "swapped": [
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                39,
+                40
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            },
+            {
+              "destination_pattern": "cx 0 1; rz 0;",
+              "destination_slots": [
+                41,
+                42
+              ],
+              "source_pattern": "rz 0; cx 0 1;",
+              "source_slots": [
+                6,
+                7
+              ],
+              "xfer_id": 38
+            }
+          ]
+        },
+        {
+          "original": [
+            {
+              "destination_pattern": "cx 0 1; rz 0;",
+              "destination_slots": [
+                39,
+                40
+              ],
+              "source_pattern": "rz 0; cx 0 1;",
+              "source_slots": [
+                6,
+                7
+              ],
+              "xfer_id": 38
+            },
+            {
+              "destination_pattern": "cx 1 2; cx 1 0; cx 0 2;",
+              "destination_slots": [
+                41,
+                42,
+                43
+              ],
+              "source_pattern": "cx 0 2; cx 1 0;",
+              "source_slots": [
+                3,
+                5
+              ],
+              "xfer_id": 812
+            }
+          ],
+          "original_keys": [
+            "(38, (6, 7))",
+            "(812, (3, 5))"
+          ],
+          "swapped": [
+            {
+              "destination_pattern": "cx 1 2; cx 1 0; cx 0 2;",
+              "destination_slots": [
+                39,
+                40,
+                41
+              ],
+              "source_pattern": "cx 0 2; cx 1 0;",
+              "source_slots": [
+                3,
+                5
+              ],
+              "xfer_id": 812
+            },
+            {
+              "destination_pattern": "cx 0 1; rz 0;",
+              "destination_slots": [
+                42,
+                43
+              ],
+              "source_pattern": "rz 0; cx 0 1;",
+              "source_slots": [
+                6,
+                7
+              ],
+              "xfer_id": 38
+            }
+          ]
+        },
+        {
+          "original": [
+            {
+              "destination_pattern": "cx 0 1; rz 0;",
+              "destination_slots": [
+                39,
+                40
+              ],
+              "source_pattern": "rz 0; cx 0 1;",
+              "source_slots": [
+                6,
+                7
+              ],
+              "xfer_id": 38
+            },
+            {
+              "destination_pattern": "cx 0 2; cx 0 1; cx 2 1;",
+              "destination_slots": [
+                41,
+                42,
+                43
+              ],
+              "source_pattern": "cx 2 1; cx 0 2;",
+              "source_slots": [
+                3,
+                5
+              ],
+              "xfer_id": 820
+            }
+          ],
+          "original_keys": [
+            "(38, (6, 7))",
+            "(820, (3, 5))"
+          ],
+          "swapped": [
+            {
+              "destination_pattern": "cx 0 2; cx 0 1; cx 2 1;",
+              "destination_slots": [
+                39,
+                40,
+                41
+              ],
+              "source_pattern": "cx 2 1; cx 0 2;",
+              "source_slots": [
+                3,
+                5
+              ],
+              "xfer_id": 820
+            },
+            {
+              "destination_pattern": "cx 0 1; rz 0;",
+              "destination_slots": [
+                42,
+                43
+              ],
+              "source_pattern": "rz 0; cx 0 1;",
+              "source_slots": [
+                6,
+                7
+              ],
+              "xfer_id": 38
+            }
+          ]
+        },
+        {
+          "original": [
+            {
+              "destination_pattern": "cx 0 1; rz 0;",
+              "destination_slots": [
+                39,
+                40
+              ],
+              "source_pattern": "rz 0; cx 0 1;",
+              "source_slots": [
+                6,
+                7
+              ],
+              "xfer_id": 38
+            },
+            {
+              "destination_pattern": "cx 1 2; cx 1 0; rz 0; cx 1 0; cx 2 0;",
+              "destination_slots": [
+                41,
+                42,
+                43,
+                44,
+                45
+              ],
+              "source_pattern": "cx 1 0; rz 0; cx 2 0; cx 1 2;",
+              "source_slots": [
+                1,
+                2,
+                3,
+                5
+              ],
+              "xfer_id": 1510
+            }
+          ],
+          "original_keys": [
+            "(38, (6, 7))",
+            "(1510, (1, 2, 3, 5))"
+          ],
+          "swapped": [
+            {
+              "destination_pattern": "cx 1 2; cx 1 0; rz 0; cx 1 0; cx 2 0;",
+              "destination_slots": [
+                39,
+                40,
+                41,
+                42,
+                43
+              ],
+              "source_pattern": "cx 1 0; rz 0; cx 2 0; cx 1 2;",
+              "source_slots": [
+                1,
+                2,
+                3,
+                5
+              ],
+              "xfer_id": 1510
+            },
+            {
+              "destination_pattern": "cx 0 1; rz 0;",
+              "destination_slots": [
+                44,
+                45
+              ],
+              "source_pattern": "rz 0; cx 0 1;",
+              "source_slots": [
+                6,
+                7
+              ],
+              "xfer_id": 38
+            }
+          ]
+        },
+        {
+          "original": [
+            {
+              "destination_pattern": "cx 0 1; rz 0;",
+              "destination_slots": [
+                39,
+                40
+              ],
+              "source_pattern": "rz 0; cx 0 1;",
+              "source_slots": [
+                6,
+                7
+              ],
+              "xfer_id": 38
+            },
+            {
+              "destination_pattern": "cx 1 0; cx 2 1; rz 1; cx 2 1; cx 0 2;",
+              "destination_slots": [
+                41,
+                42,
+                43,
+                44,
+                45
+              ],
+              "source_pattern": "cx 1 2; rz 2; cx 0 2; cx 1 0;",
+              "source_slots": [
+                1,
+                2,
+                3,
+                5
+              ],
+              "xfer_id": 1542
+            }
+          ],
+          "original_keys": [
+            "(38, (6, 7))",
+            "(1542, (1, 2, 3, 5))"
+          ],
+          "swapped": [
+            {
+              "destination_pattern": "cx 1 0; cx 2 1; rz 1; cx 2 1; cx 0 2;",
+              "destination_slots": [
+                39,
+                40,
+                41,
+                42,
+                43
+              ],
+              "source_pattern": "cx 1 2; rz 2; cx 0 2; cx 1 0;",
+              "source_slots": [
+                1,
+                2,
+                3,
+                5
+              ],
+              "xfer_id": 1542
+            },
+            {
+              "destination_pattern": "cx 0 1; rz 0;",
+              "destination_slots": [
+                44,
+                45
+              ],
+              "source_pattern": "rz 0; cx 0 1;",
+              "source_slots": [
+                6,
+                7
+              ],
+              "xfer_id": 38
+            }
+          ]
+        }
+      ],
+      "commutable_last_pair_noncanonical_by_source_xfer_key": 17,
+      "depth": 2,
+      "duplicate_pair_analysis": {
+        "duplicate_pairs": 54,
+        "order_variant_example_pairs": [
+          [
+            0,
+            20
+          ],
+          [
+            8,
+            73
+          ],
+          [
+            9,
+            83
+          ],
+          [
+            10,
+            95
+          ],
+          [
+            15,
+            116
+          ]
+        ],
+        "pairs_different_xfer_multiset": 44,
+        "pairs_same_concrete_action_multiset": 9,
+        "pairs_same_xfer_multiset": 10,
+        "pairs_same_xfer_sequence": 0,
+        "states_with_observed_order_variant": 18
+      },
+      "quartz_hash": {
+        "duplicate_excess": 44,
+        "duplicate_groups": 35,
+        "largest_group": 5,
+        "largest_group_sizes": [
+          5,
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "unique": 103
+      },
+      "quartz_proven_commutable_last_pair_prefixes": 32,
+      "same_exact_parent_same_child_excess": 3,
+      "slot_sensitive_exact_topologies": {
+        "duplicate_excess": 0,
+        "duplicate_groups": 0,
+        "largest_group": 1,
+        "largest_group_sizes": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "unique": 147
+      },
+      "unique_action_prefixes": 147,
+      "unique_canonical_parent_child_transitions": 144
+    },
+    {
+      "canonical_qasm_dag": {
+        "duplicate_excess": 680,
+        "duplicate_groups": 173,
+        "largest_group": 24,
+        "largest_group_sizes": [
+          24,
+          24,
+          22,
+          22,
+          22,
+          21,
+          21,
+          21,
+          20,
+          20,
+          14,
+          13,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          9
+        ],
+        "unique": 320
+      },
+      "commutable_last_pair_examples": [
+        {
+          "original": [
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                41,
+                42
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            },
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                43,
+                44
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                39,
+                40
+              ],
+              "xfer_id": 39
+            }
+          ],
+          "original_keys": [
+            "(39, (8, 9))",
+            "(39, (39, 40))"
+          ],
+          "swapped": [
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                41,
+                42
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                39,
+                40
+              ],
+              "xfer_id": 39
+            },
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                43,
+                44
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            }
+          ]
+        },
+        {
+          "original": [
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                41,
+                42
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            },
+            {
+              "destination_pattern": "cx 1 2; cx 1 0; cx 0 2;",
+              "destination_slots": [
+                43,
+                44,
+                45
+              ],
+              "source_pattern": "cx 0 2; cx 1 0;",
+              "source_slots": [
+                3,
+                5
+              ],
+              "xfer_id": 812
+            }
+          ],
+          "original_keys": [
+            "(39, (8, 9))",
+            "(812, (3, 5))"
+          ],
+          "swapped": [
+            {
+              "destination_pattern": "cx 1 2; cx 1 0; cx 0 2;",
+              "destination_slots": [
+                41,
+                42,
+                43
+              ],
+              "source_pattern": "cx 0 2; cx 1 0;",
+              "source_slots": [
+                3,
+                5
+              ],
+              "xfer_id": 812
+            },
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                44,
+                45
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            }
+          ]
+        },
+        {
+          "original": [
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                41,
+                42
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            },
+            {
+              "destination_pattern": "cx 1 2; cx 1 0; cx 2 0;",
+              "destination_slots": [
+                43,
+                44,
+                45
+              ],
+              "source_pattern": "cx 2 0; cx 1 2;",
+              "source_slots": [
+                3,
+                5
+              ],
+              "xfer_id": 818
+            }
+          ],
+          "original_keys": [
+            "(39, (8, 9))",
+            "(818, (3, 5))"
+          ],
+          "swapped": [
+            {
+              "destination_pattern": "cx 1 2; cx 1 0; cx 2 0;",
+              "destination_slots": [
+                41,
+                42,
+                43
+              ],
+              "source_pattern": "cx 2 0; cx 1 2;",
+              "source_slots": [
+                3,
+                5
+              ],
+              "xfer_id": 818
+            },
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                44,
+                45
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            }
+          ]
+        },
+        {
+          "original": [
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                41,
+                42
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            },
+            {
+              "destination_pattern": "cx 1 0; cx 2 0; cx 2 1;",
+              "destination_slots": [
+                43,
+                44,
+                45
+              ],
+              "source_pattern": "cx 2 1; cx 1 0;",
+              "source_slots": [
+                5,
+                39
+              ],
+              "xfer_id": 822
+            }
+          ],
+          "original_keys": [
+            "(39, (8, 9))",
+            "(822, (5, 39))"
+          ],
+          "swapped": [
+            {
+              "destination_pattern": "cx 1 0; cx 2 0; cx 2 1;",
+              "destination_slots": [
+                41,
+                42,
+                43
+              ],
+              "source_pattern": "cx 2 1; cx 1 0;",
+              "source_slots": [
+                5,
+                39
+              ],
+              "xfer_id": 822
+            },
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                44,
+                45
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            }
+          ]
+        },
+        {
+          "original": [
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                41,
+                42
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            },
+            {
+              "destination_pattern": "cx 1 2; cx 1 0; rz 0; cx 1 0; cx 2 0;",
+              "destination_slots": [
+                43,
+                44,
+                45,
+                46,
+                47
+              ],
+              "source_pattern": "cx 1 0; rz 0; cx 2 0; cx 1 2;",
+              "source_slots": [
+                1,
+                2,
+                3,
+                5
+              ],
+              "xfer_id": 1510
+            }
+          ],
+          "original_keys": [
+            "(39, (8, 9))",
+            "(1510, (1, 2, 3, 5))"
+          ],
+          "swapped": [
+            {
+              "destination_pattern": "cx 1 2; cx 1 0; rz 0; cx 1 0; cx 2 0;",
+              "destination_slots": [
+                41,
+                42,
+                43,
+                44,
+                45
+              ],
+              "source_pattern": "cx 1 0; rz 0; cx 2 0; cx 1 2;",
+              "source_slots": [
+                1,
+                2,
+                3,
+                5
+              ],
+              "xfer_id": 1510
+            },
+            {
+              "destination_pattern": "rz 0; cx 0 1;",
+              "destination_slots": [
+                46,
+                47
+              ],
+              "source_pattern": "cx 0 1; rz 0;",
+              "source_slots": [
+                8,
+                9
+              ],
+              "xfer_id": 39
+            }
+          ]
+        }
+      ],
+      "commutable_last_pair_noncanonical_by_source_xfer_key": 181,
+      "depth": 3,
+      "duplicate_pair_analysis": {
+        "duplicate_pairs": 3626,
+        "order_variant_example_pairs": [
+          [
+            236,
+            258
+          ],
+          [
+            237,
+            269
+          ],
+          [
+            2,
+            20
+          ],
+          [
+            703,
+            722
+          ],
+          [
+            3,
+            40
+          ]
+        ],
+        "pairs_different_xfer_multiset": 3282,
+        "pairs_same_concrete_action_multiset": 150,
+        "pairs_same_xfer_multiset": 344,
+        "pairs_same_xfer_sequence": 14,
+        "states_with_observed_order_variant": 192
+      },
+      "quartz_hash": {
+        "duplicate_excess": 688,
+        "duplicate_groups": 175,
+        "largest_group": 24,
+        "largest_group_sizes": [
+          24,
+          24,
+          22,
+          22,
+          22,
+          21,
+          21,
+          21,
+          20,
+          20,
+          14,
+          13,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10
+        ],
+        "unique": 312
+      },
+      "quartz_proven_commutable_last_pair_prefixes": 324,
+      "same_exact_parent_same_child_excess": 17,
+      "slot_sensitive_exact_topologies": {
+        "duplicate_excess": 0,
+        "duplicate_groups": 0,
+        "largest_group": 1,
+        "largest_group_sizes": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "unique": 1000
+      },
+      "unique_action_prefixes": 1000,
+      "unique_canonical_parent_child_transitions": 680
+    }
+  ],
+  "quartz_hash_collision_audit": {
+    "canonical_circuits_minus_hashes": 8,
+    "groups_with_parameter_distinctions": 0,
+    "groups_with_structural_or_qubit_distinctions": 8,
+    "hash_groups_containing_multiple_canonical_circuits": 8,
+    "largest_collision_groups": [
+      {
+        "canonical_circuits": 2,
+        "canonical_without_parameters": 2,
+        "example_digests": [
+          "376f2258d5df3b9d",
+          "a2c01e97b86f4a69",
+          "a2c01e97b86f4a69",
+          "376f2258d5df3b9d",
+          "376f2258d5df3b9d",
+          "a2c01e97b86f4a69",
+          "a2c01e97b86f4a69",
+          "376f2258d5df3b9d"
+        ],
+        "example_indices": [
+          801,
+          807,
+          868,
+          869,
+          883,
+          884,
+          906,
+          907
+        ],
+        "graph_hash": 12231920083985378177,
+        "states": 10
+      },
+      {
+        "canonical_circuits": 2,
+        "canonical_without_parameters": 2,
+        "example_digests": [
+          "efbde9973839779d",
+          "53c5fe5e0838dc40",
+          "53c5fe5e0838dc40",
+          "efbde9973839779d",
+          "efbde9973839779d",
+          "53c5fe5e0838dc40"
+        ],
+        "example_indices": [
+          804,
+          805,
+          890,
+          891,
+          973,
+          974
+        ],
+        "graph_hash": 15953762810932701553,
+        "states": 6
+      },
+      {
+        "canonical_circuits": 2,
+        "canonical_without_parameters": 2,
+        "example_digests": [
+          "9d0be4001bab03e5",
+          "9a9aefd2be2d6fd3",
+          "9d0be4001bab03e5"
+        ],
+        "example_indices": [
+          816,
+          825,
+          988
+        ],
+        "graph_hash": 14978979614197006173,
+        "states": 3
+      },
+      {
+        "canonical_circuits": 2,
+        "canonical_without_parameters": 2,
+        "example_digests": [
+          "a664f72b4544e221",
+          "300a3dcc158e4ce6",
+          "a664f72b4544e221"
+        ],
+        "example_indices": [
+          820,
+          922,
+          923
+        ],
+        "graph_hash": 14585762409339509431,
+        "states": 3
+      },
+      {
+        "canonical_circuits": 2,
+        "canonical_without_parameters": 2,
+        "example_digests": [
+          "689bf84f507a3771",
+          "c1999326011f4890"
+        ],
+        "example_indices": [
+          881,
+          882
+        ],
+        "graph_hash": 5425509285365859540,
+        "states": 2
+      },
+      {
+        "canonical_circuits": 2,
+        "canonical_without_parameters": 2,
+        "example_digests": [
+          "7e1825f55d425bf4",
+          "d33632fea7beeace"
+        ],
+        "example_indices": [
+          914,
+          915
+        ],
+        "graph_hash": 792689863096920902,
+        "states": 2
+      },
+      {
+        "canonical_circuits": 2,
+        "canonical_without_parameters": 2,
+        "example_digests": [
+          "0f080ec96e1a48d4",
+          "01064fd375be8cb2"
+        ],
+        "example_indices": [
+          931,
+          934
+        ],
+        "graph_hash": 10393386216453655688,
+        "states": 2
+      },
+      {
+        "canonical_circuits": 2,
+        "canonical_without_parameters": 2,
+        "example_digests": [
+          "8d0d8d4d82c1f139",
+          "cdd158526b0a0d99"
+        ],
+        "example_indices": [
+          968,
+          969
+        ],
+        "graph_hash": 1224012353330356738,
+        "states": 2
+      }
+    ],
+    "source_limitation": "Graph::hash ignores constant parameters, seeds all input qubits identically, and sums node hashes"
+  }
+}

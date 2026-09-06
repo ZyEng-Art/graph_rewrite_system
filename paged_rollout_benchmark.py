@@ -22,6 +22,13 @@ if _libgomp:
 import torch
 import torch.nn.functional as F
 
+from circuit_identity import (
+    ExactGraphRegistry,
+    QuartzHashRegistry,
+    canonical_qasm_key,
+    exact_graph_key,
+    register_exact_graph,
+)
 from beam_search_benchmark import (
     BeamState,
     Proposal,
@@ -58,13 +65,11 @@ from tensorized_batch import collate_paged_states
 from train import autocast_context, move_batch
 
 
-def register_exact_graph_hash(exact_graph, seen_exact: set[int]) -> bool:
-    """Register one materialized Quartz graph, returning false for a duplicate."""
-    exact_hash = int(exact_graph.hash())
-    if exact_hash in seen_exact:
-        return False
-    seen_exact.add(exact_hash)
-    return True
+def register_exact_graph_hash(exact_graph, seen_exact) -> bool:
+    """Backward-compatible alias for collision-safe exact graph registration."""
+    if isinstance(seen_exact, (ExactGraphRegistry, QuartzHashRegistry)):
+        return seen_exact.register(exact_graph)
+    return register_exact_graph(exact_graph, seen_exact)
 
 
 def initial_batch(snapshot_row: dict) -> dict:
@@ -244,6 +249,7 @@ def serialized_history_state(state: BeamState) -> dict:
                 "xfer_id": action.xfer_id,
                 "source_slots": list(action.source_slots),
                 "destination_slots": list(action.destination_slots),
+                "conflict_slots": list(action.conflict_slots),
             }
             for action in state.history
         ],
@@ -1162,6 +1168,26 @@ def main() -> None:
         "--dedup-mode", choices=("none", "raw", "canonical"), default="raw"
     )
     parser.add_argument(
+        "--direct-inverse-pruning",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "experimental: reject a reverse-pattern xfer applied directly to "
+            "the prior action's destination; disabled because compact ECC "
+            "metadata omits parameter maps and cannot prove exact inversion"
+        ),
+    )
+    parser.add_argument(
+        "--canonical-trace-ordering",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "experimental: keep canonical order across an independent action "
+            "suffix; disabled because the GF reference path uses 11 opposite-"
+            "order continuations within refresh windows"
+        ),
+    )
+    parser.add_argument(
         "--lazy-topology-backend",
         choices=("legacy", "indexed"),
         default="legacy",
@@ -1193,8 +1219,18 @@ def main() -> None:
         action=argparse.BooleanOptionalAction,
         default=True,
         help=(
-            "deduplicate successfully replayed refresh states by Quartz graph hash "
-            "and keep scanning the over-generated pool until the beam is full"
+            "deduplicate successfully replayed refresh states by exact physical-"
+            "qubit/parameter circuit identity and keep scanning the over-generated "
+            "pool until the beam is full"
+        ),
+    )
+    parser.add_argument(
+        "--refresh-dedup-identity",
+        choices=("exact", "quartz_hash"),
+        default="exact",
+        help=(
+            "exact uses physical-qubit/parameter wire traces; quartz_hash is "
+            "the legacy lossy identity and is retained only for A/B diagnostics"
         ),
     )
     parser.add_argument("--audit-count", type=int, default=1000)
@@ -1475,6 +1511,7 @@ def main() -> None:
         - len(rules.source_gate_types[rules.xfer_to_source[index]])
         for index in range(len(rules.xfer_to_source))
     ]
+    inverse_xfer_ids = rules.unique_inverse_xfer_ids()
     gpu_rule_index = (
         GpuRuleIndex.build(
             source_to_xfers,
@@ -1503,8 +1540,17 @@ def main() -> None:
     best_exact_gate_count = initial_gate_count
     best_exact_depth = 0
     # This set is deliberately separate from slot-sensitive speculative hashes
-    # and persists across refreshes and best-root restarts.
-    seen_exact = {int(graph.hash())} if args.refresh_exact_dedup else set()
+    # and persists across refreshes and best-root restarts.  The key includes
+    # physical qubits and parameters and is collision-checked by full-key equality.
+    seen_exact = (
+        (
+            ExactGraphRegistry.seeded(graph)
+            if args.refresh_dedup_identity == "exact"
+            else QuartzHashRegistry.seeded(graph)
+        )
+        if args.refresh_exact_dedup
+        else None
+    )
     segment_index = 0
     segment_start_depth = 0
     segment_root_gate_count = initial_gate_count
@@ -1841,6 +1887,7 @@ def main() -> None:
         update_started = time.perf_counter()
         records: list[tuple[BeamState, Proposal]] = []
         attempted = invalid = duplicates = 0
+        pruning_stats: dict[str, int] = {}
         accepted_target = args.beam_size * (
             args.refresh_factor if refresh_due else 1
         )
@@ -1857,6 +1904,11 @@ def main() -> None:
                 args.dedup_mode,
                 seen,
                 args.lazy_topology_backend,
+                inverse_xfer_ids=(
+                    inverse_xfer_ids if args.direct_inverse_pruning else None
+                ),
+                canonical_trace_ordering=args.canonical_trace_ordering,
+                pruning_stats=pruning_stats,
             )
             if is_duplicate:
                 duplicates += 1
@@ -2043,7 +2095,7 @@ def main() -> None:
                 refresh_replay_valid += 1
                 if args.refresh_exact_dedup:
                     hash_started = time.perf_counter()
-                    is_unique = register_exact_graph_hash(exact_graph, seen_exact)
+                    is_unique = seen_exact.register(exact_graph)
                     refresh_hash_seconds += time.perf_counter() - hash_started
                     if not is_unique:
                         refresh_exact_duplicates += 1
@@ -2068,13 +2120,13 @@ def main() -> None:
             refresh_improved_best = best_exact_gate_count < best_before_refresh
             stale_refreshes = 0 if refresh_improved_best else stale_refreshes + 1
             if args.profile_stages and args.refresh_exact_dedup:
-                refresh_profile_seconds["exact_graph_hash_seconds"] = (
+                refresh_profile_seconds["exact_graph_identity_seconds"] = (
                     refresh_hash_seconds
                 )
-                refresh_profile_counts["exact_graph_hash_calls"] = (
+                refresh_profile_counts["exact_graph_identity_calls"] = (
                     refresh_replay_valid
                 )
-                refresh_profile_counts["exact_graph_hash_duplicates"] = (
+                refresh_profile_counts["exact_graph_identity_duplicates"] = (
                     refresh_exact_duplicates
                 )
             refresh_seconds = time.perf_counter() - refresh_started
@@ -2288,6 +2340,15 @@ def main() -> None:
             "accepted_actions": accepted_beam_size,
             "invalid_structural_actions": invalid,
             "duplicate_speculative_successors": duplicates,
+            "direct_inverse_rejections": pruning_stats.get(
+                "direct_inverse_rejections", 0
+            ),
+            "canonical_trace_order_rejections": pruning_stats.get(
+                "canonical_trace_order_rejections", 0
+            ),
+            "canonical_cycle_rejections": pruning_stats.get(
+                "canonical_cycle_rejections", 0
+            ),
             "model_match_seconds": model_seconds,
             "exploration_model_match_seconds": exploration_model_seconds,
             "proposal_seconds": proposal_seconds,
@@ -2322,6 +2383,7 @@ def main() -> None:
             "exact_refresh_valid": refresh_valid,
             "exact_refresh_exact_duplicates": refresh_exact_duplicates,
             "exact_refresh_hash_seconds": refresh_hash_seconds,
+            "exact_refresh_identity_seconds": refresh_hash_seconds,
             "exact_refresh_early_stopped": refresh_early_stopped,
             "exact_refresh_failures": dict(sorted(refresh_failures.items())),
             "checkpoint_audited": checkpoint_audited,
@@ -2395,6 +2457,10 @@ def main() -> None:
     audited = min(args.audit_count, len(beam))
     valid = topology_matches = 0
     exact_hashes = set()
+    exact_identities = set()
+    qasm_fallback_identities = set()
+    native_to_qasm: dict[object, set] = defaultdict(set)
+    qasm_to_native: dict[object, set] = defaultdict(set)
     failure_steps: dict[int, int] = defaultdict(int)
     best_valid_gate_count = None
     best_valid_graph = None
@@ -2415,6 +2481,12 @@ def main() -> None:
         valid += 1
         topology_matches += int(topology_ok)
         exact_hashes.add(int(exact_graph.hash()))
+        exact_identity = exact_graph_key(exact_graph)
+        qasm_identity = canonical_qasm_key(exact_graph.to_qasm_str())
+        exact_identities.add(exact_identity)
+        qasm_fallback_identities.add(qasm_identity)
+        native_to_qasm[exact_identity].add(qasm_identity)
+        qasm_to_native[qasm_identity].add(exact_identity)
         gate_count = int(exact_graph.gate_count)
         if best_valid_gate_count is None or gate_count < best_valid_gate_count:
             best_valid_gate_count = gate_count
@@ -2429,6 +2501,12 @@ def main() -> None:
         "valid_trajectory_rate": valid / max(1, audited),
         "exact_topology_matches": topology_matches,
         "unique_exact_graph_hashes": len(exact_hashes),
+        "unique_exact_graph_identities": len(exact_identities),
+        "unique_qasm_fallback_identities": len(qasm_fallback_identities),
+        "native_qasm_partition_mismatches": sum(
+            len(values) != 1 for values in native_to_qasm.values()
+        )
+        + sum(len(values) != 1 for values in qasm_to_native.values()),
         "failure_steps": dict(sorted(failure_steps.items())),
         "best_valid_gate_count": best_valid_gate_count,
         "audit_seconds": time.perf_counter() - audit_started,
@@ -2457,6 +2535,11 @@ def main() -> None:
         "final_segment_root_gate_count": segment_root_gate_count,
         "final_beam_size": len(beam),
         "dedup_mode": args.dedup_mode,
+        "direct_inverse_pruning": args.direct_inverse_pruning,
+        "canonical_trace_ordering": args.canonical_trace_ordering,
+        "unambiguous_inverse_xfers": sum(
+            inverse_xfer_id >= 0 for inverse_xfer_id in inverse_xfer_ids
+        ),
         "lazy_topology_backend": args.lazy_topology_backend,
         "page_size": args.page_size,
         "cache_gather_backend": args.cache_gather_backend,
@@ -2514,7 +2597,24 @@ def main() -> None:
         "refresh_interval": args.refresh_interval,
         "refresh_factor": args.refresh_factor,
         "refresh_exact_dedup": args.refresh_exact_dedup,
-        "exact_graph_hashes_seen": len(seen_exact),
+        "exact_dedup_identity": (
+            "quartz_wire_trace_v1_or_qasm_fallback"
+            if args.refresh_dedup_identity == "exact"
+            else "quartz_graph_hash_legacy_unsafe"
+        ),
+        "exact_graph_hashes_seen": len(seen_exact) if seen_exact is not None else 0,
+        "exact_graph_identities_seen": (
+            len(seen_exact) if seen_exact is not None else 0
+        ),
+        "exact_graph_identity_registry": (
+            seen_exact.stats() if seen_exact is not None else None
+        ),
+        "direct_inverse_rejections_total": sum(
+            int(row["direct_inverse_rejections"]) for row in step_rows
+        ),
+        "canonical_trace_order_rejections_total": sum(
+            int(row["canonical_trace_order_rejections"]) for row in step_rows
+        ),
         "exact_refresh_replay_valid_total": sum(
             int(row["exact_refresh_replay_valid"]) for row in step_rows
         ),
@@ -2525,6 +2625,9 @@ def main() -> None:
             int(row["exact_refresh_exact_duplicates"]) for row in step_rows
         ),
         "exact_refresh_hash_seconds_total": sum(
+            float(row["exact_refresh_hash_seconds"]) for row in step_rows
+        ),
+        "exact_refresh_identity_seconds_total": sum(
             float(row["exact_refresh_hash_seconds"]) for row in step_rows
         ),
         "checkpoint_audit_count": args.checkpoint_audit_count,

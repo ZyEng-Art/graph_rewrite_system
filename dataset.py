@@ -88,6 +88,33 @@ class RuleMetadata:
             xfer_destinations=tuple(payload["xfer_destinations"]),
         )
 
+    def unique_inverse_xfer_ids(self) -> tuple[int, ...]:
+        """Return unambiguous reverse-pattern xfers, or -1 when uncertain.
+
+        The compact matcher metadata does not expose Quartz parameter maps.  A
+        reverse is therefore enabled only when exactly one xfer has the swapped
+        normalized source/destination pattern.  Ambiguous and self-reversing
+        patterns are deliberately left unpruned.
+        """
+        def normalize(pattern: str) -> str:
+            return "".join(pattern.split()).rstrip(";")
+
+        sources = tuple(map(normalize, self.xfer_sources))
+        destinations = tuple(map(normalize, self.xfer_destinations))
+        by_pair: dict[tuple[str, str], list[int]] = {}
+        for xfer_id, pair in enumerate(zip(sources, destinations)):
+            by_pair.setdefault(pair, []).append(xfer_id)
+        result = []
+        for xfer_id, (source, destination) in enumerate(
+            zip(sources, destinations)
+        ):
+            candidates = by_pair.get((destination, source), ())
+            inverse = candidates[0] if len(candidates) == 1 else -1
+            if inverse == xfer_id:
+                inverse = -1
+            result.append(inverse)
+        return tuple(result)
+
 
 def action_destination_types(action: dict, rules: RuleMetadata) -> tuple[int, ...]:
     """Return the post-normalization destination types for one concrete action.

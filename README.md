@@ -124,6 +124,15 @@ takes 106.18 seconds and finishes 1000/1000 exact-valid at 253 gates. Without
 recovery it takes 66.21 seconds but is only 823/1000 valid; the older four-step
 recovery policy takes 138.77 seconds.
 
+Exact refreshes now deduplicate by a complete per-physical-qubit operation
+trace rather than `Graph.hash()`. The identity is invariant to serialization
+order of independent actions while retaining gate parameters, operand roles,
+physical wiring, and dependent order. A native Quartz patch is provided at
+`quartz_patches/exact_graph_key.patch`; without that patch the rollout uses a
+correct but slower QASM fallback. The Barenco/GF duplicate diagnosis, H100 A/B,
+reference-trajectory safety audit, and rebuild instructions are in
+`benchmark_results/exact_identity_dedup_findings_20260906.md`.
+
 A strict same-checkpoint cache A/B on the actual 1000-state `hwb6` beams
 confirms why short searches looked similar. With both paths at microbatch 512
 and inference under `torch.no_grad()`, depth 8 is effectively tied (paged is

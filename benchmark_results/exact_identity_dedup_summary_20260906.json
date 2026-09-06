@@ -1,0 +1,137 @@
+{
+  "date": "2026-09-06",
+  "decision": {
+    "default_refresh_identity": "quartz_wire_trace_v1",
+    "fallback_identity": "canonical_qasm_per_physical_wire_trace",
+    "legacy_quartz_hash_default": false,
+    "direct_inverse_pruning_default": false,
+    "canonical_action_ordering_default": false,
+    "reason": "Deduplicate materialized circuit states with complete deterministic keys. Do not predict sequence equivalence or reject actions with heuristics that fail authoritative trajectory audits."
+  },
+  "barenco_duplicate_diagnosis_without_exact_refresh_dedup": {
+    "beam_1000_depth_3": {
+      "histories": 1000,
+      "unique_exact_final_states": 320,
+      "duplicate_excess": 680,
+      "raw_qasm_unique": 380,
+      "extra_duplicates_found_by_independent_order_invariance": 60,
+      "quartz_proven_commutable_adjacent_occurrences": 582,
+      "histories_with_commutable_adjacent_pair": 464
+    },
+    "beam_256_depth_8": {
+      "histories": 256,
+      "unique_exact_final_states": 11,
+      "duplicate_excess": 245,
+      "direct_inverse_occurrences": 926,
+      "histories_with_direct_inverse": 256,
+      "histories_with_commutable_adjacent_pair": 241
+    }
+  },
+  "saved_high_quality_trajectory_audit": {
+    "barenco_38_3": {
+      "states": 17,
+      "actions": 16,
+      "unique_exact_states": 15,
+      "duplicate_step_groups": [[4, 6], [11, 13]],
+      "native_qasm_partition_mismatches": 0,
+      "cost_mismatches": 0
+    },
+    "gf2_6_mult_370_2": {
+      "states": 272,
+      "actions": 271,
+      "unique_exact_states": 136,
+      "duplicate_excess": 136,
+      "native_qasm_partition_mismatches": 0,
+      "cost_mismatches": 0
+    },
+    "interpretation": "The saved paths themselves contain exact return-to-state loops. Keeping the first occurrence preserves circuit-level reachability and leaves more remaining depth, although a learned history-conditioned proposal policy can score the retained representative differently."
+  },
+  "reference_action_filter_audit": {
+    "barenco_38_3": {
+      "windows": 2,
+      "steps": 16,
+      "direct_inverse_rejections": 0,
+      "canonical_order_rejections": 0
+    },
+    "gf2_6_mult_370_2": {
+      "windows": 34,
+      "steps": 271,
+      "direct_inverse_rejections": 23,
+      "canonical_order_rejections": 11
+    },
+    "decision": "Both action-history filters remain disabled by default."
+  },
+  "h100_native_exact_vs_legacy_quartz_hash_beam_1000_depth_3": {
+    "protocol": "Three runs per identity mode; search time excludes final replay audit; medians reported.",
+    "gf2_6_mult": {
+      "native_exact_search_seconds_median": 6.058531636372209,
+      "legacy_hash_search_seconds_median": 6.197733320295811,
+      "native_exact_end_to_end_reduction_percent": 2.246009576884443,
+      "native_exact_identity_seconds_median": 0.5579446516931057,
+      "legacy_hash_identity_seconds_median": 0.6911008059978485,
+      "native_exact_identity_time_reduction_percent": 19.267254957471046,
+      "native_exact_microseconds_per_call_median": 271.50591323265485,
+      "legacy_hash_microseconds_per_call_median": 336.302095376082,
+      "native_exact_identity_share_of_search_percent": 9.209238891210902,
+      "native_exact_replayed_valid": 2054,
+      "native_exact_duplicates": 1054,
+      "native_exact_unique_accepted": 1000
+    },
+    "barenco_38_3": {
+      "native_exact_search_seconds_median": 7.261724790558219,
+      "legacy_hash_search_seconds_median": 7.755046999081969,
+      "native_exact_end_to_end_reduction_percent": 6.361305206559664,
+      "native_exact_identity_seconds_median": 0.06468836404383183,
+      "legacy_hash_identity_seconds_median": 0.07730839401483536,
+      "native_exact_total_identity_time_reduction_percent": 16.324268705648922,
+      "native_exact_microseconds_per_call_median": 26.232102207555485,
+      "legacy_hash_microseconds_per_call_median": 30.305132894878618,
+      "native_exact_per_call_reduction_percent": 13.439885102618854,
+      "native_exact_identity_share_of_search_percent": 0.8908126637894679,
+      "native_exact_replayed_valid": 2465,
+      "native_exact_duplicates": 1465,
+      "native_exact_unique_accepted": 1000,
+      "legacy_hash_replayed_valid_typical": 2550,
+      "legacy_hash_duplicates_typical": 1550,
+      "legacy_hash_false_merge_evidence": {
+        "audited_native_exact_unique": 1000,
+        "audited_quartz_hash_unique": 950
+      }
+    }
+  },
+  "h100_depth_16_refresh_8_regression": {
+    "gf2_6_mult": {
+      "search_seconds": 4.645090460777283,
+      "identity_seconds": 0.18408571928739548,
+      "identity_calls_including_root": 692,
+      "replayed_valid": 691,
+      "duplicates_removed": 179,
+      "unique_accepted": 512,
+      "final_beam": 256,
+      "final_audit_valid": 256,
+      "native_qasm_partition_mismatches": 0
+    },
+    "barenco_38_3": {
+      "search_seconds": 7.751818438991904,
+      "identity_seconds": 0.08790682815015316,
+      "identity_calls_including_root": 3349,
+      "replayed_valid": 3348,
+      "duplicates_removed": 3196,
+      "duplicate_fraction_of_valid_replays": 0.9545997610513739,
+      "unique_accepted": 152,
+      "final_beam": 112,
+      "final_audit_valid": 112,
+      "audited_native_exact_unique": 112,
+      "audited_quartz_hash_unique": 110,
+      "native_qasm_partition_mismatches": 0
+    }
+  },
+  "validation": {
+    "unit_tests": "49/49 passed",
+    "native_integration": "passed",
+    "barenco_exact_transition_replay": "16/16",
+    "gf_exact_transition_replay": "271/271",
+    "barenco_indexed_topology_replay": "16/16",
+    "gf_indexed_topology_replay": "271/271"
+  }
+}

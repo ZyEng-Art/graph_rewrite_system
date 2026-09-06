@@ -1,0 +1,404 @@
+{
+  "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_barenco38_3_normalized_w8_20260906.pt": {
+    "trajectory_windows": 2,
+    "steps": 16,
+    "unique_inverse_xfers": 4482,
+    "independent_adjacent_pairs": 0,
+    "direct_inverse_rejections": 0,
+    "canonical_trace_order_rejections": 0,
+    "direct_inverse_rows": [],
+    "canonical_trace_order_rows": []
+  },
+  "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_gf370_2_normalized_w8_20260905.pt": {
+    "trajectory_windows": 34,
+    "steps": 271,
+    "unique_inverse_xfers": 4482,
+    "independent_adjacent_pairs": 18,
+    "direct_inverse_rejections": 23,
+    "canonical_trace_order_rejections": 11,
+    "direct_inverse_rows": [
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=0:8",
+        "offset": 3,
+        "step": 3,
+        "previous_xfer_id": 822,
+        "xfer_id": 823,
+        "source_slots": [
+          377,
+          378,
+          379
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=0:8",
+        "offset": 5,
+        "step": 5,
+        "previous_xfer_id": 4394,
+        "xfer_id": 4397,
+        "source_slots": [
+          382,
+          383
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=0:8",
+        "offset": 6,
+        "step": 6,
+        "previous_xfer_id": 4397,
+        "xfer_id": 4394,
+        "source_slots": [
+          384,
+          385
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=16:24",
+        "offset": 2,
+        "step": 2,
+        "previous_xfer_id": 42,
+        "xfer_id": 43,
+        "source_slots": [
+          411,
+          412,
+          413,
+          414
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=48:56",
+        "offset": 4,
+        "step": 4,
+        "previous_xfer_id": 120,
+        "xfer_id": 121,
+        "source_slots": [
+          497,
+          498,
+          499
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=72:80",
+        "offset": 1,
+        "step": 1,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          550,
+          551,
+          552
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=72:80",
+        "offset": 4,
+        "step": 4,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          557,
+          558,
+          559
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=72:80",
+        "offset": 7,
+        "step": 7,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          564,
+          565,
+          566
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=80:88",
+        "offset": 1,
+        "step": 1,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          569,
+          570,
+          571
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=96:104",
+        "offset": 5,
+        "step": 5,
+        "previous_xfer_id": 121,
+        "xfer_id": 120,
+        "source_slots": [
+          620,
+          621,
+          622
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=120:128",
+        "offset": 2,
+        "step": 2,
+        "previous_xfer_id": 4385,
+        "xfer_id": 4382,
+        "source_slots": [
+          673,
+          674
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=120:128",
+        "offset": 3,
+        "step": 3,
+        "previous_xfer_id": 4382,
+        "xfer_id": 4385,
+        "source_slots": [
+          675,
+          676
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=120:128",
+        "offset": 4,
+        "step": 4,
+        "previous_xfer_id": 4385,
+        "xfer_id": 4382,
+        "source_slots": [
+          677,
+          678
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=136:144",
+        "offset": 3,
+        "step": 3,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          712,
+          713,
+          714
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=136:144",
+        "offset": 7,
+        "step": 7,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          721,
+          722,
+          723
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=144:152",
+        "offset": 1,
+        "step": 1,
+        "previous_xfer_id": 3435,
+        "xfer_id": 3438,
+        "source_slots": [
+          726,
+          727,
+          728
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=144:152",
+        "offset": 2,
+        "step": 2,
+        "previous_xfer_id": 3438,
+        "xfer_id": 3435,
+        "source_slots": [
+          729,
+          730
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=160:168",
+        "offset": 4,
+        "step": 4,
+        "previous_xfer_id": 3428,
+        "xfer_id": 3430,
+        "source_slots": [
+          773,
+          774,
+          775
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=184:192",
+        "offset": 7,
+        "step": 7,
+        "previous_xfer_id": 4394,
+        "xfer_id": 4397,
+        "source_slots": [
+          838,
+          839
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=192:200",
+        "offset": 1,
+        "step": 1,
+        "previous_xfer_id": 4397,
+        "xfer_id": 4394,
+        "source_slots": [
+          842,
+          843
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=216:224",
+        "offset": 7,
+        "step": 7,
+        "previous_xfer_id": 4382,
+        "xfer_id": 4385,
+        "source_slots": [
+          907,
+          908
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=240:248",
+        "offset": 6,
+        "step": 6,
+        "previous_xfer_id": 3422,
+        "xfer_id": 3424,
+        "source_slots": [
+          958,
+          959,
+          960
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=264:271",
+        "offset": 2,
+        "step": 2,
+        "previous_xfer_id": 4382,
+        "xfer_id": 4385,
+        "source_slots": [
+          1007,
+          1008
+        ]
+      }
+    ],
+    "canonical_trace_order_rows": [
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=8:16",
+        "offset": 2,
+        "step": 2,
+        "xfer_id": 120,
+        "source_slots": [
+          386,
+          375,
+          388
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=8:16",
+        "offset": 6,
+        "step": 6,
+        "xfer_id": 4385,
+        "source_slots": [
+          156,
+          157
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=8:16",
+        "offset": 7,
+        "step": 7,
+        "xfer_id": 4370,
+        "source_slots": [
+          68,
+          389
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=16:24",
+        "offset": 3,
+        "step": 3,
+        "xfer_id": 4382,
+        "source_slots": [
+          401,
+          402
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=16:24",
+        "offset": 4,
+        "step": 4,
+        "xfer_id": 4370,
+        "source_slots": [
+          409,
+          415
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=16:24",
+        "offset": 6,
+        "step": 6,
+        "xfer_id": 4370,
+        "source_slots": [
+          36,
+          39
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=32:40",
+        "offset": 1,
+        "step": 1,
+        "xfer_id": 120,
+        "source_slots": [
+          431,
+          416,
+          380
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=48:56",
+        "offset": 6,
+        "step": 6,
+        "xfer_id": 120,
+        "source_slots": [
+          500,
+          501,
+          502
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=72:80",
+        "offset": 3,
+        "step": 3,
+        "xfer_id": 3417,
+        "source_slots": [
+          553,
+          554
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=72:80",
+        "offset": 6,
+        "step": 6,
+        "xfer_id": 3417,
+        "source_slots": [
+          560,
+          561
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0#window=176:184",
+        "offset": 1,
+        "step": 1,
+        "xfer_id": 812,
+        "source_slots": [
+          762,
+          718
+        ]
+      }
+    ]
+  }
+}

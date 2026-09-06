@@ -41,6 +41,7 @@ class LazyAction:
     xfer_id: int
     source_slots: tuple[int, ...]
     destination_slots: tuple[int, ...]
+    conflict_slots: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,64 @@ class IndexedRewrite:
     fingerprint: int
     removed_edges: frozenset[tuple[int, int, int, int]]
     added_edges: frozenset[tuple[int, int, int, int]]
+
+
+def is_direct_inverse_action(
+    history: tuple[LazyAction, ...],
+    xfer_id: int,
+    source_slots: tuple[int, ...],
+    inverse_xfer_ids: tuple[int, ...] | None,
+) -> bool:
+    """Whether an action unambiguously reverses the immediately prior rewrite."""
+    if not history or inverse_xfer_ids is None:
+        return False
+    previous = history[-1]
+    if previous.xfer_id >= len(inverse_xfer_ids):
+        return False
+    return (
+        inverse_xfer_ids[previous.xfer_id] == xfer_id
+        and source_slots == previous.destination_slots
+    )
+
+
+def action_conflict_slots(
+    source_slots: tuple[int, ...],
+    destination_slots: tuple[int, ...],
+    removed_edges,
+    added_edges,
+) -> tuple[int, ...]:
+    """Conservative rewrite footprint used to prove actions are independent."""
+    footprint = set(source_slots) | set(destination_slots)
+    for src, dst, _, _ in removed_edges:
+        footprint.add(int(src))
+        footprint.add(int(dst))
+    for src, dst, _, _ in added_edges:
+        footprint.add(int(src))
+        footprint.add(int(dst))
+    return tuple(sorted(footprint))
+
+
+def violates_canonical_trace_order(
+    history: tuple[LazyAction, ...], candidate: LazyAction
+) -> bool:
+    """Reject a noncanonical permutation across a proven-independent suffix.
+
+    A missing conflict footprint is treated as an ordering barrier.  This keeps
+    imported/legacy histories safe and makes the reduction conservative.
+    """
+    candidate_footprint = set(candidate.conflict_slots)
+    if not candidate_footprint:
+        return False
+    candidate_key = (candidate.xfer_id, candidate.source_slots)
+    for previous in reversed(history):
+        if not previous.conflict_slots:
+            break
+        if candidate_footprint.intersection(previous.conflict_slots):
+            break
+        previous_key = (previous.xfer_id, previous.source_slots)
+        if previous_key > candidate_key:
+            return True
+    return False
 
 
 def _component_hash(kind: str, values: tuple) -> int:
@@ -441,7 +500,19 @@ def lazy_child_indexed(
     source,
     destination,
     seen: set,
+    *,
+    inverse_xfer_ids: tuple[int, ...] | None = None,
+    canonical_trace_ordering: bool = False,
+    pruning_stats: dict[str, int] | None = None,
 ) -> tuple[BeamState | None, int | None, bool]:
+    if inverse_xfer_ids is not None and is_direct_inverse_action(
+        parent.history, proposal.xfer_id, proposal.binding, inverse_xfer_ids
+    ):
+        if pruning_stats is not None:
+            pruning_stats["direct_inverse_rejections"] = (
+                pruning_stats.get("direct_inverse_rejections", 0) + 1
+            )
+        return None, None, True
     parent_topology = (
         parent.topology_index
         if parent.topology_index is not None
@@ -460,6 +531,32 @@ def lazy_child_indexed(
         )
     except ValueError:
         return None, None, False
+    changed_edges = rewrite.removed_edges.symmetric_difference(
+        rewrite.added_edges
+    )
+    action = LazyAction(
+        xfer_id=proposal.xfer_id,
+        source_slots=proposal.binding,
+        destination_slots=destination_slots,
+        conflict_slots=(
+            action_conflict_slots(
+                proposal.binding,
+                destination_slots,
+                rewrite.removed_edges,
+                rewrite.added_edges,
+            )
+            if canonical_trace_ordering
+            else ()
+        ),
+    )
+    if canonical_trace_ordering and violates_canonical_trace_order(
+        parent.history, action
+    ):
+        if pruning_stats is not None:
+            pruning_stats["canonical_trace_order_rejections"] = (
+                pruning_stats.get("canonical_trace_order_rejections", 0) + 1
+            )
+        return None, None, True
     fingerprint = rewrite.fingerprint
     if fingerprint in seen:
         return None, fingerprint, True
@@ -472,9 +569,6 @@ def lazy_child_indexed(
         rewrite,
     )
     removed = set(proposal.binding)
-    changed_edges = rewrite.removed_edges.symmetric_difference(
-        rewrite.added_edges
-    )
     live = set(child_topology.nodes)
     destination_set = set(destination_slots)
     core = set(destination_set)
@@ -501,11 +595,6 @@ def lazy_child_indexed(
             f"gate delta mismatch: expected {proposal.next_gate_count}, "
             f"got {len(child_topology.nodes)}"
         )
-    action = LazyAction(
-        xfer_id=proposal.xfer_id,
-        source_slots=proposal.binding,
-        destination_slots=destination_slots,
-    )
     return (
         BeamState(
             graph=None,
@@ -613,6 +702,10 @@ def lazy_child(
     dedup_mode: str,
     seen: set,
     topology_backend: str = "legacy",
+    *,
+    inverse_xfer_ids: tuple[int, ...] | None = None,
+    canonical_trace_ordering: bool = False,
+    pruning_stats: dict[str, int] | None = None,
 ) -> tuple[BeamState | None, bytes | int | None, bool]:
     if proposal.binding is None:
         raise ValueError("lazy rollout requires a complete predicted binding")
@@ -624,8 +717,23 @@ def lazy_child(
         and not structural_recheck
     ):
         return lazy_child_indexed(
-            parent, proposal, source, destination, seen
+            parent,
+            proposal,
+            source,
+            destination,
+            seen,
+            inverse_xfer_ids=inverse_xfer_ids,
+            canonical_trace_ordering=canonical_trace_ordering,
+            pruning_stats=pruning_stats,
         )
+    if inverse_xfer_ids is not None and is_direct_inverse_action(
+        parent.history, proposal.xfer_id, proposal.binding, inverse_xfer_ids
+    ):
+        if pruning_stats is not None:
+            pruning_stats["direct_inverse_rejections"] = (
+                pruning_stats.get("direct_inverse_rejections", 0) + 1
+            )
+        return None, None, True
     circuit = IncrementalCircuit(parent.snapshot)
     before_nodes = set(circuit.nodes)
     before_edges = circuit.edges
@@ -640,6 +748,31 @@ def lazy_child(
         circuit.apply(source, destination, proposal.binding, destination_slots)
     except ValueError:
         return None, None, False
+    removed = before_nodes - set(circuit.nodes)
+    changed_edges = before_edges.symmetric_difference(circuit.edges)
+    action = LazyAction(
+        xfer_id=proposal.xfer_id,
+        source_slots=proposal.binding,
+        destination_slots=destination_slots,
+        conflict_slots=(
+            action_conflict_slots(
+                proposal.binding,
+                destination_slots,
+                before_edges.difference(circuit.edges),
+                circuit.edges.difference(before_edges),
+            )
+            if canonical_trace_ordering
+            else ()
+        ),
+    )
+    if canonical_trace_ordering and violates_canonical_trace_order(
+        parent.history, action
+    ):
+        if pruning_stats is not None:
+            pruning_stats["canonical_trace_order_rejections"] = (
+                pruning_stats.get("canonical_trace_order_rejections", 0) + 1
+            )
+        return None, None, True
     if dedup_mode == "canonical":
         after = {
             "nodes": sorted(
@@ -647,7 +780,14 @@ def lazy_child(
             ),
             "edges": sorted(circuit.edges),
         }
-        fingerprint = topology_digest(after)
+        try:
+            fingerprint = topology_digest(after)
+        except RuntimeError:
+            if pruning_stats is not None:
+                pruning_stats["canonical_cycle_rejections"] = (
+                    pruning_stats.get("canonical_cycle_rejections", 0) + 1
+                )
+            return None, None, False
     elif dedup_mode == "raw":
         fingerprint = raw_topology_hash_components(circuit.nodes, circuit.edges)
     else:
@@ -662,8 +802,6 @@ def lazy_child(
         ),
         "edges": sorted(circuit.edges),
     }
-    removed = before_nodes - set(circuit.nodes)
-    changed_edges = before_edges.symmetric_difference(circuit.edges)
     live = set(circuit.nodes)
     destination_set = set(destination_slots)
     core = set(destination_set)
@@ -689,11 +827,6 @@ def lazy_child(
             f"gate delta mismatch: expected {proposal.next_gate_count}, "
             f"got {len(circuit.nodes)}"
         )
-    action = LazyAction(
-        xfer_id=proposal.xfer_id,
-        source_slots=proposal.binding,
-        destination_slots=destination_slots,
-    )
     return (
         BeamState(
             graph=None,
