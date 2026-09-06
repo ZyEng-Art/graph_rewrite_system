@@ -112,3 +112,14 @@ The four raw search results are
 `barenco38_3_b256_d8_proposal_{full,preselect}_final_20260906.json` and
 `gf370_2_b256_d8_proposal_{full,preselect}_final_20260906.json` in
 `benchmark_results/`.
+
+## End-to-end follow-up
+
+The matcher/proposal numbers above are not optimizer-level speedups. A later
+beam-1000, depth-3, microbatch-512 comparison includes proposal processing,
+successor construction, deduplication, cache advance, and final exact Quartz
+refresh. Its median end-to-end speedup is 88.80x on GF but only 1.27x on the
+small Barenco start; the latter requires 64x proposal overgeneration to refill
+a 1,000-state beam after exact validation. Full timing boundaries, three GPU
+repetitions, legality audits, and the exact-diversity caveat are in
+`benchmark_results/end_to_end_throughput_findings_20260906.md`.

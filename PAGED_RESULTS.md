@@ -1401,3 +1401,30 @@ protocol. Detailed mutually exclusive stage percentages, absolute time per
 transition, source/environment identity, and remote raw-log paths are in
 `benchmark_results/quarl_original_rollout_size_profile_summary_20260905.json`
 and `benchmark_results/quarl_original_rollout_size_profile_findings_20260905.md`.
+
+## CPU Quartz versus GPU paged search end-to-end throughput
+
+The historical batch-512 matcher comparison has now been followed by an actual
+beam-search A/B at beam 1000, depth 3, and GPU microbatch 512. The CPU timer
+includes exact Quartz matching, candidate selection, real graph copy/apply, and
+exact hash deduplication. The GPU timer includes model matching, full GPU
+proposal expansion/ranking, selected-only D2H, lazy topology/update/hash,
+paged-cache advance, and the final exact Quartz refresh.
+
+On the 371-gate GF trajectory start, CPU Quartz required 276.195 seconds versus
+a 3.110-second median over three GPU runs, an end-to-end **88.80x** speedup.
+On the 39-gate Barenco start, CPU Quartz required 4.076 seconds versus a
+3.212-second GPU median, only **1.27x**. Every GPU repeat returned 1,000/1,000
+Quartz-replayable and topology-exact trajectories. Counting a redundant
+second replay audit of all final states gives conservative speedups of 32.97x
+and 1.09x, respectively.
+
+Barenco needed proposal factor 64 and refresh factor 32 to fill the final beam;
+the default factor-8 run retained only 162 valid states after refresh. Also,
+the final 1,000 GPU states contain only 524 unique exact graph hashes for GF and
+312 for Barenco because raw speculative states can merge after Quartz
+normalization. Therefore these results measure time to a full legal beam with
+the same best gate count, not identical beam diversity or search distribution.
+See `benchmark_results/end_to_end_throughput_findings_20260906.md` and
+`benchmark_results/end_to_end_throughput_summary_20260906.json` for stage
+timings, raw-result checksums, and interpretation limits.

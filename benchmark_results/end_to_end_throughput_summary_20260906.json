@@ -1,0 +1,144 @@
+{
+  "date": "2026-09-06",
+  "benchmark_scope": "end-to-end search after initialization",
+  "source_commit": "8c1808664c2ee4ff83e1a52a495ef6a289faff08",
+  "config": {
+    "beam_size": 1000,
+    "depth": 3,
+    "gpu_microbatch": 512,
+    "quartz_xfers": 4700,
+    "target_recall": 0.999,
+    "max_source_matches": 8192,
+    "max_actions_per_parent": 128,
+    "max_gate_increase": 1,
+    "ranking": "gate",
+    "eliminate_rotation": true,
+    "gpu_proposal_backend": "gpu",
+    "gpu_proposal_expansion": "full",
+    "gpu_state_batch_backend": "tensorized",
+    "gpu_lazy_topology_backend": "indexed",
+    "gpu_dedup_mode": "raw",
+    "refresh_interval": 3,
+    "device": "NVIDIA H100 80GB HBM3",
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311.pt",
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311_calibration_r999.json"
+  },
+  "timing_boundary": {
+    "excluded": [
+      "process startup",
+      "QASM and dataset loading",
+      "Quartz context construction",
+      "model and calibration loading"
+    ],
+    "cpu_search": "exact Quartz matching, proposal selection, Quartz graph copy/apply, and exact hash deduplication",
+    "gpu_search": "model matching, GPU proposal expansion/ranking, selected-proposal D2H, lazy topology/update/hash, cache advance, and final exact Quartz refresh",
+    "independent_audit": "a redundant second Quartz replay of every final trajectory; excluded from primary search time"
+  },
+  "results": {
+    "gf2^6_mult_370_2": {
+      "initial_gate_count": 371,
+      "best_cpu_gate_count": 371,
+      "best_gpu_exact_gate_count": 371,
+      "cpu": {
+        "search_seconds": 276.1947951829061,
+        "final_beam_size": 1000,
+        "accepted_actions": 2655,
+        "accepted_actions_per_second": 9.612780712401781,
+        "unique_graphs_seen": 2656,
+        "exact_match_seconds": 256.41273687174544,
+        "proposal_seconds": 4.497058124747127,
+        "quartz_apply_seconds": 14.668227192945778,
+        "result": "benchmark_results/e2e_gf370_2_cpu_quartz_b1000_d3_20260906.json",
+        "sha256": "23cb19f2a764db53aca2892aea25236cfd2f3b380a0822e2dcb904d6c1ae6795"
+      },
+      "gpu": {
+        "proposal_factor": 8,
+        "refresh_factor": 2,
+        "search_seconds_repetitions": [3.1099527201149613, 3.176685953978449, 3.1103835781104863],
+        "search_seconds_median": 3.1103835781104863,
+        "speedup_vs_cpu_search": 88.7976637758262,
+        "search_plus_audit_seconds_repetitions": [8.360983514226973, 8.37655204697512, 8.406713822158053],
+        "search_plus_audit_seconds_median": 8.37655204697512,
+        "conservative_speedup_including_independent_audit": 32.9723725984182,
+        "final_beam_size_each_repeat": 1000,
+        "valid_trajectories_each_repeat": 1000,
+        "exact_topology_matches_each_repeat": 1000,
+        "unique_exact_graph_hashes_each_repeat": 524,
+        "first_run_stage_seconds": {
+          "model_match": 0.7864285940304399,
+          "proposal": 0.08902066014707089,
+          "lazy_update_and_hash": 0.8013673471286893,
+          "exact_refresh": 1.2556993761099875
+        },
+        "results": [
+          {"path": "benchmark_results/e2e_gf370_2_gpu_b1000_d3_refresh3_20260906.json", "sha256": "ea152ae5c129c609101ff8c578b570a01552ccedcd49ecff0026e94d00b44943"},
+          {"path": "benchmark_results/e2e_gf370_2_gpu_b1000_d3_refresh3_r2_20260906.json", "sha256": "f679137f67985f7e3e81270d0e6fa4e18fc75efdeb8c4c7fb75caf813b43d4a8"},
+          {"path": "benchmark_results/e2e_gf370_2_gpu_b1000_d3_refresh3_r3_20260906.json", "sha256": "4fd9e5bf7e77b4d83e4da41ca796712521874d2b3059c0fd6283016d4ea6846a"}
+        ]
+      }
+    },
+    "barenco_38_3": {
+      "initial_gate_count": 39,
+      "best_cpu_gate_count": 39,
+      "best_gpu_exact_gate_count": 39,
+      "cpu": {
+        "search_seconds": 4.075737416977063,
+        "final_beam_size": 1000,
+        "accepted_actions": 1138,
+        "accepted_actions_per_second": 279.2132769053714,
+        "unique_graphs_seen": 1139,
+        "exact_match_seconds": 2.1084090049844235,
+        "proposal_seconds": 0.014683786313980816,
+        "quartz_apply_seconds": 1.9476811408530921,
+        "result": "benchmark_results/e2e_barenco38_3_cpu_quartz_b1000_d3_20260906.json",
+        "sha256": "dfb0981286a7a25190e31b82d6620a9beeefd97a0b89030c9c364edf008c245e"
+      },
+      "gpu": {
+        "proposal_factor": 64,
+        "refresh_factor": 32,
+        "reason_for_extra_overgeneration": "factor 8 / refresh factor 2 retained only 162 exact-valid final states; larger factors were required to return a full 1000-state beam",
+        "factor8_diagnostic": {
+          "search_seconds": 1.1182914730161428,
+          "final_beam_size": 162,
+          "valid_trajectories": 162,
+          "path": "benchmark_results/e2e_barenco38_3_gpu_b1000_d3_refresh3_20260906.json",
+          "sha256": "a48acceb10c898f1df75382f6607018e977c1f4fc224164c70369fddba72c585"
+        },
+        "search_seconds_repetitions": [3.178447637008503, 3.212416644906625, 3.237542364979163],
+        "search_seconds_median": 3.212416644906625,
+        "speedup_vs_cpu_search": 1.26874495667903,
+        "search_plus_audit_seconds_repetitions": [3.716844930080697, 3.7533667548559605, 3.7708376389928164],
+        "search_plus_audit_seconds_median": 3.7533667548559605,
+        "conservative_speedup_including_independent_audit": 1.08588839918296,
+        "final_beam_size_each_repeat": 1000,
+        "valid_trajectories_each_repeat": 1000,
+        "exact_topology_matches_each_repeat": 1000,
+        "unique_exact_graph_hashes_each_repeat": 312,
+        "first_run_stage_seconds": {
+          "model_match": 0.38384365825913846,
+          "proposal": 0.1140156202018261,
+          "lazy_update_and_hash": 1.962556510232389,
+          "exact_refresh": 0.2786459010094404
+        },
+        "final_step": {
+          "eligible_actions_before_parent_cap": 200835,
+          "proposals_after_caps": 64000,
+          "attempted_speculative_actions": 64000,
+          "duplicate_speculative_successors": 46309,
+          "exact_refresh_attempted": 13829,
+          "exact_refresh_valid": 1000
+        },
+        "results": [
+          {"path": "benchmark_results/e2e_barenco38_3_gpu_b1000_d3_refresh3_rf32_pf64_20260906.json", "sha256": "c6c4737c39da7ac26d6d927b2e94a7742e5d236e641bb645e47265cd8fd46858"},
+          {"path": "benchmark_results/e2e_barenco38_3_gpu_b1000_d3_refresh3_rf32_pf64_r2_20260906.json", "sha256": "cda87088304299c9cad9ca4e0ae1ce064130920c6683020db999721a8046c6b3"},
+          {"path": "benchmark_results/e2e_barenco38_3_gpu_b1000_d3_refresh3_rf32_pf64_r3_20260906.json", "sha256": "88eb84c31eecaac0f6a48f975ff30bfd0c56e521533b3039a2e46149157a832c"}
+        ]
+      }
+    }
+  },
+  "interpretation": {
+    "primary_claim": "time to complete depth 3 and return a full exactly replayable 1000-state beam",
+    "not_claimed": "identical final beam or identical search distribution",
+    "quality_caveat": "raw speculative deduplication permits distinct histories to collapse to the same exact graph after Quartz normalization; strict equal-diversity comparison requires exact-hash deduplication and refill during refresh"
+  }
+}
