@@ -1,0 +1,109 @@
+{
+  "date": "2026-09-06",
+  "scope": "CPU Quartz exact matching versus the learned matcher, always starting from untouched input QASM",
+  "protocol": {
+    "beam_size": 1000,
+    "max_actions_per_parent": 128,
+    "proposal_factor": 16,
+    "max_gate_increase": 3,
+    "eliminate_rotation_after_each_apply": true,
+    "dedup_identity": "exact",
+    "model_target_recall": 0.999,
+    "model_microbatch": 512,
+    "rule_metadata_role": "rewrite vocabulary only; no trajectory state is used as a search root"
+  },
+  "inputs": {
+    "barenco_tof_3": {
+      "initial_gate_count": 58,
+      "known_target_gate_count": 35
+    },
+    "gf2^6_mult": {
+      "initial_gate_count": 495,
+      "known_target_gate_count": 369
+    }
+  },
+  "batch_512_candidate_throughput": {
+    "barenco_tof_3": {
+      "cpu_quartz_states_per_second": 46.04414537568295,
+      "gpu_full_proposal_states_per_second": 15695.975352882693,
+      "gpu_full_proposal_speedup": 340.8897097517229,
+      "gpu_host_materialized_states_per_second": 2399.877868300502,
+      "gpu_host_materialized_speedup": 52.12123818825263,
+      "gpu_including_one_time_tensor_preparation_states_per_second": 923.3216202002516,
+      "gpu_including_one_time_tensor_preparation_speedup": 20.0529646639479
+    },
+    "gf2^6_mult": {
+      "cpu_quartz_states_per_second": 5.159270478905812,
+      "gpu_full_proposal_states_per_second": 4262.509220708199,
+      "gpu_full_proposal_speedup": 826.1844844413351,
+      "gpu_host_materialized_states_per_second": 229.6862259915026,
+      "gpu_host_materialized_speedup": 44.51912861141851,
+      "gpu_including_one_time_tensor_preparation_states_per_second": 124.25393592708046,
+      "gpu_including_one_time_tensor_preparation_speedup": 24.0836250851947
+    }
+  },
+  "depth_8_exact_apply": {
+    "barenco_tof_3": {
+      "cpu_quartz": {
+        "gate_counts": [58, 55],
+        "total_seconds": 156.27929127402604,
+        "first_56_seconds": 56.8178058990743,
+        "first_55_seconds": 156.27520819497295
+      },
+      "model": {
+        "gate_counts": [58, 56],
+        "total_seconds": 31.567656848579645,
+        "first_56_seconds": 12.364569492638111
+      },
+      "full_budget_speedup": 4.95061423227102,
+      "same_quality_56_gate_speedup": 4.59521101263604,
+      "quality_equal": false
+    },
+    "gf2^6_mult": {
+      "cpu_quartz": {
+        "gate_counts": [495, 485],
+        "total_seconds": 1445.6173836330418,
+        "first_485_seconds": 821.5198248457164
+      },
+      "model": {
+        "gate_counts": [495, 485],
+        "total_seconds": 133.05795521475375,
+        "first_485_seconds": 82.80473753623664
+      },
+      "full_budget_speedup": 10.864569362274016,
+      "same_quality_485_gate_speedup": 9.92116935925564,
+      "quality_equal": true
+    }
+  },
+  "depth_128": {
+    "barenco_tof_3": {
+      "cpu_quartz": {
+        "gate_counts": [58, 38],
+        "best_first_seen_step": 34,
+        "best_first_seen_seconds": 755.2540177321061,
+        "total_seconds": 2554.597485803999,
+        "unique_graphs_seen": 127093,
+        "target_reached": false
+      },
+      "model": {
+        "gate_counts": [58, 38],
+        "best_first_seen_step": 36,
+        "best_first_seen_seconds": 161.2333949021995,
+        "total_seconds": 699.1664847452193,
+        "unique_graphs_seen": 122886,
+        "target_reached": false
+      },
+      "time_to_same_best_speedup": 4.6842282158124,
+      "full_budget_speedup": 3.653775662222869
+    },
+    "gf2^6_mult_model_reachability": {
+      "gate_counts": [495, 468],
+      "best_first_seen_step": 128,
+      "best_first_seen_seconds": 2754.361108120531,
+      "total_seconds": 2754.37182835117,
+      "unique_graphs_seen": 127886,
+      "target_reached": false,
+      "note": "No CPU depth-128 run; the direct CPU/model comparison is the depth-8 run."
+    }
+  }
+}

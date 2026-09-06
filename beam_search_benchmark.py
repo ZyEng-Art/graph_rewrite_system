@@ -28,7 +28,7 @@ from dataset import (
     compact_live_slots,
     RuleMetadata,
 )
-from model import S0ActionBindingModel
+from model_factory import build_model
 from threshold_inference import load_threshold_config, threshold_candidates
 from train import autocast_context, move_batch
 
@@ -161,6 +161,37 @@ def collate_states(states: list[BeamState]) -> dict:
     }
 
 
+def collate_matcher_states(states: list[BeamState], *, paged_action: bool) -> dict:
+    """Collate exact current graphs for either matcher architecture.
+
+    The paged matcher is deliberately rebased on each exact Quartz graph in
+    this benchmark.  That keeps the CPU and model modes semantically aligned:
+    both observe the same post-normalization circuit at every depth, while the
+    comparison changes only candidate enumeration.
+    """
+    batch = collate_states(states)
+    if not paged_action:
+        return batch
+    batch_size = batch["current_types"].shape[0]
+    empty_actions = torch.empty((batch_size, 0), dtype=torch.long)
+    empty_bindings = torch.empty((batch_size, 0, 0), dtype=torch.long)
+    batch.update(
+        {
+            "initial_types": batch["current_types"].clone(),
+            "edge_batch": batch["current_edge_batch"],
+            "edge_src": batch["current_edge_src"],
+            "edge_dst": batch["current_edge_dst"],
+            "edge_relation": batch["current_edge_relation"],
+            "action_xfers": empty_actions,
+            "action_sources": empty_actions.clone(),
+            "binding_slots": empty_bindings,
+            "destination_slots": empty_bindings.clone(),
+            "destination_types": empty_bindings.clone(),
+        }
+    )
+    return batch
+
+
 def exact_actions(
     state: BeamState, context
 ) -> list[tuple[int, int, tuple[int, ...] | None, float]]:
@@ -181,6 +212,8 @@ def model_matches(
     threshold_config,
     microbatch: int,
     max_candidates: int,
+    *,
+    paged_action: bool = False,
 ) -> tuple[list[list[tuple[int, int, tuple[int, ...], float]]], float]:
     output = []
     started = time.perf_counter()
@@ -188,7 +221,9 @@ def model_matches(
         source_vectors = model.retrieval_source(model.source_representations())
     for begin in range(0, len(states), microbatch):
         selected = states[begin : begin + microbatch]
-        batch = move_batch(collate_states(selected), device)
+        batch = move_batch(
+            collate_matcher_states(selected, paged_action=paged_action), device
+        )
         with autocast_context(device):
             encoded, live, gate_types = model.encode(batch)
             logits, eligible = model.match_logits(
@@ -317,6 +352,11 @@ def main() -> None:
     parser.add_argument("--max-gate-increase", type=int, default=1)
     parser.add_argument("--refresh-interval", type=int, default=0)
     parser.add_argument("--refresh-count", type=int, default=100)
+    parser.add_argument(
+        "--target-gate-count",
+        type=int,
+        help="stop after the historical best gate count is reached",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--best-qasm", type=Path)
     parser.add_argument(
@@ -369,15 +409,8 @@ def main() -> None:
     if args.mode == "model":
         checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
         train_args = checkpoint["args"]
-        model = S0ActionBindingModel(
-            rules,
-            num_xfers=len(payload["xfer_to_source"]),
-            width=train_args["width"],
-            retrieval_width=train_args["retrieval_width"],
-            graph_layers=train_args["graph_layers"],
-            current_graph_layers=train_args["current_graph_layers"],
-            use_action_history=not train_args.get("state_only", False),
-            use_locality_features=train_args.get("locality_features", False),
+        model = build_model(
+            rules, len(payload["xfer_to_source"]), train_args
         ).to(device)
         model.load_state_dict(checkpoint["model"])
         model.eval()
@@ -410,6 +443,7 @@ def main() -> None:
             threshold_config,
             args.microbatch,
             args.max_source_matches,
+            paged_action=train_args.get("architecture") == "paged_action",
         )
     else:
         graph.available_xfers_parallel(context=context, node=graph.nodes[0])
@@ -417,6 +451,12 @@ def main() -> None:
     gc.collect()
     gc.disable()
     initial_gate_count = beam[0].gate_count
+    best_state = beam[0]
+    best_first_seen_step = 0
+    best_first_seen_seconds = 0.0
+    improvement_trace = [
+        {"step": 0, "gate_count": initial_gate_count, "seconds": 0.0}
+    ]
     seen = (
         ExactGraphRegistry.seeded(graph)
         if args.dedup_identity == "exact"
@@ -436,6 +476,7 @@ def main() -> None:
                 threshold_config,
                 args.microbatch,
                 args.max_source_matches,
+                paged_action=train_args.get("architecture") == "paged_action",
             )
             action_rows: list[
                 list[tuple[int, int, tuple[int, ...] | None, float]]
@@ -544,6 +585,18 @@ def main() -> None:
         children.sort(key=lambda state: (state.gate_count, len(state.history)))
         beam = children[: args.beam_size]
         elapsed = time.perf_counter() - step_started
+        cumulative_seconds = time.perf_counter() - total_started
+        if beam[0].gate_count < best_state.gate_count:
+            best_state = beam[0]
+            best_first_seen_step = step + 1
+            best_first_seen_seconds = cumulative_seconds
+            improvement_trace.append(
+                {
+                    "step": best_first_seen_step,
+                    "gate_count": best_state.gate_count,
+                    "seconds": best_first_seen_seconds,
+                }
+            )
         matched_action_count = sum(map(len, action_rows))
         match_seconds = model_seconds + exact_seconds
         successful_applies = attempted - invalid
@@ -552,6 +605,8 @@ def main() -> None:
             "input_states": len(action_rows),
             "output_states": len(beam),
             "best_gate_count": beam[0].gate_count,
+            "global_best_gate_count": best_state.gate_count,
+            "cumulative_seconds": cumulative_seconds,
             "predicted_or_exact_actions": matched_action_count,
             "eligible_actions_before_parent_cap": total_action_candidates,
             "proposals_after_caps": len(proposals),
@@ -575,6 +630,11 @@ def main() -> None:
         }
         step_rows.append(row)
         print(json.dumps(row, sort_keys=True), flush=True)
+        if (
+            args.target_gate_count is not None
+            and best_state.gate_count <= args.target_gate_count
+        ):
+            break
 
     total_seconds = time.perf_counter() - total_started
     total_accepted = sum(row["accepted_actions"] for row in step_rows)
@@ -592,13 +652,24 @@ def main() -> None:
     )
     result = {
         "mode": args.mode,
+        "input_kind": "qasm_initial",
+        "rule_metadata": str(args.data),
+        "rule_metadata_role": "rewrite vocabulary only; not a search state",
         "eliminate_rotation": args.eliminate_rotation,
         "qasm": str(args.qasm),
         "beam_size": args.beam_size,
         "requested_depth": args.depth,
         "completed_depth": len(step_rows),
         "initial_gate_count": initial_gate_count,
-        "best_gate_count": min(state.gate_count for state in beam),
+        "best_gate_count": best_state.gate_count,
+        "best_first_seen_step": best_first_seen_step,
+        "best_first_seen_seconds": best_first_seen_seconds,
+        "improvement_trace": improvement_trace,
+        "target_gate_count": args.target_gate_count,
+        "target_reached": (
+            args.target_gate_count is not None
+            and best_state.gate_count <= args.target_gate_count
+        ),
         "final_beam_size": len(beam),
         "dedup_identity": args.dedup_identity,
         "unique_graphs_seen": len(seen),
@@ -623,7 +694,7 @@ def main() -> None:
     args.output.write_text(rendered)
     if args.best_qasm is not None:
         args.best_qasm.parent.mkdir(parents=True, exist_ok=True)
-        beam[0].graph.to_qasm(filename=str(args.best_qasm))
+        best_state.graph.to_qasm(filename=str(args.best_qasm))
 
 
 if __name__ == "__main__":

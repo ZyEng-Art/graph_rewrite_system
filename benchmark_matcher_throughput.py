@@ -32,6 +32,52 @@ from threshold_inference import (
 from train import autocast_context, build_model, move_batch
 
 
+class InitialGraphDataset:
+    """One action-free state constructed directly from an input QASM graph."""
+
+    def __init__(self, snapshot: dict):
+        self.sample = {
+            "initial_graph": snapshot,
+            "actions": [],
+            "matches": [],
+            "target_action": None,
+            "local_streak": 0,
+            "prefix_length": 0,
+            "previous_action": None,
+            "previous_delta": None,
+            "previous_local_streak": None,
+        }
+
+    def __len__(self) -> int:
+        return 1
+
+    def __getitem__(self, index: int) -> dict:
+        if index != 0:
+            raise IndexError(index)
+        return self.sample
+
+
+def snapshot_qasm_graph(graph) -> dict:
+    """Assign stable dense slots to a Quartz graph for model collation."""
+    nodes = list(graph.nodes)
+    guid_to_slot = {int(node.guid): index for index, node in enumerate(nodes)}
+    return {
+        "nodes": [
+            (guid_to_slot[int(node.guid)], int(node.gate_tp), int(node.guid))
+            for node in nodes
+        ],
+        "edges": [
+            (
+                guid_to_slot[int(nodes[int(src)].guid)],
+                guid_to_slot[int(nodes[int(dst)].guid)],
+                int(src_port),
+                int(dst_port),
+            )
+            for src, dst, src_port, dst_port in graph.all_edges()
+        ],
+    }
+
+
 class CyclicDataset:
     """Repeat real trajectory states to a requested benchmark batch shape."""
 
@@ -472,7 +518,20 @@ def main() -> None:
     parser.add_argument("--calibration", type=Path, required=True)
     parser.add_argument("--target-recall", type=float, default=0.999)
     parser.add_argument("--ecc-file", type=Path, required=True)
-    parser.add_argument("--trajectory-dir", type=Path, required=True)
+    input_group = parser.add_mutually_exclusive_group(required=True)
+    input_group.add_argument(
+        "--trajectory-dir",
+        type=Path,
+        help="saved trajectory states used by the historical benchmark",
+    )
+    input_group.add_argument(
+        "--qasm",
+        type=Path,
+        help=(
+            "benchmark the untouched input QASM as a single unique state; "
+            "--benchmark-states may repeat it to the requested batch shape"
+        ),
+    )
     parser.add_argument("--batch-sizes", type=int, nargs="+", default=(1, 8, 16))
     parser.add_argument(
         "--benchmark-states",
@@ -514,14 +573,6 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     payload = torch.load(args.data, map_location="cpu", weights_only=False)
     rules = RuleMetadata.from_payload(payload)
-    trajectories = payload["train_trajectories"] + payload["test_trajectories"]
-    base_dataset = PrefixDataset(trajectories, rules)
-    dataset = (
-        CyclicDataset(base_dataset, args.benchmark_states)
-        if args.benchmark_states is not None
-        else base_dataset
-    )
-
     context = quartz.QuartzContext(
         gate_set=["h", "cx", "x", "rz", "add"],
         filename=str(args.ecc_file),
@@ -530,6 +581,24 @@ def main() -> None:
     )
     if context.num_xfers != len(rules.xfer_to_source):
         raise ValueError("dataset and Quartz context have different xfer counts")
+
+    parsed_qasm_graph = None
+    if args.qasm is not None:
+        started = time.perf_counter()
+        parsed_qasm_graph = quartz.PyGraph.from_qasm(
+            context=context, filename=str(args.qasm)
+        )
+        qasm_parse_seconds = time.perf_counter() - started
+        base_dataset = InitialGraphDataset(snapshot_qasm_graph(parsed_qasm_graph))
+    else:
+        trajectories = payload["train_trajectories"] + payload["test_trajectories"]
+        base_dataset = PrefixDataset(trajectories, rules)
+        qasm_parse_seconds = None
+    dataset = (
+        CyclicDataset(base_dataset, args.benchmark_states)
+        if args.benchmark_states is not None
+        else base_dataset
+    )
 
     if args.reuse_cpu_from is not None:
         previous = json.loads(args.reuse_cpu_from.read_text())
@@ -545,12 +614,15 @@ def main() -> None:
             previous.get("qasm_parse_seconds_excluded"),
         )
     else:
-        base_graphs, qasm_parse_seconds = load_quartz_graphs(
-            quartz,
-            context,
-            args.trajectory_dir,
-            expected_graph_hashes(base_dataset),
-        )
+        if parsed_qasm_graph is not None:
+            base_graphs = [parsed_qasm_graph]
+        else:
+            base_graphs, qasm_parse_seconds = load_quartz_graphs(
+                quartz,
+                context,
+                args.trajectory_dir,
+                expected_graph_hashes(base_dataset),
+            )
         graphs = [base_graphs[index % len(base_graphs)] for index in range(len(dataset))]
         cpu = benchmark_cpu(
             graphs,
@@ -639,7 +711,11 @@ def main() -> None:
             "per_parent_cap": args.per_parent_cap,
             "global_proposal_cap": args.global_proposal_cap,
             "ecc_file": str(args.ecc_file),
-            "trajectory_dir": str(args.trajectory_dir),
+            "trajectory_dir": (
+                str(args.trajectory_dir) if args.trajectory_dir is not None else None
+            ),
+            "qasm": str(args.qasm) if args.qasm is not None else None,
+            "input_kind": "qasm_initial" if args.qasm is not None else "trajectory",
             "device": str(device),
             "states": len(dataset),
             "unique_input_states": len(base_dataset),
