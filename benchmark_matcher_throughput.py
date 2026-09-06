@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import defaultdict
 import ctypes
 import ctypes.util
 import gc
@@ -21,7 +22,9 @@ import torch
 
 from collect_quarl_trajectories import parse_trajectory_directory
 from dataset import PrefixDataset, RuleMetadata, collate_prefixes
+from gpu_proposals import GpuRuleIndex, build_gpu_proposals
 from threshold_inference import (
+    CandidateTensors,
     load_threshold_config,
     threshold_candidates,
     threshold_candidate_tensors,
@@ -200,22 +203,31 @@ def prepare_batches(dataset, rules, batch_size: int):
 def run_model_pass(
     *,
     batches,
+    beams,
     model,
     device,
     threshold_config,
     source_vectors,
     max_source_matches: int,
-    host_materialized: bool,
+    output_mode: str,
     xfers_per_source_cpu: list[int],
     xfers_per_source_device: torch.Tensor,
-) -> tuple[float, int, int]:
+    gpu_rule_index: GpuRuleIndex,
+    per_parent_cap: int,
+    global_proposal_cap: int,
+) -> tuple[float, dict[str, int]]:
     if device.type == "cuda":
         torch.cuda.synchronize(device)
     started = time.perf_counter()
     source_candidates = 0
     expanded_xfer_actions = 0
     expanded_xfer_actions_device = torch.zeros((), device=device, dtype=torch.long)
-    for cpu_batch in batches:
+    eligible_actions = 0
+    materialized_actions = 0
+    selected_actions = 0
+    proposal_candidates = []
+    batch_offset = 0
+    for cpu_batch, beam_chunk in zip(batches, beams):
         batch = move_batch(cpu_batch, device)
         with autocast_context(device):
             encoded, live, gate_types = model.encode(batch)
@@ -225,7 +237,7 @@ def run_model_pass(
                 gate_types,
                 source_vectors=source_vectors,
             )
-        if host_materialized:
+        if output_mode == "host_materialized":
             rows = threshold_candidates(
                 model,
                 batch,
@@ -248,18 +260,56 @@ def run_model_pass(
                 eligible,
                 threshold_config,
                 max_candidates_per_state=max_source_matches,
+                batch_offset=(
+                    batch_offset
+                    if output_mode
+                    in {"gpu_proposals_full", "gpu_proposals_preselect"}
+                    else 0
+                ),
             )
             source_candidates += int(candidates.sources.numel())
-            if candidates.sources.numel():
+            if output_mode == "gpu_resident" and candidates.sources.numel():
                 expanded_xfer_actions_device += xfers_per_source_device[
                     candidates.sources
                 ].sum()
+            if output_mode in {
+                "gpu_proposals_full",
+                "gpu_proposals_preselect",
+            }:
+                proposal_candidates.append(candidates)
+            batch_offset += len(beam_chunk)
+    if proposal_candidates:
+        candidates = CandidateTensors.cat(proposal_candidates)
+        beam = [state for chunk in beams for state in chunk]
+        proposals, metrics, _, _ = build_gpu_proposals(
+            candidates,
+            beam,
+            gpu_rule_index,
+            per_parent_cap=per_parent_cap,
+            global_cap=global_proposal_cap,
+            ranking_mode="gate",
+            preselect_matches=output_mode == "gpu_proposals_preselect",
+        )
+        if proposals is None:
+            raise RuntimeError("proposal benchmark requires final D2H rows")
+        eligible_actions = int(metrics["eligible_actions"])
+        expanded_xfer_actions = int(metrics["predicted_actions"])
+        materialized_actions = int(
+            metrics.get("materialized_actions", metrics["eligible_actions"])
+        )
+        selected_actions = len(proposals)
     if device.type == "cuda":
         torch.cuda.synchronize(device)
     elapsed = time.perf_counter() - started
-    if not host_materialized:
+    if output_mode == "gpu_resident":
         expanded_xfer_actions = int(expanded_xfer_actions_device.item())
-    return elapsed, source_candidates, expanded_xfer_actions
+    return elapsed, {
+        "source_binding_candidates": source_candidates,
+        "expanded_xfer_actions": expanded_xfer_actions,
+        "eligible_actions": eligible_actions,
+        "materialized_actions": materialized_actions,
+        "selected_actions": selected_actions,
+    }
 
 
 def benchmark_model(
@@ -271,9 +321,19 @@ def benchmark_model(
     threshold_config,
     batch_size: int,
     max_source_matches: int,
+    max_gate_increase: int,
+    per_parent_cap: int,
+    global_proposal_cap: int,
     repeats: int,
 ) -> dict:
     batches, preparation_seconds = prepare_batches(dataset, rules, batch_size)
+    beams = [
+        [
+            types.SimpleNamespace(gate_count=int(gate_count))
+            for gate_count in cpu_batch["current_types"].ge(0).sum(dim=1).tolist()
+        ]
+        for cpu_batch in batches
+    ]
     with autocast_context(device):
         source_vectors = model.retrieval_source(model.source_representations())
 
@@ -283,56 +343,100 @@ def benchmark_model(
     xfers_per_source_device = torch.tensor(
         xfer_counts, device=device, dtype=torch.long
     )
+    source_to_xfers: dict[int, list[int]] = defaultdict(list)
+    for xfer_id, source_id in enumerate(rules.xfer_to_source):
+        source_to_xfers[int(source_id)].append(xfer_id)
+    gate_deltas = [
+        len(rules.destination_gate_types[xfer_id])
+        - len(rules.source_gate_types[int(source_id)])
+        for xfer_id, source_id in enumerate(rules.xfer_to_source)
+    ]
+    gpu_rule_index = GpuRuleIndex.build(
+        source_to_xfers,
+        gate_deltas,
+        len(rules.source_patterns),
+        max_gate_increase,
+        device,
+    )
 
     results = {}
-    for name, host_materialized in (
-        ("gpu_resident", False),
-        ("host_materialized", True),
+    for name in (
+        "gpu_resident",
+        "host_materialized",
+        "gpu_proposals_full",
+        "gpu_proposals_preselect",
     ):
         # One full warm-up pass covers all sequence lengths and the final short batch.
         run_model_pass(
             batches=batches,
+            beams=beams,
             model=model,
             device=device,
             threshold_config=threshold_config,
             source_vectors=source_vectors,
             max_source_matches=max_source_matches,
-            host_materialized=host_materialized,
+            output_mode=name,
             xfers_per_source_cpu=xfer_counts,
             xfers_per_source_device=xfers_per_source_device,
+            gpu_rule_index=gpu_rule_index,
+            per_parent_cap=per_parent_cap,
+            global_proposal_cap=global_proposal_cap,
         )
         seconds = []
-        candidate_counts = []
-        action_counts = []
+        metric_rows = []
         for _ in range(repeats):
-            elapsed, candidates, actions = run_model_pass(
+            elapsed, metrics = run_model_pass(
                 batches=batches,
+                beams=beams,
                 model=model,
                 device=device,
                 threshold_config=threshold_config,
                 source_vectors=source_vectors,
                 max_source_matches=max_source_matches,
-                host_materialized=host_materialized,
+                output_mode=name,
                 xfers_per_source_cpu=xfer_counts,
                 xfers_per_source_device=xfers_per_source_device,
+                gpu_rule_index=gpu_rule_index,
+                per_parent_cap=per_parent_cap,
+                global_proposal_cap=global_proposal_cap,
             )
             seconds.append(elapsed)
-            candidate_counts.append(candidates)
-            action_counts.append(actions)
-        median_candidates = int(statistics.median(candidate_counts))
-        median_actions = int(statistics.median(action_counts))
+            metric_rows.append(metrics)
+        metric_series = {
+            key: [row[key] for row in metric_rows] for key in metric_rows[0]
+        }
+        median_metrics = {
+            key: int(statistics.median(values))
+            for key, values in metric_series.items()
+        }
         results[name] = {
             **summarize_seconds(seconds, len(dataset)),
-            "source_binding_candidates": median_candidates,
-            "source_binding_candidates_per_state": median_candidates
+            **median_metrics,
+            "source_binding_candidates_per_state": median_metrics[
+                "source_binding_candidates"
+            ]
             / len(dataset),
-            "source_binding_candidates_by_repeat": candidate_counts,
-            "source_binding_candidates_min": min(candidate_counts),
-            "source_binding_candidates_max": max(candidate_counts),
-            "expanded_xfer_actions": median_actions,
-            "expanded_xfer_actions_per_state": median_actions / len(dataset),
-            "expanded_xfer_actions_by_repeat": action_counts,
-            "candidate_count_stable": len(set(candidate_counts)) == 1,
+            "expanded_xfer_actions_per_state": median_metrics[
+                "expanded_xfer_actions"
+            ]
+            / len(dataset),
+            "metrics_by_repeat": metric_rows,
+            "source_binding_candidates_by_repeat": metric_series[
+                "source_binding_candidates"
+            ],
+            "source_binding_candidates_min": min(
+                metric_series["source_binding_candidates"]
+            ),
+            "source_binding_candidates_max": max(
+                metric_series["source_binding_candidates"]
+            ),
+            "expanded_xfer_actions_by_repeat": metric_series[
+                "expanded_xfer_actions"
+            ],
+            "candidate_count_stable": len(
+                set(metric_series["source_binding_candidates"])
+            )
+            == 1,
         }
 
     results["tensor_preparation"] = {
@@ -341,7 +445,12 @@ def benchmark_model(
         "states_per_second": len(dataset) / max(preparation_seconds, 1e-12),
         "note": "PrefixDataset replay plus CPU collation; excluded from core matcher timings",
     }
-    for name in ("gpu_resident", "host_materialized"):
+    for name in (
+        "gpu_resident",
+        "host_materialized",
+        "gpu_proposals_full",
+        "gpu_proposals_preselect",
+    ):
         total = results[name]["median_seconds"] + preparation_seconds
         results[name]["including_one_time_tensor_preparation"] = {
             "seconds": total,
@@ -374,6 +483,9 @@ def main() -> None:
         ),
     )
     parser.add_argument("--max-source-matches", type=int, default=8192)
+    parser.add_argument("--max-gate-increase", type=int, default=1)
+    parser.add_argument("--per-parent-cap", type=int, default=128)
+    parser.add_argument("--global-proposal-cap", type=int, default=8192)
     parser.add_argument("--cpu-repeats", type=int, default=1)
     parser.add_argument("--model-repeats", type=int, default=5)
     parser.add_argument(
@@ -389,6 +501,8 @@ def main() -> None:
         parser.error("repeat counts must be positive")
     if args.benchmark_states is not None and args.benchmark_states < 1:
         parser.error("benchmark state count must be positive")
+    if args.per_parent_cap < 1 or args.global_proposal_cap < 1:
+        parser.error("proposal caps must be positive")
     if not 0.0 < args.target_recall <= 1.0:
         parser.error("target recall must be within (0, 1]")
 
@@ -486,6 +600,9 @@ def main() -> None:
             threshold_config=threshold_config,
             batch_size=effective_size,
             max_source_matches=args.max_source_matches,
+            max_gate_increase=args.max_gate_increase,
+            per_parent_cap=args.per_parent_cap,
+            global_proposal_cap=args.global_proposal_cap,
             repeats=args.model_repeats,
         )
 
@@ -498,7 +615,12 @@ def main() -> None:
     speedups = {}
     for batch_size, rows in model_results.items():
         speedups[batch_size] = {}
-        for mode in ("gpu_resident", "host_materialized"):
+        for mode in (
+            "gpu_resident",
+            "host_materialized",
+            "gpu_proposals_full",
+            "gpu_proposals_preselect",
+        ):
             throughput = rows[mode]["states_per_second_from_median"]
             speedups[batch_size][mode] = {
                 "vs_original_xfer_anchor": throughput / cpu_anchor_throughput,
@@ -513,6 +635,9 @@ def main() -> None:
             "calibration": str(args.calibration),
             "target_recall": args.target_recall,
             "max_source_matches": args.max_source_matches,
+            "max_gate_increase": args.max_gate_increase,
+            "per_parent_cap": args.per_parent_cap,
+            "global_proposal_cap": args.global_proposal_cap,
             "ecc_file": str(args.ecc_file),
             "trajectory_dir": str(args.trajectory_dir),
             "device": str(device),
@@ -547,6 +672,15 @@ def main() -> None:
             "model_host_materialized": (
                 "same logical matcher stages plus device-to-host copies and Python "
                 "packing of source-anchor-binding-probability rows"
+            ),
+            "model_gpu_proposals_full": (
+                "GPU matcher, full source-to-xfer expansion, gate/parent/global "
+                "ranking and caps, then D2H packing of selected proposals only"
+            ),
+            "model_gpu_proposals_preselect": (
+                "GPU matcher, exact per-parent match preselection before xfer "
+                "expansion, gate/parent/global ranking and caps, then D2H packing "
+                "of selected proposals only"
             ),
         },
     }

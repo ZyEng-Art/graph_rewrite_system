@@ -61,10 +61,84 @@
       "remote_result_sha256": "f1732780b4368d388c9eee781521bec5f9a295f259ce0c0266b848835aff09bd"
     }
   },
+  "gpu_selected_proposal_followup": {
+    "proposal_config": {
+      "max_gate_increase": 1,
+      "per_parent_cap": 128,
+      "global_proposal_cap": 8192,
+      "ranking": "gate",
+      "host_materialization": "selected proposals only"
+    },
+    "gf2^6_mult_370_2": {
+      "full_states_per_second": 1812.50738290328,
+      "full_speedup_vs_cpu_quartz": 296.5849202811965,
+      "preselect_states_per_second": 1843.649571984217,
+      "preselect_speedup_vs_cpu_quartz": 301.68079120181966,
+      "full_eligible_actions": 2059253,
+      "full_materialized_actions": 2059253,
+      "preselect_eligible_actions": 2059254,
+      "preselect_materialized_actions": 128467,
+      "selected_host_proposals": 8192,
+      "remote_result": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/experiment/refresh_consistency_model_20260906/benchmark_results/matcher_throughput_gf370_2_b512_gpu_proposals_h100_20260906.json",
+      "remote_result_sha256": "e85b17a473cbc8272d447384b80605d371e1a18b1a10e400e9ead75c8a2e7c06"
+    },
+    "barenco_38_3": {
+      "full_states_per_second": 8232.819037806696,
+      "full_speedup_vs_cpu_quartz": 121.89578734942418,
+      "preselect_states_per_second": 8030.523333215725,
+      "preselect_speedup_vs_cpu_quartz": 118.90058071664336,
+      "full_eligible_actions": 115360,
+      "full_materialized_actions": 115360,
+      "preselect_eligible_actions": 115360,
+      "preselect_materialized_actions": 112320,
+      "selected_host_proposals": 8192,
+      "remote_result": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/experiment/refresh_consistency_model_20260906/benchmark_results/matcher_throughput_barenco38_3_b512_gpu_proposals_h100_20260906.json",
+      "remote_result_sha256": "914ac92d8caaa12010f474f643e5af8368a3d923da1df817104bcec3956a9132"
+    }
+  },
+  "search_equivalence_followup": {
+    "config": {
+      "beam_size": 256,
+      "depth": 8,
+      "microbatch": 512,
+      "refresh_interval": 8,
+      "audit_count": 256
+    },
+    "barenco_38_3": {
+      "best_exact_gate_count": 39,
+      "full_materialized_actions": 270848,
+      "preselect_materialized_actions": 269294,
+      "proposals_after_caps": 28797,
+      "accepted_actions": 1709,
+      "accepted_actions_equal_by_depth": true,
+      "full_valid_trajectories": "130/130",
+      "preselect_valid_trajectories": "130/130",
+      "full_result": "benchmark_results/barenco38_3_b256_d8_proposal_full_final_20260906.json",
+      "full_result_sha256": "f1b86ccb68d6488f5ff33a1ef4def634b59e26e7e5a8545ba3c24c5d7ec3b72f",
+      "preselect_result": "benchmark_results/barenco38_3_b256_d8_proposal_preselect_final_20260906.json",
+      "preselect_result_sha256": "8cd5f983376916840f5092f02a2c1bc046eb350d9fe0eaf0e229a86d1938dad7"
+    },
+    "gf2^6_mult_370_2": {
+      "best_exact_gate_count": 371,
+      "full_materialized_actions": 6779897,
+      "preselect_materialized_actions": 424511,
+      "proposals_after_caps": 29184,
+      "accepted_actions": 1918,
+      "accepted_actions_equal_by_depth": true,
+      "full_valid_trajectories": "256/256",
+      "preselect_valid_trajectories": "256/256",
+      "full_result": "benchmark_results/gf370_2_b256_d8_proposal_full_final_20260906.json",
+      "full_result_sha256": "db47f43022b15b6581e01ee6a415fd7af2afb40e36b6941f83c6bf2559d22d39",
+      "preselect_result": "benchmark_results/gf370_2_b256_d8_proposal_preselect_final_20260906.json",
+      "preselect_result_sha256": "b6cc40d0c54f1962f0902527bb95005486f5651c7907f0c724a4e49404f30f37"
+    }
+  },
   "timing_boundaries": {
     "cpu": "preloaded graph/context; all nodes plus original Quartz matching API",
     "gpu_resident": "H2D, model encode and logits, r99.9 threshold, 8192 cap, structural decode; GPU tensor output",
     "host_materialized": "gpu_resident logical stages plus D2H and Python row packing",
+    "gpu_proposals_full": "gpu_resident plus full source-to-xfer expansion, gate and parent/global ranking, then D2H packing of at most 8192 selected proposals",
+    "gpu_proposals_preselect": "gpu_resident plus exact per-parent match preselection before xfer expansion, gate and parent/global ranking, then D2H packing of at most 8192 selected proposals",
     "tensor_preparation": "PrefixDataset history replay and CPU collation, charged once per 512-state pass"
   }
 }

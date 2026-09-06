@@ -1067,6 +1067,35 @@ Quartz audits. A trained-PPO run retained its 811-gate best and passed 64/64
 audits while materializing 1,313,543 of 40,788,395 eligible actions. The raw
 logs are `benchmark_results/proposal_*_grover5_b128_h100.json`.
 
+### Selected-only proposal transfer at batch 512
+
+A follow-up comparison against original CPU Quartz now measures the complete
+GPU proposal boundary rather than materializing every retained source binding
+on the host.  It includes matcher inference, r99.9 thresholding, structural
+decode, source-to-xfer expansion, the `max_gate_increase=1` filter,
+per-parent-128 and global-8192 ranking/caps, and Python packing of only those
+8192 final proposals.  The 512-state input shape matches the historical
+microbatch-512 comparison.
+
+| Workload | Full GPU proposals | Preselected GPU proposals | Original CPU Quartz |
+|---|---:|---:|---:|
+| GF trajectory states | 1812.51 states/s (296.58x) | 1843.65 states/s (301.68x) | 6.111 states/s |
+| Barenco trajectory states | 8232.82 states/s (121.90x) | 8030.52 states/s (118.90x) | 67.540 states/s |
+
+Only final proposals cross to the host.  The earlier all-source-row D2H
+control measured 153.34 states/s on GF and 1170.30 states/s on Barenco, so it
+understates the integrated GPU proposal throughput by 7--12x.  Preselection
+reduced GF intermediate xfer rows from 2.059 million to 128,467, but Barenco
+only fell from 115,360 to 112,320 and was slower; full expansion therefore
+remains the stable GPU default and preselection remains opt-in.
+
+A beam-256, depth-8 full/preselect search A/B retained identical accepted
+counts at every depth on both trajectory starts.  All 130 Barenco and 256 GF
+final states passed Quartz replay and exact-topology audits.  The driver,
+six raw result files, hashes, and exact timing boundaries are recorded in
+`benchmark_results/matcher_throughput_b512_findings_20260906.md` and
+`benchmark_results/matcher_throughput_b512_summary_20260906.json`.
+
 ## First-gate matcher grouping in PPO collection
 
 PPO collection previously used the full source-pattern matrix even though the

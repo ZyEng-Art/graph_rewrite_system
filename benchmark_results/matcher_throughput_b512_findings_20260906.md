@@ -21,6 +21,41 @@ Throughput is states/s. Speedup is relative to Quartz's original CPU `available_
 | Model: GPU-resident plus prefix replay/tensor preparation | 119.3754 | **19.53x** | 1183.9949 | **17.53x** |
 | Model: host rows plus prefix replay/tensor preparation | 70.5007 | **11.54x** | 646.1654 | **9.57x** |
 
+## Complete GPU proposal path
+
+The host-materialized row above is deliberately pessimistic: it copies every
+retained source binding to Python.  The actual GPU proposal backend does not do
+that.  It expands source bindings to xfers, applies the gate-increase filter,
+ranks and caps actions per parent and globally on the GPU, and copies only the
+final proposals that the Quartz successor stage will try.  A follow-up run
+times that complete path with a per-parent cap of 128 and a global cap of 8192.
+
+| Complete timed path | GF throughput | GF speedup | Barenco throughput | Barenco speedup |
+| --- | ---: | ---: | ---: | ---: |
+| GPU full expansion/ranking + selected-only D2H | 1812.5074 | **296.58x** | 8232.8190 | **121.90x** |
+| GPU match preselection + expansion/ranking + selected-only D2H | 1843.6496 | **301.68x** | 8030.5233 | **118.90x** |
+
+Thus the deployable matcher/proposal boundary is not the earlier 19--26x
+all-row host-materialization result.  With only final proposals transferred,
+it retains a 119--302x advantage over original CPU Quartz enumeration in this
+batch-512 comparison.  The remaining CPU Quartz rewrite application is outside
+both matcher timings.
+
+The number of GPU action rows and final host objects explains the difference:
+
+| 512-state workload | Eligible xfer rows | Xfer rows after optional preselection | Final D2H proposals |
+| --- | ---: | ---: | ---: |
+| GF, full | 2,059,253 | 2,059,253 | 8,192 |
+| GF, preselect | 2,059,254 | 128,467 | 8,192 |
+| Barenco, full | 115,360 | 115,360 | 8,192 |
+| Barenco, preselect | 115,360 | 112,320 | 8,192 |
+
+Preselection is exact for gate/probability ranking, but is not automatically
+faster.  It reduced GF intermediate rows by 16.0x and was 1.7% faster in this
+matcher benchmark; Barenco had almost no removable rows and was 2.5% slower.
+The production default therefore remains full GPU expansion, with
+`--proposal-expansion preselect` available for very dense workloads.
+
 The GPU-resident timing includes H2D, graph/action encoding, source-anchor logits, r99.9 calibration and thresholding, the per-state 8192 cap, and complete-binding structural decode. Its output stays as GPU tensors.
 
 The host-materialized timing adds device-to-host copies and Python packing of every `(source, anchor, binding, probability)` row. The final row additionally charges `PrefixDataset` action-prefix replay and CPU collation once for the 512 states. That reconstruction is conservative for a live optimizer that already maintains incremental current-state tensors, but it exposes the same class of state-materialization bottleneck identified in the historical depth-64 stage profile.
@@ -52,3 +87,28 @@ The GF GPU candidate count varies by at most three rows among roughly 1.45 milli
   - SHA-256: `5c0a38ed9a6c27fcd88036eac21f6c70067581f37f2bd3e419b72dd29652e902`
 - Remote Barenco result: `benchmark_results/matcher_throughput_barenco38_3_b512_r999_s8192_h100_cpu_20260906.json`
   - SHA-256: `f1732780b4368d388c9eee781521bec5f9a295f259ce0c0266b848835aff09bd`
+- Complete GPU-proposal GF result: `benchmark_results/matcher_throughput_gf370_2_b512_gpu_proposals_h100_20260906.json`
+  - SHA-256: `e85b17a473cbc8272d447384b80605d371e1a18b1a10e400e9ead75c8a2e7c06`
+- Complete GPU-proposal Barenco result: `benchmark_results/matcher_throughput_barenco38_3_b512_gpu_proposals_h100_20260906.json`
+  - SHA-256: `914ac92d8caaa12010f474f643e5af8368a3d923da1df817104bcec3956a9132`
+
+## Search-level equivalence check
+
+A separate beam-256, depth-8 H100 A/B started from the first state of each
+high-quality trajectory.  Full and preselected expansion retained identical
+accepted-state counts at every depth.  Barenco ended with 130 states and GF
+with 256; every retained state passed Quartz replay and exact-topology checks.
+Both modes reported the same best exact gate counts (39 for this Barenco start,
+371 for this GF start).
+
+Preselection reduced the GF search's materialized action rows from 6,779,897
+to 424,511 (16.0x) while leaving the 29,184 globally capped proposals and all
+1,918 accepted successors unchanged.  Barenco reduced only 270,848 to 269,294
+rows and left 28,797 capped proposals and all 1,709 accepted successors
+unchanged.  At this smaller beam shape the proposal-stage time did not improve,
+which is why preselection is kept opt-in rather than forced globally.
+
+The four raw search results are
+`barenco38_3_b256_d8_proposal_{full,preselect}_final_20260906.json` and
+`gf370_2_b256_d8_proposal_{full,preselect}_final_20260906.json` in
+`benchmark_results/`.
