@@ -58,6 +58,15 @@ from tensorized_batch import collate_paged_states
 from train import autocast_context, move_batch
 
 
+def register_exact_graph_hash(exact_graph, seen_exact: set[int]) -> bool:
+    """Register one materialized Quartz graph, returning false for a duplicate."""
+    exact_hash = int(exact_graph.hash())
+    if exact_hash in seen_exact:
+        return False
+    seen_exact.add(exact_hash)
+    return True
+
+
 def initial_batch(snapshot_row: dict) -> dict:
     slots = max((int(row[0]) for row in snapshot_row["nodes"]), default=-1) + 1
     initial_types = torch.full((1, slots), -1, dtype=torch.long)
@@ -1179,6 +1188,15 @@ def main() -> None:
         default=2,
         help="over-generate this many beam widths before an exact refresh",
     )
+    parser.add_argument(
+        "--refresh-exact-dedup",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "deduplicate successfully replayed refresh states by Quartz graph hash "
+            "and keep scanning the over-generated pool until the beam is full"
+        ),
+    )
     parser.add_argument("--audit-count", type=int, default=1000)
     parser.add_argument(
         "--eliminate-rotation",
@@ -1484,6 +1502,9 @@ def main() -> None:
     best_exact_graph = graph
     best_exact_gate_count = initial_gate_count
     best_exact_depth = 0
+    # This set is deliberately separate from slot-sensitive speculative hashes
+    # and persists across refreshes and best-root restarts.
+    seen_exact = {int(graph.hash())} if args.refresh_exact_dedup else set()
     segment_index = 0
     segment_start_depth = 0
     segment_root_gate_count = initial_gate_count
@@ -1916,7 +1937,10 @@ def main() -> None:
         refresh_seconds = 0.0
         refresh_candidates = 0
         refresh_attempted = 0
+        refresh_replay_valid = 0
         refresh_valid = 0
+        refresh_exact_duplicates = 0
+        refresh_hash_seconds = 0.0
         refresh_early_stopped = False
         refresh_failures: dict[int, int] = defaultdict(int)
         refresh_profile_seconds: dict[str, float] = {}
@@ -2016,6 +2040,14 @@ def main() -> None:
                 if not topology_ok:
                     refresh_failures[-1] += 1
                     continue
+                refresh_replay_valid += 1
+                if args.refresh_exact_dedup:
+                    hash_started = time.perf_counter()
+                    is_unique = register_exact_graph_hash(exact_graph, seen_exact)
+                    refresh_hash_seconds += time.perf_counter() - hash_started
+                    if not is_unique:
+                        refresh_exact_duplicates += 1
+                        continue
                 valid_indices.append(state_index)
                 refresh_checkpoints[state_index] = (exact_graph, exact_slots)
                 if len(valid_indices) >= args.beam_size:
@@ -2035,6 +2067,16 @@ def main() -> None:
                     best_exact_depth = segment_start_depth + len(state.history)
             refresh_improved_best = best_exact_gate_count < best_before_refresh
             stale_refreshes = 0 if refresh_improved_best else stale_refreshes + 1
+            if args.profile_stages and args.refresh_exact_dedup:
+                refresh_profile_seconds["exact_graph_hash_seconds"] = (
+                    refresh_hash_seconds
+                )
+                refresh_profile_counts["exact_graph_hash_calls"] = (
+                    refresh_replay_valid
+                )
+                refresh_profile_counts["exact_graph_hash_duplicates"] = (
+                    refresh_exact_duplicates
+                )
             refresh_seconds = time.perf_counter() - refresh_started
         else:
             keep_indices = list(range(min(args.beam_size, len(beam))))
@@ -2276,7 +2318,10 @@ def main() -> None:
             "exact_refresh_seconds": refresh_seconds,
             "exact_refresh_candidates": refresh_candidates,
             "exact_refresh_attempted": refresh_attempted,
+            "exact_refresh_replay_valid": refresh_replay_valid,
             "exact_refresh_valid": refresh_valid,
+            "exact_refresh_exact_duplicates": refresh_exact_duplicates,
+            "exact_refresh_hash_seconds": refresh_hash_seconds,
             "exact_refresh_early_stopped": refresh_early_stopped,
             "exact_refresh_failures": dict(sorted(refresh_failures.items())),
             "checkpoint_audited": checkpoint_audited,
@@ -2468,6 +2513,20 @@ def main() -> None:
         "source_grouping": args.source_grouping,
         "refresh_interval": args.refresh_interval,
         "refresh_factor": args.refresh_factor,
+        "refresh_exact_dedup": args.refresh_exact_dedup,
+        "exact_graph_hashes_seen": len(seen_exact),
+        "exact_refresh_replay_valid_total": sum(
+            int(row["exact_refresh_replay_valid"]) for row in step_rows
+        ),
+        "exact_refresh_valid_total": sum(
+            int(row["exact_refresh_valid"]) for row in step_rows
+        ),
+        "exact_refresh_exact_duplicates_total": sum(
+            int(row["exact_refresh_exact_duplicates"]) for row in step_rows
+        ),
+        "exact_refresh_hash_seconds_total": sum(
+            float(row["exact_refresh_hash_seconds"]) for row in step_rows
+        ),
         "checkpoint_audit_count": args.checkpoint_audit_count,
         "proposal_legality_audit": (
             aggregate_legality_audits(step_rows, args.audit_proposal_topn)

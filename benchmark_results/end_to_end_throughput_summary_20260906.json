@@ -1,5 +1,6 @@
 {
   "date": "2026-09-06",
+  "superseded_for_strict_unique_beams_by": "benchmark_results/exact_refresh_dedup_summary_20260906.json",
   "benchmark_scope": "end-to-end search after initialization",
   "source_commit": "8c1808664c2ee4ff83e1a52a495ef6a289faff08",
   "config": {

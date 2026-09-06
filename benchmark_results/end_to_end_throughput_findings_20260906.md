@@ -1,5 +1,11 @@
 # End-to-end CPU Quartz versus GPU paged search (2026-09-06)
 
+> Historical note: this benchmark predates exact graph-hash filtering at
+> refresh and therefore permits several trajectories to occupy the beam with
+> the same exact Quartz graph. The strict exact-unique follow-up supersedes its
+> final-beam speedup interpretation; see
+> `benchmark_results/exact_refresh_dedup_findings_20260906.md`.
+
 ## Why this benchmark was needed
 
 The earlier batch-512 result timed candidate matching and, in the follow-up,

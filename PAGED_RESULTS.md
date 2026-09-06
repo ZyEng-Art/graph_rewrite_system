@@ -1428,3 +1428,37 @@ the same best gate count, not identical beam diversity or search distribution.
 See `benchmark_results/end_to_end_throughput_findings_20260906.md` and
 `benchmark_results/end_to_end_throughput_summary_20260906.json` for stage
 timings, raw-result checksums, and interpretation limits.
+
+## Exact graph-hash deduplication at refresh
+
+The paged search now enables exact Quartz graph-hash deduplication by default
+at refresh boundaries. Speculative layers keep the cheap incremental raw hash;
+after Quartz has already replayed a leaf and verified its topology, the search
+calls `PyGraph.hash()` once (which caches its result), rejects hashes in a
+persistent `seen_exact` set, and continues scanning the over-generated pool.
+The old behavior remains available as `--no-refresh-exact-dedup` for A/B
+tests. New per-step metrics separate replay-valid candidates, exact-unique
+accepted candidates, exact duplicates, and hash time.
+
+At beam 1000 and depth 3, a 3x GF refresh pool fills all 1,000 exact-unique
+slots in a median 5.327 seconds, still **51.84x** faster than the 276.195-second
+CPU Quartz result. Exact hashing accounts for 0.604 seconds, or 11.33% of GPU
+search. The previous 2x pool contains only 972 non-root unique graphs.
+
+Barenco's unchanged 64x-proposal/32x-refresh pool increases median search time
+by only 3.2% when exact filtering is enabled, but the apparent 1,000-state beam
+shrinks from 312 distinct Quartz graphs to an honest 445-state exact-unique
+beam after the entire pool is scanned. Hashing costs only 37 ms, 1.06% of
+search. Filling 1,000 exact-unique Barenco slots requires nearly all 127,722
+ranked proposals plus 37,187 refresh attempts; median search becomes 6.707
+seconds, **1.65x slower** than CPU Quartz. Hashing is only 68 ms (1.01%); lazy
+successor construction and cache advance dominate.
+
+A two-refresh beam-256, depth-16 regression leaves GF at 256/256 exact-unique
+states after both depth-8 and depth-16 refreshes. Barenco exposes much stronger
+convergence: only 40 new unique graphs survive the first refresh and 109 the
+second, despite large proposal and refresh factors. Every retained state in
+both circuits passes independent Quartz replay, topology equality, and final
+exact-hash uniqueness. Detailed A/Bs, counters, and raw checksums are in
+`benchmark_results/exact_refresh_dedup_findings_20260906.md` and
+`benchmark_results/exact_refresh_dedup_summary_20260906.json`.
