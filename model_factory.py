@@ -27,6 +27,8 @@ def build_model(rules, num_xfers: int, args: dict):
                 "readout_attention_backend", "sdpa"
             ),
             action_value_head=args.get("action_value_head", False),
+            source_topology_layers=args.get("source_topology_layers", 0),
+            source_id_frequency_prior=args.get("source_id_frequency_prior", 0.0),
         )
     if architecture != "legacy":
         raise ValueError(f"unknown architecture: {architecture}")
@@ -39,4 +41,6 @@ def build_model(rules, num_xfers: int, args: dict):
         current_graph_layers=args.get("current_graph_layers", 5),
         use_action_history=not args.get("state_only", False),
         use_locality_features=args.get("locality_features", False),
+        source_topology_layers=args.get("source_topology_layers", 0),
+        source_id_frequency_prior=args.get("source_id_frequency_prior", 0.0),
     )

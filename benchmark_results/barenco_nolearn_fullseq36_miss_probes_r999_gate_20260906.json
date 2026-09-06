@@ -1,0 +1,1337 @@
+{
+  "actions": [
+    {
+      "anchor_slots": [
+        28
+      ],
+      "binding_slots": [
+        [
+          28,
+          40,
+          42,
+          43,
+          45
+        ]
+      ],
+      "cost": 54,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": null,
+      "matching_anchor_count": 1,
+      "node_id": 17,
+      "reward": 1,
+      "source_candidates": 310,
+      "source_id": 1467,
+      "source_match_covered": false,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step020",
+      "xfer_id": 1525
+    },
+    {
+      "anchor_slots": [
+        19
+      ],
+      "binding_slots": [
+        [
+          19,
+          20
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 158,
+      "matching_anchor_count": 1,
+      "node_id": 19,
+      "reward": -2,
+      "source_candidates": 137,
+      "source_id": 38,
+      "source_match_covered": true,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step066",
+      "xfer_id": 42
+    },
+    {
+      "anchor_slots": [
+        29
+      ],
+      "binding_slots": [
+        [
+          29,
+          30,
+          31
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 271,
+      "matching_anchor_count": 1,
+      "node_id": 27,
+      "reward": -2,
+      "source_candidates": 178,
+      "source_id": 97,
+      "source_match_covered": true,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step069",
+      "xfer_id": 101
+    },
+    {
+      "anchor_slots": [
+        24
+      ],
+      "binding_slots": [
+        [
+          24,
+          26
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 192,
+      "matching_anchor_count": 1,
+      "node_id": 24,
+      "reward": -2,
+      "source_candidates": 179,
+      "source_id": 32,
+      "source_match_covered": true,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step079",
+      "xfer_id": 36
+    },
+    {
+      "anchor_slots": [
+        24
+      ],
+      "binding_slots": [
+        [
+          24,
+          25,
+          27,
+          28
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 148,
+      "matching_anchor_count": 1,
+      "node_id": 24,
+      "reward": -1,
+      "source_candidates": 158,
+      "source_id": 3477,
+      "source_match_covered": true,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step084",
+      "xfer_id": 3811
+    },
+    {
+      "anchor_slots": [
+        12
+      ],
+      "binding_slots": [
+        [
+          12,
+          13
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 160,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": -2,
+      "source_candidates": 138,
+      "source_id": 36,
+      "source_match_covered": true,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step086",
+      "xfer_id": 40
+    },
+    {
+      "anchor_slots": [
+        10
+      ],
+      "binding_slots": [
+        [
+          10,
+          11,
+          12,
+          14
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 138,
+      "matching_anchor_count": 1,
+      "node_id": 10,
+      "reward": -1,
+      "source_candidates": 205,
+      "source_id": 1536,
+      "source_match_covered": true,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step090",
+      "xfer_id": 1594
+    },
+    {
+      "anchor_slots": [
+        13
+      ],
+      "binding_slots": [
+        [
+          13,
+          14
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 247,
+      "matching_anchor_count": 1,
+      "node_id": 11,
+      "reward": -2,
+      "source_candidates": 172,
+      "source_id": 38,
+      "source_match_covered": true,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step105",
+      "xfer_id": 42
+    }
+  ],
+  "config": {
+    "action_value_weight": 1.0,
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311_calibration_r999.json",
+    "caps": [
+      128,
+      256,
+      512,
+      8192
+    ],
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311.pt",
+    "data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_barenco38_3_normalized_w8_20260906.pt",
+    "device": "cuda",
+    "ecc_file": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/ecc_set/nam_ecc.json",
+    "max_action_rank": 8192,
+    "max_gate_increase": 3,
+    "max_source_matches": 8192,
+    "microbatch": 8,
+    "near_source_reserve": 0,
+    "ranking_mode": "gate",
+    "source_grouping": "first_gate",
+    "source_microbatch": 0,
+    "target_recall": 0.999,
+    "trajectories": [
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step020",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step066",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step069",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step079",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step084",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step086",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step090",
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step105"
+    ]
+  },
+  "proposal_metrics": {
+    "eligible_actions": 2183,
+    "predicted_actions": 2183,
+    "selected_actions": 2183,
+    "selected_value_exploration_proposals": 0,
+    "value_increase_candidates_after_parent_cap": 0
+  },
+  "sequence_conditioned": {
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step020": {
+      "actions": [
+        {
+          "anchor_slots": [
+            28
+          ],
+          "cost": 54,
+          "declared_anchor_available": false,
+          "declared_anchor_matches": false,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": -1,
+          "gate_rank": null,
+          "match_group": "far",
+          "matcher_above_threshold": false,
+          "matcher_calibrated_probability": 0.0006040348671376705,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -6.237612247467041,
+          "matcher_raw_threshold": -5.537871360778809,
+          "matcher_unfiltered_probability_rank": 799,
+          "matching_anchor_count": 1,
+          "node_id": 17,
+          "reward": 1,
+          "sequence_window_start": 0,
+          "source_candidates": 310,
+          "source_id": 1467,
+          "source_match_covered": false,
+          "step": 0,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step020",
+          "xfer_id": 1525
+        }
+      ],
+      "probes": [],
+      "summary": {
+        "actions": 1,
+        "caps": {
+          "128": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "256": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "512": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "8192": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          }
+        },
+        "exact_action_available": 1,
+        "exact_transition_matches": 1,
+        "gate_rank": {
+          "max": null,
+          "median": null,
+          "min": null,
+          "p90": null,
+          "p95": null
+        },
+        "missing_rank_steps": [
+          0
+        ],
+        "ranked_action_covered": 0,
+        "source_match_covered": 0
+      }
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step066": {
+      "actions": [
+        {
+          "anchor_slots": [
+            19
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 2,
+          "gate_rank": 158,
+          "match_group": "far",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 1.0,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 24.591392517089844,
+          "matcher_raw_threshold": -5.537871360778809,
+          "matcher_unfiltered_probability_rank": 41,
+          "matching_anchor_count": 1,
+          "node_id": 19,
+          "reward": -2,
+          "sequence_window_start": 0,
+          "source_candidates": 137,
+          "source_id": 38,
+          "source_match_covered": true,
+          "step": 0,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step066",
+          "xfer_id": 42
+        }
+      ],
+      "probes": [],
+      "summary": {
+        "actions": 1,
+        "caps": {
+          "128": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "256": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "512": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "8192": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          }
+        },
+        "exact_action_available": 1,
+        "exact_transition_matches": 1,
+        "gate_rank": {
+          "max": 158,
+          "median": 158,
+          "min": 158,
+          "p90": 158,
+          "p95": 158
+        },
+        "missing_rank_steps": [],
+        "ranked_action_covered": 1,
+        "source_match_covered": 1
+      }
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step069": {
+      "actions": [
+        {
+          "anchor_slots": [
+            29
+          ],
+          "cost": 40,
+          "declared_anchor_available": false,
+          "declared_anchor_matches": false,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 2,
+          "gate_rank": 271,
+          "match_group": "far",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.9999860525131226,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 10.33306884765625,
+          "matcher_raw_threshold": -5.537871360778809,
+          "matcher_unfiltered_probability_rank": 66,
+          "matching_anchor_count": 1,
+          "node_id": 27,
+          "reward": -2,
+          "sequence_window_start": 0,
+          "source_candidates": 178,
+          "source_id": 97,
+          "source_match_covered": true,
+          "step": 0,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step069",
+          "xfer_id": 101
+        }
+      ],
+      "probes": [],
+      "summary": {
+        "actions": 1,
+        "caps": {
+          "128": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "256": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "512": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "8192": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          }
+        },
+        "exact_action_available": 1,
+        "exact_transition_matches": 1,
+        "gate_rank": {
+          "max": 271,
+          "median": 271,
+          "min": 271,
+          "p90": 271,
+          "p95": 271
+        },
+        "missing_rank_steps": [],
+        "ranked_action_covered": 1,
+        "source_match_covered": 1
+      }
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step079": {
+      "actions": [
+        {
+          "anchor_slots": [
+            24
+          ],
+          "cost": 41,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 2,
+          "gate_rank": 192,
+          "match_group": "far",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 1.0,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 25.84866714477539,
+          "matcher_raw_threshold": -5.537871360778809,
+          "matcher_unfiltered_probability_rank": 29,
+          "matching_anchor_count": 1,
+          "node_id": 24,
+          "reward": -2,
+          "sequence_window_start": 0,
+          "source_candidates": 179,
+          "source_id": 32,
+          "source_match_covered": true,
+          "step": 0,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step079",
+          "xfer_id": 36
+        }
+      ],
+      "probes": [],
+      "summary": {
+        "actions": 1,
+        "caps": {
+          "128": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "256": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "512": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "8192": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          }
+        },
+        "exact_action_available": 1,
+        "exact_transition_matches": 1,
+        "gate_rank": {
+          "max": 192,
+          "median": 192,
+          "min": 192,
+          "p90": 192,
+          "p95": 192
+        },
+        "missing_rank_steps": [],
+        "ranked_action_covered": 1,
+        "source_match_covered": 1
+      }
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step084": {
+      "actions": [
+        {
+          "anchor_slots": [
+            24
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 1,
+          "gate_rank": 148,
+          "match_group": "far",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.0069365291856229305,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -4.056802272796631,
+          "matcher_raw_threshold": -5.537871360778809,
+          "matcher_unfiltered_probability_rank": 280,
+          "matching_anchor_count": 1,
+          "node_id": 24,
+          "reward": -1,
+          "sequence_window_start": 0,
+          "source_candidates": 158,
+          "source_id": 3477,
+          "source_match_covered": true,
+          "step": 0,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step084",
+          "xfer_id": 3811
+        }
+      ],
+      "probes": [],
+      "summary": {
+        "actions": 1,
+        "caps": {
+          "128": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "256": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "512": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "8192": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          }
+        },
+        "exact_action_available": 1,
+        "exact_transition_matches": 1,
+        "gate_rank": {
+          "max": 148,
+          "median": 148,
+          "min": 148,
+          "p90": 148,
+          "p95": 148
+        },
+        "missing_rank_steps": [],
+        "ranked_action_covered": 1,
+        "source_match_covered": 1
+      }
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step086": {
+      "actions": [
+        {
+          "anchor_slots": [
+            12
+          ],
+          "cost": 38,
+          "declared_anchor_available": false,
+          "declared_anchor_matches": false,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 2,
+          "gate_rank": 160,
+          "match_group": "far",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 1.0,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 31.522001266479492,
+          "matcher_raw_threshold": -5.537871360778809,
+          "matcher_unfiltered_probability_rank": 26,
+          "matching_anchor_count": 1,
+          "node_id": 9,
+          "reward": -2,
+          "sequence_window_start": 0,
+          "source_candidates": 138,
+          "source_id": 36,
+          "source_match_covered": true,
+          "step": 0,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step086",
+          "xfer_id": 40
+        }
+      ],
+      "probes": [],
+      "summary": {
+        "actions": 1,
+        "caps": {
+          "128": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "256": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "512": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "8192": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          }
+        },
+        "exact_action_available": 1,
+        "exact_transition_matches": 1,
+        "gate_rank": {
+          "max": 160,
+          "median": 160,
+          "min": 160,
+          "p90": 160,
+          "p95": 160
+        },
+        "missing_rank_steps": [],
+        "ranked_action_covered": 1,
+        "source_match_covered": 1
+      }
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step090": {
+      "actions": [
+        {
+          "anchor_slots": [
+            10
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": true,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 1,
+          "gate_rank": 138,
+          "match_group": "far",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.2563600540161133,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -0.5823268890380859,
+          "matcher_raw_threshold": -5.537871360778809,
+          "matcher_unfiltered_probability_rank": 170,
+          "matching_anchor_count": 1,
+          "node_id": 10,
+          "reward": -1,
+          "sequence_window_start": 0,
+          "source_candidates": 205,
+          "source_id": 1536,
+          "source_match_covered": true,
+          "step": 0,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step090",
+          "xfer_id": 1594
+        }
+      ],
+      "probes": [],
+      "summary": {
+        "actions": 1,
+        "caps": {
+          "128": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "256": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "512": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "8192": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          }
+        },
+        "exact_action_available": 1,
+        "exact_transition_matches": 1,
+        "gate_rank": {
+          "max": 138,
+          "median": 138,
+          "min": 138,
+          "p90": 138,
+          "p95": 138
+        },
+        "missing_rank_steps": [],
+        "ranked_action_covered": 1,
+        "source_match_covered": 1
+      }
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step105": {
+      "actions": [
+        {
+          "anchor_slots": [
+            13
+          ],
+          "cost": 39,
+          "declared_anchor_available": true,
+          "declared_anchor_matches": false,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": 2,
+          "gate_rank": 247,
+          "match_group": "far",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 1.0,
+          "matcher_eligible": true,
+          "matcher_raw_logit": 22.966392517089844,
+          "matcher_raw_threshold": -5.537871360778809,
+          "matcher_unfiltered_probability_rank": 36,
+          "matching_anchor_count": 1,
+          "node_id": 11,
+          "reward": -2,
+          "sequence_window_start": 0,
+          "source_candidates": 172,
+          "source_id": 38,
+          "source_match_covered": true,
+          "step": 0,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step105",
+          "xfer_id": 42
+        }
+      ],
+      "probes": [],
+      "summary": {
+        "actions": 1,
+        "caps": {
+          "128": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "256": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "512": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "8192": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          }
+        },
+        "exact_action_available": 1,
+        "exact_transition_matches": 1,
+        "gate_rank": {
+          "max": 247,
+          "median": 247,
+          "min": 247,
+          "p90": 247,
+          "p95": 247
+        },
+        "missing_rank_steps": [],
+        "ranked_action_covered": 1,
+        "source_match_covered": 1
+      }
+    }
+  },
+  "summary": {
+    "actions": 8,
+    "caps": {
+      "128": {
+        "covered": 0,
+        "missing_steps": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "recall": 0.0,
+        "whole_trajectory_covered": false
+      },
+      "256": {
+        "covered": 6,
+        "missing_steps": [
+          0,
+          0
+        ],
+        "recall": 0.75,
+        "whole_trajectory_covered": false
+      },
+      "512": {
+        "covered": 7,
+        "missing_steps": [
+          0
+        ],
+        "recall": 0.875,
+        "whole_trajectory_covered": false
+      },
+      "8192": {
+        "covered": 7,
+        "missing_steps": [
+          0
+        ],
+        "recall": 0.875,
+        "whole_trajectory_covered": false
+      }
+    },
+    "exact_action_available": 8,
+    "exact_transition_matches": 8,
+    "gate_rank": {
+      "max": 271,
+      "median": 160,
+      "min": 138,
+      "p90": 271,
+      "p95": 271
+    },
+    "missing_rank_steps": [
+      0
+    ],
+    "ranked_action_covered": 7,
+    "source_match_covered": 7
+  },
+  "timing": {
+    "model_match_seconds": 0.197360347956419,
+    "model_match_stages": {
+      "batch_collate_and_pad_seconds": 0.000639256089925766,
+      "batch_host_to_device_seconds": 0.0001513175666332245,
+      "candidate_device_to_host_seconds": 0.0,
+      "candidate_gpu_pack_seconds": 0.007817041128873825,
+      "candidate_python_pack_seconds": 0.0,
+      "candidate_selection_and_ranking_seconds": 0.1128247044980526,
+      "incremental_graph_readout_seconds": 0.0054741911590099335,
+      "match_group_compaction_seconds": 0.04536040499806404,
+      "match_logits_seconds": 0.009249618276953697,
+      "model_match_unattributed_seconds": 0.0005006436258554459,
+      "readout_cache_metadata_or_gather_seconds": 0.00018995068967342377,
+      "structural_binding_decode_seconds": 0.015153219923377037
+    },
+    "proposal_seconds": 0.009666163474321365,
+    "proposal_stages": {
+      "gpu_action_expansion_seconds": 0.0007644463330507278,
+      "gpu_global_proposal_rank_seconds": 0.00023338012397289276,
+      "gpu_match_preselection_seconds": 0.0013677999377250671,
+      "gpu_per_parent_rank_seconds": 0.001841038465499878,
+      "proposal_device_to_host_and_pack_seconds": 0.005296651273965836
+    },
+    "qasm_load_and_exact_validation_seconds": 0.10467380657792091
+  },
+  "trajectories": {
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step020": {
+      "actions": 1,
+      "caps": {
+        "128": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "256": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "512": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "8192": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        }
+      },
+      "exact_action_available": 1,
+      "exact_transition_matches": 1,
+      "gate_rank": {
+        "max": null,
+        "median": null,
+        "min": null,
+        "p90": null,
+        "p95": null
+      },
+      "missing_rank_steps": [
+        0
+      ],
+      "ranked_action_covered": 0,
+      "source_match_covered": 0
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step066": {
+      "actions": 1,
+      "caps": {
+        "128": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "256": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "512": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "8192": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        }
+      },
+      "exact_action_available": 1,
+      "exact_transition_matches": 1,
+      "gate_rank": {
+        "max": 158,
+        "median": 158,
+        "min": 158,
+        "p90": 158,
+        "p95": 158
+      },
+      "missing_rank_steps": [],
+      "ranked_action_covered": 1,
+      "source_match_covered": 1
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step069": {
+      "actions": 1,
+      "caps": {
+        "128": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "256": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "512": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "8192": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        }
+      },
+      "exact_action_available": 1,
+      "exact_transition_matches": 1,
+      "gate_rank": {
+        "max": 271,
+        "median": 271,
+        "min": 271,
+        "p90": 271,
+        "p95": 271
+      },
+      "missing_rank_steps": [],
+      "ranked_action_covered": 1,
+      "source_match_covered": 1
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step079": {
+      "actions": 1,
+      "caps": {
+        "128": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "256": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "512": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "8192": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        }
+      },
+      "exact_action_available": 1,
+      "exact_transition_matches": 1,
+      "gate_rank": {
+        "max": 192,
+        "median": 192,
+        "min": 192,
+        "p90": 192,
+        "p95": 192
+      },
+      "missing_rank_steps": [],
+      "ranked_action_covered": 1,
+      "source_match_covered": 1
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step084": {
+      "actions": 1,
+      "caps": {
+        "128": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "256": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "512": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "8192": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        }
+      },
+      "exact_action_available": 1,
+      "exact_transition_matches": 1,
+      "gate_rank": {
+        "max": 148,
+        "median": 148,
+        "min": 148,
+        "p90": 148,
+        "p95": 148
+      },
+      "missing_rank_steps": [],
+      "ranked_action_covered": 1,
+      "source_match_covered": 1
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step086": {
+      "actions": 1,
+      "caps": {
+        "128": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "256": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "512": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "8192": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        }
+      },
+      "exact_action_available": 1,
+      "exact_transition_matches": 1,
+      "gate_rank": {
+        "max": 160,
+        "median": 160,
+        "min": 160,
+        "p90": 160,
+        "p95": 160
+      },
+      "missing_rank_steps": [],
+      "ranked_action_covered": 1,
+      "source_match_covered": 1
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step090": {
+      "actions": 1,
+      "caps": {
+        "128": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "256": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "512": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "8192": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        }
+      },
+      "exact_action_available": 1,
+      "exact_transition_matches": 1,
+      "gate_rank": {
+        "max": 138,
+        "median": 138,
+        "min": 138,
+        "p90": 138,
+        "p95": 138
+      },
+      "missing_rank_steps": [],
+      "ranked_action_covered": 1,
+      "source_match_covered": 1
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/miss_probes/step105": {
+      "actions": 1,
+      "caps": {
+        "128": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "256": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "512": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "8192": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        }
+      },
+      "exact_action_available": 1,
+      "exact_transition_matches": 1,
+      "gate_rank": {
+        "max": 247,
+        "median": 247,
+        "min": 247,
+        "p90": 247,
+        "p95": 247
+      },
+      "missing_rank_steps": [],
+      "ranked_action_covered": 1,
+      "source_match_covered": 1
+    }
+  }
+}

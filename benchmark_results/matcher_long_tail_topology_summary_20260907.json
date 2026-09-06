@@ -1,0 +1,169 @@
+{
+  "date": "2026-09-07",
+  "selected": {
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_matcher_control_s412_sourcetopo1_only_lr1e4_a06875_s414.pt",
+    "checkpoint_sha256": "a27088b0bafccc0c43c37598814f676555b7eed3c2cbdc9d37413d968f178879",
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_matcher_control_s412_sourcetopo1_only_lr1e4_a06875_s414_calibration_r999.json",
+    "calibration_sha256": "50bfebabe4bf7dfc591662592506cef41f9277922930eca2aaa9582fb5a04025",
+    "target_recall": 0.999,
+    "source_topology_layers": 1,
+    "source_topology_residual_scale": 0.6875,
+    "near_source_reserve": 0,
+    "recommended_max_source_matches": 10240,
+    "baseline_parameters": 6930383,
+    "topology_parameters": 339072,
+    "total_parameters": 7269455
+  },
+  "strict_disjoint_audit_cap8192": {
+    "states": 1536,
+    "eligible_pairs": 574851236,
+    "exact_matches": 1607788,
+    "control": {
+      "above_threshold_pairs": 26273345,
+      "after_source_cap_pairs": 11841065,
+      "after_structural_decode": 1981966,
+      "exact_final_retained": 1598001,
+      "exact_final_recall": 0.9939127546666601,
+      "teacher_final_retained": 1528,
+      "teacher_actions": 1536,
+      "length5_exact_final_recall": 0.9572797235746819
+    },
+    "selected": {
+      "above_threshold_pairs": 33424884,
+      "after_source_cap_pairs": 12073928,
+      "after_structural_decode": 1935580,
+      "exact_final_retained": 1598033,
+      "exact_final_recall": 0.9939326577882158,
+      "teacher_final_retained": 1528,
+      "teacher_actions": 1536,
+      "length5_exact_final_recall": 0.9623998743521281
+    },
+    "frequency_recall": {
+      "control": {
+        "unseen": 0.023809523809523808,
+        "1": 0.0025,
+        "2-7": 0.5864406779661017,
+        "8-63": 0.7787408759124088,
+        "64-511": 0.9244839738211109,
+        "512+": 0.9954044642885178
+      },
+      "selected": {
+        "unseen": 0.02976190476190476,
+        "1": 0.00375,
+        "2-7": 0.6508474576271186,
+        "8-63": 0.7823905109489051,
+        "64-511": 0.9416009397549925,
+        "512+": 0.9952782409108178
+      }
+    }
+  },
+  "ordinary_holdout": {
+    "states": 2048,
+    "control_full_binding_topn": 0.9020188946916395,
+    "selected_full_binding_topn": 0.9016633931497772
+  },
+  "training_distribution_diagnosis": {
+    "source_classes": 3855,
+    "unseen_positive_source_classes": 958,
+    "unseen_length5_source_classes": 954,
+    "unseen_sharing_gate_type_sequence_with_observed": 907,
+    "unseen_sharing_full_topology_signature_with_observed": 0,
+    "source1467": {
+      "positive_states": 289,
+      "concrete_matches": 292,
+      "slot_span_min": 4,
+      "slot_span_median": 4,
+      "slot_span_p90": 10,
+      "slot_span_max": 173,
+      "matches_with_span_at_least_17": 27,
+      "matches_with_span_exactly_17": 1
+    }
+  },
+  "target_trajectory_audits": {
+    "gf370_2_window8": {
+      "max_source_matches": 10240,
+      "teacher_final_retained": 271,
+      "teacher_actions": 271,
+      "exact_final_retained": 559323,
+      "exact_matches": 559524,
+      "exact_final_recall": 0.9996407660797392
+    },
+    "gf370_2_window64": {
+      "max_source_matches": 8192,
+      "teacher_final_retained": 271,
+      "teacher_actions": 271,
+      "exact_final_retained": 559451,
+      "exact_matches": 559524,
+      "exact_final_recall": 0.9998695319593083
+    },
+    "barenco_fullseq36_window8": {
+      "max_source_matches": 10240,
+      "teacher_final_retained": 116,
+      "teacher_actions": 116,
+      "exact_final_retained": 15925,
+      "exact_matches": 16003,
+      "exact_final_recall": 0.9951259138911455
+    },
+    "barenco_fullseq36_window64": {
+      "max_source_matches": 10240,
+      "teacher_final_retained": 116,
+      "teacher_actions": 116,
+      "exact_final_retained": 16001,
+      "exact_matches": 16003,
+      "exact_final_recall": 0.9998750234331063
+    }
+  },
+  "target_control_comparison": {
+    "gf370_2_window8": {
+      "teacher_final_retained": 271,
+      "teacher_actions": 271,
+      "exact_final_retained": 559323,
+      "exact_matches": 559524
+    },
+    "gf370_2_window64": {
+      "teacher_final_retained": 271,
+      "teacher_actions": 271,
+      "exact_final_retained": 559470,
+      "exact_matches": 559524
+    },
+    "barenco_fullseq36_window8": {
+      "teacher_final_retained": 116,
+      "teacher_actions": 116,
+      "exact_final_retained": 15910,
+      "exact_matches": 16003
+    },
+    "barenco_fullseq36_window64": {
+      "teacher_final_retained": 116,
+      "teacher_actions": 116,
+      "exact_final_retained": 16000,
+      "exact_matches": 16003
+    }
+  },
+  "barenco_step20": {
+    "xfer_id": 1525,
+    "source_id": 1467,
+    "binding_slots": [28, 40, 42, 43, 45],
+    "control_raw_logit": -6.237612247467041,
+    "control_raw_threshold": -5.537871360778809,
+    "selected_raw_logit": -5.579756259918213,
+    "selected_raw_threshold": -5.675974369049072,
+    "selected_raw_margin": 0.09621810913085938,
+    "selected_unfiltered_probability_rank": 737
+  },
+  "gf_window8_cap_boundary": {
+    "step": 251,
+    "xfer_id": 4382,
+    "source_id": 3759,
+    "binding_slots": [968, 971],
+    "above_threshold": true,
+    "above_threshold_rank": 9306,
+    "retained_at_cap8192": false,
+    "retained_at_cap10240": true
+  },
+  "validation": {
+    "focused_unit_tests_passed": 20,
+    "focused_unit_tests_failed": 0,
+    "barenco_normalized_transitions": 116,
+    "barenco_normalization_failures": 0
+  }
+}

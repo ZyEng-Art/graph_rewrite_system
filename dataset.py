@@ -310,6 +310,34 @@ class PrefixDataset(Dataset):
             ),
         }
 
+    def positive_source_ids(self, index: int) -> set[int]:
+        """Return source classes with an exact match in one prefix state.
+
+        Source balancing operates on state incidence rather than raw binding
+        multiplicity.  This matches the classification loss, which is
+        normalized independently inside each state, and prevents a circuit
+        with many symmetric bindings from dominating the frequency estimate.
+        """
+
+        trajectory_id, prefix_length = self.indices[index]
+        trajectory = self.trajectories[trajectory_id]
+        terminal = prefix_length == len(trajectory["steps"])
+        matches = (
+            trajectory["terminal_matches"]
+            if terminal
+            else trajectory["steps"][prefix_length]["matches"]
+        )
+        return {int(match["source_id"]) for match in matches}
+
+    def target_source_id(self, index: int) -> int | None:
+        """Return the source class selected by the trajectory at one state."""
+
+        trajectory_id, prefix_length = self.indices[index]
+        trajectory = self.trajectories[trajectory_id]
+        if prefix_length == len(trajectory["steps"]):
+            return None
+        return int(trajectory["steps"][prefix_length]["action"]["source_id"])
+
 
 def _max_slot(sample: dict) -> int:
     slots = [int(row[0]) for row in sample["initial_graph"]["nodes"]]
@@ -685,6 +713,122 @@ class EpochRandomSampler(torch.utils.data.Sampler[int]):
         rng.shuffle(indices)
         self.epoch += 1
         return iter(indices)
+
+    def __len__(self) -> int:
+        return len(self.dataset)
+
+
+def source_state_counts(dataset: PrefixDataset, num_sources: int) -> torch.Tensor:
+    """Count the number of prefix states containing each exact source class."""
+
+    counts = torch.zeros(num_sources, dtype=torch.long)
+    for index in range(len(dataset)):
+        for source_id in dataset.positive_source_ids(index):
+            if not 0 <= source_id < num_sources:
+                raise ValueError(f"source id {source_id} is out of range")
+            counts[source_id] += 1
+    return counts
+
+
+def target_source_counts(dataset: PrefixDataset, num_sources: int) -> torch.Tensor:
+    """Count trajectory-selected source classes in a prefix dataset."""
+
+    counts = torch.zeros(num_sources, dtype=torch.long)
+    for index in range(len(dataset)):
+        source_id = dataset.target_source_id(index)
+        if source_id is None:
+            continue
+        if not 0 <= source_id < num_sources:
+            raise ValueError(f"source id {source_id} is out of range")
+        counts[source_id] += 1
+    return counts
+
+
+def inverse_frequency_weights(
+    counts: torch.Tensor,
+    *,
+    power: float,
+    cap: float,
+) -> torch.Tensor:
+    """Build bounded inverse-frequency weights for observed source classes.
+
+    Unobserved sources keep unit weight.  The most frequent observed source is
+    the reference, so common sources also keep unit weight while rare sources
+    receive at most ``cap``.  Bounding is important because a single noisy
+    example must not dominate matcher training.
+    """
+
+    if power < 0:
+        raise ValueError("source-balance power must be nonnegative")
+    if cap < 1:
+        raise ValueError("source-balance cap must be at least one")
+    weights = torch.ones(counts.shape, dtype=torch.float32)
+    observed = counts.gt(0)
+    if not bool(observed.any()) or power == 0:
+        return weights
+    reference = counts[observed].max().to(torch.float64)
+    balanced = (reference / counts[observed].to(torch.float64)).pow(power)
+    weights[observed] = balanced.clamp(max=cap).to(torch.float32)
+    return weights
+
+
+class TargetSourceBalancedSampler(torch.utils.data.Sampler[int]):
+    """Mix uniform states with bounded target-source-balanced resampling.
+
+    The uniform lane preserves broad graph coverage.  The balanced lane uses
+    replacement so states whose chosen action has a rare source class are seen
+    more often.  Sampling remains deterministic across epochs and emits the
+    same number of states as the original epoch sampler.
+    """
+
+    def __init__(
+        self,
+        dataset: PrefixDataset,
+        num_sources: int,
+        seed: int,
+        *,
+        power: float,
+        cap: float,
+        fraction: float,
+    ):
+        if not 0 <= fraction <= 1:
+            raise ValueError("balanced sampler fraction must be in [0, 1]")
+        self.dataset = dataset
+        self.seed = seed
+        self.epoch = 0
+        self.fraction = fraction
+        self.counts = target_source_counts(dataset, num_sources)
+        source_weights = inverse_frequency_weights(
+            self.counts,
+            power=power,
+            cap=cap,
+        )
+        self.weights = torch.ones(len(dataset), dtype=torch.float64)
+        for index in range(len(dataset)):
+            source_id = dataset.target_source_id(index)
+            if source_id is not None:
+                self.weights[index] = float(source_weights[source_id])
+
+    def __iter__(self):
+        size = len(self.dataset)
+        generator = torch.Generator()
+        generator.manual_seed(self.seed + self.epoch)
+        self.epoch += 1
+        balanced_count = round(size * self.fraction)
+        uniform_count = size - balanced_count
+        uniform = torch.randperm(size, generator=generator)[:uniform_count]
+        if balanced_count:
+            balanced = torch.multinomial(
+                self.weights,
+                balanced_count,
+                replacement=True,
+                generator=generator,
+            )
+            indices = torch.cat((uniform, balanced))
+        else:
+            indices = uniform
+        order = torch.randperm(indices.numel(), generator=generator)
+        return iter(indices[order].tolist())
 
     def __len__(self) -> int:
         return len(self.dataset)

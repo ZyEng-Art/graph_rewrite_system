@@ -1,0 +1,3520 @@
+{
+  "actions": [
+    {
+      "anchor_slots": [
+        8
+      ],
+      "binding_slots": [
+        [
+          8,
+          10,
+          11
+        ]
+      ],
+      "cost": 58,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 44,
+      "matching_anchor_count": 1,
+      "node_id": 8,
+      "reward": 0,
+      "source_candidates": 195,
+      "source_id": 117,
+      "source_match_covered": true,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 121
+    },
+    {
+      "anchor_slots": [
+        50
+      ],
+      "binding_slots": [
+        [
+          50,
+          51
+        ]
+      ],
+      "cost": 58,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 26,
+      "matching_anchor_count": 1,
+      "node_id": 21,
+      "reward": 0,
+      "source_candidates": 206,
+      "source_id": 3768,
+      "source_match_covered": true,
+      "step": 1,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4409
+    },
+    {
+      "anchor_slots": [
+        36
+      ],
+      "binding_slots": [
+        [
+          36,
+          38,
+          40
+        ]
+      ],
+      "cost": 58,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 27,
+      "matching_anchor_count": 1,
+      "node_id": 28,
+      "reward": 0,
+      "source_candidates": 234,
+      "source_id": 116,
+      "source_match_covered": true,
+      "step": 2,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 120
+    },
+    {
+      "anchor_slots": [
+        37
+      ],
+      "binding_slots": [
+        [
+          37,
+          39,
+          40,
+          41
+        ]
+      ],
+      "cost": 58,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 39,
+      "matching_anchor_count": 1,
+      "node_id": 29,
+      "reward": 0,
+      "source_candidates": 251,
+      "source_id": 323,
+      "source_match_covered": true,
+      "step": 3,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 336
+    },
+    {
+      "anchor_slots": [
+        35
+      ],
+      "binding_slots": [
+        [
+          35,
+          37
+        ]
+      ],
+      "cost": 58,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 12,
+      "matching_anchor_count": 1,
+      "node_id": 23,
+      "reward": 0,
+      "source_candidates": 236,
+      "source_id": 41,
+      "source_match_covered": true,
+      "step": 4,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 45
+    },
+    {
+      "anchor_slots": [
+        12
+      ],
+      "binding_slots": [
+        [
+          12,
+          31
+        ]
+      ],
+      "cost": 58,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 3,
+      "matching_anchor_count": 1,
+      "node_id": 12,
+      "reward": 0,
+      "source_candidates": 259,
+      "source_id": 34,
+      "source_match_covered": true,
+      "step": 5,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 38
+    },
+    {
+      "anchor_slots": [
+        32
+      ],
+      "binding_slots": [
+        [
+          32,
+          34
+        ]
+      ],
+      "cost": 58,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 37,
+      "matching_anchor_count": 1,
+      "node_id": 24,
+      "reward": 2,
+      "source_candidates": 275,
+      "source_id": 3233,
+      "source_match_covered": true,
+      "step": 6,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3320
+    },
+    {
+      "anchor_slots": [
+        28
+      ],
+      "binding_slots": [
+        [
+          28,
+          42
+        ]
+      ],
+      "cost": 56,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 6,
+      "matching_anchor_count": 1,
+      "node_id": 16,
+      "reward": 0,
+      "source_candidates": 262,
+      "source_id": 40,
+      "source_match_covered": true,
+      "step": 7,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 44
+    },
+    {
+      "anchor_slots": [
+        33
+      ],
+      "binding_slots": [
+        [
+          33,
+          35,
+          37,
+          38
+        ]
+      ],
+      "cost": 56,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 51,
+      "matching_anchor_count": 1,
+      "node_id": 27,
+      "reward": 0,
+      "source_candidates": 282,
+      "source_id": 1535,
+      "source_match_covered": true,
+      "step": 8,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1593
+    },
+    {
+      "anchor_slots": [
+        9
+      ],
+      "binding_slots": [
+        [
+          9,
+          10,
+          11
+        ]
+      ],
+      "cost": 56,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 32,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 0,
+      "source_candidates": 306,
+      "source_id": 117,
+      "source_match_covered": true,
+      "step": 9,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 121
+    },
+    {
+      "anchor_slots": [
+        25
+      ],
+      "binding_slots": [
+        [
+          25,
+          27
+        ]
+      ],
+      "cost": 56,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 12,
+      "matching_anchor_count": 1,
+      "node_id": 15,
+      "reward": 0,
+      "source_candidates": 282,
+      "source_id": 41,
+      "source_match_covered": true,
+      "step": 10,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 45
+    },
+    {
+      "anchor_slots": [
+        50
+      ],
+      "binding_slots": [
+        [
+          50,
+          52
+        ]
+      ],
+      "cost": 56,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 21,
+      "matching_anchor_count": 1,
+      "node_id": 17,
+      "reward": 0,
+      "source_candidates": 283,
+      "source_id": 3764,
+      "source_match_covered": true,
+      "step": 11,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4397
+    },
+    {
+      "anchor_slots": [
+        48
+      ],
+      "binding_slots": [
+        [
+          48,
+          49,
+          50,
+          51
+        ]
+      ],
+      "cost": 56,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 49,
+      "matching_anchor_count": 1,
+      "node_id": 21,
+      "reward": 0,
+      "source_candidates": 288,
+      "source_id": 323,
+      "source_match_covered": true,
+      "step": 12,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 340
+    },
+    {
+      "anchor_slots": [
+        9
+      ],
+      "binding_slots": [
+        [
+          9,
+          10,
+          11,
+          12
+        ]
+      ],
+      "cost": 56,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 46,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 0,
+      "source_candidates": 285,
+      "source_id": 323,
+      "source_match_covered": true,
+      "step": 13,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 340
+    },
+    {
+      "anchor_slots": [
+        5
+      ],
+      "binding_slots": [
+        [
+          5,
+          7
+        ]
+      ],
+      "cost": 56,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 4,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": 0,
+      "source_candidates": 289,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 14,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        46
+      ],
+      "binding_slots": [
+        [
+          46,
+          48
+        ]
+      ],
+      "cost": 56,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 16,
+      "matching_anchor_count": 1,
+      "node_id": 17,
+      "reward": 0,
+      "source_candidates": 287,
+      "source_id": 41,
+      "source_match_covered": true,
+      "step": 15,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 45
+    },
+    {
+      "anchor_slots": [
+        43
+      ],
+      "binding_slots": [
+        [
+          43,
+          45
+        ]
+      ],
+      "cost": 56,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 29,
+      "matching_anchor_count": 1,
+      "node_id": 23,
+      "reward": 2,
+      "source_candidates": 286,
+      "source_id": 3233,
+      "source_match_covered": true,
+      "step": 16,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3320
+    },
+    {
+      "anchor_slots": [
+        21
+      ],
+      "binding_slots": [
+        [
+          21,
+          24
+        ]
+      ],
+      "cost": 54,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 3,
+      "matching_anchor_count": 1,
+      "node_id": 14,
+      "reward": 0,
+      "source_candidates": 270,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 17,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        31
+      ],
+      "binding_slots": [
+        [
+          31,
+          33
+        ]
+      ],
+      "cost": 54,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 30,
+      "matching_anchor_count": 1,
+      "node_id": 29,
+      "reward": 0,
+      "source_candidates": 292,
+      "source_id": 3767,
+      "source_match_covered": true,
+      "step": 18,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4406
+    },
+    {
+      "anchor_slots": [
+        45
+      ],
+      "binding_slots": [
+        [
+          45,
+          47,
+          48,
+          49
+        ]
+      ],
+      "cost": 54,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 45,
+      "matching_anchor_count": 1,
+      "node_id": 27,
+      "reward": 0,
+      "source_candidates": 306,
+      "source_id": 1438,
+      "source_match_covered": true,
+      "step": 19,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1496
+    },
+    {
+      "anchor_slots": [
+        28
+      ],
+      "binding_slots": [
+        [
+          28,
+          40,
+          42,
+          43,
+          45
+        ]
+      ],
+      "cost": 54,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": null,
+      "matching_anchor_count": 1,
+      "node_id": 17,
+      "reward": 1,
+      "source_candidates": 310,
+      "source_id": 1467,
+      "source_match_covered": false,
+      "step": 20,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1525
+    },
+    {
+      "anchor_slots": [
+        26
+      ],
+      "binding_slots": [
+        [
+          26,
+          39
+        ]
+      ],
+      "cost": 53,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 10,
+      "matching_anchor_count": 1,
+      "node_id": 16,
+      "reward": 0,
+      "source_candidates": 295,
+      "source_id": 40,
+      "source_match_covered": true,
+      "step": 21,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 44
+    },
+    {
+      "anchor_slots": [
+        41
+      ],
+      "binding_slots": [
+        [
+          41,
+          43
+        ]
+      ],
+      "cost": 53,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 16,
+      "matching_anchor_count": 1,
+      "node_id": 25,
+      "reward": 2,
+      "source_candidates": 300,
+      "source_id": 3233,
+      "source_match_covered": true,
+      "step": 22,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3320
+    },
+    {
+      "anchor_slots": [
+        24
+      ],
+      "binding_slots": [
+        [
+          24,
+          38,
+          40,
+          41,
+          42
+        ]
+      ],
+      "cost": 51,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 17,
+      "reward": 1,
+      "source_candidates": 287,
+      "source_id": 1455,
+      "source_match_covered": true,
+      "step": 23,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1513
+    },
+    {
+      "anchor_slots": [
+        42
+      ],
+      "binding_slots": [
+        [
+          42,
+          43
+        ]
+      ],
+      "cost": 50,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 3,
+      "matching_anchor_count": 1,
+      "node_id": 30,
+      "reward": 2,
+      "source_candidates": 247,
+      "source_id": 3854,
+      "source_match_covered": true,
+      "step": 24,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4694
+    },
+    {
+      "anchor_slots": [
+        22
+      ],
+      "binding_slots": [
+        [
+          22,
+          40
+        ]
+      ],
+      "cost": 48,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 5,
+      "matching_anchor_count": 1,
+      "node_id": 12,
+      "reward": 0,
+      "source_candidates": 216,
+      "source_id": 40,
+      "source_match_covered": true,
+      "step": 25,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 44
+    },
+    {
+      "anchor_slots": [
+        44
+      ],
+      "binding_slots": [
+        [
+          44,
+          46
+        ]
+      ],
+      "cost": 48,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 11,
+      "matching_anchor_count": 1,
+      "node_id": 21,
+      "reward": 0,
+      "source_candidates": 229,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 26,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        41
+      ],
+      "binding_slots": [
+        [
+          41,
+          43
+        ]
+      ],
+      "cost": 48,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 13,
+      "matching_anchor_count": 1,
+      "node_id": 21,
+      "reward": 2,
+      "source_candidates": 225,
+      "source_id": 3233,
+      "source_match_covered": true,
+      "step": 27,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3322
+    },
+    {
+      "anchor_slots": [
+        31
+      ],
+      "binding_slots": [
+        [
+          31,
+          32
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 5,
+      "matching_anchor_count": 1,
+      "node_id": 26,
+      "reward": 0,
+      "source_candidates": 211,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 28,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        8
+      ],
+      "binding_slots": [
+        [
+          8,
+          10
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 12,
+      "matching_anchor_count": 1,
+      "node_id": 8,
+      "reward": 0,
+      "source_candidates": 201,
+      "source_id": 3752,
+      "source_match_covered": true,
+      "step": 29,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4361
+    },
+    {
+      "anchor_slots": [
+        31
+      ],
+      "binding_slots": [
+        [
+          31,
+          32
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 5,
+      "matching_anchor_count": 1,
+      "node_id": 24,
+      "reward": 0,
+      "source_candidates": 219,
+      "source_id": 40,
+      "source_match_covered": true,
+      "step": 30,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 44
+    },
+    {
+      "anchor_slots": [
+        10
+      ],
+      "binding_slots": [
+        [
+          10,
+          12
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 19,
+      "matching_anchor_count": 1,
+      "node_id": 10,
+      "reward": 0,
+      "source_candidates": 230,
+      "source_id": 3752,
+      "source_match_covered": true,
+      "step": 31,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4361
+    },
+    {
+      "anchor_slots": [
+        6
+      ],
+      "binding_slots": [
+        [
+          6,
+          8,
+          9,
+          10
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 38,
+      "matching_anchor_count": 1,
+      "node_id": 6,
+      "reward": 0,
+      "source_candidates": 233,
+      "source_id": 1438,
+      "source_match_covered": true,
+      "step": 32,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1496
+    },
+    {
+      "anchor_slots": [
+        1
+      ],
+      "binding_slots": [
+        [
+          1,
+          3
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 1,
+      "reward": 0,
+      "source_candidates": 240,
+      "source_id": 41,
+      "source_match_covered": true,
+      "step": 33,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 45
+    },
+    {
+      "anchor_slots": [
+        2
+      ],
+      "binding_slots": [
+        [
+          2,
+          3,
+          4,
+          6
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 124,
+      "matching_anchor_count": 1,
+      "node_id": 2,
+      "reward": -1,
+      "source_candidates": 251,
+      "source_id": 1434,
+      "source_match_covered": true,
+      "step": 34,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1492
+    },
+    {
+      "anchor_slots": [
+        5
+      ],
+      "binding_slots": [
+        [
+          5,
+          6,
+          7
+        ]
+      ],
+      "cost": 47,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 21,
+      "matching_anchor_count": 1,
+      "node_id": 5,
+      "reward": 0,
+      "source_candidates": 263,
+      "source_id": 123,
+      "source_match_covered": true,
+      "step": 35,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 127
+    },
+    {
+      "anchor_slots": [
+        7
+      ],
+      "binding_slots": [
+        [
+          7,
+          8,
+          9,
+          10
+        ]
+      ],
+      "cost": 47,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 7,
+      "reward": 1,
+      "source_candidates": 239,
+      "source_id": 883,
+      "source_match_covered": true,
+      "step": 36,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 941
+    },
+    {
+      "anchor_slots": [
+        8
+      ],
+      "binding_slots": [
+        [
+          8,
+          10
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 10,
+      "matching_anchor_count": 1,
+      "node_id": 8,
+      "reward": 0,
+      "source_candidates": 209,
+      "source_id": 3751,
+      "source_match_covered": true,
+      "step": 37,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4358
+    },
+    {
+      "anchor_slots": [
+        9
+      ],
+      "binding_slots": [
+        [
+          9,
+          10,
+          12
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 111,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": -1,
+      "source_candidates": 225,
+      "source_id": 1424,
+      "source_match_covered": true,
+      "step": 38,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1482
+    },
+    {
+      "anchor_slots": [
+        9
+      ],
+      "binding_slots": [
+        [
+          9,
+          10,
+          11,
+          12
+        ]
+      ],
+      "cost": 47,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 4,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 1,
+      "source_candidates": 271,
+      "source_id": 883,
+      "source_match_covered": true,
+      "step": 39,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 941
+    },
+    {
+      "anchor_slots": [
+        31
+      ],
+      "binding_slots": [
+        [
+          31,
+          33
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 25,
+      "reward": 0,
+      "source_candidates": 230,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 40,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        8
+      ],
+      "binding_slots": [
+        [
+          8,
+          9,
+          10,
+          11
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 29,
+      "matching_anchor_count": 1,
+      "node_id": 8,
+      "reward": 0,
+      "source_candidates": 219,
+      "source_id": 317,
+      "source_match_covered": true,
+      "step": 41,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 328
+    },
+    {
+      "anchor_slots": [
+        29
+      ],
+      "binding_slots": [
+        [
+          29,
+          31
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 27,
+      "reward": 0,
+      "source_candidates": 209,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 42,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        9
+      ],
+      "binding_slots": [
+        [
+          9,
+          10,
+          11
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 42,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 0,
+      "source_candidates": 214,
+      "source_id": 117,
+      "source_match_covered": true,
+      "step": 43,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 121
+    },
+    {
+      "anchor_slots": [
+        9
+      ],
+      "binding_slots": [
+        [
+          9,
+          10,
+          11,
+          12
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 39,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 0,
+      "source_candidates": 224,
+      "source_id": 1477,
+      "source_match_covered": true,
+      "step": 44,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1535
+    },
+    {
+      "anchor_slots": [
+        8
+      ],
+      "binding_slots": [
+        [
+          8,
+          11
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 8,
+      "reward": 0,
+      "source_candidates": 214,
+      "source_id": 34,
+      "source_match_covered": true,
+      "step": 45,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 38
+    },
+    {
+      "anchor_slots": [
+        13
+      ],
+      "binding_slots": [
+        [
+          13,
+          15
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 13,
+      "reward": 0,
+      "source_candidates": 201,
+      "source_id": 34,
+      "source_match_covered": true,
+      "step": 46,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 38
+    },
+    {
+      "anchor_slots": [
+        10
+      ],
+      "binding_slots": [
+        [
+          10,
+          12,
+          14
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 7,
+      "matching_anchor_count": 1,
+      "node_id": 10,
+      "reward": 0,
+      "source_candidates": 213,
+      "source_id": 116,
+      "source_match_covered": true,
+      "step": 47,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 120
+    },
+    {
+      "anchor_slots": [
+        23
+      ],
+      "binding_slots": [
+        [
+          23,
+          24,
+          25,
+          27,
+          29
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 42,
+      "matching_anchor_count": 1,
+      "node_id": 23,
+      "reward": 0,
+      "source_candidates": 205,
+      "source_id": 3231,
+      "source_match_covered": true,
+      "step": 48,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3317
+    },
+    {
+      "anchor_slots": [
+        10
+      ],
+      "binding_slots": [
+        [
+          10,
+          12,
+          14
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 33,
+      "matching_anchor_count": 1,
+      "node_id": 10,
+      "reward": 0,
+      "source_candidates": 212,
+      "source_id": 116,
+      "source_match_covered": true,
+      "step": 49,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 120
+    },
+    {
+      "anchor_slots": [
+        26
+      ],
+      "binding_slots": [
+        [
+          26,
+          28
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 125,
+      "matching_anchor_count": 1,
+      "node_id": 23,
+      "reward": -1,
+      "source_candidates": 221,
+      "source_id": 752,
+      "source_match_covered": true,
+      "step": 50,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 810
+    },
+    {
+      "anchor_slots": [
+        14
+      ],
+      "binding_slots": [
+        [
+          14,
+          16,
+          24,
+          26
+        ]
+      ],
+      "cost": 47,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 4,
+      "matching_anchor_count": 1,
+      "node_id": 14,
+      "reward": 1,
+      "source_candidates": 231,
+      "source_id": 3354,
+      "source_match_covered": true,
+      "step": 51,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3564
+    },
+    {
+      "anchor_slots": [
+        12
+      ],
+      "binding_slots": [
+        [
+          12,
+          24,
+          25,
+          26
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 46,
+      "matching_anchor_count": 1,
+      "node_id": 12,
+      "reward": 0,
+      "source_candidates": 241,
+      "source_id": 318,
+      "source_match_covered": true,
+      "step": 52,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 345
+    },
+    {
+      "anchor_slots": [
+        10
+      ],
+      "binding_slots": [
+        [
+          10,
+          12,
+          22,
+          23
+        ]
+      ],
+      "cost": 46,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 10,
+      "reward": 1,
+      "source_candidates": 234,
+      "source_id": 883,
+      "source_match_covered": true,
+      "step": 53,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 941
+    },
+    {
+      "anchor_slots": [
+        24
+      ],
+      "binding_slots": [
+        [
+          24,
+          26,
+          27,
+          28,
+          29
+        ]
+      ],
+      "cost": 45,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 31,
+      "matching_anchor_count": 1,
+      "node_id": 24,
+      "reward": 0,
+      "source_candidates": 211,
+      "source_id": 3219,
+      "source_match_covered": true,
+      "step": 54,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3301
+    },
+    {
+      "anchor_slots": [
+        30
+      ],
+      "binding_slots": [
+        [
+          30,
+          32
+        ]
+      ],
+      "cost": 45,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 11,
+      "matching_anchor_count": 1,
+      "node_id": 23,
+      "reward": 2,
+      "source_candidates": 205,
+      "source_id": 3233,
+      "source_match_covered": true,
+      "step": 55,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3322
+    },
+    {
+      "anchor_slots": [
+        28
+      ],
+      "binding_slots": [
+        [
+          28,
+          26,
+          29,
+          30
+        ]
+      ],
+      "cost": 43,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 5,
+      "matching_anchor_count": 1,
+      "node_id": 26,
+      "reward": 1,
+      "source_candidates": 208,
+      "source_id": 3359,
+      "source_match_covered": true,
+      "step": 56,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3574
+    },
+    {
+      "anchor_slots": [
+        23
+      ],
+      "binding_slots": [
+        [
+          23,
+          24,
+          25
+        ]
+      ],
+      "cost": 42,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 23,
+      "reward": 1,
+      "source_candidates": 189,
+      "source_id": 761,
+      "source_match_covered": true,
+      "step": 57,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 819
+    },
+    {
+      "anchor_slots": [
+        22
+      ],
+      "binding_slots": [
+        [
+          22,
+          23,
+          24,
+          25,
+          26
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 43,
+      "matching_anchor_count": 1,
+      "node_id": 22,
+      "reward": 0,
+      "source_candidates": 188,
+      "source_id": 3198,
+      "source_match_covered": true,
+      "step": 58,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3272
+    },
+    {
+      "anchor_slots": [
+        26
+      ],
+      "binding_slots": [
+        [
+          26,
+          27
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 7,
+      "matching_anchor_count": 1,
+      "node_id": 25,
+      "reward": 0,
+      "source_candidates": 199,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 59,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        8
+      ],
+      "binding_slots": [
+        [
+          8,
+          21,
+          22,
+          23,
+          25
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 33,
+      "matching_anchor_count": 1,
+      "node_id": 8,
+      "reward": 0,
+      "source_candidates": 171,
+      "source_id": 3741,
+      "source_match_covered": true,
+      "step": 60,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4335
+    },
+    {
+      "anchor_slots": [
+        22
+      ],
+      "binding_slots": [
+        [
+          22,
+          25
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 22,
+      "reward": 0,
+      "source_candidates": 162,
+      "source_id": 34,
+      "source_match_covered": true,
+      "step": 61,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 38
+    },
+    {
+      "anchor_slots": [
+        25
+      ],
+      "binding_slots": [
+        [
+          25,
+          26
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 7,
+      "matching_anchor_count": 1,
+      "node_id": 23,
+      "reward": 2,
+      "source_candidates": 167,
+      "source_id": 3233,
+      "source_match_covered": true,
+      "step": 62,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3320
+    },
+    {
+      "anchor_slots": [
+        19
+      ],
+      "binding_slots": [
+        [
+          19,
+          20,
+          21,
+          23,
+          24
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 32,
+      "matching_anchor_count": 1,
+      "node_id": 19,
+      "reward": 0,
+      "source_candidates": 183,
+      "source_id": 3164,
+      "source_match_covered": true,
+      "step": 63,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3222
+    },
+    {
+      "anchor_slots": [
+        20
+      ],
+      "binding_slots": [
+        [
+          20,
+          22
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 20,
+      "reward": 0,
+      "source_candidates": 151,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 64,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        25
+      ],
+      "binding_slots": [
+        [
+          25,
+          28
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 3,
+      "matching_anchor_count": 1,
+      "node_id": 25,
+      "reward": 0,
+      "source_candidates": 135,
+      "source_id": 40,
+      "source_match_covered": true,
+      "step": 65,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 44
+    },
+    {
+      "anchor_slots": [
+        19
+      ],
+      "binding_slots": [
+        [
+          19,
+          20
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 158,
+      "matching_anchor_count": 1,
+      "node_id": 19,
+      "reward": -2,
+      "source_candidates": 137,
+      "source_id": 38,
+      "source_match_covered": true,
+      "step": 66,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 42
+    },
+    {
+      "anchor_slots": [
+        22
+      ],
+      "binding_slots": [
+        [
+          22,
+          23,
+          25
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 10,
+      "matching_anchor_count": 1,
+      "node_id": 22,
+      "reward": 1,
+      "source_candidates": 190,
+      "source_id": 3761,
+      "source_match_covered": true,
+      "step": 67,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4389
+    },
+    {
+      "anchor_slots": [
+        23
+      ],
+      "binding_slots": [
+        [
+          23,
+          24,
+          25
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 27,
+      "matching_anchor_count": 1,
+      "node_id": 23,
+      "reward": 0,
+      "source_candidates": 176,
+      "source_id": 116,
+      "source_match_covered": true,
+      "step": 68,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 120
+    },
+    {
+      "anchor_slots": [
+        29
+      ],
+      "binding_slots": [
+        [
+          29,
+          30,
+          31
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 271,
+      "matching_anchor_count": 1,
+      "node_id": 27,
+      "reward": -2,
+      "source_candidates": 178,
+      "source_id": 97,
+      "source_match_covered": true,
+      "step": 69,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 101
+    },
+    {
+      "anchor_slots": [
+        23
+      ],
+      "binding_slots": [
+        [
+          23,
+          24,
+          25,
+          26
+        ]
+      ],
+      "cost": 42,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 56,
+      "matching_anchor_count": 1,
+      "node_id": 23,
+      "reward": 0,
+      "source_candidates": 191,
+      "source_id": 3492,
+      "source_match_covered": true,
+      "step": 70,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3840
+    },
+    {
+      "anchor_slots": [
+        29
+      ],
+      "binding_slots": [
+        [
+          29,
+          30
+        ]
+      ],
+      "cost": 42,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 9,
+      "matching_anchor_count": 1,
+      "node_id": 29,
+      "reward": 0,
+      "source_candidates": 185,
+      "source_id": 3764,
+      "source_match_covered": true,
+      "step": 71,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4397
+    },
+    {
+      "anchor_slots": [
+        24
+      ],
+      "binding_slots": [
+        [
+          24,
+          26
+        ]
+      ],
+      "cost": 42,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 11,
+      "matching_anchor_count": 1,
+      "node_id": 24,
+      "reward": 0,
+      "source_candidates": 182,
+      "source_id": 3752,
+      "source_match_covered": true,
+      "step": 72,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4361
+    },
+    {
+      "anchor_slots": [
+        22
+      ],
+      "binding_slots": [
+        [
+          22,
+          24
+        ]
+      ],
+      "cost": 42,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 4,
+      "matching_anchor_count": 1,
+      "node_id": 22,
+      "reward": 0,
+      "source_candidates": 171,
+      "source_id": 3763,
+      "source_match_covered": true,
+      "step": 73,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4394
+    },
+    {
+      "anchor_slots": [
+        20
+      ],
+      "binding_slots": [
+        [
+          20,
+          22
+        ]
+      ],
+      "cost": 42,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 30,
+      "matching_anchor_count": 1,
+      "node_id": 20,
+      "reward": 0,
+      "source_candidates": 175,
+      "source_id": 3751,
+      "source_match_covered": true,
+      "step": 74,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4358
+    },
+    {
+      "anchor_slots": [
+        25
+      ],
+      "binding_slots": [
+        [
+          25,
+          26,
+          27,
+          28
+        ]
+      ],
+      "cost": 42,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 29,
+      "matching_anchor_count": 1,
+      "node_id": 25,
+      "reward": 0,
+      "source_candidates": 172,
+      "source_id": 3493,
+      "source_match_covered": true,
+      "step": 75,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3842
+    },
+    {
+      "anchor_slots": [
+        24
+      ],
+      "binding_slots": [
+        [
+          24,
+          25,
+          26
+        ]
+      ],
+      "cost": 42,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 3,
+      "matching_anchor_count": 1,
+      "node_id": 24,
+      "reward": 1,
+      "source_candidates": 186,
+      "source_id": 3284,
+      "source_match_covered": true,
+      "step": 76,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3424
+    },
+    {
+      "anchor_slots": [
+        19
+      ],
+      "binding_slots": [
+        [
+          19,
+          20,
+          21
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 34,
+      "matching_anchor_count": 1,
+      "node_id": 19,
+      "reward": 0,
+      "source_candidates": 183,
+      "source_id": 54,
+      "source_match_covered": true,
+      "step": 77,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 58
+    },
+    {
+      "anchor_slots": [
+        23
+      ],
+      "binding_slots": [
+        [
+          23,
+          24,
+          25,
+          26,
+          27
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 53,
+      "matching_anchor_count": 1,
+      "node_id": 23,
+      "reward": 0,
+      "source_candidates": 184,
+      "source_id": 3202,
+      "source_match_covered": true,
+      "step": 78,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3276
+    },
+    {
+      "anchor_slots": [
+        24
+      ],
+      "binding_slots": [
+        [
+          24,
+          26
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 192,
+      "matching_anchor_count": 1,
+      "node_id": 24,
+      "reward": -2,
+      "source_candidates": 179,
+      "source_id": 32,
+      "source_match_covered": true,
+      "step": 79,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 36
+    },
+    {
+      "anchor_slots": [
+        22
+      ],
+      "binding_slots": [
+        [
+          22,
+          23,
+          25
+        ]
+      ],
+      "cost": 43,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 8,
+      "matching_anchor_count": 1,
+      "node_id": 22,
+      "reward": 1,
+      "source_candidates": 221,
+      "source_id": 3750,
+      "source_match_covered": true,
+      "step": 80,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4356
+    },
+    {
+      "anchor_slots": [
+        22
+      ],
+      "binding_slots": [
+        [
+          22,
+          23,
+          25
+        ]
+      ],
+      "cost": 42,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 5,
+      "matching_anchor_count": 1,
+      "node_id": 22,
+      "reward": 1,
+      "source_candidates": 188,
+      "source_id": 765,
+      "source_match_covered": true,
+      "step": 81,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 823
+    },
+    {
+      "anchor_slots": [
+        23
+      ],
+      "binding_slots": [
+        [
+          23,
+          25
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 4,
+      "matching_anchor_count": 1,
+      "node_id": 23,
+      "reward": 0,
+      "source_candidates": 177,
+      "source_id": 35,
+      "source_match_covered": true,
+      "step": 82,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 39
+    },
+    {
+      "anchor_slots": [
+        16
+      ],
+      "binding_slots": [
+        [
+          16,
+          18
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 14,
+      "reward": 2,
+      "source_candidates": 154,
+      "source_id": 3851,
+      "source_match_covered": true,
+      "step": 83,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4654
+    },
+    {
+      "anchor_slots": [
+        24
+      ],
+      "binding_slots": [
+        [
+          24,
+          25,
+          27,
+          28
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 148,
+      "matching_anchor_count": 1,
+      "node_id": 24,
+      "reward": -1,
+      "source_candidates": 158,
+      "source_id": 3477,
+      "source_match_covered": true,
+      "step": 84,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3811
+    },
+    {
+      "anchor_slots": [
+        22
+      ],
+      "binding_slots": [
+        [
+          22,
+          23,
+          24,
+          25
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 22,
+      "reward": 2,
+      "source_candidates": 176,
+      "source_id": 37,
+      "source_match_covered": true,
+      "step": 85,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 41
+    },
+    {
+      "anchor_slots": [
+        12
+      ],
+      "binding_slots": [
+        [
+          12,
+          13
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 160,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": -2,
+      "source_candidates": 138,
+      "source_id": 36,
+      "source_match_covered": true,
+      "step": 86,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 40
+    },
+    {
+      "anchor_slots": [
+        14
+      ],
+      "binding_slots": [
+        [
+          14,
+          15,
+          16,
+          17,
+          18
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 4,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 1,
+      "source_candidates": 192,
+      "source_id": 1509,
+      "source_match_covered": true,
+      "step": 87,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1567
+    },
+    {
+      "anchor_slots": [
+        11
+      ],
+      "binding_slots": [
+        [
+          11,
+          12
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 4,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 0,
+      "source_candidates": 187,
+      "source_id": 34,
+      "source_match_covered": true,
+      "step": 88,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 38
+    },
+    {
+      "anchor_slots": [
+        16
+      ],
+      "binding_slots": [
+        [
+          16,
+          17,
+          18,
+          19
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 14,
+      "matching_anchor_count": 1,
+      "node_id": 16,
+      "reward": 0,
+      "source_candidates": 218,
+      "source_id": 3484,
+      "source_match_covered": true,
+      "step": 89,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3824
+    },
+    {
+      "anchor_slots": [
+        10
+      ],
+      "binding_slots": [
+        [
+          10,
+          11,
+          12,
+          14
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 138,
+      "matching_anchor_count": 1,
+      "node_id": 10,
+      "reward": -1,
+      "source_candidates": 205,
+      "source_id": 1536,
+      "source_match_covered": true,
+      "step": 90,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1594
+    },
+    {
+      "anchor_slots": [
+        11
+      ],
+      "binding_slots": [
+        [
+          11,
+          13,
+          14,
+          15
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 28,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 0,
+      "source_candidates": 224,
+      "source_id": 1438,
+      "source_match_covered": true,
+      "step": 91,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1496
+    },
+    {
+      "anchor_slots": [
+        17
+      ],
+      "binding_slots": [
+        [
+          17,
+          18,
+          19,
+          20
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 15,
+      "matching_anchor_count": 1,
+      "node_id": 17,
+      "reward": 0,
+      "source_candidates": 227,
+      "source_id": 1501,
+      "source_match_covered": true,
+      "step": 92,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1559
+    },
+    {
+      "anchor_slots": [
+        15
+      ],
+      "binding_slots": [
+        [
+          15,
+          16,
+          17,
+          18
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 18,
+      "matching_anchor_count": 1,
+      "node_id": 13,
+      "reward": 0,
+      "source_candidates": 251,
+      "source_id": 1534,
+      "source_match_covered": true,
+      "step": 93,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1592
+    },
+    {
+      "anchor_slots": [
+        11
+      ],
+      "binding_slots": [
+        [
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 58,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 0,
+      "source_candidates": 223,
+      "source_id": 3209,
+      "source_match_covered": true,
+      "step": 94,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3289
+    },
+    {
+      "anchor_slots": [
+        14
+      ],
+      "binding_slots": [
+        [
+          14,
+          15,
+          16
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 12,
+      "reward": 1,
+      "source_candidates": 198,
+      "source_id": 751,
+      "source_match_covered": true,
+      "step": 95,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 809
+    },
+    {
+      "anchor_slots": [
+        10
+      ],
+      "binding_slots": [
+        [
+          10,
+          11,
+          12,
+          14
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 63,
+      "matching_anchor_count": 1,
+      "node_id": 10,
+      "reward": -1,
+      "source_candidates": 212,
+      "source_id": 1482,
+      "source_match_covered": true,
+      "step": 96,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1540
+    },
+    {
+      "anchor_slots": [
+        13
+      ],
+      "binding_slots": [
+        [
+          13,
+          14,
+          15,
+          16
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 11,
+      "reward": 2,
+      "source_candidates": 200,
+      "source_id": 33,
+      "source_match_covered": true,
+      "step": 97,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 37
+    },
+    {
+      "anchor_slots": [
+        16
+      ],
+      "binding_slots": [
+        [
+          16,
+          17,
+          18
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 3,
+      "matching_anchor_count": 1,
+      "node_id": 16,
+      "reward": 0,
+      "source_candidates": 141,
+      "source_id": 117,
+      "source_match_covered": true,
+      "step": 98,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 121
+    },
+    {
+      "anchor_slots": [
+        15
+      ],
+      "binding_slots": [
+        [
+          15,
+          16
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 13,
+      "reward": 0,
+      "source_candidates": 148,
+      "source_id": 40,
+      "source_match_covered": true,
+      "step": 99,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 44
+    },
+    {
+      "anchor_slots": [
+        17
+      ],
+      "binding_slots": [
+        [
+          17,
+          18
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 3,
+      "matching_anchor_count": 1,
+      "node_id": 17,
+      "reward": 0,
+      "source_candidates": 150,
+      "source_id": 40,
+      "source_match_covered": true,
+      "step": 100,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 44
+    },
+    {
+      "anchor_slots": [
+        14
+      ],
+      "binding_slots": [
+        [
+          14,
+          15,
+          16,
+          17
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 16,
+      "matching_anchor_count": 1,
+      "node_id": 12,
+      "reward": 0,
+      "source_candidates": 169,
+      "source_id": 3492,
+      "source_match_covered": true,
+      "step": 101,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3840
+    },
+    {
+      "anchor_slots": [
+        12
+      ],
+      "binding_slots": [
+        [
+          12,
+          13,
+          14
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 8,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 0,
+      "source_candidates": 154,
+      "source_id": 116,
+      "source_match_covered": true,
+      "step": 102,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 120
+    },
+    {
+      "anchor_slots": [
+        11
+      ],
+      "binding_slots": [
+        [
+          11,
+          12
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 0,
+      "source_candidates": 153,
+      "source_id": 34,
+      "source_match_covered": true,
+      "step": 103,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 38
+    },
+    {
+      "anchor_slots": [
+        10
+      ],
+      "binding_slots": [
+        [
+          10,
+          11
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 72,
+      "matching_anchor_count": 1,
+      "node_id": 10,
+      "reward": -1,
+      "source_candidates": 151,
+      "source_id": 3289,
+      "source_match_covered": true,
+      "step": 104,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3434
+    },
+    {
+      "anchor_slots": [
+        13
+      ],
+      "binding_slots": [
+        [
+          13,
+          14
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 2,
+      "gate_rank": 247,
+      "matching_anchor_count": 1,
+      "node_id": 11,
+      "reward": -2,
+      "source_candidates": 172,
+      "source_id": 38,
+      "source_match_covered": true,
+      "step": 105,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 42
+    },
+    {
+      "anchor_slots": [
+        16
+      ],
+      "binding_slots": [
+        [
+          16,
+          17,
+          18
+        ]
+      ],
+      "cost": 41,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 16,
+      "matching_anchor_count": 1,
+      "node_id": 11,
+      "reward": 1,
+      "source_candidates": 227,
+      "source_id": 3750,
+      "source_match_covered": true,
+      "step": 106,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4356
+    },
+    {
+      "anchor_slots": [
+        15
+      ],
+      "binding_slots": [
+        [
+          15,
+          16,
+          17
+        ]
+      ],
+      "cost": 40,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 3,
+      "matching_anchor_count": 1,
+      "node_id": 12,
+      "reward": 1,
+      "source_candidates": 215,
+      "source_id": 3287,
+      "source_match_covered": true,
+      "step": 107,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3430
+    },
+    {
+      "anchor_slots": [
+        14
+      ],
+      "binding_slots": [
+        [
+          14,
+          15
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 5,
+      "matching_anchor_count": 1,
+      "node_id": 11,
+      "reward": 0,
+      "source_candidates": 177,
+      "source_id": 40,
+      "source_match_covered": true,
+      "step": 108,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 44
+    },
+    {
+      "anchor_slots": [
+        11
+      ],
+      "binding_slots": [
+        [
+          11,
+          13
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 16,
+      "matching_anchor_count": 1,
+      "node_id": 11,
+      "reward": 0,
+      "source_candidates": 214,
+      "source_id": 3767,
+      "source_match_covered": true,
+      "step": 109,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 4406
+    },
+    {
+      "anchor_slots": [
+        0
+      ],
+      "binding_slots": [
+        [
+          0,
+          11,
+          12
+        ]
+      ],
+      "cost": 39,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 3,
+      "matching_anchor_count": 1,
+      "node_id": 0,
+      "reward": 1,
+      "source_candidates": 205,
+      "source_id": 759,
+      "source_match_covered": true,
+      "step": 110,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 817
+    },
+    {
+      "anchor_slots": [
+        11
+      ],
+      "binding_slots": [
+        [
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 46,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": 0,
+      "source_candidates": 192,
+      "source_id": 3209,
+      "source_match_covered": true,
+      "step": 111,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 3289
+    },
+    {
+      "anchor_slots": [
+        14
+      ],
+      "binding_slots": [
+        [
+          14,
+          16,
+          15,
+          17
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 12,
+      "reward": 1,
+      "source_candidates": 161,
+      "source_id": 885,
+      "source_match_covered": true,
+      "step": 112,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 943
+    },
+    {
+      "anchor_slots": [
+        10
+      ],
+      "binding_slots": [
+        [
+          10,
+          12
+        ]
+      ],
+      "cost": 37,
+      "declared_anchor_available": true,
+      "declared_anchor_matches": true,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 0,
+      "gate_rank": 2,
+      "matching_anchor_count": 1,
+      "node_id": 10,
+      "reward": 0,
+      "source_candidates": 176,
+      "source_id": 41,
+      "source_match_covered": true,
+      "step": 113,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 45
+    },
+    {
+      "anchor_slots": [
+        11
+      ],
+      "binding_slots": [
+        [
+          11,
+          12,
+          13,
+          15
+        ]
+      ],
+      "cost": 37,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": 1,
+      "gate_rank": 57,
+      "matching_anchor_count": 1,
+      "node_id": 9,
+      "reward": -1,
+      "source_candidates": 161,
+      "source_id": 1434,
+      "source_match_covered": true,
+      "step": 114,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 1492
+    },
+    {
+      "anchor_slots": [
+        14
+      ],
+      "binding_slots": [
+        [
+          14,
+          15,
+          16,
+          17
+        ]
+      ],
+      "cost": 38,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -2,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 11,
+      "reward": 2,
+      "source_candidates": 175,
+      "source_id": 33,
+      "source_match_covered": true,
+      "step": 115,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward",
+      "xfer_id": 37
+    }
+  ],
+  "config": {
+    "action_value_weight": 1.0,
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311_calibration_r999.json",
+    "caps": [
+      64,
+      128,
+      256,
+      512,
+      1024,
+      2048,
+      4096,
+      8192
+    ],
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311.pt",
+    "data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_barenco38_3_normalized_w8_20260906.pt",
+    "device": "cuda",
+    "ecc_file": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/ecc_set/nam_ecc.json",
+    "max_action_rank": 8192,
+    "max_gate_increase": 3,
+    "max_source_matches": 8192,
+    "microbatch": 32,
+    "near_source_reserve": 0,
+    "ranking_mode": "gate",
+    "source_grouping": "first_gate",
+    "source_microbatch": 0,
+    "target_recall": 0.999,
+    "trajectories": [
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward"
+    ]
+  },
+  "proposal_metrics": {
+    "eligible_actions": 36708,
+    "predicted_actions": 36708,
+    "selected_actions": 36708,
+    "selected_value_exploration_proposals": 0,
+    "value_increase_candidates_after_parent_cap": 0
+  },
+  "summary": {
+    "actions": 116,
+    "caps": {
+      "1024": {
+        "covered": 115,
+        "missing_steps": [
+          20
+        ],
+        "recall": 0.9913793103448276,
+        "whole_trajectory_covered": false
+      },
+      "128": {
+        "covered": 108,
+        "missing_steps": [
+          20,
+          66,
+          69,
+          79,
+          84,
+          86,
+          90,
+          105
+        ],
+        "recall": 0.9310344827586207,
+        "whole_trajectory_covered": false
+      },
+      "2048": {
+        "covered": 115,
+        "missing_steps": [
+          20
+        ],
+        "recall": 0.9913793103448276,
+        "whole_trajectory_covered": false
+      },
+      "256": {
+        "covered": 114,
+        "missing_steps": [
+          20,
+          69
+        ],
+        "recall": 0.9827586206896551,
+        "whole_trajectory_covered": false
+      },
+      "4096": {
+        "covered": 115,
+        "missing_steps": [
+          20
+        ],
+        "recall": 0.9913793103448276,
+        "whole_trajectory_covered": false
+      },
+      "512": {
+        "covered": 115,
+        "missing_steps": [
+          20
+        ],
+        "recall": 0.9913793103448276,
+        "whole_trajectory_covered": false
+      },
+      "64": {
+        "covered": 104,
+        "missing_steps": [
+          20,
+          34,
+          38,
+          50,
+          66,
+          69,
+          79,
+          84,
+          86,
+          90,
+          104,
+          105
+        ],
+        "recall": 0.896551724137931,
+        "whole_trajectory_covered": false
+      },
+      "8192": {
+        "covered": 115,
+        "missing_steps": [
+          20
+        ],
+        "recall": 0.9913793103448276,
+        "whole_trajectory_covered": false
+      }
+    },
+    "exact_action_available": 116,
+    "exact_transition_matches": 116,
+    "gate_rank": {
+      "max": 271,
+      "median": 12,
+      "min": 1,
+      "p90": 63,
+      "p95": 148
+    },
+    "missing_rank_steps": [
+      20
+    ],
+    "ranked_action_covered": 115,
+    "source_match_covered": 115
+  },
+  "timing": {
+    "model_match_seconds": 0.22600257024168968,
+    "model_match_stages": {
+      "batch_collate_and_pad_seconds": 0.004282791167497635,
+      "batch_host_to_device_seconds": 0.0005524102598428726,
+      "candidate_device_to_host_seconds": 0.0,
+      "candidate_gpu_pack_seconds": 0.008139895275235176,
+      "candidate_python_pack_seconds": 0.0,
+      "candidate_selection_and_ranking_seconds": 0.10751110315322876,
+      "incremental_graph_readout_seconds": 0.01623588241636753,
+      "match_group_compaction_seconds": 0.045113129541277885,
+      "match_logits_seconds": 0.018634827807545662,
+      "model_match_unattributed_seconds": 0.0015731751918792725,
+      "readout_cache_metadata_or_gather_seconds": 0.00045778974890708923,
+      "structural_binding_decode_seconds": 0.0235015656799078
+    },
+    "proposal_seconds": 0.17518557235598564,
+    "proposal_stages": {
+      "gpu_action_expansion_seconds": 0.0007458701729774475,
+      "gpu_global_proposal_rank_seconds": 0.0003695730119943619,
+      "gpu_match_preselection_seconds": 0.0012339279055595398,
+      "gpu_per_parent_rank_seconds": 0.0018224846571683884,
+      "proposal_device_to_host_and_pack_seconds": 0.17082284577190876
+    },
+    "qasm_load_and_exact_validation_seconds": 1.1726274862885475
+  },
+  "trajectories": {
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward": {
+      "actions": 116,
+      "caps": {
+        "1024": {
+          "covered": 115,
+          "missing_steps": [
+            20
+          ],
+          "recall": 0.9913793103448276,
+          "whole_trajectory_covered": false
+        },
+        "128": {
+          "covered": 108,
+          "missing_steps": [
+            20,
+            66,
+            69,
+            79,
+            84,
+            86,
+            90,
+            105
+          ],
+          "recall": 0.9310344827586207,
+          "whole_trajectory_covered": false
+        },
+        "2048": {
+          "covered": 115,
+          "missing_steps": [
+            20
+          ],
+          "recall": 0.9913793103448276,
+          "whole_trajectory_covered": false
+        },
+        "256": {
+          "covered": 114,
+          "missing_steps": [
+            20,
+            69
+          ],
+          "recall": 0.9827586206896551,
+          "whole_trajectory_covered": false
+        },
+        "4096": {
+          "covered": 115,
+          "missing_steps": [
+            20
+          ],
+          "recall": 0.9913793103448276,
+          "whole_trajectory_covered": false
+        },
+        "512": {
+          "covered": 115,
+          "missing_steps": [
+            20
+          ],
+          "recall": 0.9913793103448276,
+          "whole_trajectory_covered": false
+        },
+        "64": {
+          "covered": 104,
+          "missing_steps": [
+            20,
+            34,
+            38,
+            50,
+            66,
+            69,
+            79,
+            84,
+            86,
+            90,
+            104,
+            105
+          ],
+          "recall": 0.896551724137931,
+          "whole_trajectory_covered": false
+        },
+        "8192": {
+          "covered": 115,
+          "missing_steps": [
+            20
+          ],
+          "recall": 0.9913793103448276,
+          "whole_trajectory_covered": false
+        }
+      },
+      "exact_action_available": 116,
+      "exact_transition_matches": 116,
+      "gate_rank": {
+        "max": 271,
+        "median": 12,
+        "min": 1,
+        "p90": 63,
+        "p95": 148
+      },
+      "missing_rank_steps": [
+        20
+      ],
+      "ranked_action_covered": 115,
+      "source_match_covered": 115
+    }
+  }
+}

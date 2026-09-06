@@ -66,8 +66,14 @@ class S0ActionBindingModel(nn.Module):
         dropout: float = 0.05,
         use_action_history: bool = True,
         use_locality_features: bool = False,
+        source_topology_layers: int = 0,
+        source_id_frequency_prior: float = 0.0,
     ):
         super().__init__()
+        if source_topology_layers < 0:
+            raise ValueError("source_topology_layers must be nonnegative")
+        if source_id_frequency_prior < 0:
+            raise ValueError("source_id_frequency_prior must be nonnegative")
         self.width = width
         self.retrieval_width = retrieval_width
         self.use_action_history = use_action_history
@@ -162,6 +168,37 @@ class S0ActionBindingModel(nn.Module):
         self.register_buffer("binding_direction", binding_direction)
         self.register_buffer("pattern_edges", pattern_edges)
 
+        source_edge_batch = []
+        source_edge_src = []
+        source_edge_dst = []
+        source_edge_relation = []
+        for source_id, edges in enumerate(pattern_edge_rows):
+            for src_index, dst_index, src_port, dst_port in edges:
+                source_edge_batch.append(source_id)
+                source_edge_src.append(src_index)
+                source_edge_dst.append(dst_index)
+                source_edge_relation.append(src_port * 4 + dst_port)
+        self.register_buffer(
+            "source_edge_batch",
+            torch.tensor(source_edge_batch, dtype=torch.long),
+            persistent=False,
+        )
+        self.register_buffer(
+            "source_edge_src",
+            torch.tensor(source_edge_src, dtype=torch.long),
+            persistent=False,
+        )
+        self.register_buffer(
+            "source_edge_dst",
+            torch.tensor(source_edge_dst, dtype=torch.long),
+            persistent=False,
+        )
+        self.register_buffer(
+            "source_edge_relation",
+            torch.tensor(source_edge_relation, dtype=torch.long),
+            persistent=False,
+        )
+
         self.gate_embedding = nn.Embedding(rules.num_gate_types, width)
         self.source_embedding = nn.Embedding(self.num_sources, width)
         self.xfer_embedding = nn.Embedding(num_xfers, width)
@@ -170,6 +207,22 @@ class S0ActionBindingModel(nn.Module):
         self.pattern_composer = nn.Sequential(
             nn.Linear(width, 2 * width), nn.GELU(), nn.Linear(2 * width, width)
         )
+        self.source_topology_layers = nn.ModuleList(
+            InitialGraphLayer(width) for _ in range(source_topology_layers)
+        )
+        if source_topology_layers:
+            self.source_topology_output = nn.Linear(width, width)
+            nn.init.zeros_(self.source_topology_output.weight)
+            nn.init.zeros_(self.source_topology_output.bias)
+        else:
+            self.source_topology_output = None
+        self.source_id_frequency_prior = float(source_id_frequency_prior)
+        if source_id_frequency_prior > 0:
+            self.register_buffer(
+                "source_id_weight", torch.ones(self.num_sources)
+            )
+        else:
+            self.source_id_weight = None
         self.graph_layers = nn.ModuleList(
             InitialGraphLayer(width) for _ in range(graph_layers)
         )
@@ -231,9 +284,42 @@ class S0ActionBindingModel(nn.Module):
         positions = self.pattern_position.weight[: self.max_pattern]
         safe_types = self.source_types.clamp_min(0)
         tokens = self.gate_embedding(safe_types) + positions.unsqueeze(0)
-        mask = self.source_types.ge(0).unsqueeze(-1)
+        live = self.source_types.ge(0)
+        mask = live.unsqueeze(-1)
         composed = (tokens * mask).sum(1) / mask.sum(1).clamp_min(1)
-        return self.source_embedding.weight + self.pattern_composer(composed)
+        identity = self.source_embedding.weight
+        if self.source_id_weight is not None:
+            identity = identity * self.source_id_weight.unsqueeze(-1)
+        representation = identity + self.pattern_composer(composed)
+        if self.source_topology_output is not None:
+            topology = tokens * mask
+            for layer in self.source_topology_layers:
+                topology = layer(
+                    topology,
+                    live,
+                    self.source_edge_batch,
+                    self.source_edge_src,
+                    self.source_edge_dst,
+                    self.source_edge_relation,
+                )
+            topology = (topology * mask).sum(1) / mask.sum(1).clamp_min(1)
+            representation = representation + self.source_topology_output(topology)
+        return representation
+
+    @torch.no_grad()
+    def set_source_frequency_prior(self, counts: torch.Tensor) -> None:
+        if self.source_id_weight is None:
+            raise ValueError("source_id_frequency_prior is disabled")
+        if counts.shape != (self.num_sources,):
+            raise ValueError("source frequency counts have the wrong shape")
+        counts = counts.to(device=self.source_id_weight.device, dtype=torch.float32)
+        weights = counts / (counts + self.source_id_frequency_prior)
+        self.source_id_weight.copy_(weights)
+
+    def source_bias_values(self) -> torch.Tensor:
+        if self.source_id_weight is None:
+            return self.source_bias
+        return self.source_bias * self.source_id_weight
 
     def current_graph_tokens(
         self, batch: dict, gate_types: torch.Tensor, live: torch.Tensor
@@ -430,7 +516,7 @@ class S0ActionBindingModel(nn.Module):
         logits = torch.einsum("bsd,vd->bsv", node_vectors, selected_sources)
         logits = (
             logits / math.sqrt(self.retrieval_width)
-            + self.source_bias[source_begin:source_end]
+            + self.source_bias_values()[source_begin:source_end]
         )
         first_types = self.source_types[source_begin:source_end, 0]
         eligible = live.unsqueeze(-1) & gate_types.unsqueeze(-1).eq(first_types)
@@ -446,7 +532,7 @@ class S0ActionBindingModel(nn.Module):
         logits = torch.einsum("bsd,vd->bsv", node_vectors, selected_sources)
         return (
             logits / math.sqrt(self.retrieval_width)
-            + self.source_bias.index_select(0, source_ids)
+            + self.source_bias_values().index_select(0, source_ids)
         )
 
     @torch.no_grad()
@@ -551,6 +637,10 @@ class S0ActionBindingModel(nn.Module):
         locality_positive_weight: float = 0.0,
         locality_negative_weight: float = 0.0,
         action_positive_weight: float = 0.0,
+        interleaving_positive_weight: float = 0.0,
+        interleaving_positive_scale: float = 8.0,
+        source_positive_weights: torch.Tensor | None = None,
+        source_positive_hard_ceilings: torch.Tensor | None = None,
         topn_boundary_weight: float = 0.0,
         topn_boundary_margin: float = 0.0,
     ) -> torch.Tensor:
@@ -605,6 +695,69 @@ class S0ActionBindingModel(nn.Module):
                     positive_weights = (
                         positive_weights + action_positive_weight * chosen
                     )
+            if interleaving_positive_weight > 0:
+                if interleaving_positive_scale <= 0:
+                    raise ValueError("interleaving positive scale must be positive")
+                excess_spans = []
+                for _, binding in rows:
+                    slots = tuple(map(int, binding))
+                    span = max(slots) - min(slots) if slots else 0
+                    excess_spans.append(max(0, span - (len(slots) - 1)))
+                interleaving = torch.tensor(
+                    excess_spans,
+                    dtype=positive_weights.dtype,
+                    device=positive_weights.device,
+                ).div(interleaving_positive_scale).clamp_max(1.0)
+                positive_weights = positive_weights * (
+                    1.0 + interleaving_positive_weight * interleaving
+                )
+            if source_positive_weights is not None:
+                if source_positive_weights.ndim != 1 or (
+                    source_positive_weights.shape[0] != self.num_sources
+                ):
+                    raise ValueError(
+                        "source positive weights must have one row per source"
+                    )
+                # Keep the established locality/action weighting semantics,
+                # then scale the result by source rarity.  The per-state loss
+                # normalization makes this a relative weighting among exact
+                # matches instead of an uncontrolled change in loss scale.
+                source_multiplier = source_positive_weights[sources].to(
+                    dtype=positive_weights.dtype,
+                    device=positive_weights.device,
+                )
+                if source_positive_hard_ceilings is not None:
+                    if (
+                        source_positive_hard_ceilings.ndim != 1
+                        or source_positive_hard_ceilings.shape[0] != 2
+                    ):
+                        raise ValueError(
+                            "source hard-positive ceilings must contain near and far"
+                        )
+                    if batch is None or "positive_near" not in batch:
+                        raise ValueError(
+                            "source hard-positive ceilings need positive_near labels"
+                        )
+                    near = torch.tensor(
+                        batch["positive_near"][batch_index],
+                        dtype=torch.bool,
+                        device=positive_logits.device,
+                    )
+                    ceilings = torch.where(
+                        near,
+                        source_positive_hard_ceilings[0],
+                        source_positive_hard_ceilings[1],
+                    ).to(
+                        dtype=positive_logits.dtype,
+                        device=positive_logits.device,
+                    )
+                    hard_positive = positive_logits.detach().lt(ceilings)
+                    source_multiplier = torch.where(
+                        hard_positive,
+                        source_multiplier,
+                        torch.ones_like(source_multiplier),
+                    )
+                positive_weights = positive_weights * source_multiplier
             negative_mask = eligible[batch_index] & ~target
             negative_logits = logits[batch_index][negative_mask]
             if positive_logits.numel() == 0 or negative_logits.numel() == 0:

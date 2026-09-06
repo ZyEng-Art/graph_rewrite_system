@@ -120,6 +120,8 @@ class PagedActionBindingModel(S0ActionBindingModel):
         identity_readout_prefix: int = 0,
         readout_attention_backend: str = "sdpa",
         action_value_head: bool = False,
+        source_topology_layers: int = 0,
+        source_id_frequency_prior: float = 0.0,
         dropout: float = 0.05,
     ):
         super().__init__(
@@ -132,6 +134,8 @@ class PagedActionBindingModel(S0ActionBindingModel):
             dropout=dropout,
             use_action_history=True,
             use_locality_features=readout_locality_features,
+            source_topology_layers=source_topology_layers,
+            source_id_frequency_prior=source_id_frequency_prior,
         )
         self.action_layers_count = action_layers
         self.action_heads = action_heads

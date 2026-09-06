@@ -13,12 +13,16 @@ from torch.utils.data import DataLoader
 
 from dataset import (
     EpochRandomSampler,
+    TargetSourceBalancedSampler,
     collate_current_graphs,
     collate_prefixes,
+    inverse_frequency_weights,
     load_datasets,
     rebase_prefix_sample,
+    source_state_counts,
 )
 from model_factory import build_model
+from threshold_inference import load_threshold_config
 
 
 def move_batch(batch: dict, device: torch.device) -> dict:
@@ -26,6 +30,73 @@ def move_batch(batch: dict, device: torch.device) -> dict:
         key: value.to(device, non_blocking=True) if isinstance(value, torch.Tensor) else value
         for key, value in batch.items()
     }
+
+
+SOURCE_ADAPTER_PARAMETERS = frozenset(
+    {
+        "source_embedding.weight",
+        "source_bias",
+    }
+)
+SOURCE_TOPOLOGY_PREFIXES = (
+    "source_topology_layers.",
+    "source_topology_output.",
+)
+
+
+def configure_source_adapter_only(model: torch.nn.Module) -> int:
+    """Train per-source rows plus an enabled source-topology adapter."""
+
+    found = set()
+    trainable = 0
+    for name, parameter in model.named_parameters():
+        enabled = name in SOURCE_ADAPTER_PARAMETERS or name.startswith(
+            SOURCE_TOPOLOGY_PREFIXES
+        )
+        parameter.requires_grad_(enabled)
+        if enabled:
+            found.add(name)
+            trainable += parameter.numel()
+    missing = SOURCE_ADAPTER_PARAMETERS - found
+    if missing:
+        raise ValueError(
+            f"model is missing source adapter parameters: {sorted(missing)}"
+        )
+    return trainable
+
+
+def configure_source_topology_only(model: torch.nn.Module) -> int:
+    """Freeze the baseline and train only the shared source-topology branch."""
+
+    trainable = 0
+    found = False
+    for name, parameter in model.named_parameters():
+        enabled = name.startswith(SOURCE_TOPOLOGY_PREFIXES)
+        parameter.requires_grad_(enabled)
+        if enabled:
+            found = True
+            trainable += parameter.numel()
+    if not found:
+        raise ValueError("model has no source-topology parameters")
+    return trainable
+
+
+def register_source_adapter_frequency_mask(
+    model: torch.nn.Module, trainable_sources: torch.Tensor
+) -> int:
+    """Restrict per-source adapter gradients without changing inference."""
+
+    if trainable_sources.shape != (model.num_sources,):
+        raise ValueError("source adapter mask has the wrong shape")
+    mask = trainable_sources.to(
+        device=model.source_embedding.weight.device,
+        dtype=model.source_embedding.weight.dtype,
+    )
+    model.source_embedding.weight.register_hook(
+        lambda gradient: gradient * mask.unsqueeze(-1)
+    )
+    model.source_bias.register_hook(lambda gradient: gradient * mask)
+    return int(trainable_sources.sum())
 
 
 def autocast_context(device: torch.device):
@@ -451,6 +522,21 @@ def main() -> None:
     )
     parser.add_argument("--width", type=int, default=192)
     parser.add_argument("--retrieval-width", type=int, default=128)
+    parser.add_argument(
+        "--source-topology-layers",
+        type=int,
+        default=0,
+        help="static port-aware message-passing layers for source patterns",
+    )
+    parser.add_argument(
+        "--source-id-frequency-prior",
+        type=float,
+        default=0.0,
+        help=(
+            "shrink memorized source-ID embeddings and biases by count/(count+prior); "
+            "0 disables frequency shrinkage"
+        ),
+    )
     parser.add_argument("--graph-layers", type=int, default=3)
     parser.add_argument("--current-graph-layers", type=int, default=5)
     parser.add_argument(
@@ -476,10 +562,38 @@ def main() -> None:
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--weight-decay", type=float, default=1e-2)
     parser.add_argument("--binding-weight", type=float, default=1.0)
+    parser.add_argument(
+        "--source-adapter-only",
+        action="store_true",
+        help=(
+            "freeze the shared graph/action matcher and train only the existing "
+            "per-source embedding/bias and any enabled source-topology branch"
+        ),
+    )
+    parser.add_argument(
+        "--source-adapter-max-frequency",
+        type=int,
+        default=0,
+        help=(
+            "when source-adapter-only is enabled, update only observed source "
+            "rows with at most this many positive training states; 0 updates all rows"
+        ),
+    )
+    parser.add_argument(
+        "--source-topology-only",
+        action="store_true",
+        help="freeze the baseline matcher and train only source-topology parameters",
+    )
     parser.add_argument("--seed", type=int, default=73)
     parser.add_argument("--eval-every", type=int, default=5)
     parser.add_argument("--max-eval-batches", type=int)
     parser.add_argument("--max-train-batches", type=int)
+    parser.add_argument(
+        "--log-every-batches",
+        type=int,
+        default=0,
+        help="print an in-epoch progress record every N batches; 0 disables it",
+    )
     parser.add_argument("--include-train-terminal", action="store_true")
     parser.add_argument("--train-terminal-repeat", type=int, default=1)
     parser.add_argument("--structural-hard-negatives", action="store_true")
@@ -492,6 +606,77 @@ def main() -> None:
         type=float,
         default=0.0,
         help="extra classification weight for the trajectory's chosen exact action",
+    )
+    parser.add_argument(
+        "--interleaving-positive-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "extra weight for exact bindings whose source nodes are interleaved "
+            "with unrelated live slots"
+        ),
+    )
+    parser.add_argument(
+        "--interleaving-positive-scale",
+        type=float,
+        default=8.0,
+        help="excess binding-slot span that receives the full interleaving weight",
+    )
+    parser.add_argument(
+        "--source-positive-balance-power",
+        type=float,
+        default=0.0,
+        help=(
+            "bounded inverse-frequency exponent for exact-positive source "
+            "classes; 0 disables source-balanced positive loss"
+        ),
+    )
+    parser.add_argument(
+        "--source-positive-balance-cap",
+        type=float,
+        default=16.0,
+        help="maximum multiplier for a rare exact-positive source class",
+    )
+    parser.add_argument(
+        "--source-hard-positive-calibration",
+        type=Path,
+        help=(
+            "only source-balance exact positives below calibrated near/far "
+            "thresholds; omitted weights every exact positive"
+        ),
+    )
+    parser.add_argument(
+        "--source-hard-positive-target-recall",
+        type=float,
+        default=0.999,
+        help="calibration recall row used to define hard-positive thresholds",
+    )
+    parser.add_argument(
+        "--source-hard-positive-margin",
+        type=float,
+        default=1.0,
+        help="raw-logit safety margin added above each calibrated threshold",
+    )
+    parser.add_argument(
+        "--target-source-sampler-power",
+        type=float,
+        default=0.0,
+        help=(
+            "bounded inverse-frequency exponent for trajectory-selected "
+            "source resampling; 0 disables balanced resampling"
+        ),
+    )
+    parser.add_argument(
+        "--target-source-sampler-cap",
+        type=float,
+        default=16.0,
+        help="maximum state-resampling multiplier for a rare target source",
+    )
+    parser.add_argument(
+        "--target-source-sampler-fraction",
+        type=float,
+        default=0.5,
+        help="fraction of each epoch drawn from target-source-balanced sampling",
     )
     parser.add_argument("--topn-boundary-weight", type=float, default=0.0)
     parser.add_argument("--topn-boundary-margin", type=float, default=0.0)
@@ -576,10 +761,54 @@ def main() -> None:
         )
     if args.refresh_consistency_pairs < 0:
         parser.error("--refresh-consistency-pairs must be nonnegative")
+    if args.source_topology_layers < 0:
+        parser.error("--source-topology-layers must be nonnegative")
+    if args.source_id_frequency_prior < 0:
+        parser.error("--source-id-frequency-prior must be nonnegative")
+    if args.interleaving_positive_weight < 0:
+        parser.error("--interleaving-positive-weight must be nonnegative")
+    if args.interleaving_positive_scale <= 0:
+        parser.error("--interleaving-positive-scale must be positive")
+    if args.source_adapter_max_frequency < 0:
+        parser.error("--source-adapter-max-frequency must be nonnegative")
+    if args.source_adapter_max_frequency and not args.source_adapter_only:
+        parser.error(
+            "--source-adapter-max-frequency requires --source-adapter-only"
+        )
+    if args.source_adapter_only and args.source_topology_only:
+        parser.error("source-adapter-only and source-topology-only are exclusive")
+    if args.source_topology_only and args.source_topology_layers == 0:
+        parser.error("--source-topology-only requires --source-topology-layers")
     if args.refresh_consistency_weight and not args.refresh_augmentation_actions:
         parser.error("refresh consistency requires refresh augmentation")
     if args.refresh_augmentation_actions and args.state_only:
         parser.error("refresh augmentation requires action-prefix training")
+    for name in (
+        "source_positive_balance_power",
+        "target_source_sampler_power",
+    ):
+        if getattr(args, name) < 0:
+            parser.error(f"--{name.replace('_', '-')} must be nonnegative")
+    for name in (
+        "source_positive_balance_cap",
+        "target_source_sampler_cap",
+    ):
+        if getattr(args, name) < 1:
+            parser.error(f"--{name.replace('_', '-')} must be at least one")
+    if not 0 <= args.target_source_sampler_fraction <= 1:
+        parser.error("--target-source-sampler-fraction must be in [0, 1]")
+    if args.source_hard_positive_calibration is not None and (
+        args.source_positive_balance_power == 0
+    ):
+        parser.error(
+            "--source-hard-positive-calibration requires source-positive balancing"
+        )
+    if not 0 < args.source_hard_positive_target_recall <= 1:
+        parser.error("--source-hard-positive-target-recall must be in (0, 1]")
+    if args.source_hard_positive_margin < 0:
+        parser.error("--source-hard-positive-margin must be nonnegative")
+    if args.log_every_batches < 0:
+        parser.error("--log-every-batches must be nonnegative")
 
     torch.manual_seed(args.seed)
     if torch.cuda.is_available():
@@ -605,7 +834,87 @@ def main() -> None:
         )
     else:
         train_collate = collate
-    sampler = EpochRandomSampler(train_dataset, args.seed)
+    num_sources = len(rules.source_gate_types)
+    positive_counts = None
+    source_positive_weights = None
+    source_positive_hard_ceilings = None
+    source_balance_summary = None
+    if args.source_positive_balance_power > 0:
+        positive_counts = source_state_counts(train_dataset, num_sources)
+        source_positive_weights = inverse_frequency_weights(
+            positive_counts,
+            power=args.source_positive_balance_power,
+            cap=args.source_positive_balance_cap,
+        ).to(device)
+        observed = positive_counts.gt(0)
+        source_balance_summary = {
+            "training_states": len(train_dataset),
+            "positive_source_state_counts": positive_counts.tolist(),
+            "positive_source_weights": source_positive_weights.cpu().tolist(),
+            "observed_positive_sources": int(observed.sum()),
+            "maximum_positive_source_weight": float(
+                source_positive_weights[observed].max().cpu()
+            ),
+        }
+        print(
+            "source_positive_balance "
+            f"observed_sources={int(observed.sum())} "
+            f"max_weight={float(source_positive_weights[observed].max()):.3f}",
+            flush=True,
+        )
+        if args.source_hard_positive_calibration is not None:
+            hard_config = load_threshold_config(
+                args.source_hard_positive_calibration,
+                args.source_hard_positive_target_recall,
+            )
+            source_positive_hard_ceilings = torch.tensor(
+                [
+                    hard_config["groups"]["near"]["raw_threshold"]
+                    + args.source_hard_positive_margin,
+                    hard_config["groups"]["far"]["raw_threshold"]
+                    + args.source_hard_positive_margin,
+                ],
+                dtype=torch.float32,
+                device=device,
+            )
+            source_balance_summary["hard_positive_ceilings"] = (
+                source_positive_hard_ceilings.cpu().tolist()
+            )
+            print(
+                "source_hard_positive_ceilings "
+                f"near={float(source_positive_hard_ceilings[0]):.4f} "
+                f"far={float(source_positive_hard_ceilings[1]):.4f}",
+                flush=True,
+            )
+    if args.target_source_sampler_power > 0:
+        sampler = TargetSourceBalancedSampler(
+            train_dataset,
+            num_sources,
+            args.seed,
+            power=args.target_source_sampler_power,
+            cap=args.target_source_sampler_cap,
+            fraction=args.target_source_sampler_fraction,
+        )
+        target_observed = sampler.counts.gt(0)
+        if source_balance_summary is None:
+            source_balance_summary = {}
+        source_balance_summary.update(
+            {
+                "target_source_counts": sampler.counts.tolist(),
+                "observed_target_sources": int(target_observed.sum()),
+                "target_sampler_min_state_weight": float(sampler.weights.min()),
+                "target_sampler_max_state_weight": float(sampler.weights.max()),
+            }
+        )
+        print(
+            "target_source_sampler "
+            f"observed_sources={int(target_observed.sum())} "
+            f"fraction={args.target_source_sampler_fraction:.3f} "
+            f"max_state_weight={float(sampler.weights.max()):.3f}",
+            flush=True,
+        )
+    else:
+        sampler = EpochRandomSampler(train_dataset, args.seed)
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
@@ -654,6 +963,8 @@ def main() -> None:
                 "touch_age_embedding.",
                 "local_streak_embedding.",
                 "locality_fusion.",
+                "source_topology_layers.",
+                "source_topology_output.",
             )
             unexpected_missing = [
                 key
@@ -671,12 +982,66 @@ def main() -> None:
                 f"new_parameters={incompatible.missing_keys}",
                 flush=True,
             )
+    if args.source_id_frequency_prior > 0:
+        if positive_counts is None:
+            positive_counts = source_state_counts(train_dataset, num_sources)
+        model.set_source_frequency_prior(positive_counts)
+        if source_balance_summary is None:
+            source_balance_summary = {}
+        source_balance_summary["source_id_frequency_prior"] = (
+            args.source_id_frequency_prior
+        )
+        source_balance_summary["source_id_weights"] = (
+            model.source_id_weight.cpu().tolist()
+        )
+        print(
+            "source_id_frequency_prior "
+            f"prior={args.source_id_frequency_prior:.3f} "
+            f"zero_weight_sources={int(model.source_id_weight.eq(0).sum())}",
+            flush=True,
+        )
+    if args.source_topology_only:
+        trainable_parameter_count = configure_source_topology_only(model)
+    elif args.source_adapter_only:
+        trainable_parameter_count = configure_source_adapter_only(model)
+        if args.source_adapter_max_frequency:
+            if positive_counts is None:
+                positive_counts = source_state_counts(train_dataset, num_sources)
+            trainable_sources = positive_counts.gt(0) & positive_counts.le(
+                args.source_adapter_max_frequency
+            )
+            masked_source_count = register_source_adapter_frequency_mask(
+                model, trainable_sources
+            )
+            if source_balance_summary is None:
+                source_balance_summary = {}
+            source_balance_summary["source_adapter_max_frequency"] = (
+                args.source_adapter_max_frequency
+            )
+            source_balance_summary["source_adapter_trainable_sources"] = (
+                masked_source_count
+            )
+            print(
+                "source_adapter_frequency_mask "
+                f"max_frequency={args.source_adapter_max_frequency} "
+                f"trainable_sources={masked_source_count}",
+                flush=True,
+            )
+    else:
+        trainable_parameter_count = sum(
+            parameter.numel()
+            for parameter in model.parameters()
+            if parameter.requires_grad
+        )
     optimizer = torch.optim.AdamW(
-        model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
+        (parameter for parameter in model.parameters() if parameter.requires_grad),
+        lr=args.learning_rate,
+        weight_decay=args.weight_decay,
     )
     parameter_count = sum(parameter.numel() for parameter in model.parameters())
     print(
         f"device={device} parameters={parameter_count:,} "
+        f"trainable_parameters={trainable_parameter_count:,} "
         f"train_states={len(train_dataset)} test_states={len(test_dataset)}",
         flush=True,
     )
@@ -716,6 +1081,14 @@ def main() -> None:
                     locality_positive_weight=args.locality_positive_weight,
                     locality_negative_weight=args.locality_negative_weight,
                     action_positive_weight=args.action_positive_weight,
+                    interleaving_positive_weight=(
+                        args.interleaving_positive_weight
+                    ),
+                    interleaving_positive_scale=args.interleaving_positive_scale,
+                    source_positive_weights=source_positive_weights,
+                    source_positive_hard_ceilings=(
+                        source_positive_hard_ceilings
+                    ),
                     topn_boundary_weight=args.topn_boundary_weight,
                     topn_boundary_margin=args.topn_boundary_margin,
                 )
@@ -748,6 +1121,16 @@ def main() -> None:
                         locality_positive_weight=args.locality_positive_weight,
                         locality_negative_weight=args.locality_negative_weight,
                         action_positive_weight=args.action_positive_weight,
+                        interleaving_positive_weight=(
+                            args.interleaving_positive_weight
+                        ),
+                        interleaving_positive_scale=(
+                            args.interleaving_positive_scale
+                        ),
+                        source_positive_weights=source_positive_weights,
+                        source_positive_hard_ceilings=(
+                            source_positive_hard_ceilings
+                        ),
                         topn_boundary_weight=args.topn_boundary_weight,
                         topn_boundary_margin=args.topn_boundary_margin,
                     )
@@ -791,6 +1174,17 @@ def main() -> None:
             epoch_refresh += float(refresh_supervised_loss.detach())
             epoch_consistency += float(consistency_loss.detach())
             batches += 1
+            if args.log_every_batches and batches % args.log_every_batches == 0:
+                elapsed = time.perf_counter() - started
+                print(
+                    f"epoch={epoch:03d} batch={batches:05d} "
+                    f"loss={epoch_loss / batches:.4f} "
+                    f"class={epoch_class / batches:.4f} "
+                    f"seconds={elapsed:.1f} "
+                    f"states_per_second="
+                    f"{batches * args.batch_size / max(elapsed, 1e-9):.1f}",
+                    flush=True,
+                )
         elapsed = time.perf_counter() - started
         print(
             f"epoch={epoch:03d} loss={epoch_loss / batches:.4f} "
@@ -818,6 +1212,7 @@ def main() -> None:
                         "model": model.state_dict(),
                         "args": vars(args),
                         "metrics": metrics,
+                        "source_balance": source_balance_summary,
                         "format": payload["format"],
                     },
                     args.output,

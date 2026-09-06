@@ -7,7 +7,12 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 
-from dataset import PrefixDataset, RuleMetadata, collate_prefixes
+from dataset import (
+    PrefixDataset,
+    RuleMetadata,
+    collate_prefixes,
+    source_state_counts,
+)
 from model_factory import build_model
 from threshold_inference import (
     load_threshold_config,
@@ -73,6 +78,77 @@ def add_totals(destination: dict[str, int], source: dict[str, int]) -> None:
         destination[key] += int(source[key])
 
 
+def empty_exact_totals() -> dict[str, int]:
+    return {
+        "exact_matches": 0,
+        "exact_eligible": 0,
+        "exact_above_threshold": 0,
+        "exact_after_source_cap": 0,
+        "exact_final_retained": 0,
+    }
+
+
+def summarize_exact_totals(rows: dict[str, int]) -> dict:
+    return {
+        **rows,
+        "exact_above_threshold_recall": safe_ratio(
+            rows["exact_above_threshold"], rows["exact_matches"]
+        ),
+        "exact_after_source_cap_recall": safe_ratio(
+            rows["exact_after_source_cap"], rows["exact_matches"]
+        ),
+        "exact_final_recall": safe_ratio(
+            rows["exact_final_retained"], rows["exact_matches"]
+        ),
+    }
+
+
+def source_frequency_bucket(count: int) -> str:
+    if count == 0:
+        return "unseen"
+    if count == 1:
+        return "1"
+    if count < 8:
+        return "2-7"
+    if count < 64:
+        return "8-63"
+    if count < 512:
+        return "64-511"
+    return "512+"
+
+
+def prefix_training_state_count(
+    trajectories: list[dict],
+    *,
+    include_terminal: bool,
+    terminal_only_repeat: int,
+) -> int:
+    total = 0
+    for trajectory in trajectories:
+        terminal_only = bool(trajectory.get("terminal_only_supervision", False))
+        if not terminal_only:
+            total += len(trajectory["steps"])
+        if include_terminal and "terminal_matches" in trajectory:
+            total += terminal_only_repeat if terminal_only else 1
+    return total
+
+
+def exclude_trajectory_partition(
+    trajectories: list[dict],
+    *,
+    modulo: int,
+    remainder: int,
+) -> tuple[list[dict], int]:
+    if modulo < 1 or not 0 <= remainder < modulo:
+        raise ValueError("trajectory partition is invalid")
+    retained = [
+        trajectory
+        for trajectory in trajectories
+        if int(trajectory["trajectory_id"]) % modulo != remainder
+    ]
+    return retained, len(trajectories) - len(retained)
+
+
 @torch.no_grad()
 def audit_recall(
     *,
@@ -81,12 +157,16 @@ def audit_recall(
     device: torch.device,
     threshold_config: dict,
     max_source_matches: int,
+    training_source_counts: list[int],
+    log_every_batches: int = 0,
 ) -> tuple[dict, list[dict]]:
     totals = empty_totals()
     group_totals = {"near": empty_totals(), "far": empty_totals()}
+    length_totals: dict[int, dict[str, int]] = {}
+    frequency_totals: dict[str, dict[str, int]] = {}
     states = []
     state_index = 0
-    for cpu_batch in loader:
+    for batch_number, cpu_batch in enumerate(loader, start=1):
         batch = move_batch(cpu_batch, device)
         with autocast_context(device):
             encoded, live, gate_types = model.encode(batch)
@@ -185,6 +265,24 @@ def audit_recall(
                 row for row in exact if (row[0], row[1][0]) in capped_pairs
             }
             exact_final = exact & decoded
+
+            for source, binding in exact:
+                source_length = int(model.source_lengths[source].item())
+                bucket = length_totals.setdefault(
+                    source_length,
+                    empty_exact_totals(),
+                )
+                exact_row = (source, binding)
+                frequency = training_source_counts[source]
+                frequency_bucket = frequency_totals.setdefault(
+                    source_frequency_bucket(frequency), empty_exact_totals()
+                )
+                for rows in (bucket, frequency_bucket):
+                    rows["exact_matches"] += 1
+                    rows["exact_eligible"] += int(exact_row in exact_eligible)
+                    rows["exact_above_threshold"] += int(exact_row in exact_above)
+                    rows["exact_after_source_cap"] += int(exact_row in exact_capped)
+                    rows["exact_final_retained"] += int(exact_row in exact_final)
 
             teacher = cpu_batch["target_actions"][batch_index]
             teacher_key = None
@@ -368,10 +466,25 @@ def audit_recall(
                 }
             )
             state_index += 1
+        if log_every_batches and batch_number % log_every_batches == 0:
+            print(
+                f"audit_batch={batch_number}/{len(loader)} states={state_index}",
+                flush=True,
+            )
 
     result = summarize_totals(totals)
     result["groups"] = {
         name: summarize_totals(rows) for name, rows in group_totals.items()
+    }
+    result["source_gate_lengths"] = {
+        str(length): summarize_exact_totals(rows)
+        for length, rows in sorted(length_totals.items())
+    }
+    frequency_order = ("unseen", "1", "2-7", "8-63", "64-511", "512+")
+    result["training_source_frequency_buckets"] = {
+        name: summarize_exact_totals(frequency_totals[name])
+        for name in frequency_order
+        if name in frequency_totals
     }
     return result, states
 
@@ -385,6 +498,14 @@ def main() -> None:
     )
     parser.add_argument("--data", type=Path, required=True)
     parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument(
+        "--source-frequency-checkpoint",
+        type=Path,
+        help=(
+            "reuse source-state counts from another checkpoint trained on the "
+            "same data; useful when auditing an unbalanced control checkpoint"
+        ),
+    )
     parser.add_argument("--calibration", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
@@ -392,6 +513,26 @@ def main() -> None:
     )
     parser.add_argument("--max-source-matches", type=int, default=8192)
     parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument(
+        "--log-every-batches",
+        type=int,
+        default=0,
+        help="print audit progress every N batches; 0 disables it",
+    )
+    parser.add_argument(
+        "--split",
+        choices=("all", "train", "test"),
+        default="all",
+        help="dataset split to audit; test isolates the held-out trajectories",
+    )
+    parser.add_argument(
+        "--exclude-calibration-trajectories",
+        action="store_true",
+        help=(
+            "exclude the trajectory modulo/remainder partition recorded by "
+            "the calibration file"
+        ),
+    )
     args = parser.parse_args()
     if not args.target_recalls or any(
         not 0.0 < recall <= 1.0 for recall in args.target_recalls
@@ -399,11 +540,31 @@ def main() -> None:
         parser.error("target recalls must be within (0, 1]")
     if args.max_source_matches < 1 or args.batch_size < 1:
         parser.error("source cap and batch size must be positive")
+    if args.log_every_batches < 0:
+        parser.error("--log-every-batches must be nonnegative")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     payload = torch.load(args.data, map_location="cpu", weights_only=False)
     rules = RuleMetadata.from_payload(payload)
-    trajectories = payload["train_trajectories"] + payload["test_trajectories"]
+    if args.split == "train":
+        trajectories = payload["train_trajectories"]
+    elif args.split == "test":
+        trajectories = payload["test_trajectories"]
+    else:
+        trajectories = payload["train_trajectories"] + payload["test_trajectories"]
+    excluded_calibration_partition = None
+    if args.exclude_calibration_trajectories:
+        calibration_payload = json.loads(args.calibration.read_text())
+        modulo = int(calibration_payload["trajectory_modulo"])
+        remainder = int(calibration_payload["trajectory_remainder"])
+        trajectories, excluded = exclude_trajectory_partition(
+            trajectories, modulo=modulo, remainder=remainder
+        )
+        excluded_calibration_partition = {
+            "trajectory_modulo": modulo,
+            "trajectory_remainder": remainder,
+            "excluded_trajectories": excluded,
+        }
     dataset = PrefixDataset(trajectories, rules)
     loader = DataLoader(
         dataset,
@@ -421,6 +582,61 @@ def main() -> None:
     model.load_state_dict(checkpoint["model"])
     model.eval()
     model.readout_attention_backend = "sdpa"
+    source_frequency_checkpoint = checkpoint
+    if args.source_frequency_checkpoint is not None:
+        source_frequency_checkpoint = torch.load(
+            args.source_frequency_checkpoint,
+            map_location="cpu",
+            weights_only=False,
+        )
+        frequency_args = source_frequency_checkpoint.get("args", {})
+        if str(frequency_args.get("data")) != str(train_args.get("data")):
+            raise ValueError(
+                "source-frequency checkpoint was trained on different data"
+            )
+    stored_source_balance = source_frequency_checkpoint.get("source_balance") or {}
+    stored_source_counts = stored_source_balance.get(
+        "positive_source_state_counts"
+    )
+    if stored_source_counts is not None and (
+        len(stored_source_counts) == model.num_sources
+    ):
+        training_source_counts = list(map(int, stored_source_counts))
+        training_states_for_source_frequency = stored_source_balance.get(
+            "training_states"
+        )
+        if training_states_for_source_frequency is None and (
+            str(args.data) == str(train_args.get("data"))
+        ):
+            training_states_for_source_frequency = prefix_training_state_count(
+                payload["train_trajectories"],
+                include_terminal=bool(
+                    train_args.get("include_train_terminal", False)
+                ),
+                terminal_only_repeat=int(
+                    train_args.get("train_terminal_repeat", 1)
+                ),
+            )
+    else:
+        training_dataset = PrefixDataset(
+            payload["train_trajectories"],
+            rules,
+            include_terminal=bool(
+                train_args.get("include_train_terminal", False)
+            ),
+            terminal_only_repeat=int(train_args.get("train_terminal_repeat", 1)),
+        )
+        training_source_counts = source_state_counts(
+            training_dataset, model.num_sources
+        ).tolist()
+        training_states_for_source_frequency = len(training_dataset)
+    training_source_frequency_class_counts = {
+        name: sum(
+            source_frequency_bucket(count) == name
+            for count in training_source_counts
+        )
+        for name in ("unseen", "1", "2-7", "8-63", "64-511", "512+")
+    }
 
     results = {}
     state_details = {}
@@ -433,6 +649,8 @@ def main() -> None:
             device=device,
             threshold_config=threshold_config,
             max_source_matches=args.max_source_matches,
+            training_source_counts=training_source_counts,
+            log_every_batches=args.log_every_batches,
         )
         results[key] = summary
         state_details[key] = states
@@ -449,6 +667,11 @@ def main() -> None:
         "config": {
             "data": str(args.data),
             "checkpoint": str(args.checkpoint),
+            "source_frequency_checkpoint": (
+                str(args.source_frequency_checkpoint)
+                if args.source_frequency_checkpoint is not None
+                else str(args.checkpoint)
+            ),
             "checkpoint_training_data": (
                 str(train_args["data"]) if train_args.get("data") is not None else None
             ),
@@ -462,8 +685,16 @@ def main() -> None:
             "max_source_matches": args.max_source_matches,
             "batch_size": args.batch_size,
             "device": str(device),
+            "split": args.split,
+            "excluded_calibration_partition": excluded_calibration_partition,
             "trajectories": len(trajectories),
             "states": len(dataset),
+            "training_states_for_source_frequency": (
+                training_states_for_source_frequency
+            ),
+            "training_source_frequency_class_counts": (
+                training_source_frequency_class_counts
+            ),
         },
         "results": results,
         "states": state_details,

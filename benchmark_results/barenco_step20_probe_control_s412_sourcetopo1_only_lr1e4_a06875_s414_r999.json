@@ -1,0 +1,216 @@
+{
+  "actions": [
+    {
+      "anchor_slots": [
+        28
+      ],
+      "binding_slots": [
+        [
+          28,
+          40,
+          42,
+          43,
+          45
+        ]
+      ],
+      "cost": 54,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": 1,
+      "matching_anchor_count": 1,
+      "node_id": 17,
+      "reward": 1,
+      "source_candidates": 301,
+      "source_id": 1467,
+      "source_match_covered": true,
+      "step": 0,
+      "trajectory": "../../data/step20_probe",
+      "xfer_id": 1525
+    }
+  ],
+  "config": {
+    "action_value_weight": 1.0,
+    "calibration": "../../runs/paged_action_matcher_control_s412_sourcetopo1_only_lr1e4_a06875_s414_calibration_r999.json",
+    "caps": [
+      512,
+      8192
+    ],
+    "checkpoint": "../../runs/paged_action_matcher_control_s412_sourcetopo1_only_lr1e4_a06875_s414.pt",
+    "data": "../../data/quarl_barenco38_3_normalized_w8_20260906.pt",
+    "device": "cuda",
+    "ecc_file": "../../quarl/experiment/ecc_set/nam_ecc.json",
+    "max_action_rank": 8192,
+    "max_gate_increase": 3,
+    "max_source_matches": 8192,
+    "microbatch": 1,
+    "near_source_reserve": 0,
+    "ranking_mode": "gate",
+    "source_grouping": "first_gate",
+    "source_microbatch": 0,
+    "target_recall": 0.999,
+    "trajectories": [
+      "../../data/step20_probe"
+    ]
+  },
+  "proposal_metrics": {
+    "eligible_actions": 432,
+    "predicted_actions": 432,
+    "selected_actions": 432,
+    "selected_value_exploration_proposals": 0,
+    "value_increase_candidates_after_parent_cap": 0
+  },
+  "sequence_conditioned": {
+    "../../data/step20_probe": {
+      "actions": [
+        {
+          "anchor_slots": [
+            28
+          ],
+          "cost": 54,
+          "declared_anchor_available": false,
+          "declared_anchor_matches": false,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": -1,
+          "gate_rank": 1,
+          "match_group": "far",
+          "matcher_above_threshold": true,
+          "matcher_calibrated_probability": 0.0007777446298860013,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -5.579756259918213,
+          "matcher_raw_threshold": -5.675974369049072,
+          "matcher_unfiltered_probability_rank": 737,
+          "matching_anchor_count": 1,
+          "node_id": 17,
+          "reward": 1,
+          "sequence_window_start": 0,
+          "source_candidates": 301,
+          "source_id": 1467,
+          "source_match_covered": true,
+          "step": 0,
+          "trajectory": "../../data/step20_probe",
+          "xfer_id": 1525
+        }
+      ],
+      "probes": [],
+      "summary": {
+        "actions": 1,
+        "caps": {
+          "512": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          },
+          "8192": {
+            "covered": 1,
+            "missing_steps": [],
+            "recall": 1.0,
+            "whole_trajectory_covered": true
+          }
+        },
+        "exact_action_available": 1,
+        "exact_transition_matches": 1,
+        "gate_rank": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "p90": 1,
+          "p95": 1
+        },
+        "missing_rank_steps": [],
+        "ranked_action_covered": 1,
+        "source_match_covered": 1
+      }
+    }
+  },
+  "summary": {
+    "actions": 1,
+    "caps": {
+      "512": {
+        "covered": 1,
+        "missing_steps": [],
+        "recall": 1.0,
+        "whole_trajectory_covered": true
+      },
+      "8192": {
+        "covered": 1,
+        "missing_steps": [],
+        "recall": 1.0,
+        "whole_trajectory_covered": true
+      }
+    },
+    "exact_action_available": 1,
+    "exact_transition_matches": 1,
+    "gate_rank": {
+      "max": 1,
+      "median": 1,
+      "min": 1,
+      "p90": 1,
+      "p95": 1
+    },
+    "missing_rank_steps": [],
+    "ranked_action_covered": 1,
+    "source_match_covered": 1
+  },
+  "timing": {
+    "model_match_seconds": 0.2074260413646698,
+    "model_match_stages": {
+      "batch_collate_and_pad_seconds": 0.0004500262439250946,
+      "batch_host_to_device_seconds": 0.00014499016106128693,
+      "candidate_device_to_host_seconds": 0.0,
+      "candidate_gpu_pack_seconds": 0.00882679969072342,
+      "candidate_python_pack_seconds": 0.0,
+      "candidate_selection_and_ranking_seconds": 0.09304122440516949,
+      "incremental_graph_readout_seconds": 0.004141077399253845,
+      "match_group_compaction_seconds": 0.07088200561702251,
+      "match_logits_seconds": 0.015906136482954025,
+      "model_match_unattributed_seconds": 0.0005041621625423431,
+      "readout_cache_metadata_or_gather_seconds": 0.00017382390797138214,
+      "structural_binding_decode_seconds": 0.013355795294046402
+    },
+    "proposal_seconds": 0.005484487861394882,
+    "proposal_stages": {
+      "gpu_action_expansion_seconds": 0.0006981194019317627,
+      "gpu_global_proposal_rank_seconds": 0.00024871714413166046,
+      "gpu_match_preselection_seconds": 0.00019727274775505066,
+      "gpu_per_parent_rank_seconds": 0.0020544491708278656,
+      "proposal_device_to_host_and_pack_seconds": 0.0021233614534139633
+    },
+    "qasm_load_and_exact_validation_seconds": 0.0625191256403923
+  },
+  "trajectories": {
+    "../../data/step20_probe": {
+      "actions": 1,
+      "caps": {
+        "512": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        },
+        "8192": {
+          "covered": 1,
+          "missing_steps": [],
+          "recall": 1.0,
+          "whole_trajectory_covered": true
+        }
+      },
+      "exact_action_available": 1,
+      "exact_transition_matches": 1,
+      "gate_rank": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "p90": 1,
+        "p95": 1
+      },
+      "missing_rank_steps": [],
+      "ranked_action_covered": 1,
+      "source_match_covered": 1
+    }
+  }
+}

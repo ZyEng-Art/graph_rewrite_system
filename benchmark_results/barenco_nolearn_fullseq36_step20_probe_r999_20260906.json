@@ -1,0 +1,234 @@
+{
+  "actions": [
+    {
+      "anchor_slots": [
+        28
+      ],
+      "binding_slots": [
+        [
+          28,
+          40,
+          42,
+          43,
+          45
+        ]
+      ],
+      "cost": 54,
+      "declared_anchor_available": false,
+      "declared_anchor_matches": false,
+      "exact_action_available": true,
+      "exact_transition_matches": true,
+      "gate_delta": -1,
+      "gate_rank": null,
+      "matching_anchor_count": 1,
+      "node_id": 17,
+      "reward": 1,
+      "source_candidates": 310,
+      "source_id": 1467,
+      "source_match_covered": false,
+      "step": 0,
+      "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/step20_probe",
+      "xfer_id": 1525
+    }
+  ],
+  "config": {
+    "action_value_weight": 1.0,
+    "calibration": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311_calibration_r999.json",
+    "caps": [
+      128,
+      8192
+    ],
+    "checkpoint": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/paged_action_refreshrand07_complex_possafe_c015_s311.pt",
+    "data": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_barenco38_3_normalized_w8_20260906.pt",
+    "device": "cuda",
+    "ecc_file": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/quarl/experiment/ecc_set/nam_ecc.json",
+    "max_action_rank": 8192,
+    "max_gate_increase": 3,
+    "max_source_matches": 8192,
+    "microbatch": 1,
+    "near_source_reserve": 0,
+    "ranking_mode": "gate",
+    "source_grouping": "first_gate",
+    "source_microbatch": 0,
+    "target_recall": 0.999,
+    "trajectories": [
+      "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/step20_probe"
+    ]
+  },
+  "proposal_metrics": {
+    "eligible_actions": 455,
+    "predicted_actions": 455,
+    "selected_actions": 455,
+    "selected_value_exploration_proposals": 0,
+    "value_increase_candidates_after_parent_cap": 0
+  },
+  "sequence_conditioned": {
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/step20_probe": {
+      "actions": [
+        {
+          "anchor_slots": [
+            28
+          ],
+          "cost": 54,
+          "declared_anchor_available": false,
+          "declared_anchor_matches": false,
+          "exact_action_available": true,
+          "exact_transition_matches": true,
+          "gate_delta": -1,
+          "gate_rank": null,
+          "match_group": "far",
+          "matcher_above_threshold": false,
+          "matcher_calibrated_probability": 0.0006040348671376705,
+          "matcher_eligible": true,
+          "matcher_raw_logit": -6.237612247467041,
+          "matcher_raw_threshold": -5.537871360778809,
+          "matcher_unfiltered_probability_rank": 799,
+          "matching_anchor_count": 1,
+          "node_id": 17,
+          "reward": 1,
+          "sequence_window_start": 0,
+          "source_candidates": 310,
+          "source_id": 1467,
+          "source_match_covered": false,
+          "step": 0,
+          "trajectory": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/step20_probe",
+          "xfer_id": 1525
+        }
+      ],
+      "probes": [],
+      "summary": {
+        "actions": 1,
+        "caps": {
+          "128": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          },
+          "8192": {
+            "covered": 0,
+            "missing_steps": [
+              0
+            ],
+            "recall": 0.0,
+            "whole_trajectory_covered": false
+          }
+        },
+        "exact_action_available": 1,
+        "exact_transition_matches": 1,
+        "gate_rank": {
+          "max": null,
+          "median": null,
+          "min": null,
+          "p90": null,
+          "p95": null
+        },
+        "missing_rank_steps": [
+          0
+        ],
+        "ranked_action_covered": 0,
+        "source_match_covered": 0
+      }
+    }
+  },
+  "summary": {
+    "actions": 1,
+    "caps": {
+      "128": {
+        "covered": 0,
+        "missing_steps": [
+          0
+        ],
+        "recall": 0.0,
+        "whole_trajectory_covered": false
+      },
+      "8192": {
+        "covered": 0,
+        "missing_steps": [
+          0
+        ],
+        "recall": 0.0,
+        "whole_trajectory_covered": false
+      }
+    },
+    "exact_action_available": 1,
+    "exact_transition_matches": 1,
+    "gate_rank": {
+      "max": null,
+      "median": null,
+      "min": null,
+      "p90": null,
+      "p95": null
+    },
+    "missing_rank_steps": [
+      0
+    ],
+    "ranked_action_covered": 0,
+    "source_match_covered": 0
+  },
+  "timing": {
+    "model_match_seconds": 0.2000378556549549,
+    "model_match_stages": {
+      "batch_collate_and_pad_seconds": 0.00040122121572494507,
+      "batch_host_to_device_seconds": 0.00017379224300384521,
+      "candidate_device_to_host_seconds": 0.0,
+      "candidate_gpu_pack_seconds": 0.007268192246556282,
+      "candidate_python_pack_seconds": 0.0,
+      "candidate_selection_and_ranking_seconds": 0.0920061506330967,
+      "incremental_graph_readout_seconds": 0.02188609167933464,
+      "match_group_compaction_seconds": 0.05520320497453213,
+      "match_logits_seconds": 0.007892293855547905,
+      "model_match_unattributed_seconds": 0.00047486089169979095,
+      "readout_cache_metadata_or_gather_seconds": 0.00022542662918567657,
+      "structural_binding_decode_seconds": 0.014506621286273003
+    },
+    "proposal_seconds": 0.005265211686491966,
+    "proposal_stages": {
+      "gpu_action_expansion_seconds": 0.0007712636142969131,
+      "gpu_global_proposal_rank_seconds": 0.00024113059043884277,
+      "gpu_match_preselection_seconds": 0.0012109559029340744,
+      "gpu_per_parent_rank_seconds": 0.001832442358136177,
+      "proposal_device_to_host_and_pack_seconds": 0.0010712090879678726
+    },
+    "qasm_load_and_exact_validation_seconds": 0.029562564566731453
+  },
+  "trajectories": {
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/step20_probe": {
+      "actions": 1,
+      "caps": {
+        "128": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        },
+        "8192": {
+          "covered": 0,
+          "missing_steps": [
+            0
+          ],
+          "recall": 0.0,
+          "whole_trajectory_covered": false
+        }
+      },
+      "exact_action_available": 1,
+      "exact_transition_matches": 1,
+      "gate_rank": {
+        "max": null,
+        "median": null,
+        "min": null,
+        "p90": null,
+        "p95": null
+      },
+      "missing_rank_steps": [
+        0
+      ],
+      "ranked_action_covered": 0,
+      "source_match_covered": 0
+    }
+  }
+}

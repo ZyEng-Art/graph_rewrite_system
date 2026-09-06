@@ -39,6 +39,7 @@ def main() -> None:
         "model": mixed_state,
         "args": tuned["args"],
         "metrics": {},
+        "source_balance": tuned.get("source_balance"),
         "format": tuned.get("format", base.get("format")),
         "interpolation": {
             "base": str(args.base),
