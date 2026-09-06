@@ -19,13 +19,20 @@ are recorded in `BASELINE_SHA256.txt`.
   measured cross-circuit suite;
 - depth-8 cross-circuit audit: **1280/1280** trajectories Quartz-valid and
   topology-exact on `vbe_adder_3`, `gf2^4_mult`, `gf2^5_mult`, `adder_8`, and
-  `grover_5`.
+  `grover_5`;
+- 2026-09-06 batch-512 rerun: H100 full-proposal throughput is **319.37x**
+  CPU Quartz on GF `370_2` and **129.62x** on Barenco `38_3`;
+- current long-path optimization: Barenco reproduces 39 -> 38, while GF
+  completes 271 actions but remains 371 -> 371.
 
 See `PAGED_RESULTS.md` for the final stage profiles and cross-circuit results,
 `RESULTS.md` for the earlier model/data experiments, and
 `QUARL_TRAJECTORY_FINETUNING.md` for the held-out Barenco/GF trajectory
 hard-positive experiment.  The two recommended checkpoints and their
 calibration files are under `benchmark_results/`.
+The current CPU/H100 rerun, full Barenco/GF searches, and their limitations are
+reported in
+`benchmark_results/cpu_quartz_rerun_and_e2e_optimization_findings_20260906.md`.
 
 ## Repository layout
 
@@ -132,6 +139,14 @@ physical wiring, and dependent order. A native Quartz patch is provided at
 correct but slower QASM fallback. The Barenco/GF duplicate diagnosis, H100 A/B,
 reference-trajectory safety audit, and rebuild instructions are in
 `benchmark_results/exact_identity_dedup_findings_20260906.md`.
+
+For history-conditioned models, `--refresh-dedup-scope level` removes exact
+duplicates inside each refreshed beam without permanently rejecting a circuit
+that reappears at a later depth. `--rebase-model-history-at-refresh` permits a
+search to exceed a checkpoint's learned action-context limit by re-encoding
+each Quartz-verified current circuit as a new model root; the physical state,
+full replay history, and exact checkpoint are retained. The GF depth-271
+benchmark uses both options and charges all re-encoding time to the search.
 
 A strict same-checkpoint cache A/B on the actual 1000-state `hwb6` beams
 confirms why short searches looked similar. With both paths at microbatch 512

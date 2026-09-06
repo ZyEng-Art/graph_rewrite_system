@@ -89,6 +89,38 @@ def initial_batch(snapshot_row: dict) -> dict:
     }
 
 
+def initial_batches(snapshot_rows: list[dict]) -> dict:
+    """Pack several exact-refresh graphs as independent model roots."""
+    if not snapshot_rows:
+        raise ValueError("at least one snapshot is required")
+    slots = max(
+        max((int(row[0]) for row in snapshot_row["nodes"]), default=-1) + 1
+        for snapshot_row in snapshot_rows
+    )
+    initial_types = torch.full(
+        (len(snapshot_rows), slots), -1, dtype=torch.long
+    )
+    edge_batch = []
+    edge_src = []
+    edge_dst = []
+    edge_relation = []
+    for batch_index, snapshot_row in enumerate(snapshot_rows):
+        for slot, gate_type, _ in snapshot_row["nodes"]:
+            initial_types[batch_index, int(slot)] = int(gate_type)
+        for src, dst, src_port, dst_port in snapshot_row["edges"]:
+            edge_batch.append(batch_index)
+            edge_src.append(int(src))
+            edge_dst.append(int(dst))
+            edge_relation.append(int(src_port) * 4 + int(dst_port))
+    return {
+        "initial_types": initial_types,
+        "edge_batch": torch.tensor(edge_batch, dtype=torch.long),
+        "edge_src": torch.tensor(edge_src, dtype=torch.long),
+        "edge_dst": torch.tensor(edge_dst, dtype=torch.long),
+        "edge_relation": torch.tensor(edge_relation, dtype=torch.long),
+    }
+
+
 def pad_current_batch(batch: dict, slots: int) -> dict:
     current_slots = batch["current_types"].shape[1]
     if current_slots > slots:
@@ -1233,6 +1265,15 @@ def main() -> None:
             "the legacy lossy identity and is retained only for A/B diagnostics"
         ),
     )
+    parser.add_argument(
+        "--refresh-dedup-scope",
+        choices=("global", "level"),
+        default="global",
+        help=(
+            "global rejects a circuit seen at any earlier refresh; level rejects "
+            "duplicate circuits only within the current refreshed beam"
+        ),
+    )
     parser.add_argument("--audit-count", type=int, default=1000)
     parser.add_argument(
         "--eliminate-rotation",
@@ -1249,6 +1290,17 @@ def main() -> None:
         help=(
             "at each refresh, compare this many checkpoint-based replays against "
             "a full replay from s0 (0 disables)"
+        ),
+    )
+    parser.add_argument(
+        "--rebase-model-history-at-refresh",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "after a Quartz refresh reaches the model's trained context limit, "
+            "re-encode every surviving current circuit as a zero-history model "
+            "root; the full action history and exact replay checkpoints remain "
+            "unchanged"
         ),
     )
     parser.add_argument(
@@ -1302,6 +1354,8 @@ def main() -> None:
         parser.error(str(error))
     if args.refresh_interval < 0:
         parser.error("--refresh-interval must be nonnegative")
+    if args.rebase_model_history_at_refresh and not args.refresh_interval:
+        parser.error("--rebase-model-history-at-refresh requires a refresh interval")
     if args.source_microbatch < 0:
         parser.error("--source-microbatch must be nonnegative")
     if args.near_source_reserve < 0:
@@ -1539,22 +1593,24 @@ def main() -> None:
     best_exact_graph = graph
     best_exact_gate_count = initial_gate_count
     best_exact_depth = 0
-    # This set is deliberately separate from slot-sensitive speculative hashes
-    # and persists across refreshes and best-root restarts.  The key includes
-    # physical qubits and parameters and is collision-checked by full-key equality.
+    # This registry is deliberately separate from slot-sensitive speculative
+    # hashes. In global mode it persists across refreshes and best-root restarts;
+    # level mode creates a fresh exact registry at each refresh so a
+    # history-conditioned policy can revisit a circuit at a later depth.
     seen_exact = (
         (
             ExactGraphRegistry.seeded(graph)
             if args.refresh_dedup_identity == "exact"
             else QuartzHashRegistry.seeded(graph)
         )
-        if args.refresh_exact_dedup
+        if args.refresh_exact_dedup and args.refresh_dedup_scope == "global"
         else None
     )
     segment_index = 0
     segment_start_depth = 0
     segment_root_gate_count = initial_gate_count
     restart_count = 0
+    model_history_rebase_count = 0
     stale_refreshes = 0
     beam = [
         BeamState(
@@ -1993,6 +2049,7 @@ def main() -> None:
         refresh_valid = 0
         refresh_exact_duplicates = 0
         refresh_hash_seconds = 0.0
+        refresh_identity_unique = 0
         refresh_early_stopped = False
         refresh_failures: dict[int, int] = defaultdict(int)
         refresh_profile_seconds: dict[str, float] = {}
@@ -2006,6 +2063,16 @@ def main() -> None:
             refresh_candidates = len(beam)
             valid_indices = []
             refresh_checkpoints = {}
+            refresh_seen_exact = seen_exact
+            if (
+                args.refresh_exact_dedup
+                and args.refresh_dedup_scope == "level"
+            ):
+                refresh_seen_exact = (
+                    ExactGraphRegistry()
+                    if args.refresh_dedup_identity == "exact"
+                    else QuartzHashRegistry()
+                )
             refresh_replay_cache: dict[
                 tuple, ExactReplayCacheEntry
             ] | None = None
@@ -2095,7 +2162,7 @@ def main() -> None:
                 refresh_replay_valid += 1
                 if args.refresh_exact_dedup:
                     hash_started = time.perf_counter()
-                    is_unique = seen_exact.register(exact_graph)
+                    is_unique = refresh_seen_exact.register(exact_graph)
                     refresh_hash_seconds += time.perf_counter() - hash_started
                     if not is_unique:
                         refresh_exact_duplicates += 1
@@ -2106,6 +2173,9 @@ def main() -> None:
                     refresh_early_stopped = state_index + 1 < len(beam)
                     break
             refresh_valid = len(valid_indices)
+            refresh_identity_unique = (
+                len(refresh_seen_exact) if refresh_seen_exact is not None else 0
+            )
             keep_indices = valid_indices[: args.beam_size]
             for state_index in keep_indices:
                 state = beam[state_index]
@@ -2190,6 +2260,7 @@ def main() -> None:
             )
 
         restart_seconds = 0.0
+        model_history_rebase_seconds = 0.0
         best_root_restart_due = bool(
             refresh_due
             and args.restart_from_best_at_refresh
@@ -2269,6 +2340,69 @@ def main() -> None:
             if args.profile_stages and device.type == "cuda":
                 torch.cuda.synchronize(device)
             restart_seconds = time.perf_counter() - restart_started
+        model_history_rebase_due = bool(
+            args.rebase_model_history_at_refresh
+            and refresh_due
+            and beam
+            and not restarted_from_best
+            and step + 1 < args.depth
+            and max(handle.length for handle in handles) + args.refresh_interval
+            > model.max_sequence_length
+        )
+        if model_history_rebase_due:
+            rebase_started = time.perf_counter()
+            for handle in handles:
+                arena.release(handle)
+            if arena.allocated_pages:
+                raise RuntimeError(
+                    "paged cache pages leaked while rebasing model history"
+                )
+            rebase_snapshots = []
+            for state in beam:
+                if (
+                    state.exact_graph_checkpoint is None
+                    or state.exact_slot_checkpoint is None
+                ):
+                    raise RuntimeError(
+                        "model-history rebase requires an exact refresh checkpoint"
+                    )
+                rebase_snapshot = snapshot(
+                    state.exact_graph_checkpoint,
+                    state.exact_slot_checkpoint,
+                )
+                state.snapshot = rebase_snapshot
+                if args.lazy_topology_backend == "indexed":
+                    state.topology_index = indexed_topology(rebase_snapshot)
+                rebase_snapshots.append(rebase_snapshot)
+            with torch.no_grad(), autocast_context(device):
+                slot_states, live, gate_types = model.initialize_incremental(
+                    move_batch(initial_batches(rebase_snapshots), device)
+                )
+            handles = [arena.empty_handle() for _ in beam]
+            if exploration_model is not None:
+                for handle in exploration_handles:
+                    exploration_arena.release(handle)
+                if exploration_arena.allocated_pages:
+                    raise RuntimeError(
+                        "exploration cache pages leaked while rebasing model history"
+                    )
+                with torch.no_grad(), autocast_context(device):
+                    (
+                        exploration_slot_states,
+                        exploration_live,
+                        exploration_gate_types,
+                    ) = exploration_model.initialize_incremental(
+                        move_batch(initial_batches(rebase_snapshots), device)
+                    )
+                exploration_handles = [
+                    exploration_arena.empty_handle() for _ in beam
+                ]
+            model_history_rebase_count += 1
+            if args.profile_stages and device.type == "cuda":
+                torch.cuda.synchronize(device)
+            model_history_rebase_seconds = (
+                time.perf_counter() - rebase_started
+            )
         logical_pages = sum(len(handle.blocks) for handle in handles)
         elapsed = time.perf_counter() - step_started
         stage_seconds: dict[str, float] = {}
@@ -2298,6 +2432,9 @@ def main() -> None:
             stage_seconds["exact_quartz_refresh_seconds"] = refresh_seconds
             stage_seconds["beam_prune_and_reindex_seconds"] = beam_prune_seconds
             stage_seconds["best_root_restart_seconds"] = restart_seconds
+            stage_seconds["model_history_rebase_seconds"] = (
+                model_history_rebase_seconds
+            )
             stage_seconds["proposal_legality_audit_seconds"] = (
                 0.0
                 if proposal_legality_audit is None
@@ -2328,6 +2465,8 @@ def main() -> None:
             "segment_completed": segment_completed,
             "restarted_from_best": restarted_from_best,
             "restart_seconds": restart_seconds,
+            "model_history_rebased": model_history_rebase_due,
+            "model_history_rebase_seconds": model_history_rebase_seconds,
             "refresh_history": (
                 str(refresh_history_path) if refresh_history_path is not None else None
             ),
@@ -2384,6 +2523,7 @@ def main() -> None:
             "exact_refresh_exact_duplicates": refresh_exact_duplicates,
             "exact_refresh_hash_seconds": refresh_hash_seconds,
             "exact_refresh_identity_seconds": refresh_hash_seconds,
+            "exact_refresh_identity_unique": refresh_identity_unique,
             "exact_refresh_early_stopped": refresh_early_stopped,
             "exact_refresh_failures": dict(sorted(refresh_failures.items())),
             "checkpoint_audited": checkpoint_audited,
@@ -2528,6 +2668,13 @@ def main() -> None:
         "restart_from_best_at_refresh": args.restart_from_best_at_refresh,
         "best_root_restart_interval": args.best_root_restart_interval,
         "restart_count": restart_count,
+        "rebase_model_history_at_refresh": (
+            args.rebase_model_history_at_refresh
+        ),
+        "model_history_rebase_count": model_history_rebase_count,
+        "model_history_rebase_seconds_total": sum(
+            float(row["model_history_rebase_seconds"]) for row in step_rows
+        ),
         "stop_after_stale_refreshes": args.stop_after_stale_refreshes,
         "stale_refreshes": stale_refreshes,
         "final_segment_index": segment_index,
@@ -2597,17 +2744,48 @@ def main() -> None:
         "refresh_interval": args.refresh_interval,
         "refresh_factor": args.refresh_factor,
         "refresh_exact_dedup": args.refresh_exact_dedup,
+        "refresh_dedup_scope": args.refresh_dedup_scope,
         "exact_dedup_identity": (
             "quartz_wire_trace_v1_or_qasm_fallback"
             if args.refresh_dedup_identity == "exact"
             else "quartz_graph_hash_legacy_unsafe"
         ),
-        "exact_graph_hashes_seen": len(seen_exact) if seen_exact is not None else 0,
+        "exact_graph_hashes_seen": (
+            len(seen_exact)
+            if seen_exact is not None
+            else sum(
+                int(row["exact_refresh_identity_unique"]) for row in step_rows
+            )
+        ),
         "exact_graph_identities_seen": (
-            len(seen_exact) if seen_exact is not None else 0
+            len(seen_exact)
+            if seen_exact is not None
+            else sum(
+                int(row["exact_refresh_identity_unique"]) for row in step_rows
+            )
         ),
         "exact_graph_identity_registry": (
-            seen_exact.stats() if seen_exact is not None else None
+            seen_exact.stats()
+            if seen_exact is not None
+            else (
+                {
+                    "mode": f"{args.refresh_dedup_identity}_per_refresh_level",
+                    "registrations": sum(
+                        int(row["exact_refresh_replay_valid"])
+                        for row in step_rows
+                    ),
+                    "unique_identities_across_levels_not_deduplicated": sum(
+                        int(row["exact_refresh_identity_unique"])
+                        for row in step_rows
+                    ),
+                    "duplicates_within_levels": sum(
+                        int(row["exact_refresh_exact_duplicates"])
+                        for row in step_rows
+                    ),
+                }
+                if args.refresh_exact_dedup
+                else None
+            )
         ),
         "direct_inverse_rejections_total": sum(
             int(row["direct_inverse_rejections"]) for row in step_rows

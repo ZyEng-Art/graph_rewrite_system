@@ -1,11 +1,13 @@
 import unittest
 
+import torch
+
 from circuit_identity import (
     ExactGraphRegistry,
     QuartzHashRegistry,
     canonical_qasm_key,
 )
-from paged_rollout_benchmark import register_exact_graph_hash
+from paged_rollout_benchmark import initial_batch, initial_batches, register_exact_graph_hash
 
 
 class FakeGraph:
@@ -41,6 +43,26 @@ HEADER = 'OPENQASM 2.0;\ninclude "qelib1.inc";\nqreg q[3];\n'
 
 
 class ExactRefreshDedupTest(unittest.TestCase):
+    def test_batched_refresh_roots_match_single_snapshot_packing(self) -> None:
+        first = {
+            "nodes": [(0, 1, 10), (2, 3, 11)],
+            "edges": [(0, 2, 1, 0)],
+        }
+        second = {
+            "nodes": [(1, 4, 20)],
+            "edges": [],
+        }
+
+        packed = initial_batches([first, second])
+        single = initial_batch(first)
+
+        self.assertTrue(torch.equal(packed["initial_types"][0], single["initial_types"][0]))
+        self.assertEqual(packed["initial_types"].tolist(), [[1, -1, 3], [-1, 4, -1]])
+        self.assertEqual(packed["edge_batch"].tolist(), [0])
+        self.assertEqual(packed["edge_src"].tolist(), [0])
+        self.assertEqual(packed["edge_dst"].tolist(), [2])
+        self.assertEqual(packed["edge_relation"].tolist(), [4])
+
     def test_registers_unique_identity_once(self) -> None:
         seen = set()
         graph = FakeGraph(HEADER + "h q[0];\n")

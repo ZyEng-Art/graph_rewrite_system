@@ -1,0 +1,113 @@
+{
+  "date": "2026-09-06",
+  "hardware": {
+    "cpu_count": 192,
+    "gpu": "NVIDIA H100 80GB HBM3"
+  },
+  "matcher_batch_512": {
+    "barenco_38_3": {
+      "cpu_original_xfer_anchor_seconds": 8.162584122270346,
+      "cpu_states_per_second": 62.72523410853278,
+      "gpu_full_proposal_median_seconds": 0.06297378614544868,
+      "gpu_full_proposal_states_per_second": 8130.3671152540965,
+      "gpu_full_proposal_speedup": 129.618760787504,
+      "gpu_resident_median_seconds": 0.04665481671690941,
+      "gpu_resident_speedup": 174.95694328409884,
+      "gpu_including_one_time_host_packing_seconds": 0.5626242309808731,
+      "gpu_including_one_time_host_packing_speedup": 14.508056483880518,
+      "artifact": "matcher_throughput_barenco38_3_b512_r999_rerun_20260906.json"
+    },
+    "gf370_2": {
+      "cpu_original_xfer_anchor_seconds": 83.27596497908235,
+      "cpu_states_per_second": 6.148232567807609,
+      "gpu_full_proposal_median_seconds": 0.26075311936438084,
+      "gpu_full_proposal_states_per_second": 1963.543144749584,
+      "gpu_full_proposal_speedup": 319.3670901505539,
+      "gpu_resident_median_seconds": 0.236616687849164,
+      "gpu_resident_speedup": 351.9445975516666,
+      "gpu_including_one_time_host_packing_seconds": 4.85370477847755,
+      "gpu_including_one_time_host_packing_speedup": 17.157196158354594,
+      "artifact": "matcher_throughput_gf370_2_b512_r999_rerun_20260906.json"
+    }
+  },
+  "end_to_end_equal_budget": {
+    "barenco_38_3_beam1000_depth16": {
+      "initial_gate_count": 39,
+      "cpu_best_gate_count": 38,
+      "cpu_seconds": 253.89130138978362,
+      "cpu_final_exact_unique_states": 1000,
+      "gpu_history_best_gate_count": 38,
+      "gpu_history_search_seconds_repeats": [
+        13.315039992332458,
+        6.310873648151755,
+        5.599511947482824
+      ],
+      "gpu_history_search_median_seconds": 6.310873648151755,
+      "gpu_history_search_speedup": 40.2307692317909,
+      "gpu_history_independent_audit_seconds_for_median_run": 2.2489287480711937,
+      "gpu_history_conservative_speedup_with_second_audit": 29.660883468736883,
+      "gpu_history_final_valid_trajectories": 790,
+      "gpu_history_final_exact_unique_states": 113,
+      "gpu_level_exact_dedup_best_gate_count": 39,
+      "gpu_level_exact_dedup_search_seconds": 10.812063654884696,
+      "gpu_level_exact_dedup_final_valid_trajectories": 839,
+      "gpu_level_exact_dedup_final_exact_unique_states": 839,
+      "quality_equivalent_speedup_claim": false
+    },
+    "gf370_2_beam1000_depth3": {
+      "initial_gate_count": 371,
+      "cpu_best_gate_count": 371,
+      "cpu_seconds": 278.83606418967247,
+      "cpu_final_exact_unique_states": 1000,
+      "gpu_best_gate_count": 371,
+      "gpu_search_seconds_repeats": [
+        6.6321181785315275,
+        7.203982479870319,
+        6.4755681697279215
+      ],
+      "gpu_search_median_seconds": 6.6321181785315275,
+      "gpu_search_speedup": 42.04328944141521,
+      "gpu_independent_audit_seconds_for_median_run": 7.746745148673654,
+      "gpu_conservative_speedup_with_second_audit": 19.39207973846635,
+      "gpu_final_valid_trajectories": 1000,
+      "gpu_final_exact_unique_states": 1000,
+      "quality_equivalent_speedup_claim": true
+    }
+  },
+  "full_optimization": {
+    "barenco_38_3": {
+      "requested_depth": 16,
+      "initial_gate_count": 39,
+      "best_confirmed_gate_count": 38,
+      "best_confirmed_depth": 16,
+      "search_mode": "history-diverse refresh with full final Quartz audit",
+      "strict_level_exact_dedup_best_gate_count": 39
+    },
+    "gf370_2": {
+      "requested_depth": 271,
+      "initial_gate_count": 371,
+      "best_confirmed_gate_count": 371,
+      "history_diverse_search_seconds": 321.68213325180113,
+      "history_diverse_full_audit_seconds": 422.92651352472603,
+      "history_diverse_final_valid_trajectories": 1000,
+      "history_diverse_final_exact_unique_states": 492,
+      "level_exact_dedup_search_seconds": 391.31660637259483,
+      "level_exact_dedup_full_audit_seconds": 504.5917916242033,
+      "level_exact_dedup_replayed_valid_at_refreshes": 66000,
+      "level_exact_dedup_duplicates_filtered": 38072,
+      "level_exact_dedup_unique_states_retained_across_refreshes": 27928,
+      "level_exact_identity_seconds": 19.686365451663733,
+      "last_refresh_depth": 264,
+      "last_refresh_candidates": 2000,
+      "last_refresh_exact_unique_states": 832,
+      "model_history_rebases": 4,
+      "model_history_rebase_depths": [64, 128, 192, 256],
+      "reproduced_reference_370_gate_state": false
+    }
+  },
+  "interpretation": {
+    "barenco": "The Barenco-specific value model reproduces 38 gates only when multiple action histories may represent one exact circuit. Keeping one history per exact circuit changes the history-conditioned policy distribution and misses 38 in this run.",
+    "gf": "The matcher remains fast and Quartz-valid, but it is not a long-horizon policy. Immediate gate-count ranking and two stochastic depth-64 controls do not find the 271-step 370-gate endpoint; a GF-specific value or policy model is still required.",
+    "dedup": "Per-refresh-level exact dedup avoids the global-registry beam exhaustion at depth 48 while still removing independent-action permutations inside each refreshed beam."
+  }
+}

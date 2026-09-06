@@ -21,6 +21,7 @@ if _libgomp:
 
 import torch
 
+from circuit_identity import ExactGraphRegistry, QuartzHashRegistry
 from dataset import (
     _local_streak_bucket,
     _touch_age_bucket,
@@ -319,6 +320,15 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--best-qasm", type=Path)
     parser.add_argument(
+        "--dedup-identity",
+        choices=("exact", "quartz_hash"),
+        default="exact",
+        help=(
+            "collision-safe physical-wire identity, or Quartz's legacy lossy "
+            "integer hash for controlled historical comparisons"
+        ),
+    )
+    parser.add_argument(
         "--eliminate-rotation",
         action="store_true",
         help="fold parameter expressions and remove zero rotations after each Quartz rewrite",
@@ -407,7 +417,11 @@ def main() -> None:
     gc.collect()
     gc.disable()
     initial_gate_count = beam[0].gate_count
-    seen = {int(graph.hash())}
+    seen = (
+        ExactGraphRegistry.seeded(graph)
+        if args.dedup_identity == "exact"
+        else QuartzHashRegistry.seeded(graph)
+    )
     step_rows = []
     total_started = time.perf_counter()
     for step in range(args.depth):
@@ -520,11 +534,9 @@ def main() -> None:
             if child is None:
                 invalid += 1
                 continue
-            graph_hash = int(child.graph.hash())
-            if graph_hash in seen:
+            if not seen.register(child.graph):
                 duplicates += 1
                 continue
-            seen.add(graph_hash)
             children.append(child)
         apply_seconds = time.perf_counter() - apply_started
         if not children:
@@ -588,7 +600,9 @@ def main() -> None:
         "initial_gate_count": initial_gate_count,
         "best_gate_count": min(state.gate_count for state in beam),
         "final_beam_size": len(beam),
+        "dedup_identity": args.dedup_identity,
         "unique_graphs_seen": len(seen),
+        "dedup_registry": seen.stats(),
         "total_seconds": total_seconds,
         "accepted_actions": total_accepted,
         "accepted_actions_per_second": total_accepted / total_seconds,
