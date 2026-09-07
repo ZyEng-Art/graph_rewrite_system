@@ -1,0 +1,5631 @@
+{
+  "config": {
+    "batch_size": 8,
+    "calibration": "benchmark_results/hhop_h6_topo1_balanced_s907_epoch1_calibration.json",
+    "checkpoint": "runs/hhop_h6_topo1_balanced_s907.pt",
+    "checkpoint_init": "../../runs/locality_ft_feat_w1.pt",
+    "checkpoint_training_data": "../../data/binding_longmix_randomrefresh_complex_holdout_20260906.pt",
+    "data": "../../data/quarl_barenco_fullseq36_normalized_20260907.pt",
+    "device": "cuda",
+    "excluded_calibration_partition": null,
+    "max_source_matches": 10240,
+    "source_frequency_checkpoint": "runs/hhop_h6_topo1_balanced_s907.pt",
+    "split": "all",
+    "states": 116,
+    "target_recalls": [
+      0.999
+    ],
+    "training_source_frequency_class_counts": {
+      "1": 290,
+      "2-7": 283,
+      "512+": 687,
+      "64-511": 854,
+      "8-63": 783,
+      "unseen": 958
+    },
+    "training_states_for_source_frequency": 34912,
+    "trajectories": 1
+  },
+  "results": {
+    "0.9990": {
+      "above_threshold_pairs": 73139,
+      "after_source_cap_pairs": 73139,
+      "after_structural_decode": 22302,
+      "decoded_candidate_retained_fraction": 0.003251119932242824,
+      "decoded_exact_precision": 0.7175589633216752,
+      "eligible_pairs": 6859790,
+      "exact_above_threshold": 16003,
+      "exact_above_threshold_recall": 1.0,
+      "exact_after_source_cap": 16003,
+      "exact_after_source_cap_recall": 1.0,
+      "exact_eligible": 16003,
+      "exact_final_recall": 1.0,
+      "exact_final_retained": 16003,
+      "exact_matches": 16003,
+      "groups": {
+        "far": {
+          "above_threshold_pairs": 29606,
+          "after_source_cap_pairs": 29606,
+          "after_structural_decode": 9940,
+          "decoded_candidate_retained_fraction": 0.002867759915986752,
+          "decoded_exact_precision": 0.737625754527163,
+          "eligible_pairs": 3466120,
+          "exact_above_threshold": 7332,
+          "exact_above_threshold_recall": 1.0,
+          "exact_after_source_cap": 7332,
+          "exact_after_source_cap_recall": 1.0,
+          "exact_eligible": 7332,
+          "exact_final_recall": 1.0,
+          "exact_final_retained": 7332,
+          "exact_matches": 7332,
+          "source_cap_candidate_retained_fraction": 0.008541539242726737,
+          "states": 116,
+          "states_with_all_exact_matches_retained": 116,
+          "teacher_actions": 21,
+          "teacher_final_retained": 21,
+          "threshold_candidate_filtered_fraction": 0.9914584607572733,
+          "threshold_candidate_retained_fraction": 0.008541539242726737
+        },
+        "near": {
+          "above_threshold_pairs": 43533,
+          "after_source_cap_pairs": 43533,
+          "after_structural_decode": 12362,
+          "decoded_candidate_retained_fraction": 0.003642664136465832,
+          "decoded_exact_precision": 0.7014237178450089,
+          "eligible_pairs": 3393670,
+          "exact_above_threshold": 8671,
+          "exact_above_threshold_recall": 1.0,
+          "exact_after_source_cap": 8671,
+          "exact_after_source_cap_recall": 1.0,
+          "exact_eligible": 8671,
+          "exact_final_recall": 1.0,
+          "exact_final_retained": 8671,
+          "exact_matches": 8671,
+          "source_cap_candidate_retained_fraction": 0.01282770569913987,
+          "states": 116,
+          "states_with_all_exact_matches_retained": 116,
+          "teacher_actions": 95,
+          "teacher_final_retained": 95,
+          "threshold_candidate_filtered_fraction": 0.9871722943008602,
+          "threshold_candidate_retained_fraction": 0.01282770569913987
+        }
+      },
+      "source_cap_candidate_retained_fraction": 0.010661988194973899,
+      "source_gate_lengths": {
+        "2": {
+          "exact_above_threshold": 9755,
+          "exact_above_threshold_recall": 1.0,
+          "exact_after_source_cap": 9755,
+          "exact_after_source_cap_recall": 1.0,
+          "exact_eligible": 9755,
+          "exact_final_recall": 1.0,
+          "exact_final_retained": 9755,
+          "exact_matches": 9755
+        },
+        "3": {
+          "exact_above_threshold": 4385,
+          "exact_above_threshold_recall": 1.0,
+          "exact_after_source_cap": 4385,
+          "exact_after_source_cap_recall": 1.0,
+          "exact_eligible": 4385,
+          "exact_final_recall": 1.0,
+          "exact_final_retained": 4385,
+          "exact_matches": 4385
+        },
+        "4": {
+          "exact_above_threshold": 1657,
+          "exact_above_threshold_recall": 1.0,
+          "exact_after_source_cap": 1657,
+          "exact_after_source_cap_recall": 1.0,
+          "exact_eligible": 1657,
+          "exact_final_recall": 1.0,
+          "exact_final_retained": 1657,
+          "exact_matches": 1657
+        },
+        "5": {
+          "exact_above_threshold": 206,
+          "exact_above_threshold_recall": 1.0,
+          "exact_after_source_cap": 206,
+          "exact_after_source_cap_recall": 1.0,
+          "exact_eligible": 206,
+          "exact_final_recall": 1.0,
+          "exact_final_retained": 206,
+          "exact_matches": 206
+        }
+      },
+      "states": 116,
+      "states_with_all_exact_matches_retained": 116,
+      "teacher_actions": 116,
+      "teacher_final_retained": 116,
+      "threshold_candidate_filtered_fraction": 0.9893380118050261,
+      "threshold_candidate_retained_fraction": 0.010661988194973899,
+      "training_source_frequency_buckets": {
+        "512+": {
+          "exact_above_threshold": 15917,
+          "exact_above_threshold_recall": 1.0,
+          "exact_after_source_cap": 15917,
+          "exact_after_source_cap_recall": 1.0,
+          "exact_eligible": 15917,
+          "exact_final_recall": 1.0,
+          "exact_final_retained": 15917,
+          "exact_matches": 15917
+        },
+        "64-511": {
+          "exact_above_threshold": 85,
+          "exact_above_threshold_recall": 1.0,
+          "exact_after_source_cap": 85,
+          "exact_after_source_cap_recall": 1.0,
+          "exact_eligible": 85,
+          "exact_final_recall": 1.0,
+          "exact_final_retained": 85,
+          "exact_matches": 85
+        },
+        "8-63": {
+          "exact_above_threshold": 1,
+          "exact_above_threshold_recall": 1.0,
+          "exact_after_source_cap": 1,
+          "exact_after_source_cap_recall": 1.0,
+          "exact_eligible": 1,
+          "exact_final_recall": 1.0,
+          "exact_final_retained": 1,
+          "exact_matches": 1
+        }
+      }
+    }
+  },
+  "states": {
+    "0.9990": [
+      {
+        "above_threshold_pairs": 406,
+        "after_source_cap_pairs": 406,
+        "after_structural_decode": 194,
+        "eligible_pairs": 73380,
+        "exact_above_threshold": 184,
+        "exact_after_source_cap": 184,
+        "exact_eligible": 184,
+        "exact_final_retained": 184,
+        "exact_matches": 184,
+        "groups": {
+          "far": {
+            "exact_final_retained": 184,
+            "exact_matches": 184
+          },
+          "near": {
+            "exact_final_retained": 0,
+            "exact_matches": 0
+          }
+        },
+        "prefix_length": 0,
+        "state": 0,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 171,
+          "after_source_cap": true,
+          "anchor_slot": 8,
+          "binding_slots": [
+            8,
+            10,
+            11
+          ],
+          "calibrated_logit": 5.154860019683838,
+          "eligible": true,
+          "eligible_rank": 171,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 8.874228477478027,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 117,
+          "xfer_id": 121
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 445,
+        "after_source_cap_pairs": 445,
+        "after_structural_decode": 199,
+        "eligible_pairs": 73380,
+        "exact_above_threshold": 186,
+        "exact_after_source_cap": 186,
+        "exact_eligible": 186,
+        "exact_final_retained": 186,
+        "exact_matches": 186,
+        "groups": {
+          "far": {
+            "exact_final_retained": 115,
+            "exact_matches": 115
+          },
+          "near": {
+            "exact_final_retained": 71,
+            "exact_matches": 71
+          }
+        },
+        "prefix_length": 1,
+        "state": 1,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 166,
+          "after_source_cap": true,
+          "anchor_slot": 50,
+          "binding_slots": [
+            50,
+            51
+          ],
+          "calibrated_logit": 5.497605800628662,
+          "eligible": true,
+          "eligible_rank": 166,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 9.426743507385254,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 3768,
+          "xfer_id": 4409
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 536,
+        "after_source_cap_pairs": 536,
+        "after_structural_decode": 231,
+        "eligible_pairs": 73380,
+        "exact_above_threshold": 206,
+        "exact_after_source_cap": 206,
+        "exact_eligible": 206,
+        "exact_final_retained": 206,
+        "exact_matches": 206,
+        "groups": {
+          "far": {
+            "exact_final_retained": 135,
+            "exact_matches": 135
+          },
+          "near": {
+            "exact_final_retained": 71,
+            "exact_matches": 71
+          }
+        },
+        "prefix_length": 2,
+        "state": 2,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 178,
+          "after_source_cap": true,
+          "anchor_slot": 36,
+          "binding_slots": [
+            36,
+            38,
+            40
+          ],
+          "calibrated_logit": 4.799338340759277,
+          "eligible": true,
+          "eligible_rank": 178,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 8.301118850708008,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 116,
+          "xfer_id": 120
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 669,
+        "after_source_cap_pairs": 669,
+        "after_structural_decode": 235,
+        "eligible_pairs": 73380,
+        "exact_above_threshold": 208,
+        "exact_after_source_cap": 208,
+        "exact_eligible": 208,
+        "exact_final_retained": 208,
+        "exact_matches": 208,
+        "groups": {
+          "far": {
+            "exact_final_retained": 153,
+            "exact_matches": 153
+          },
+          "near": {
+            "exact_final_retained": 55,
+            "exact_matches": 55
+          }
+        },
+        "prefix_length": 3,
+        "state": 3,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 89,
+          "after_source_cap": true,
+          "anchor_slot": 63,
+          "binding_slots": [
+            63,
+            64,
+            65,
+            41
+          ],
+          "calibrated_logit": 8.98108196258545,
+          "eligible": true,
+          "eligible_rank": 89,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 16.394906997680664,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 323,
+          "xfer_id": 336
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 667,
+        "after_source_cap_pairs": 667,
+        "after_structural_decode": 221,
+        "eligible_pairs": 73380,
+        "exact_above_threshold": 200,
+        "exact_after_source_cap": 200,
+        "exact_eligible": 200,
+        "exact_final_retained": 200,
+        "exact_matches": 200,
+        "groups": {
+          "far": {
+            "exact_final_retained": 153,
+            "exact_matches": 153
+          },
+          "near": {
+            "exact_final_retained": 47,
+            "exact_matches": 47
+          }
+        },
+        "prefix_length": 4,
+        "state": 4,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 2,
+          "after_source_cap": true,
+          "anchor_slot": 35,
+          "binding_slots": [
+            35,
+            66
+          ],
+          "calibrated_logit": 17.25604820251465,
+          "eligible": true,
+          "eligible_rank": 2,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 29.733762741088867,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 41,
+          "xfer_id": 45
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 643,
+        "after_source_cap_pairs": 643,
+        "after_structural_decode": 234,
+        "eligible_pairs": 73380,
+        "exact_above_threshold": 209,
+        "exact_after_source_cap": 209,
+        "exact_eligible": 209,
+        "exact_final_retained": 209,
+        "exact_matches": 209,
+        "groups": {
+          "far": {
+            "exact_final_retained": 157,
+            "exact_matches": 157
+          },
+          "near": {
+            "exact_final_retained": 52,
+            "exact_matches": 52
+          }
+        },
+        "prefix_length": 5,
+        "state": 5,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 185,
+          "after_source_cap": true,
+          "anchor_slot": 12,
+          "binding_slots": [
+            12,
+            31
+          ],
+          "calibrated_logit": 4.43218469619751,
+          "eligible": true,
+          "eligible_rank": 185,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 9.062296867370605,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 34,
+          "xfer_id": 38
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 635,
+        "after_source_cap_pairs": 635,
+        "after_structural_decode": 257,
+        "eligible_pairs": 73380,
+        "exact_above_threshold": 203,
+        "exact_after_source_cap": 203,
+        "exact_eligible": 203,
+        "exact_final_retained": 203,
+        "exact_matches": 203,
+        "groups": {
+          "far": {
+            "exact_final_retained": 127,
+            "exact_matches": 127
+          },
+          "near": {
+            "exact_final_retained": 76,
+            "exact_matches": 76
+          }
+        },
+        "prefix_length": 6,
+        "state": 6,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 33,
+          "after_source_cap": true,
+          "anchor_slot": 73,
+          "binding_slots": [
+            73,
+            70
+          ],
+          "calibrated_logit": 12.740236282348633,
+          "eligible": true,
+          "eligible_rank": 33,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 22.454486846923828,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3233,
+          "xfer_id": 3320
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 701,
+        "after_source_cap_pairs": 701,
+        "after_structural_decode": 242,
+        "eligible_pairs": 72894,
+        "exact_above_threshold": 196,
+        "exact_after_source_cap": 196,
+        "exact_eligible": 196,
+        "exact_final_retained": 196,
+        "exact_matches": 196,
+        "groups": {
+          "far": {
+            "exact_final_retained": 147,
+            "exact_matches": 147
+          },
+          "near": {
+            "exact_final_retained": 49,
+            "exact_matches": 49
+          }
+        },
+        "prefix_length": 7,
+        "state": 7,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 32,
+          "after_source_cap": true,
+          "anchor_slot": 29,
+          "binding_slots": [
+            29,
+            44
+          ],
+          "calibrated_logit": 12.034601211547852,
+          "eligible": true,
+          "eligible_rank": 32,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 19.96454429626465,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 40,
+          "xfer_id": 44
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 793,
+        "after_source_cap_pairs": 793,
+        "after_structural_decode": 262,
+        "eligible_pairs": 72894,
+        "exact_above_threshold": 214,
+        "exact_after_source_cap": 214,
+        "exact_eligible": 214,
+        "exact_final_retained": 214,
+        "exact_matches": 214,
+        "groups": {
+          "far": {
+            "exact_final_retained": 102,
+            "exact_matches": 102
+          },
+          "near": {
+            "exact_final_retained": 112,
+            "exact_matches": 112
+          }
+        },
+        "prefix_length": 8,
+        "state": 8,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 127,
+          "after_source_cap": true,
+          "anchor_slot": 71,
+          "binding_slots": [
+            71,
+            67,
+            68,
+            69
+          ],
+          "calibrated_logit": 6.015257835388184,
+          "eligible": true,
+          "eligible_rank": 127,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 10.261211395263672,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 1535,
+          "xfer_id": 1593
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 857,
+        "after_source_cap_pairs": 857,
+        "after_structural_decode": 284,
+        "eligible_pairs": 72894,
+        "exact_above_threshold": 231,
+        "exact_after_source_cap": 231,
+        "exact_eligible": 231,
+        "exact_final_retained": 231,
+        "exact_matches": 231,
+        "groups": {
+          "far": {
+            "exact_final_retained": 153,
+            "exact_matches": 153
+          },
+          "near": {
+            "exact_final_retained": 78,
+            "exact_matches": 78
+          }
+        },
+        "prefix_length": 9,
+        "state": 9,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 105,
+          "after_source_cap": true,
+          "anchor_slot": 58,
+          "binding_slots": [
+            58,
+            59,
+            60
+          ],
+          "calibrated_logit": 7.223476886749268,
+          "eligible": true,
+          "eligible_rank": 105,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 13.561728477478027,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 117,
+          "xfer_id": 121
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 632,
+        "after_source_cap_pairs": 632,
+        "after_structural_decode": 276,
+        "eligible_pairs": 72894,
+        "exact_above_threshold": 230,
+        "exact_after_source_cap": 230,
+        "exact_eligible": 230,
+        "exact_final_retained": 230,
+        "exact_matches": 230,
+        "groups": {
+          "far": {
+            "exact_final_retained": 133,
+            "exact_matches": 133
+          },
+          "near": {
+            "exact_final_retained": 97,
+            "exact_matches": 97
+          }
+        },
+        "prefix_length": 10,
+        "state": 10,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 17,
+          "after_source_cap": true,
+          "anchor_slot": 26,
+          "binding_slots": [
+            26,
+            28
+          ],
+          "calibrated_logit": 14.217704772949219,
+          "eligible": true,
+          "eligible_rank": 17,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 23.483762741088867,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 41,
+          "xfer_id": 45
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 750,
+        "after_source_cap_pairs": 750,
+        "after_structural_decode": 268,
+        "eligible_pairs": 72894,
+        "exact_above_threshold": 223,
+        "exact_after_source_cap": 223,
+        "exact_eligible": 223,
+        "exact_final_retained": 223,
+        "exact_matches": 223,
+        "groups": {
+          "far": {
+            "exact_final_retained": 115,
+            "exact_matches": 115
+          },
+          "near": {
+            "exact_final_retained": 108,
+            "exact_matches": 108
+          }
+        },
+        "prefix_length": 11,
+        "state": 11,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 124,
+          "after_source_cap": true,
+          "anchor_slot": 62,
+          "binding_slots": [
+            62,
+            55
+          ],
+          "calibrated_logit": 6.525502681732178,
+          "eligible": true,
+          "eligible_rank": 124,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 12.436627388000488,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3764,
+          "xfer_id": 4397
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 827,
+        "after_source_cap_pairs": 827,
+        "after_structural_decode": 274,
+        "eligible_pairs": 72894,
+        "exact_above_threshold": 219,
+        "exact_after_source_cap": 219,
+        "exact_eligible": 219,
+        "exact_final_retained": 219,
+        "exact_matches": 219,
+        "groups": {
+          "far": {
+            "exact_final_retained": 150,
+            "exact_matches": 150
+          },
+          "near": {
+            "exact_final_retained": 69,
+            "exact_matches": 69
+          }
+        },
+        "prefix_length": 12,
+        "state": 12,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 212,
+          "after_source_cap": true,
+          "anchor_slot": 61,
+          "binding_slots": [
+            61,
+            53,
+            85,
+            57
+          ],
+          "calibrated_logit": 0.3832056522369385,
+          "eligible": true,
+          "eligible_rank": 212,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 2.5355327129364014,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 323,
+          "xfer_id": 340
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 823,
+        "after_source_cap_pairs": 823,
+        "after_structural_decode": 259,
+        "eligible_pairs": 72894,
+        "exact_above_threshold": 210,
+        "exact_after_source_cap": 210,
+        "exact_eligible": 210,
+        "exact_final_retained": 210,
+        "exact_matches": 210,
+        "groups": {
+          "far": {
+            "exact_final_retained": 137,
+            "exact_matches": 137
+          },
+          "near": {
+            "exact_final_retained": 73,
+            "exact_matches": 73
+          }
+        },
+        "prefix_length": 13,
+        "state": 13,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 146,
+          "after_source_cap": true,
+          "anchor_slot": 80,
+          "binding_slots": [
+            80,
+            81,
+            82,
+            13
+          ],
+          "calibrated_logit": 5.4778571128845215,
+          "eligible": true,
+          "eligible_rank": 146,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 9.39490795135498,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 323,
+          "xfer_id": 340
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 720,
+        "after_source_cap_pairs": 720,
+        "after_structural_decode": 261,
+        "eligible_pairs": 72894,
+        "exact_above_threshold": 211,
+        "exact_after_source_cap": 211,
+        "exact_eligible": 211,
+        "exact_final_retained": 211,
+        "exact_matches": 211,
+        "groups": {
+          "far": {
+            "exact_final_retained": 106,
+            "exact_matches": 106
+          },
+          "near": {
+            "exact_final_retained": 105,
+            "exact_matches": 105
+          }
+        },
+        "prefix_length": 14,
+        "state": 14,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 27,
+          "after_source_cap": true,
+          "anchor_slot": 5,
+          "binding_slots": [
+            5,
+            91
+          ],
+          "calibrated_logit": 13.145790100097656,
+          "eligible": true,
+          "eligible_rank": 27,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 23.10822105407715,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 35,
+          "xfer_id": 39
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 716,
+        "after_source_cap_pairs": 716,
+        "after_structural_decode": 254,
+        "eligible_pairs": 72894,
+        "exact_above_threshold": 207,
+        "exact_after_source_cap": 207,
+        "exact_eligible": 207,
+        "exact_final_retained": 207,
+        "exact_matches": 207,
+        "groups": {
+          "far": {
+            "exact_final_retained": 160,
+            "exact_matches": 160
+          },
+          "near": {
+            "exact_final_retained": 47,
+            "exact_matches": 47
+          }
+        },
+        "prefix_length": 15,
+        "state": 15,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 33,
+          "after_source_cap": true,
+          "anchor_slot": 48,
+          "binding_slots": [
+            48,
+            87
+          ],
+          "calibrated_logit": 12.124065399169922,
+          "eligible": true,
+          "eligible_rank": 33,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 20.108762741088867,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 41,
+          "xfer_id": 45
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 805,
+        "after_source_cap_pairs": 805,
+        "after_structural_decode": 264,
+        "eligible_pairs": 72894,
+        "exact_above_threshold": 211,
+        "exact_after_source_cap": 211,
+        "exact_eligible": 211,
+        "exact_final_retained": 211,
+        "exact_matches": 211,
+        "groups": {
+          "far": {
+            "exact_final_retained": 141,
+            "exact_matches": 141
+          },
+          "near": {
+            "exact_final_retained": 70,
+            "exact_matches": 70
+          }
+        },
+        "prefix_length": 16,
+        "state": 16,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 15,
+          "after_source_cap": true,
+          "anchor_slot": 75,
+          "binding_slots": [
+            75,
+            97
+          ],
+          "calibrated_logit": 14.13605785369873,
+          "eligible": true,
+          "eligible_rank": 15,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 24.704486846923828,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3233,
+          "xfer_id": 3320
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 700,
+        "after_source_cap_pairs": 700,
+        "after_structural_decode": 252,
+        "eligible_pairs": 72408,
+        "exact_above_threshold": 203,
+        "exact_after_source_cap": 203,
+        "exact_eligible": 203,
+        "exact_final_retained": 203,
+        "exact_matches": 203,
+        "groups": {
+          "far": {
+            "exact_final_retained": 130,
+            "exact_matches": 130
+          },
+          "near": {
+            "exact_final_retained": 73,
+            "exact_matches": 73
+          }
+        },
+        "prefix_length": 17,
+        "state": 17,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 43,
+          "after_source_cap": true,
+          "anchor_slot": 22,
+          "binding_slots": [
+            22,
+            83
+          ],
+          "calibrated_logit": 10.340258598327637,
+          "eligible": true,
+          "eligible_rank": 43,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 17.23322105407715,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 35,
+          "xfer_id": 39
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 605,
+        "after_source_cap_pairs": 605,
+        "after_structural_decode": 257,
+        "eligible_pairs": 72408,
+        "exact_above_threshold": 197,
+        "exact_after_source_cap": 197,
+        "exact_eligible": 197,
+        "exact_final_retained": 197,
+        "exact_matches": 197,
+        "groups": {
+          "far": {
+            "exact_final_retained": 118,
+            "exact_matches": 118
+          },
+          "near": {
+            "exact_final_retained": 79,
+            "exact_matches": 79
+          }
+        },
+        "prefix_length": 18,
+        "state": 18,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 114,
+          "after_source_cap": true,
+          "anchor_slot": 33,
+          "binding_slots": [
+            33,
+            76
+          ],
+          "calibrated_logit": 6.333980083465576,
+          "eligible": true,
+          "eligible_rank": 114,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 10.774999618530273,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 3767,
+          "xfer_id": 4406
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 831,
+        "after_source_cap_pairs": 831,
+        "after_structural_decode": 270,
+        "eligible_pairs": 72408,
+        "exact_above_threshold": 218,
+        "exact_after_source_cap": 218,
+        "exact_eligible": 218,
+        "exact_final_retained": 218,
+        "exact_matches": 218,
+        "groups": {
+          "far": {
+            "exact_final_retained": 119,
+            "exact_matches": 119
+          },
+          "near": {
+            "exact_final_retained": 99,
+            "exact_matches": 99
+          }
+        },
+        "prefix_length": 19,
+        "state": 19,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 193,
+          "after_source_cap": true,
+          "anchor_slot": 98,
+          "binding_slots": [
+            98,
+            88,
+            89,
+            90
+          ],
+          "calibrated_logit": 2.358445644378662,
+          "eligible": true,
+          "eligible_rank": 193,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 4.366337776184082,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 1438,
+          "xfer_id": 1496
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1003,
+        "after_source_cap_pairs": 1003,
+        "after_structural_decode": 282,
+        "eligible_pairs": 72408,
+        "exact_above_threshold": 227,
+        "exact_after_source_cap": 227,
+        "exact_eligible": 227,
+        "exact_final_retained": 227,
+        "exact_matches": 227,
+        "groups": {
+          "far": {
+            "exact_final_retained": 140,
+            "exact_matches": 140
+          },
+          "near": {
+            "exact_final_retained": 87,
+            "exact_matches": 87
+          }
+        },
+        "prefix_length": 20,
+        "state": 20,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 233,
+          "after_source_cap": true,
+          "anchor_slot": 84,
+          "binding_slots": [
+            84,
+            74,
+            45,
+            46,
+            103
+          ],
+          "calibrated_logit": -2.1567020416259766,
+          "eligible": true,
+          "eligible_rank": 233,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": -1.558679461479187,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1467,
+          "xfer_id": 1525
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1061,
+        "after_source_cap_pairs": 1061,
+        "after_structural_decode": 257,
+        "eligible_pairs": 69747,
+        "exact_above_threshold": 217,
+        "exact_after_source_cap": 217,
+        "exact_eligible": 217,
+        "exact_final_retained": 217,
+        "exact_matches": 217,
+        "groups": {
+          "far": {
+            "exact_final_retained": 116,
+            "exact_matches": 116
+          },
+          "near": {
+            "exact_final_retained": 101,
+            "exact_matches": 101
+          }
+        },
+        "prefix_length": 21,
+        "state": 21,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 39,
+          "after_source_cap": true,
+          "anchor_slot": 24,
+          "binding_slots": [
+            24,
+            107
+          ],
+          "calibrated_logit": 11.195561408996582,
+          "eligible": true,
+          "eligible_rank": 39,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 19.96454429626465,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 40,
+          "xfer_id": 44
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1091,
+        "after_source_cap_pairs": 1091,
+        "after_structural_decode": 268,
+        "eligible_pairs": 69747,
+        "exact_above_threshold": 227,
+        "exact_after_source_cap": 227,
+        "exact_eligible": 227,
+        "exact_final_retained": 227,
+        "exact_matches": 227,
+        "groups": {
+          "far": {
+            "exact_final_retained": 120,
+            "exact_matches": 120
+          },
+          "near": {
+            "exact_final_retained": 107,
+            "exact_matches": 107
+          }
+        },
+        "prefix_length": 22,
+        "state": 22,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 134,
+          "after_source_cap": true,
+          "anchor_slot": 112,
+          "binding_slots": [
+            112,
+            104
+          ],
+          "calibrated_logit": 5.954988956451416,
+          "eligible": true,
+          "eligible_rank": 134,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 11.516985893249512,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3233,
+          "xfer_id": 3320
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1091,
+        "after_source_cap_pairs": 1091,
+        "after_structural_decode": 256,
+        "eligible_pairs": 69261,
+        "exact_above_threshold": 213,
+        "exact_after_source_cap": 213,
+        "exact_eligible": 213,
+        "exact_final_retained": 213,
+        "exact_matches": 213,
+        "groups": {
+          "far": {
+            "exact_final_retained": 136,
+            "exact_matches": 136
+          },
+          "near": {
+            "exact_final_retained": 77,
+            "exact_matches": 77
+          }
+        },
+        "prefix_length": 23,
+        "state": 23,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 202,
+          "after_source_cap": true,
+          "anchor_slot": 100,
+          "binding_slots": [
+            100,
+            111,
+            108,
+            109,
+            110
+          ],
+          "calibrated_logit": -0.9329490661621094,
+          "eligible": true,
+          "eligible_rank": 202,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 0.4139530658721924,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1455,
+          "xfer_id": 1513
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 716,
+        "after_source_cap_pairs": 716,
+        "after_structural_decode": 239,
+        "eligible_pairs": 66600,
+        "exact_above_threshold": 188,
+        "exact_after_source_cap": 188,
+        "exact_eligible": 188,
+        "exact_final_retained": 188,
+        "exact_matches": 188,
+        "groups": {
+          "far": {
+            "exact_final_retained": 110,
+            "exact_matches": 110
+          },
+          "near": {
+            "exact_final_retained": 78,
+            "exact_matches": 78
+          }
+        },
+        "prefix_length": 24,
+        "state": 24,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 133,
+          "after_source_cap": true,
+          "anchor_slot": 116,
+          "binding_slots": [
+            116,
+            105
+          ],
+          "calibrated_logit": 5.574918270111084,
+          "eligible": true,
+          "eligible_rank": 133,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 10.904330253601074,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3854,
+          "xfer_id": 4694
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 665,
+        "after_source_cap_pairs": 665,
+        "after_structural_decode": 198,
+        "eligible_pairs": 61278,
+        "exact_above_threshold": 162,
+        "exact_after_source_cap": 162,
+        "exact_eligible": 162,
+        "exact_final_retained": 162,
+        "exact_matches": 162,
+        "groups": {
+          "far": {
+            "exact_final_retained": 124,
+            "exact_matches": 124
+          },
+          "near": {
+            "exact_final_retained": 38,
+            "exact_matches": 38
+          }
+        },
+        "prefix_length": 25,
+        "state": 25,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 49,
+          "after_source_cap": true,
+          "anchor_slot": 99,
+          "binding_slots": [
+            99,
+            115
+          ],
+          "calibrated_logit": 11.273107528686523,
+          "eligible": true,
+          "eligible_rank": 49,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 20.08954429626465,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 40,
+          "xfer_id": 44
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 641,
+        "after_source_cap_pairs": 641,
+        "after_structural_decode": 218,
+        "eligible_pairs": 61278,
+        "exact_above_threshold": 162,
+        "exact_after_source_cap": 162,
+        "exact_eligible": 162,
+        "exact_final_retained": 162,
+        "exact_matches": 162,
+        "groups": {
+          "far": {
+            "exact_final_retained": 122,
+            "exact_matches": 122
+          },
+          "near": {
+            "exact_final_retained": 40,
+            "exact_matches": 40
+          }
+        },
+        "prefix_length": 26,
+        "state": 26,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 78,
+          "after_source_cap": true,
+          "anchor_slot": 86,
+          "binding_slots": [
+            86,
+            56
+          ],
+          "calibrated_logit": 8.95832347869873,
+          "eligible": true,
+          "eligible_rank": 78,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 16.35822105407715,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 35,
+          "xfer_id": 39
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 643,
+        "after_source_cap_pairs": 643,
+        "after_structural_decode": 212,
+        "eligible_pairs": 61278,
+        "exact_above_threshold": 159,
+        "exact_after_source_cap": 159,
+        "exact_eligible": 159,
+        "exact_final_retained": 159,
+        "exact_matches": 159,
+        "groups": {
+          "far": {
+            "exact_final_retained": 136,
+            "exact_matches": 136
+          },
+          "near": {
+            "exact_final_retained": 23,
+            "exact_matches": 23
+          }
+        },
+        "prefix_length": 27,
+        "state": 27,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 14,
+          "after_source_cap": true,
+          "anchor_slot": 118,
+          "binding_slots": [
+            118,
+            119
+          ],
+          "calibrated_logit": 13.903421401977539,
+          "eligible": true,
+          "eligible_rank": 14,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 24.329486846923828,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3233,
+          "xfer_id": 3322
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 597,
+        "after_source_cap_pairs": 597,
+        "after_structural_decode": 192,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 152,
+        "exact_after_source_cap": 152,
+        "exact_eligible": 152,
+        "exact_final_retained": 152,
+        "exact_matches": 152,
+        "groups": {
+          "far": {
+            "exact_final_retained": 132,
+            "exact_matches": 132
+          },
+          "near": {
+            "exact_final_retained": 20,
+            "exact_matches": 20
+          }
+        },
+        "prefix_length": 28,
+        "state": 28,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 30,
+          "after_source_cap": true,
+          "anchor_slot": 78,
+          "binding_slots": [
+            78,
+            42
+          ],
+          "calibrated_logit": 11.50339126586914,
+          "eligible": true,
+          "eligible_rank": 30,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 19.10822105407715,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 35,
+          "xfer_id": 39
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 489,
+        "after_source_cap_pairs": 489,
+        "after_structural_decode": 181,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 136,
+        "exact_after_source_cap": 136,
+        "exact_eligible": 136,
+        "exact_final_retained": 136,
+        "exact_matches": 136,
+        "groups": {
+          "far": {
+            "exact_final_retained": 66,
+            "exact_matches": 66
+          },
+          "near": {
+            "exact_final_retained": 70,
+            "exact_matches": 70
+          }
+        },
+        "prefix_length": 29,
+        "state": 29,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 101,
+          "after_source_cap": true,
+          "anchor_slot": 7,
+          "binding_slots": [
+            7,
+            92
+          ],
+          "calibrated_logit": 5.480226993560791,
+          "eligible": true,
+          "eligible_rank": 101,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 9.398728370666504,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 3752,
+          "xfer_id": 4361
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 515,
+        "after_source_cap_pairs": 515,
+        "after_structural_decode": 202,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 157,
+        "exact_after_source_cap": 157,
+        "exact_eligible": 157,
+        "exact_final_retained": 157,
+        "exact_matches": 157,
+        "groups": {
+          "far": {
+            "exact_final_retained": 57,
+            "exact_matches": 57
+          },
+          "near": {
+            "exact_final_retained": 100,
+            "exact_matches": 100
+          }
+        },
+        "prefix_length": 30,
+        "state": 30,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 12,
+          "after_source_cap": true,
+          "anchor_slot": 121,
+          "binding_slots": [
+            121,
+            122
+          ],
+          "calibrated_logit": 14.515952110290527,
+          "eligible": true,
+          "eligible_rank": 12,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 23.96454429626465,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 40,
+          "xfer_id": 44
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 644,
+        "after_source_cap_pairs": 644,
+        "after_structural_decode": 217,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 173,
+        "exact_after_source_cap": 173,
+        "exact_eligible": 173,
+        "exact_final_retained": 173,
+        "exact_matches": 173,
+        "groups": {
+          "far": {
+            "exact_final_retained": 87,
+            "exact_matches": 87
+          },
+          "near": {
+            "exact_final_retained": 86,
+            "exact_matches": 86
+          }
+        },
+        "prefix_length": 31,
+        "state": 31,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 125,
+          "after_source_cap": true,
+          "anchor_slot": 124,
+          "binding_slots": [
+            124,
+            94
+          ],
+          "calibrated_logit": 4.49156379699707,
+          "eligible": true,
+          "eligible_rank": 125,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 7.804978370666504,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 3752,
+          "xfer_id": 4361
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 606,
+        "after_source_cap_pairs": 606,
+        "after_structural_decode": 205,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 167,
+        "exact_after_source_cap": 167,
+        "exact_eligible": 167,
+        "exact_final_retained": 167,
+        "exact_matches": 167,
+        "groups": {
+          "far": {
+            "exact_final_retained": 45,
+            "exact_matches": 45
+          },
+          "near": {
+            "exact_final_retained": 122,
+            "exact_matches": 122
+          }
+        },
+        "prefix_length": 32,
+        "state": 32,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 136,
+          "after_source_cap": true,
+          "anchor_slot": 96,
+          "binding_slots": [
+            96,
+            123,
+            93,
+            127
+          ],
+          "calibrated_logit": 1.9067021608352661,
+          "eligible": true,
+          "eligible_rank": 136,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 4.991337776184082,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1438,
+          "xfer_id": 1496
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 708,
+        "after_source_cap_pairs": 708,
+        "after_structural_decode": 208,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 176,
+        "exact_after_source_cap": 176,
+        "exact_eligible": 176,
+        "exact_final_retained": 176,
+        "exact_matches": 176,
+        "groups": {
+          "far": {
+            "exact_final_retained": 67,
+            "exact_matches": 67
+          },
+          "near": {
+            "exact_final_retained": 109,
+            "exact_matches": 109
+          }
+        },
+        "prefix_length": 33,
+        "state": 33,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 42,
+          "after_source_cap": true,
+          "anchor_slot": 1,
+          "binding_slots": [
+            1,
+            95
+          ],
+          "calibrated_logit": 10.276935577392578,
+          "eligible": true,
+          "eligible_rank": 42,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 18.483762741088867,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 41,
+          "xfer_id": 45
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 700,
+        "after_source_cap_pairs": 700,
+        "after_structural_decode": 233,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 172,
+        "exact_after_source_cap": 172,
+        "exact_eligible": 172,
+        "exact_final_retained": 172,
+        "exact_matches": 172,
+        "groups": {
+          "far": {
+            "exact_final_retained": 116,
+            "exact_matches": 116
+          },
+          "near": {
+            "exact_final_retained": 56,
+            "exact_matches": 56
+          }
+        },
+        "prefix_length": 34,
+        "state": 34,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 112,
+          "after_source_cap": true,
+          "anchor_slot": 134,
+          "binding_slots": [
+            134,
+            2,
+            3,
+            129
+          ],
+          "calibrated_logit": 5.362347602844238,
+          "eligible": true,
+          "eligible_rank": 112,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 10.561676025390625,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1434,
+          "xfer_id": 1492
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 938,
+        "after_source_cap_pairs": 938,
+        "after_structural_decode": 234,
+        "eligible_pairs": 63453,
+        "exact_above_threshold": 180,
+        "exact_after_source_cap": 180,
+        "exact_eligible": 180,
+        "exact_final_retained": 180,
+        "exact_matches": 180,
+        "groups": {
+          "far": {
+            "exact_final_retained": 98,
+            "exact_matches": 98
+          },
+          "near": {
+            "exact_final_retained": 82,
+            "exact_matches": 82
+          }
+        },
+        "prefix_length": 35,
+        "state": 35,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 131,
+          "after_source_cap": true,
+          "anchor_slot": 138,
+          "binding_slots": [
+            138,
+            139,
+            4
+          ],
+          "calibrated_logit": 4.449452877044678,
+          "eligible": true,
+          "eligible_rank": 131,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 9.090132713317871,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 123,
+          "xfer_id": 127
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 778,
+        "after_source_cap_pairs": 778,
+        "after_structural_decode": 206,
+        "eligible_pairs": 63453,
+        "exact_above_threshold": 168,
+        "exact_after_source_cap": 168,
+        "exact_eligible": 168,
+        "exact_final_retained": 168,
+        "exact_matches": 168,
+        "groups": {
+          "far": {
+            "exact_final_retained": 110,
+            "exact_matches": 110
+          },
+          "near": {
+            "exact_final_retained": 58,
+            "exact_matches": 58
+          }
+        },
+        "prefix_length": 36,
+        "state": 36,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 127,
+          "after_source_cap": true,
+          "anchor_slot": 142,
+          "binding_slots": [
+            142,
+            130,
+            131,
+            132
+          ],
+          "calibrated_logit": 4.854850769042969,
+          "eligible": true,
+          "eligible_rank": 127,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 9.74361515045166,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 883,
+          "xfer_id": 941
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 571,
+        "after_source_cap_pairs": 571,
+        "after_structural_decode": 198,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 152,
+        "exact_after_source_cap": 152,
+        "exact_eligible": 152,
+        "exact_final_retained": 152,
+        "exact_matches": 152,
+        "groups": {
+          "far": {
+            "exact_final_retained": 67,
+            "exact_matches": 67
+          },
+          "near": {
+            "exact_final_retained": 85,
+            "exact_matches": 85
+          }
+        },
+        "prefix_length": 37,
+        "state": 37,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 105,
+          "after_source_cap": true,
+          "anchor_slot": 144,
+          "binding_slots": [
+            144,
+            145
+          ],
+          "calibrated_logit": 5.61592960357666,
+          "eligible": true,
+          "eligible_rank": 105,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 10.970438003540039,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3751,
+          "xfer_id": 4358
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 605,
+        "after_source_cap_pairs": 605,
+        "after_structural_decode": 192,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 171,
+        "exact_after_source_cap": 171,
+        "exact_eligible": 171,
+        "exact_final_retained": 171,
+        "exact_matches": 171,
+        "groups": {
+          "far": {
+            "exact_final_retained": 67,
+            "exact_matches": 67
+          },
+          "near": {
+            "exact_final_retained": 104,
+            "exact_matches": 104
+          }
+        },
+        "prefix_length": 38,
+        "state": 38,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 149,
+          "after_source_cap": true,
+          "anchor_slot": 6,
+          "binding_slots": [
+            6,
+            147,
+            128
+          ],
+          "calibrated_logit": 0.3746304512023926,
+          "eligible": true,
+          "eligible_rank": 149,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 2.52170991897583,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1424,
+          "xfer_id": 1482
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 833,
+        "after_source_cap_pairs": 833,
+        "after_structural_decode": 244,
+        "eligible_pairs": 63453,
+        "exact_above_threshold": 199,
+        "exact_after_source_cap": 199,
+        "exact_eligible": 199,
+        "exact_final_retained": 199,
+        "exact_matches": 199,
+        "groups": {
+          "far": {
+            "exact_final_retained": 43,
+            "exact_matches": 43
+          },
+          "near": {
+            "exact_final_retained": 156,
+            "exact_matches": 156
+          }
+        },
+        "prefix_length": 39,
+        "state": 39,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 114,
+          "after_source_cap": true,
+          "anchor_slot": 148,
+          "binding_slots": [
+            148,
+            149,
+            150,
+            151
+          ],
+          "calibrated_logit": 5.16503381729126,
+          "eligible": true,
+          "eligible_rank": 114,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 10.24361515045166,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 883,
+          "xfer_id": 941
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 621,
+        "after_source_cap_pairs": 621,
+        "after_structural_decode": 212,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 167,
+        "exact_after_source_cap": 167,
+        "exact_eligible": 167,
+        "exact_final_retained": 167,
+        "exact_matches": 167,
+        "groups": {
+          "far": {
+            "exact_final_retained": 43,
+            "exact_matches": 43
+          },
+          "near": {
+            "exact_final_retained": 124,
+            "exact_matches": 124
+          }
+        },
+        "prefix_length": 40,
+        "state": 40,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 27,
+          "after_source_cap": true,
+          "anchor_slot": 125,
+          "binding_slots": [
+            125,
+            126
+          ],
+          "calibrated_logit": 11.50339126586914,
+          "eligible": true,
+          "eligible_rank": 27,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 19.10822105407715,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 35,
+          "xfer_id": 39
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 592,
+        "after_source_cap_pairs": 592,
+        "after_structural_decode": 212,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 151,
+        "exact_after_source_cap": 151,
+        "exact_eligible": 151,
+        "exact_final_retained": 151,
+        "exact_matches": 151,
+        "groups": {
+          "far": {
+            "exact_final_retained": 81,
+            "exact_matches": 81
+          },
+          "near": {
+            "exact_final_retained": 70,
+            "exact_matches": 70
+          }
+        },
+        "prefix_length": 41,
+        "state": 41,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 105,
+          "after_source_cap": true,
+          "anchor_slot": 146,
+          "binding_slots": [
+            146,
+            152,
+            153,
+            9
+          ],
+          "calibrated_logit": 5.109584808349609,
+          "eligible": true,
+          "eligible_rank": 105,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 8.801243782043457,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 317,
+          "xfer_id": 328
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 698,
+        "after_source_cap_pairs": 698,
+        "after_structural_decode": 207,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 140,
+        "exact_after_source_cap": 140,
+        "exact_eligible": 140,
+        "exact_final_retained": 140,
+        "exact_matches": 140,
+        "groups": {
+          "far": {
+            "exact_final_retained": 43,
+            "exact_matches": 43
+          },
+          "near": {
+            "exact_final_retained": 97,
+            "exact_matches": 97
+          }
+        },
+        "prefix_length": 42,
+        "state": 42,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 91,
+          "after_source_cap": true,
+          "anchor_slot": 102,
+          "binding_slots": [
+            102,
+            155
+          ],
+          "calibrated_logit": 5.585086822509766,
+          "eligible": true,
+          "eligible_rank": 91,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 10.920721054077148,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 35,
+          "xfer_id": 39
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 776,
+        "after_source_cap_pairs": 776,
+        "after_structural_decode": 205,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 145,
+        "exact_after_source_cap": 145,
+        "exact_eligible": 145,
+        "exact_final_retained": 145,
+        "exact_matches": 145,
+        "groups": {
+          "far": {
+            "exact_final_retained": 64,
+            "exact_matches": 64
+          },
+          "near": {
+            "exact_final_retained": 81,
+            "exact_matches": 81
+          }
+        },
+        "prefix_length": 43,
+        "state": 43,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 126,
+          "after_source_cap": true,
+          "anchor_slot": 158,
+          "binding_slots": [
+            158,
+            159,
+            160
+          ],
+          "calibrated_logit": 0.8803458213806152,
+          "eligible": true,
+          "eligible_rank": 126,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 1.9836034774780273,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 117,
+          "xfer_id": 121
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 663,
+        "after_source_cap_pairs": 663,
+        "after_structural_decode": 191,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 143,
+        "exact_after_source_cap": 143,
+        "exact_eligible": 143,
+        "exact_final_retained": 143,
+        "exact_matches": 143,
+        "groups": {
+          "far": {
+            "exact_final_retained": 59,
+            "exact_matches": 59
+          },
+          "near": {
+            "exact_final_retained": 84,
+            "exact_matches": 84
+          }
+        },
+        "prefix_length": 44,
+        "state": 44,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 125,
+          "after_source_cap": true,
+          "anchor_slot": 163,
+          "binding_slots": [
+            163,
+            164,
+            165,
+            154
+          ],
+          "calibrated_logit": 0.7630099058151245,
+          "eligible": true,
+          "eligible_rank": 125,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 3.147759437561035,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1477,
+          "xfer_id": 1535
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 668,
+        "after_source_cap_pairs": 668,
+        "after_structural_decode": 190,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 150,
+        "exact_after_source_cap": 150,
+        "exact_eligible": 150,
+        "exact_final_retained": 150,
+        "exact_matches": 150,
+        "groups": {
+          "far": {
+            "exact_final_retained": 41,
+            "exact_matches": 41
+          },
+          "near": {
+            "exact_final_retained": 109,
+            "exact_matches": 109
+          }
+        },
+        "prefix_length": 45,
+        "state": 45,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 78,
+          "after_source_cap": true,
+          "anchor_slot": 157,
+          "binding_slots": [
+            157,
+            167
+          ],
+          "calibrated_logit": 6.487144947052002,
+          "eligible": true,
+          "eligible_rank": 78,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 12.374796867370605,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 34,
+          "xfer_id": 38
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 712,
+        "after_source_cap_pairs": 712,
+        "after_structural_decode": 186,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 146,
+        "exact_after_source_cap": 146,
+        "exact_eligible": 146,
+        "exact_final_retained": 146,
+        "exact_matches": 146,
+        "groups": {
+          "far": {
+            "exact_final_retained": 65,
+            "exact_matches": 65
+          },
+          "near": {
+            "exact_final_retained": 81,
+            "exact_matches": 81
+          }
+        },
+        "prefix_length": 46,
+        "state": 46,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 13,
+          "after_source_cap": true,
+          "anchor_slot": 171,
+          "binding_slots": [
+            171,
+            169
+          ],
+          "calibrated_logit": 15.133488655090332,
+          "eligible": true,
+          "eligible_rank": 13,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 26.312297821044922,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 34,
+          "xfer_id": 38
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 663,
+        "after_source_cap_pairs": 663,
+        "after_structural_decode": 194,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 145,
+        "exact_after_source_cap": 145,
+        "exact_eligible": 145,
+        "exact_final_retained": 145,
+        "exact_matches": 145,
+        "groups": {
+          "far": {
+            "exact_final_retained": 49,
+            "exact_matches": 49
+          },
+          "near": {
+            "exact_final_retained": 96,
+            "exact_matches": 96
+          }
+        },
+        "prefix_length": 47,
+        "state": 47,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 36,
+          "after_source_cap": true,
+          "anchor_slot": 170,
+          "binding_slots": [
+            170,
+            168,
+            172
+          ],
+          "calibrated_logit": 11.171724319458008,
+          "eligible": true,
+          "eligible_rank": 36,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 19.926118850708008,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 116,
+          "xfer_id": 120
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 554,
+        "after_source_cap_pairs": 554,
+        "after_structural_decode": 192,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 141,
+        "exact_after_source_cap": 141,
+        "exact_eligible": 141,
+        "exact_final_retained": 141,
+        "exact_matches": 141,
+        "groups": {
+          "far": {
+            "exact_final_retained": 41,
+            "exact_matches": 41
+          },
+          "near": {
+            "exact_final_retained": 100,
+            "exact_matches": 100
+          }
+        },
+        "prefix_length": 48,
+        "state": 48,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 124,
+          "after_source_cap": true,
+          "anchor_slot": 27,
+          "binding_slots": [
+            27,
+            30,
+            72,
+            101,
+            161
+          ],
+          "calibrated_logit": 1.2274881601333618,
+          "eligible": true,
+          "eligible_rank": 124,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 3.8964767456054688,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3231,
+          "xfer_id": 3317
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 625,
+        "after_source_cap_pairs": 625,
+        "after_structural_decode": 210,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 147,
+        "exact_after_source_cap": 147,
+        "exact_eligible": 147,
+        "exact_final_retained": 147,
+        "exact_matches": 147,
+        "groups": {
+          "far": {
+            "exact_final_retained": 44,
+            "exact_matches": 44
+          },
+          "near": {
+            "exact_final_retained": 103,
+            "exact_matches": 103
+          }
+        },
+        "prefix_length": 49,
+        "state": 49,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 131,
+          "after_source_cap": true,
+          "anchor_slot": 174,
+          "binding_slots": [
+            174,
+            175,
+            176
+          ],
+          "calibrated_logit": 0.8193761110305786,
+          "eligible": true,
+          "eligible_rank": 131,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 3.238619089126587,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 116,
+          "xfer_id": 120
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 657,
+        "after_source_cap_pairs": 657,
+        "after_structural_decode": 213,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 152,
+        "exact_after_source_cap": 152,
+        "exact_eligible": 152,
+        "exact_final_retained": 152,
+        "exact_matches": 152,
+        "groups": {
+          "far": {
+            "exact_final_retained": 41,
+            "exact_matches": 41
+          },
+          "near": {
+            "exact_final_retained": 111,
+            "exact_matches": 111
+          }
+        },
+        "prefix_length": 50,
+        "state": 50,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 100,
+          "after_source_cap": true,
+          "anchor_slot": 180,
+          "binding_slots": [
+            180,
+            181
+          ],
+          "calibrated_logit": 5.355018615722656,
+          "eligible": true,
+          "eligible_rank": 100,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 10.549861907958984,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 752,
+          "xfer_id": 810
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1172,
+        "after_source_cap_pairs": 1172,
+        "after_structural_decode": 233,
+        "eligible_pairs": 63453,
+        "exact_above_threshold": 169,
+        "exact_after_source_cap": 169,
+        "exact_eligible": 169,
+        "exact_final_retained": 169,
+        "exact_matches": 169,
+        "groups": {
+          "far": {
+            "exact_final_retained": 43,
+            "exact_matches": 43
+          },
+          "near": {
+            "exact_final_retained": 126,
+            "exact_matches": 126
+          }
+        },
+        "prefix_length": 51,
+        "state": 51,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 126,
+          "after_source_cap": true,
+          "anchor_slot": 184,
+          "binding_slots": [
+            184,
+            173,
+            178,
+            185
+          ],
+          "calibrated_logit": 2.261707305908203,
+          "eligible": true,
+          "eligible_rank": 126,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 5.563589096069336,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3354,
+          "xfer_id": 3564
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1335,
+        "after_source_cap_pairs": 1335,
+        "after_structural_decode": 226,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 161,
+        "exact_after_source_cap": 161,
+        "exact_eligible": 161,
+        "exact_final_retained": 161,
+        "exact_matches": 161,
+        "groups": {
+          "far": {
+            "exact_final_retained": 38,
+            "exact_matches": 38
+          },
+          "near": {
+            "exact_final_retained": 123,
+            "exact_matches": 123
+          }
+        },
+        "prefix_length": 52,
+        "state": 52,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 142,
+          "after_source_cap": true,
+          "anchor_slot": 183,
+          "binding_slots": [
+            183,
+            190,
+            179,
+            186
+          ],
+          "calibrated_logit": 0.5947502851486206,
+          "eligible": true,
+          "eligible_rank": 142,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 2.876532793045044,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 318,
+          "xfer_id": 345
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 979,
+        "after_source_cap_pairs": 979,
+        "after_structural_decode": 220,
+        "eligible_pairs": 60792,
+        "exact_above_threshold": 158,
+        "exact_after_source_cap": 158,
+        "exact_eligible": 158,
+        "exact_final_retained": 158,
+        "exact_matches": 158,
+        "groups": {
+          "far": {
+            "exact_final_retained": 34,
+            "exact_matches": 34
+          },
+          "near": {
+            "exact_final_retained": 124,
+            "exact_matches": 124
+          }
+        },
+        "prefix_length": 53,
+        "state": 53,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 118,
+          "after_source_cap": true,
+          "anchor_slot": 182,
+          "binding_slots": [
+            182,
+            188,
+            189,
+            191
+          ],
+          "calibrated_logit": 1.539772629737854,
+          "eligible": true,
+          "eligible_rank": 118,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 4.399864673614502,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 883,
+          "xfer_id": 941
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 564,
+        "after_source_cap_pairs": 564,
+        "after_structural_decode": 210,
+        "eligible_pairs": 58131,
+        "exact_above_threshold": 144,
+        "exact_after_source_cap": 144,
+        "exact_eligible": 144,
+        "exact_final_retained": 144,
+        "exact_matches": 144,
+        "groups": {
+          "far": {
+            "exact_final_retained": 30,
+            "exact_matches": 30
+          },
+          "near": {
+            "exact_final_retained": 114,
+            "exact_matches": 114
+          }
+        },
+        "prefix_length": 54,
+        "state": 54,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 165,
+          "after_source_cap": true,
+          "anchor_slot": 193,
+          "binding_slots": [
+            193,
+            194,
+            187,
+            32,
+            162
+          ],
+          "calibrated_logit": -2.6040334701538086,
+          "eligible": true,
+          "eligible_rank": 165,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": -2.2797563076019287,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3219,
+          "xfer_id": 3301
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 609,
+        "after_source_cap_pairs": 609,
+        "after_structural_decode": 183,
+        "eligible_pairs": 58131,
+        "exact_above_threshold": 132,
+        "exact_after_source_cap": 132,
+        "exact_eligible": 132,
+        "exact_final_retained": 132,
+        "exact_matches": 132,
+        "groups": {
+          "far": {
+            "exact_final_retained": 42,
+            "exact_matches": 42
+          },
+          "near": {
+            "exact_final_retained": 90,
+            "exact_matches": 90
+          }
+        },
+        "prefix_length": 55,
+        "state": 55,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 37,
+          "after_source_cap": true,
+          "anchor_slot": 202,
+          "binding_slots": [
+            202,
+            34
+          ],
+          "calibrated_logit": 10.491411209106445,
+          "eligible": true,
+          "eligible_rank": 37,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 18.829486846923828,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3233,
+          "xfer_id": 3322
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 669,
+        "after_source_cap_pairs": 669,
+        "after_structural_decode": 188,
+        "eligible_pairs": 57645,
+        "exact_above_threshold": 128,
+        "exact_after_source_cap": 128,
+        "exact_eligible": 128,
+        "exact_final_retained": 128,
+        "exact_matches": 128,
+        "groups": {
+          "far": {
+            "exact_final_retained": 65,
+            "exact_matches": 65
+          },
+          "near": {
+            "exact_final_retained": 63,
+            "exact_matches": 63
+          }
+        },
+        "prefix_length": 56,
+        "state": 56,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 102,
+          "after_source_cap": true,
+          "anchor_slot": 201,
+          "binding_slots": [
+            201,
+            77,
+            156,
+            79
+          ],
+          "calibrated_logit": 3.804658889770508,
+          "eligible": true,
+          "eligible_rank": 102,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 8.05075454711914,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3359,
+          "xfer_id": 3574
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 445,
+        "after_source_cap_pairs": 445,
+        "after_structural_decode": 162,
+        "eligible_pairs": 54984,
+        "exact_above_threshold": 108,
+        "exact_after_source_cap": 108,
+        "exact_eligible": 108,
+        "exact_final_retained": 108,
+        "exact_matches": 108,
+        "groups": {
+          "far": {
+            "exact_final_retained": 49,
+            "exact_matches": 49
+          },
+          "near": {
+            "exact_final_retained": 59,
+            "exact_matches": 59
+          }
+        },
+        "prefix_length": 57,
+        "state": 57,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 84,
+          "after_source_cap": true,
+          "anchor_slot": 197,
+          "binding_slots": [
+            197,
+            198,
+            199
+          ],
+          "calibrated_logit": 4.669483184814453,
+          "eligible": true,
+          "eligible_rank": 84,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 9.44481086730957,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 761,
+          "xfer_id": 819
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 525,
+        "after_source_cap_pairs": 525,
+        "after_structural_decode": 177,
+        "eligible_pairs": 52323,
+        "exact_above_threshold": 115,
+        "exact_after_source_cap": 115,
+        "exact_eligible": 115,
+        "exact_final_retained": 115,
+        "exact_matches": 115,
+        "groups": {
+          "far": {
+            "exact_final_retained": 30,
+            "exact_matches": 30
+          },
+          "near": {
+            "exact_final_retained": 85,
+            "exact_matches": 85
+          }
+        },
+        "prefix_length": 58,
+        "state": 58,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 104,
+          "after_source_cap": true,
+          "anchor_slot": 192,
+          "binding_slots": [
+            192,
+            206,
+            200,
+            207,
+            203
+          ],
+          "calibrated_logit": 3.2518858909606934,
+          "eligible": true,
+          "eligible_rank": 104,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 7.15971040725708,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3198,
+          "xfer_id": 3272
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 726,
+        "after_source_cap_pairs": 726,
+        "after_structural_decode": 187,
+        "eligible_pairs": 52323,
+        "exact_above_threshold": 125,
+        "exact_after_source_cap": 125,
+        "exact_eligible": 125,
+        "exact_final_retained": 125,
+        "exact_matches": 125,
+        "groups": {
+          "far": {
+            "exact_final_retained": 30,
+            "exact_matches": 30
+          },
+          "near": {
+            "exact_final_retained": 95,
+            "exact_matches": 95
+          }
+        },
+        "prefix_length": 59,
+        "state": 59,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 65,
+          "after_source_cap": true,
+          "anchor_slot": 212,
+          "binding_slots": [
+            212,
+            37
+          ],
+          "calibrated_logit": 6.9033637046813965,
+          "eligible": true,
+          "eligible_rank": 65,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 13.045721054077148,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 35,
+          "xfer_id": 39
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 555,
+        "after_source_cap_pairs": 555,
+        "after_structural_decode": 176,
+        "eligible_pairs": 52323,
+        "exact_above_threshold": 108,
+        "exact_after_source_cap": 108,
+        "exact_eligible": 108,
+        "exact_final_retained": 108,
+        "exact_matches": 108,
+        "groups": {
+          "far": {
+            "exact_final_retained": 49,
+            "exact_matches": 49
+          },
+          "near": {
+            "exact_final_retained": 59,
+            "exact_matches": 59
+          }
+        },
+        "prefix_length": 60,
+        "state": 60,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 119,
+          "after_source_cap": true,
+          "anchor_slot": 195,
+          "binding_slots": [
+            195,
+            196,
+            208,
+            209,
+            210
+          ],
+          "calibrated_logit": -1.4381228685379028,
+          "eligible": true,
+          "eligible_rank": 119,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": -0.4003632962703705,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3741,
+          "xfer_id": 4335
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 469,
+        "after_source_cap_pairs": 469,
+        "after_structural_decode": 148,
+        "eligible_pairs": 52323,
+        "exact_above_threshold": 97,
+        "exact_after_source_cap": 97,
+        "exact_eligible": 97,
+        "exact_final_retained": 97,
+        "exact_matches": 97,
+        "groups": {
+          "far": {
+            "exact_final_retained": 24,
+            "exact_matches": 24
+          },
+          "near": {
+            "exact_final_retained": 73,
+            "exact_matches": 73
+          }
+        },
+        "prefix_length": 61,
+        "state": 61,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 23,
+          "after_source_cap": true,
+          "anchor_slot": 218,
+          "binding_slots": [
+            218,
+            219
+          ],
+          "calibrated_logit": 12.496935844421387,
+          "eligible": true,
+          "eligible_rank": 23,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 22.062297821044922,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 34,
+          "xfer_id": 38
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 560,
+        "after_source_cap_pairs": 560,
+        "after_structural_decode": 163,
+        "eligible_pairs": 52323,
+        "exact_above_threshold": 98,
+        "exact_after_source_cap": 98,
+        "exact_eligible": 98,
+        "exact_final_retained": 98,
+        "exact_matches": 98,
+        "groups": {
+          "far": {
+            "exact_final_retained": 36,
+            "exact_matches": 36
+          },
+          "near": {
+            "exact_final_retained": 62,
+            "exact_matches": 62
+          }
+        },
+        "prefix_length": 62,
+        "state": 62,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 24,
+          "after_source_cap": true,
+          "anchor_slot": 221,
+          "binding_slots": [
+            221,
+            213
+          ],
+          "calibrated_logit": 11.964778900146484,
+          "eligible": true,
+          "eligible_rank": 24,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 21.204486846923828,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3233,
+          "xfer_id": 3320
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 590,
+        "after_source_cap_pairs": 590,
+        "after_structural_decode": 156,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 107,
+        "exact_after_source_cap": 107,
+        "exact_eligible": 107,
+        "exact_final_retained": 107,
+        "exact_matches": 107,
+        "groups": {
+          "far": {
+            "exact_final_retained": 43,
+            "exact_matches": 43
+          },
+          "near": {
+            "exact_final_retained": 64,
+            "exact_matches": 64
+          }
+        },
+        "prefix_length": 63,
+        "state": 63,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 96,
+          "after_source_cap": true,
+          "anchor_slot": 177,
+          "binding_slots": [
+            177,
+            215,
+            216,
+            217,
+            220
+          ],
+          "calibrated_logit": 1.3879550695419312,
+          "eligible": true,
+          "eligible_rank": 96,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 4.155141830444336,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3164,
+          "xfer_id": 3222
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 501,
+        "after_source_cap_pairs": 501,
+        "after_structural_decode": 145,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 107,
+        "exact_after_source_cap": 107,
+        "exact_eligible": 107,
+        "exact_final_retained": 107,
+        "exact_matches": 107,
+        "groups": {
+          "far": {
+            "exact_final_retained": 22,
+            "exact_matches": 22
+          },
+          "near": {
+            "exact_final_retained": 85,
+            "exact_matches": 85
+          }
+        },
+        "prefix_length": 64,
+        "state": 64,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 49,
+          "after_source_cap": true,
+          "anchor_slot": 223,
+          "binding_slots": [
+            223,
+            224
+          ],
+          "calibrated_logit": 8.493049621582031,
+          "eligible": true,
+          "eligible_rank": 49,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 15.608221054077148,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 35,
+          "xfer_id": 39
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 320,
+        "after_source_cap_pairs": 320,
+        "after_structural_decode": 133,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 88,
+        "exact_after_source_cap": 88,
+        "exact_eligible": 88,
+        "exact_final_retained": 88,
+        "exact_matches": 88,
+        "groups": {
+          "far": {
+            "exact_final_retained": 32,
+            "exact_matches": 32
+          },
+          "near": {
+            "exact_final_retained": 56,
+            "exact_matches": 56
+          }
+        },
+        "prefix_length": 65,
+        "state": 65,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 71,
+          "after_source_cap": true,
+          "anchor_slot": 226,
+          "binding_slots": [
+            226,
+            205
+          ],
+          "calibrated_logit": 5.185771942138672,
+          "eligible": true,
+          "eligible_rank": 71,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 10.277044296264648,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 40,
+          "xfer_id": 44
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 436,
+        "after_source_cap_pairs": 436,
+        "after_structural_decode": 132,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 91,
+        "exact_after_source_cap": 91,
+        "exact_eligible": 91,
+        "exact_final_retained": 91,
+        "exact_matches": 91,
+        "groups": {
+          "far": {
+            "exact_final_retained": 37,
+            "exact_matches": 37
+          },
+          "near": {
+            "exact_final_retained": 54,
+            "exact_matches": 54
+          }
+        },
+        "prefix_length": 66,
+        "state": 66,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 79,
+          "after_source_cap": true,
+          "anchor_slot": 222,
+          "binding_slots": [
+            222,
+            227
+          ],
+          "calibrated_logit": 5.585617542266846,
+          "eligible": true,
+          "eligible_rank": 79,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 10.921576499938965,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 38,
+          "xfer_id": 42
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 555,
+        "after_source_cap_pairs": 555,
+        "after_structural_decode": 157,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 113,
+        "exact_after_source_cap": 113,
+        "exact_eligible": 113,
+        "exact_final_retained": 113,
+        "exact_matches": 113,
+        "groups": {
+          "far": {
+            "exact_final_retained": 28,
+            "exact_matches": 28
+          },
+          "near": {
+            "exact_final_retained": 85,
+            "exact_matches": 85
+          }
+        },
+        "prefix_length": 67,
+        "state": 67,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 108,
+          "after_source_cap": true,
+          "anchor_slot": 234,
+          "binding_slots": [
+            234,
+            228,
+            225
+          ],
+          "calibrated_logit": 1.3830350637435913,
+          "eligible": true,
+          "eligible_rank": 108,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 4.147211074829102,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3761,
+          "xfer_id": 4389
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 378,
+        "after_source_cap_pairs": 378,
+        "after_structural_decode": 132,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 89,
+        "exact_after_source_cap": 89,
+        "exact_eligible": 89,
+        "exact_final_retained": 89,
+        "exact_matches": 89,
+        "groups": {
+          "far": {
+            "exact_final_retained": 32,
+            "exact_matches": 32
+          },
+          "near": {
+            "exact_final_retained": 57,
+            "exact_matches": 57
+          }
+        },
+        "prefix_length": 68,
+        "state": 68,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 63,
+          "after_source_cap": true,
+          "anchor_slot": 236,
+          "binding_slots": [
+            236,
+            211,
+            214
+          ],
+          "calibrated_logit": 6.480210781097412,
+          "eligible": true,
+          "eligible_rank": 63,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 12.363618850708008,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 116,
+          "xfer_id": 120
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 419,
+        "after_source_cap_pairs": 419,
+        "after_structural_decode": 143,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 96,
+        "exact_after_source_cap": 96,
+        "exact_eligible": 96,
+        "exact_final_retained": 96,
+        "exact_matches": 96,
+        "groups": {
+          "far": {
+            "exact_final_retained": 40,
+            "exact_matches": 40
+          },
+          "near": {
+            "exact_final_retained": 56,
+            "exact_matches": 56
+          }
+        },
+        "prefix_length": 69,
+        "state": 69,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 50,
+          "after_source_cap": true,
+          "anchor_slot": 230,
+          "binding_slots": [
+            230,
+            43,
+            113
+          ],
+          "calibrated_logit": 7.697849750518799,
+          "eligible": true,
+          "eligible_rank": 50,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 14.326395988464355,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 97,
+          "xfer_id": 101
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 651,
+        "after_source_cap_pairs": 651,
+        "after_structural_decode": 180,
+        "eligible_pairs": 55402,
+        "exact_above_threshold": 109,
+        "exact_after_source_cap": 109,
+        "exact_eligible": 109,
+        "exact_final_retained": 109,
+        "exact_matches": 109,
+        "groups": {
+          "far": {
+            "exact_final_retained": 28,
+            "exact_matches": 28
+          },
+          "near": {
+            "exact_final_retained": 81,
+            "exact_matches": 81
+          }
+        },
+        "prefix_length": 70,
+        "state": 70,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 100,
+          "after_source_cap": true,
+          "anchor_slot": 235,
+          "binding_slots": [
+            235,
+            237,
+            238,
+            239
+          ],
+          "calibrated_logit": 0.6625151634216309,
+          "eligible": true,
+          "eligible_rank": 100,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 2.985766649246216,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3492,
+          "xfer_id": 3840
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 607,
+        "after_source_cap_pairs": 607,
+        "after_structural_decode": 181,
+        "eligible_pairs": 55402,
+        "exact_above_threshold": 108,
+        "exact_after_source_cap": 108,
+        "exact_eligible": 108,
+        "exact_final_retained": 108,
+        "exact_matches": 108,
+        "groups": {
+          "far": {
+            "exact_final_retained": 30,
+            "exact_matches": 30
+          },
+          "near": {
+            "exact_final_retained": 78,
+            "exact_matches": 78
+          }
+        },
+        "prefix_length": 71,
+        "state": 71,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 86,
+          "after_source_cap": true,
+          "anchor_slot": 229,
+          "binding_slots": [
+            229,
+            241
+          ],
+          "calibrated_logit": 3.559380054473877,
+          "eligible": true,
+          "eligible_rank": 86,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 7.65537691116333,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3764,
+          "xfer_id": 4397
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 551,
+        "after_source_cap_pairs": 551,
+        "after_structural_decode": 175,
+        "eligible_pairs": 55402,
+        "exact_above_threshold": 115,
+        "exact_after_source_cap": 115,
+        "exact_eligible": 115,
+        "exact_final_retained": 115,
+        "exact_matches": 115,
+        "groups": {
+          "far": {
+            "exact_final_retained": 29,
+            "exact_matches": 29
+          },
+          "near": {
+            "exact_final_retained": 86,
+            "exact_matches": 86
+          }
+        },
+        "prefix_length": 72,
+        "state": 72,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 131,
+          "after_source_cap": true,
+          "anchor_slot": 246,
+          "binding_slots": [
+            246,
+            249
+          ],
+          "calibrated_logit": -2.197664737701416,
+          "eligible": true,
+          "eligible_rank": 131,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": -1.6247090101242065,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3752,
+          "xfer_id": 4361
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 509,
+        "after_source_cap_pairs": 509,
+        "after_structural_decode": 175,
+        "eligible_pairs": 55402,
+        "exact_above_threshold": 108,
+        "exact_after_source_cap": 108,
+        "exact_eligible": 108,
+        "exact_final_retained": 108,
+        "exact_matches": 108,
+        "groups": {
+          "far": {
+            "exact_final_retained": 22,
+            "exact_matches": 22
+          },
+          "near": {
+            "exact_final_retained": 86,
+            "exact_matches": 86
+          }
+        },
+        "prefix_length": 73,
+        "state": 73,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 127,
+          "after_source_cap": true,
+          "anchor_slot": 233,
+          "binding_slots": [
+            233,
+            251
+          ],
+          "calibrated_logit": -2.2052001953125,
+          "eligible": true,
+          "eligible_rank": 127,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": -1.636855959892273,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3763,
+          "xfer_id": 4394
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 724,
+        "after_source_cap_pairs": 724,
+        "after_structural_decode": 173,
+        "eligible_pairs": 55402,
+        "exact_above_threshold": 110,
+        "exact_after_source_cap": 110,
+        "exact_eligible": 110,
+        "exact_final_retained": 110,
+        "exact_matches": 110,
+        "groups": {
+          "far": {
+            "exact_final_retained": 18,
+            "exact_matches": 18
+          },
+          "near": {
+            "exact_final_retained": 92,
+            "exact_matches": 92
+          }
+        },
+        "prefix_length": 74,
+        "state": 74,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 91,
+          "after_source_cap": true,
+          "anchor_slot": 231,
+          "binding_slots": [
+            231,
+            253
+          ],
+          "calibrated_logit": 2.6498069763183594,
+          "eligible": true,
+          "eligible_rank": 91,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 6.189188003540039,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3751,
+          "xfer_id": 4358
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 605,
+        "after_source_cap_pairs": 605,
+        "after_structural_decode": 180,
+        "eligible_pairs": 55402,
+        "exact_above_threshold": 106,
+        "exact_after_source_cap": 106,
+        "exact_eligible": 106,
+        "exact_final_retained": 106,
+        "exact_matches": 106,
+        "groups": {
+          "far": {
+            "exact_final_retained": 15,
+            "exact_matches": 15
+          },
+          "near": {
+            "exact_final_retained": 91,
+            "exact_matches": 91
+          }
+        },
+        "prefix_length": 75,
+        "state": 75,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 81,
+          "after_source_cap": true,
+          "anchor_slot": 245,
+          "binding_slots": [
+            245,
+            252,
+            247,
+            248
+          ],
+          "calibrated_logit": 3.6386184692382812,
+          "eligible": true,
+          "eligible_rank": 81,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 7.783105373382568,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3493,
+          "xfer_id": 3842
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 745,
+        "after_source_cap_pairs": 745,
+        "after_structural_decode": 180,
+        "eligible_pairs": 55402,
+        "exact_above_threshold": 107,
+        "exact_after_source_cap": 107,
+        "exact_eligible": 107,
+        "exact_final_retained": 107,
+        "exact_matches": 107,
+        "groups": {
+          "far": {
+            "exact_final_retained": 42,
+            "exact_matches": 42
+          },
+          "near": {
+            "exact_final_retained": 65,
+            "exact_matches": 65
+          }
+        },
+        "prefix_length": 76,
+        "state": 76,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 106,
+          "after_source_cap": true,
+          "anchor_slot": 254,
+          "binding_slots": [
+            254,
+            257,
+            258
+          ],
+          "calibrated_logit": 2.1469688415527344,
+          "eligible": true,
+          "eligible_rank": 106,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 5.378636360168457,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3284,
+          "xfer_id": 3424
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 747,
+        "after_source_cap_pairs": 747,
+        "after_structural_decode": 195,
+        "eligible_pairs": 52741,
+        "exact_above_threshold": 120,
+        "exact_after_source_cap": 120,
+        "exact_eligible": 120,
+        "exact_final_retained": 120,
+        "exact_matches": 120,
+        "groups": {
+          "far": {
+            "exact_final_retained": 28,
+            "exact_matches": 28
+          },
+          "near": {
+            "exact_final_retained": 92,
+            "exact_matches": 92
+          }
+        },
+        "prefix_length": 77,
+        "state": 77,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 111,
+          "after_source_cap": true,
+          "anchor_slot": 25,
+          "binding_slots": [
+            25,
+            255,
+            244
+          ],
+          "calibrated_logit": 2.8267884254455566,
+          "eligible": true,
+          "eligible_rank": 111,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 6.474473476409912,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 54,
+          "xfer_id": 58
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 632,
+        "after_source_cap_pairs": 632,
+        "after_structural_decode": 186,
+        "eligible_pairs": 52741,
+        "exact_above_threshold": 113,
+        "exact_after_source_cap": 113,
+        "exact_eligible": 113,
+        "exact_final_retained": 113,
+        "exact_matches": 113,
+        "groups": {
+          "far": {
+            "exact_final_retained": 21,
+            "exact_matches": 21
+          },
+          "near": {
+            "exact_final_retained": 92,
+            "exact_matches": 92
+          }
+        },
+        "prefix_length": 78,
+        "state": 78,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 92,
+          "after_source_cap": true,
+          "anchor_slot": 232,
+          "binding_slots": [
+            232,
+            261,
+            259,
+            262,
+            260
+          ],
+          "calibrated_logit": 4.344959735870361,
+          "eligible": true,
+          "eligible_rank": 92,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 8.9216947555542,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3202,
+          "xfer_id": 3276
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 891,
+        "after_source_cap_pairs": 891,
+        "after_structural_decode": 182,
+        "eligible_pairs": 52741,
+        "exact_above_threshold": 109,
+        "exact_after_source_cap": 109,
+        "exact_eligible": 109,
+        "exact_final_retained": 109,
+        "exact_matches": 109,
+        "groups": {
+          "far": {
+            "exact_final_retained": 35,
+            "exact_matches": 35
+          },
+          "near": {
+            "exact_final_retained": 74,
+            "exact_matches": 74
+          }
+        },
+        "prefix_length": 79,
+        "state": 79,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 54,
+          "after_source_cap": true,
+          "anchor_slot": 267,
+          "binding_slots": [
+            267,
+            268
+          ],
+          "calibrated_logit": 6.763247966766357,
+          "eligible": true,
+          "eligible_rank": 54,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 12.81986141204834,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 32,
+          "xfer_id": 36
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 821,
+        "after_source_cap_pairs": 821,
+        "after_structural_decode": 186,
+        "eligible_pairs": 58063,
+        "exact_above_threshold": 116,
+        "exact_after_source_cap": 116,
+        "exact_eligible": 116,
+        "exact_final_retained": 116,
+        "exact_matches": 116,
+        "groups": {
+          "far": {
+            "exact_final_retained": 39,
+            "exact_matches": 39
+          },
+          "near": {
+            "exact_final_retained": 77,
+            "exact_matches": 77
+          }
+        },
+        "prefix_length": 80,
+        "state": 80,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 85,
+          "after_source_cap": true,
+          "anchor_slot": 256,
+          "binding_slots": [
+            256,
+            266,
+            271
+          ],
+          "calibrated_logit": 6.494762420654297,
+          "eligible": true,
+          "eligible_rank": 85,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 12.387075424194336,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3750,
+          "xfer_id": 4356
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 618,
+        "after_source_cap_pairs": 618,
+        "after_structural_decode": 178,
+        "eligible_pairs": 55402,
+        "exact_above_threshold": 101,
+        "exact_after_source_cap": 101,
+        "exact_eligible": 101,
+        "exact_final_retained": 101,
+        "exact_matches": 101,
+        "groups": {
+          "far": {
+            "exact_final_retained": 23,
+            "exact_matches": 23
+          },
+          "near": {
+            "exact_final_retained": 78,
+            "exact_matches": 78
+          }
+        },
+        "prefix_length": 81,
+        "state": 81,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 101,
+          "after_source_cap": true,
+          "anchor_slot": 275,
+          "binding_slots": [
+            275,
+            276,
+            272
+          ],
+          "calibrated_logit": 1.1699053049087524,
+          "eligible": true,
+          "eligible_rank": 101,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 3.8036558628082275,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 765,
+          "xfer_id": 823
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 734,
+        "after_source_cap_pairs": 734,
+        "after_structural_decode": 158,
+        "eligible_pairs": 52741,
+        "exact_above_threshold": 100,
+        "exact_after_source_cap": 100,
+        "exact_eligible": 100,
+        "exact_final_retained": 100,
+        "exact_matches": 100,
+        "groups": {
+          "far": {
+            "exact_final_retained": 23,
+            "exact_matches": 23
+          },
+          "near": {
+            "exact_final_retained": 77,
+            "exact_matches": 77
+          }
+        },
+        "prefix_length": 82,
+        "state": 82,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 51,
+          "after_source_cap": true,
+          "anchor_slot": 278,
+          "binding_slots": [
+            278,
+            273
+          ],
+          "calibrated_logit": 8.376730918884277,
+          "eligible": true,
+          "eligible_rank": 51,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 15.420721054077148,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 35,
+          "xfer_id": 39
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 468,
+        "after_source_cap_pairs": 468,
+        "after_structural_decode": 151,
+        "eligible_pairs": 52741,
+        "exact_above_threshold": 89,
+        "exact_after_source_cap": 89,
+        "exact_eligible": 89,
+        "exact_final_retained": 89,
+        "exact_matches": 89,
+        "groups": {
+          "far": {
+            "exact_final_retained": 34,
+            "exact_matches": 34
+          },
+          "near": {
+            "exact_final_retained": 55,
+            "exact_matches": 55
+          }
+        },
+        "prefix_length": 83,
+        "state": 83,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 20,
+          "after_source_cap": true,
+          "anchor_slot": 240,
+          "binding_slots": [
+            240,
+            263
+          ],
+          "calibrated_logit": 13.703950881958008,
+          "eligible": true,
+          "eligible_rank": 20,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 22.65557861328125,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 3851,
+          "xfer_id": 4654
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 527,
+        "after_source_cap_pairs": 527,
+        "after_structural_decode": 155,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 84,
+        "exact_after_source_cap": 84,
+        "exact_eligible": 84,
+        "exact_final_retained": 84,
+        "exact_matches": 84,
+        "groups": {
+          "far": {
+            "exact_final_retained": 57,
+            "exact_matches": 57
+          },
+          "near": {
+            "exact_final_retained": 27,
+            "exact_matches": 27
+          }
+        },
+        "prefix_length": 84,
+        "state": 84,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 81,
+          "after_source_cap": true,
+          "anchor_slot": 274,
+          "binding_slots": [
+            274,
+            270,
+            204,
+            250
+          ],
+          "calibrated_logit": 1.812031865119934,
+          "eligible": true,
+          "eligible_rank": 81,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 3.4855048656463623,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 3477,
+          "xfer_id": 3811
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 452,
+        "after_source_cap_pairs": 452,
+        "after_structural_decode": 153,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 82,
+        "exact_after_source_cap": 82,
+        "exact_eligible": 82,
+        "exact_final_retained": 82,
+        "exact_matches": 82,
+        "groups": {
+          "far": {
+            "exact_final_retained": 31,
+            "exact_matches": 31
+          },
+          "near": {
+            "exact_final_retained": 51,
+            "exact_matches": 51
+          }
+        },
+        "prefix_length": 85,
+        "state": 85,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 72,
+          "after_source_cap": true,
+          "anchor_slot": 280,
+          "binding_slots": [
+            280,
+            269,
+            281,
+            282
+          ],
+          "calibrated_logit": 4.521552085876465,
+          "eligible": true,
+          "eligible_rank": 72,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 9.206353187561035,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 37,
+          "xfer_id": 41
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 268,
+        "after_source_cap_pairs": 268,
+        "after_structural_decode": 109,
+        "eligible_pairs": 49176,
+        "exact_above_threshold": 60,
+        "exact_after_source_cap": 60,
+        "exact_eligible": 60,
+        "exact_final_retained": 60,
+        "exact_matches": 60,
+        "groups": {
+          "far": {
+            "exact_final_retained": 31,
+            "exact_matches": 31
+          },
+          "near": {
+            "exact_final_retained": 29,
+            "exact_matches": 29
+          }
+        },
+        "prefix_length": 86,
+        "state": 86,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 42,
+          "after_source_cap": true,
+          "anchor_slot": 17,
+          "binding_slots": [
+            17,
+            18
+          ],
+          "calibrated_logit": 8.980551719665527,
+          "eligible": true,
+          "eligible_rank": 42,
+          "final_retained": true,
+          "group": "far",
+          "raw_logit": 15.041339874267578,
+          "raw_threshold": -12.230936050415039,
+          "source_id": 36,
+          "xfer_id": 40
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 375,
+        "after_source_cap_pairs": 375,
+        "after_structural_decode": 154,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 82,
+        "exact_after_source_cap": 82,
+        "exact_eligible": 82,
+        "exact_final_retained": 82,
+        "exact_matches": 82,
+        "groups": {
+          "far": {
+            "exact_final_retained": 31,
+            "exact_matches": 31
+          },
+          "near": {
+            "exact_final_retained": 51,
+            "exact_matches": 51
+          }
+        },
+        "prefix_length": 87,
+        "state": 87,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 78,
+          "after_source_cap": true,
+          "anchor_slot": 290,
+          "binding_slots": [
+            290,
+            291,
+            19,
+            20,
+            21
+          ],
+          "calibrated_logit": 1.9948378801345825,
+          "eligible": true,
+          "eligible_rank": 78,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 5.133408546447754,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1509,
+          "xfer_id": 1567
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 452,
+        "after_source_cap_pairs": 452,
+        "after_structural_decode": 137,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 97,
+        "exact_after_source_cap": 97,
+        "exact_eligible": 97,
+        "exact_final_retained": 97,
+        "exact_matches": 97,
+        "groups": {
+          "far": {
+            "exact_final_retained": 27,
+            "exact_matches": 27
+          },
+          "near": {
+            "exact_final_retained": 70,
+            "exact_matches": 70
+          }
+        },
+        "prefix_length": 88,
+        "state": 88,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 56,
+          "after_source_cap": true,
+          "anchor_slot": 16,
+          "binding_slots": [
+            16,
+            288
+          ],
+          "calibrated_logit": 7.72787618637085,
+          "eligible": true,
+          "eligible_rank": 56,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 14.374796867370605,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 34,
+          "xfer_id": 38
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 654,
+        "after_source_cap_pairs": 654,
+        "after_structural_decode": 178,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 121,
+        "exact_after_source_cap": 121,
+        "exact_eligible": 121,
+        "exact_final_retained": 121,
+        "exact_matches": 121,
+        "groups": {
+          "far": {
+            "exact_final_retained": 37,
+            "exact_matches": 37
+          },
+          "near": {
+            "exact_final_retained": 84,
+            "exact_matches": 84
+          }
+        },
+        "prefix_length": 89,
+        "state": 89,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 101,
+          "after_source_cap": true,
+          "anchor_slot": 294,
+          "binding_slots": [
+            294,
+            295,
+            23,
+            264
+          ],
+          "calibrated_logit": 3.7255325317382812,
+          "eligible": true,
+          "eligible_rank": 101,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 7.923206806182861,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3484,
+          "xfer_id": 3824
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 729,
+        "after_source_cap_pairs": 729,
+        "after_structural_decode": 179,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 114,
+        "exact_after_source_cap": 114,
+        "exact_eligible": 114,
+        "exact_final_retained": 114,
+        "exact_matches": 114,
+        "groups": {
+          "far": {
+            "exact_final_retained": 21,
+            "exact_matches": 21
+          },
+          "near": {
+            "exact_final_retained": 93,
+            "exact_matches": 93
+          }
+        },
+        "prefix_length": 90,
+        "state": 90,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 103,
+          "after_source_cap": true,
+          "anchor_slot": 15,
+          "binding_slots": [
+            15,
+            296,
+            289,
+            292
+          ],
+          "calibrated_logit": 2.7241578102111816,
+          "eligible": true,
+          "eligible_rank": 103,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 6.309037685394287,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1536,
+          "xfer_id": 1594
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 1079,
+        "after_source_cap_pairs": 1079,
+        "after_structural_decode": 206,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 118,
+        "exact_after_source_cap": 118,
+        "exact_eligible": 118,
+        "exact_final_retained": 118,
+        "exact_matches": 118,
+        "groups": {
+          "far": {
+            "exact_final_retained": 32,
+            "exact_matches": 32
+          },
+          "near": {
+            "exact_final_retained": 86,
+            "exact_matches": 86
+          }
+        },
+        "prefix_length": 91,
+        "state": 91,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 96,
+          "after_source_cap": true,
+          "anchor_slot": 303,
+          "binding_slots": [
+            303,
+            304,
+            305,
+            306
+          ],
+          "calibrated_logit": 3.0505008697509766,
+          "eligible": true,
+          "eligible_rank": 96,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 6.835087776184082,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1438,
+          "xfer_id": 1496
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 869,
+        "after_source_cap_pairs": 869,
+        "after_structural_decode": 201,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 117,
+        "exact_after_source_cap": 117,
+        "exact_eligible": 117,
+        "exact_final_retained": 117,
+        "exact_matches": 117,
+        "groups": {
+          "far": {
+            "exact_final_retained": 37,
+            "exact_matches": 37
+          },
+          "near": {
+            "exact_final_retained": 80,
+            "exact_matches": 80
+          }
+        },
+        "prefix_length": 92,
+        "state": 92,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 75,
+          "after_source_cap": true,
+          "anchor_slot": 298,
+          "binding_slots": [
+            298,
+            299,
+            300,
+            301
+          ],
+          "calibrated_logit": 4.883225440979004,
+          "eligible": true,
+          "eligible_rank": 75,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 9.789353370666504,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1501,
+          "xfer_id": 1559
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 796,
+        "after_source_cap_pairs": 796,
+        "after_structural_decode": 218,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 133,
+        "exact_after_source_cap": 133,
+        "exact_eligible": 133,
+        "exact_final_retained": 133,
+        "exact_matches": 133,
+        "groups": {
+          "far": {
+            "exact_final_retained": 24,
+            "exact_matches": 24
+          },
+          "near": {
+            "exact_final_retained": 109,
+            "exact_matches": 109
+          }
+        },
+        "prefix_length": 93,
+        "state": 93,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 107,
+          "after_source_cap": true,
+          "anchor_slot": 310,
+          "binding_slots": [
+            310,
+            297,
+            311,
+            312
+          ],
+          "calibrated_logit": 3.207575798034668,
+          "eligible": true,
+          "eligible_rank": 107,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 7.088284969329834,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1534,
+          "xfer_id": 1592
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 654,
+        "after_source_cap_pairs": 654,
+        "after_structural_decode": 206,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 96,
+        "exact_after_source_cap": 96,
+        "exact_eligible": 96,
+        "exact_final_retained": 96,
+        "exact_matches": 96,
+        "groups": {
+          "far": {
+            "exact_final_retained": 27,
+            "exact_matches": 27
+          },
+          "near": {
+            "exact_final_retained": 69,
+            "exact_matches": 69
+          }
+        },
+        "prefix_length": 94,
+        "state": 94,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 97,
+          "after_source_cap": true,
+          "anchor_slot": 307,
+          "binding_slots": [
+            307,
+            308,
+            309,
+            293,
+            315
+          ],
+          "calibrated_logit": 0.8807889223098755,
+          "eligible": true,
+          "eligible_rank": 97,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 3.337613821029663,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3209,
+          "xfer_id": 3289
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 393,
+        "after_source_cap_pairs": 393,
+        "after_structural_decode": 168,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 87,
+        "exact_after_source_cap": 87,
+        "exact_eligible": 87,
+        "exact_final_retained": 87,
+        "exact_matches": 87,
+        "groups": {
+          "far": {
+            "exact_final_retained": 31,
+            "exact_matches": 31
+          },
+          "near": {
+            "exact_final_retained": 56,
+            "exact_matches": 56
+          }
+        },
+        "prefix_length": 95,
+        "state": 95,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 85,
+          "after_source_cap": true,
+          "anchor_slot": 322,
+          "binding_slots": [
+            322,
+            323,
+            316
+          ],
+          "calibrated_logit": 0.7126230001449585,
+          "eligible": true,
+          "eligible_rank": 85,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 3.066538095474243,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 751,
+          "xfer_id": 809
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 481,
+        "after_source_cap_pairs": 481,
+        "after_structural_decode": 167,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 110,
+        "exact_after_source_cap": 110,
+        "exact_eligible": 110,
+        "exact_final_retained": 110,
+        "exact_matches": 110,
+        "groups": {
+          "far": {
+            "exact_final_retained": 29,
+            "exact_matches": 29
+          },
+          "near": {
+            "exact_final_retained": 81,
+            "exact_matches": 81
+          }
+        },
+        "prefix_length": 96,
+        "state": 96,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 72,
+          "after_source_cap": true,
+          "anchor_slot": 302,
+          "binding_slots": [
+            302,
+            319,
+            320,
+            324
+          ],
+          "calibrated_logit": 5.666618824005127,
+          "eligible": true,
+          "eligible_rank": 72,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 11.052146911621094,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1482,
+          "xfer_id": 1540
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 395,
+        "after_source_cap_pairs": 395,
+        "after_structural_decode": 137,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 86,
+        "exact_after_source_cap": 86,
+        "exact_eligible": 86,
+        "exact_final_retained": 86,
+        "exact_matches": 86,
+        "groups": {
+          "far": {
+            "exact_final_retained": 26,
+            "exact_matches": 26
+          },
+          "near": {
+            "exact_final_retained": 60,
+            "exact_matches": 60
+          }
+        },
+        "prefix_length": 97,
+        "state": 97,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 71,
+          "after_source_cap": true,
+          "anchor_slot": 329,
+          "binding_slots": [
+            329,
+            330,
+            321,
+            325
+          ],
+          "calibrated_logit": 5.6808576583862305,
+          "eligible": true,
+          "eligible_rank": 71,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 11.075098991394043,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 33,
+          "xfer_id": 37
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 235,
+        "after_source_cap_pairs": 235,
+        "after_structural_decode": 108,
+        "eligible_pairs": 49176,
+        "exact_above_threshold": 65,
+        "exact_after_source_cap": 65,
+        "exact_eligible": 65,
+        "exact_final_retained": 65,
+        "exact_matches": 65,
+        "groups": {
+          "far": {
+            "exact_final_retained": 31,
+            "exact_matches": 31
+          },
+          "near": {
+            "exact_final_retained": 34,
+            "exact_matches": 34
+          }
+        },
+        "prefix_length": 98,
+        "state": 98,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 64,
+          "after_source_cap": true,
+          "anchor_slot": 318,
+          "binding_slots": [
+            318,
+            313,
+            314
+          ],
+          "calibrated_logit": 0.651479959487915,
+          "eligible": true,
+          "eligible_rank": 64,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 2.9679784774780273,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 117,
+          "xfer_id": 121
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 286,
+        "after_source_cap_pairs": 286,
+        "after_structural_decode": 118,
+        "eligible_pairs": 49176,
+        "exact_above_threshold": 65,
+        "exact_after_source_cap": 65,
+        "exact_eligible": 65,
+        "exact_final_retained": 65,
+        "exact_matches": 65,
+        "groups": {
+          "far": {
+            "exact_final_retained": 25,
+            "exact_matches": 25
+          },
+          "near": {
+            "exact_final_retained": 40,
+            "exact_matches": 40
+          }
+        },
+        "prefix_length": 99,
+        "state": 99,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 32,
+          "after_source_cap": true,
+          "anchor_slot": 317,
+          "binding_slots": [
+            317,
+            333
+          ],
+          "calibrated_logit": 10.807833671569824,
+          "eligible": true,
+          "eligible_rank": 32,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 19.33954429626465,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 40,
+          "xfer_id": 44
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 371,
+        "after_source_cap_pairs": 371,
+        "after_structural_decode": 133,
+        "eligible_pairs": 49176,
+        "exact_above_threshold": 76,
+        "exact_after_source_cap": 76,
+        "exact_eligible": 76,
+        "exact_final_retained": 76,
+        "exact_matches": 76,
+        "groups": {
+          "far": {
+            "exact_final_retained": 27,
+            "exact_matches": 27
+          },
+          "near": {
+            "exact_final_retained": 49,
+            "exact_matches": 49
+          }
+        },
+        "prefix_length": 100,
+        "state": 100,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 28,
+          "after_source_cap": true,
+          "anchor_slot": 337,
+          "binding_slots": [
+            337,
+            335
+          ],
+          "calibrated_logit": 11.195561408996582,
+          "eligible": true,
+          "eligible_rank": 28,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 19.96454429626465,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 40,
+          "xfer_id": 44
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 382,
+        "after_source_cap_pairs": 382,
+        "after_structural_decode": 139,
+        "eligible_pairs": 49176,
+        "exact_above_threshold": 78,
+        "exact_after_source_cap": 78,
+        "exact_eligible": 78,
+        "exact_final_retained": 78,
+        "exact_matches": 78,
+        "groups": {
+          "far": {
+            "exact_final_retained": 25,
+            "exact_matches": 25
+          },
+          "near": {
+            "exact_final_retained": 53,
+            "exact_matches": 53
+          }
+        },
+        "prefix_length": 101,
+        "state": 101,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 77,
+          "after_source_cap": true,
+          "anchor_slot": 332,
+          "binding_slots": [
+            332,
+            336,
+            334,
+            338
+          ],
+          "calibrated_logit": 1.9710983037948608,
+          "eligible": true,
+          "eligible_rank": 77,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 5.095141410827637,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3492,
+          "xfer_id": 3840
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 317,
+        "after_source_cap_pairs": 317,
+        "after_structural_decode": 145,
+        "eligible_pairs": 49176,
+        "exact_above_threshold": 76,
+        "exact_after_source_cap": 76,
+        "exact_eligible": 76,
+        "exact_final_retained": 76,
+        "exact_matches": 76,
+        "groups": {
+          "far": {
+            "exact_final_retained": 27,
+            "exact_matches": 27
+          },
+          "near": {
+            "exact_final_retained": 49,
+            "exact_matches": 49
+          }
+        },
+        "prefix_length": 102,
+        "state": 102,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 73,
+          "after_source_cap": true,
+          "anchor_slot": 328,
+          "binding_slots": [
+            328,
+            331,
+            340
+          ],
+          "calibrated_logit": 2.021334171295166,
+          "eligible": true,
+          "eligible_rank": 73,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 5.176118850708008,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 116,
+          "xfer_id": 120
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 298,
+        "after_source_cap_pairs": 298,
+        "after_structural_decode": 125,
+        "eligible_pairs": 49176,
+        "exact_above_threshold": 71,
+        "exact_after_source_cap": 71,
+        "exact_eligible": 71,
+        "exact_final_retained": 71,
+        "exact_matches": 71,
+        "groups": {
+          "far": {
+            "exact_final_retained": 29,
+            "exact_matches": 29
+          },
+          "near": {
+            "exact_final_retained": 42,
+            "exact_matches": 42
+          }
+        },
+        "prefix_length": 103,
+        "state": 103,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 52,
+          "after_source_cap": true,
+          "anchor_slot": 327,
+          "binding_slots": [
+            327,
+            344
+          ],
+          "calibrated_logit": 7.2238287925720215,
+          "eligible": true,
+          "eligible_rank": 52,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 13.562296867370605,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 34,
+          "xfer_id": 38
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 398,
+        "after_source_cap_pairs": 398,
+        "after_structural_decode": 129,
+        "eligible_pairs": 49176,
+        "exact_above_threshold": 75,
+        "exact_after_source_cap": 75,
+        "exact_eligible": 75,
+        "exact_final_retained": 75,
+        "exact_matches": 75,
+        "groups": {
+          "far": {
+            "exact_final_retained": 39,
+            "exact_matches": 39
+          },
+          "near": {
+            "exact_final_retained": 36,
+            "exact_matches": 36
+          }
+        },
+        "prefix_length": 104,
+        "state": 104,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 69,
+          "after_source_cap": true,
+          "anchor_slot": 326,
+          "binding_slots": [
+            326,
+            347
+          ],
+          "calibrated_logit": 5.708855152130127,
+          "eligible": true,
+          "eligible_rank": 69,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 11.120229721069336,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3289,
+          "xfer_id": 3434
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 427,
+        "after_source_cap_pairs": 427,
+        "after_structural_decode": 159,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 86,
+        "exact_after_source_cap": 86,
+        "exact_eligible": 86,
+        "exact_final_retained": 86,
+        "exact_matches": 86,
+        "groups": {
+          "far": {
+            "exact_final_retained": 32,
+            "exact_matches": 32
+          },
+          "near": {
+            "exact_final_retained": 54,
+            "exact_matches": 54
+          }
+        },
+        "prefix_length": 105,
+        "state": 105,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 42,
+          "after_source_cap": true,
+          "anchor_slot": 351,
+          "binding_slots": [
+            351,
+            348
+          ],
+          "calibrated_logit": 9.50167465209961,
+          "eligible": true,
+          "eligible_rank": 42,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 17.23407745361328,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 38,
+          "xfer_id": 42
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 572,
+        "after_source_cap_pairs": 572,
+        "after_structural_decode": 182,
+        "eligible_pairs": 57159,
+        "exact_above_threshold": 108,
+        "exact_after_source_cap": 108,
+        "exact_eligible": 108,
+        "exact_final_retained": 108,
+        "exact_matches": 108,
+        "groups": {
+          "far": {
+            "exact_final_retained": 33,
+            "exact_matches": 33
+          },
+          "near": {
+            "exact_final_retained": 75,
+            "exact_matches": 75
+          }
+        },
+        "prefix_length": 106,
+        "state": 106,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 106,
+          "after_source_cap": true,
+          "anchor_slot": 355,
+          "binding_slots": [
+            355,
+            346,
+            341
+          ],
+          "calibrated_logit": -0.4843490719795227,
+          "eligible": true,
+          "eligible_rank": 106,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 1.1370753049850464,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3750,
+          "xfer_id": 4356
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 656,
+        "after_source_cap_pairs": 656,
+        "after_structural_decode": 184,
+        "eligible_pairs": 54498,
+        "exact_above_threshold": 106,
+        "exact_after_source_cap": 106,
+        "exact_eligible": 106,
+        "exact_final_retained": 106,
+        "exact_matches": 106,
+        "groups": {
+          "far": {
+            "exact_final_retained": 32,
+            "exact_matches": 32
+          },
+          "near": {
+            "exact_final_retained": 74,
+            "exact_matches": 74
+          }
+        },
+        "prefix_length": 107,
+        "state": 107,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 85,
+          "after_source_cap": true,
+          "anchor_slot": 354,
+          "binding_slots": [
+            354,
+            356,
+            357
+          ],
+          "calibrated_logit": 1.3571912050247192,
+          "eligible": true,
+          "eligible_rank": 85,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 4.105551719665527,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3287,
+          "xfer_id": 3430
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 562,
+        "after_source_cap_pairs": 562,
+        "after_structural_decode": 141,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 87,
+        "exact_after_source_cap": 87,
+        "exact_eligible": 87,
+        "exact_final_retained": 87,
+        "exact_matches": 87,
+        "groups": {
+          "far": {
+            "exact_final_retained": 32,
+            "exact_matches": 32
+          },
+          "near": {
+            "exact_final_retained": 55,
+            "exact_matches": 55
+          }
+        },
+        "prefix_length": 108,
+        "state": 108,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 1,
+          "after_source_cap": true,
+          "anchor_slot": 353,
+          "binding_slots": [
+            353,
+            358
+          ],
+          "calibrated_logit": 16.31357765197754,
+          "eligible": true,
+          "eligible_rank": 1,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 28.21454429626465,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 40,
+          "xfer_id": 44
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 627,
+        "after_source_cap_pairs": 627,
+        "after_structural_decode": 145,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 107,
+        "exact_after_source_cap": 107,
+        "exact_eligible": 107,
+        "exact_final_retained": 107,
+        "exact_matches": 107,
+        "groups": {
+          "far": {
+            "exact_final_retained": 32,
+            "exact_matches": 32
+          },
+          "near": {
+            "exact_final_retained": 75,
+            "exact_matches": 75
+          }
+        },
+        "prefix_length": 109,
+        "state": 109,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 58,
+          "after_source_cap": true,
+          "anchor_slot": 350,
+          "binding_slots": [
+            350,
+            352
+          ],
+          "calibrated_logit": 7.62719202041626,
+          "eligible": true,
+          "eligible_rank": 58,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 14.212499618530273,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3767,
+          "xfer_id": 4406
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 730,
+        "after_source_cap_pairs": 730,
+        "after_structural_decode": 164,
+        "eligible_pairs": 51837,
+        "exact_above_threshold": 92,
+        "exact_after_source_cap": 92,
+        "exact_eligible": 92,
+        "exact_final_retained": 92,
+        "exact_matches": 92,
+        "groups": {
+          "far": {
+            "exact_final_retained": 28,
+            "exact_matches": 28
+          },
+          "near": {
+            "exact_final_retained": 64,
+            "exact_matches": 64
+          }
+        },
+        "prefix_length": 110,
+        "state": 110,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 83,
+          "after_source_cap": true,
+          "anchor_slot": 349,
+          "binding_slots": [
+            349,
+            362,
+            363
+          ],
+          "calibrated_logit": 1.292833685874939,
+          "eligible": true,
+          "eligible_rank": 83,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 4.001810550689697,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 759,
+          "xfer_id": 817
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 528,
+        "after_source_cap_pairs": 528,
+        "after_structural_decode": 142,
+        "eligible_pairs": 49176,
+        "exact_above_threshold": 86,
+        "exact_after_source_cap": 86,
+        "exact_eligible": 86,
+        "exact_final_retained": 86,
+        "exact_matches": 86,
+        "groups": {
+          "far": {
+            "exact_final_retained": 28,
+            "exact_matches": 28
+          },
+          "near": {
+            "exact_final_retained": 58,
+            "exact_matches": 58
+          }
+        },
+        "prefix_length": 111,
+        "state": 111,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 83,
+          "after_source_cap": true,
+          "anchor_slot": 365,
+          "binding_slots": [
+            365,
+            345,
+            360,
+            361,
+            359
+          ],
+          "calibrated_logit": 1.5787001848220825,
+          "eligible": true,
+          "eligible_rank": 83,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 4.462614059448242,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 3209,
+          "xfer_id": 3289
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 414,
+        "after_source_cap_pairs": 414,
+        "after_structural_decode": 156,
+        "eligible_pairs": 49176,
+        "exact_above_threshold": 85,
+        "exact_after_source_cap": 85,
+        "exact_eligible": 85,
+        "exact_final_retained": 85,
+        "exact_matches": 85,
+        "groups": {
+          "far": {
+            "exact_final_retained": 29,
+            "exact_matches": 29
+          },
+          "near": {
+            "exact_final_retained": 56,
+            "exact_matches": 56
+          }
+        },
+        "prefix_length": 112,
+        "state": 112,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 79,
+          "after_source_cap": true,
+          "anchor_slot": 369,
+          "binding_slots": [
+            369,
+            370,
+            342,
+            343
+          ],
+          "calibrated_logit": 2.170029640197754,
+          "eligible": true,
+          "eligible_rank": 79,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 5.415809631347656,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 885,
+          "xfer_id": 943
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 484,
+        "after_source_cap_pairs": 484,
+        "after_structural_decode": 144,
+        "eligible_pairs": 46515,
+        "exact_above_threshold": 96,
+        "exact_after_source_cap": 96,
+        "exact_eligible": 96,
+        "exact_final_retained": 96,
+        "exact_matches": 96,
+        "groups": {
+          "far": {
+            "exact_final_retained": 27,
+            "exact_matches": 27
+          },
+          "near": {
+            "exact_final_retained": 69,
+            "exact_matches": 69
+          }
+        },
+        "prefix_length": 113,
+        "state": 113,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 58,
+          "after_source_cap": true,
+          "anchor_slot": 364,
+          "binding_slots": [
+            364,
+            371
+          ],
+          "calibrated_logit": 7.756701946258545,
+          "eligible": true,
+          "eligible_rank": 58,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 14.421262741088867,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 41,
+          "xfer_id": 45
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 389,
+        "after_source_cap_pairs": 389,
+        "after_structural_decode": 125,
+        "eligible_pairs": 46515,
+        "exact_above_threshold": 85,
+        "exact_after_source_cap": 85,
+        "exact_eligible": 85,
+        "exact_final_retained": 85,
+        "exact_matches": 85,
+        "groups": {
+          "far": {
+            "exact_final_retained": 30,
+            "exact_matches": 30
+          },
+          "near": {
+            "exact_final_retained": 55,
+            "exact_matches": 55
+          }
+        },
+        "prefix_length": 114,
+        "state": 114,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 83,
+          "after_source_cap": true,
+          "anchor_slot": 375,
+          "binding_slots": [
+            375,
+            366,
+            367,
+            372
+          ],
+          "calibrated_logit": 1.368744969367981,
+          "eligible": true,
+          "eligible_rank": 83,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 4.124176025390625,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 1434,
+          "xfer_id": 1492
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      },
+      {
+        "above_threshold_pairs": 344,
+        "after_source_cap_pairs": 344,
+        "after_structural_decode": 96,
+        "eligible_pairs": 49176,
+        "exact_above_threshold": 76,
+        "exact_after_source_cap": 76,
+        "exact_eligible": 76,
+        "exact_final_retained": 76,
+        "exact_matches": 76,
+        "groups": {
+          "far": {
+            "exact_final_retained": 29,
+            "exact_matches": 29
+          },
+          "near": {
+            "exact_final_retained": 47,
+            "exact_matches": 47
+          }
+        },
+        "prefix_length": 115,
+        "state": 115,
+        "states": 1,
+        "states_with_all_exact_matches_retained": 1,
+        "teacher": {
+          "above_threshold": true,
+          "above_threshold_rank": 61,
+          "after_source_cap": true,
+          "anchor_slot": 379,
+          "binding_slots": [
+            379,
+            380,
+            368,
+            373
+          ],
+          "calibrated_logit": 7.19299840927124,
+          "eligible": true,
+          "eligible_rank": 61,
+          "final_retained": true,
+          "group": "near",
+          "raw_logit": 13.512598991394043,
+          "raw_threshold": -10.670381546020508,
+          "source_id": 33,
+          "xfer_id": 37
+        },
+        "teacher_actions": 1,
+        "teacher_final_retained": 1
+      }
+    ]
+  }
+}

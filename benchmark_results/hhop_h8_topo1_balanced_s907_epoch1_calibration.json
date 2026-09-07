@@ -1,0 +1,68 @@
+{
+  "calibration_states": 512,
+  "checkpoint": "runs/hhop_h8_topo1_balanced_s907.pt",
+  "groups": {
+    "far": {
+      "positive_count": 433461,
+      "probability_bias": -0.36449211721518604,
+      "probability_scale": 0.5217592961624598,
+      "sampled_negative_count": 1733844,
+      "thresholds": {
+        "0.9500": {
+          "calibrated_probability_threshold": 0.6958574652671814,
+          "estimated_candidates_per_state_before_structural_decode": 814.7262420654297,
+          "estimated_precision_before_structural_decode": 0.9871701633926377,
+          "positive_recall": 0.9500001153506313,
+          "raw_logit_threshold": 2.2848477363586426
+        },
+        "0.9900": {
+          "calibrated_probability_threshold": 0.026158176362514496,
+          "estimated_candidates_per_state_before_structural_decode": 1035.5689544677734,
+          "estimated_precision_before_structural_decode": 0.8095640289167142,
+          "positive_recall": 0.9902620997044717,
+          "raw_logit_threshold": -6.2338995933532715
+        },
+        "0.9990": {
+          "calibrated_probability_threshold": 0.001019249320961535,
+          "estimated_candidates_per_state_before_structural_decode": 2143.1251220703125,
+          "estimated_precision_before_structural_decode": 0.39463762698230925,
+          "positive_recall": 0.9990010635328207,
+          "raw_logit_threshold": -12.502272605895996
+        }
+      },
+      "total_negative_count": 154654149
+    },
+    "near": {
+      "positive_count": 49272,
+      "probability_bias": -1.2256884449733871,
+      "probability_scale": 0.5681782586879514,
+      "sampled_negative_count": 197088,
+      "thresholds": {
+        "0.9500": {
+          "calibrated_probability_threshold": 0.28927525877952576,
+          "estimated_candidates_per_state_before_structural_decode": 99.18147945404053,
+          "estimated_precision_before_structural_decode": 0.9217832666769674,
+          "positive_recall": 0.95001217730151,
+          "raw_logit_threshold": 0.5751398205757141
+        },
+        "0.9900": {
+          "calibrated_probability_threshold": 0.010204602964222431,
+          "estimated_candidates_per_state_before_structural_decode": 168.0895767211914,
+          "estimated_precision_before_structural_decode": 0.5668015790058722,
+          "positive_recall": 0.990014612761812,
+          "raw_logit_threshold": -5.894225597381592
+        },
+        "0.9990": {
+          "calibrated_probability_threshold": 0.000507621793076396,
+          "estimated_candidates_per_state_before_structural_decode": 530.9197692871094,
+          "estimated_precision_before_structural_decode": 0.18107947271221386,
+          "positive_recall": 0.9990055203766846,
+          "raw_logit_threshold": -11.192926406860352
+        }
+      },
+      "total_negative_count": 17791301
+    }
+  },
+  "trajectory_modulo": 4,
+  "trajectory_remainder": 0
+}
