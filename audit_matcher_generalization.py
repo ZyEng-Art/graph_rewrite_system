@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from dataset import (
     PrefixDataset,
     RuleMetadata,
+    collate_current_graphs,
     collate_prefixes,
     source_state_counts,
 )
@@ -565,23 +566,28 @@ def main() -> None:
             "trajectory_remainder": remainder,
             "excluded_trajectories": excluded,
         }
+    checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
+    train_args = checkpoint["args"]
+    architecture = train_args.get("architecture", "legacy")
+    state_only = architecture == "legacy" and bool(train_args.get("state_only"))
+    if architecture != "paged_action" and not state_only:
+        raise ValueError(
+            "generalization audit requires paged_action or legacy state-only"
+        )
     dataset = PrefixDataset(trajectories, rules)
+    collate = collate_current_graphs if state_only else collate_prefixes
     loader = DataLoader(
         dataset,
         batch_size=args.batch_size,
         shuffle=False,
-        collate_fn=lambda samples: collate_prefixes(samples, rules),
+        collate_fn=lambda samples: collate(samples, rules),
         num_workers=0,
     )
-
-    checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
-    train_args = checkpoint["args"]
-    if train_args.get("architecture") != "paged_action":
-        raise ValueError("generalization audit requires a paged_action checkpoint")
     model = build_model(rules, len(rules.xfer_to_source), train_args).to(device)
     model.load_state_dict(checkpoint["model"])
     model.eval()
-    model.readout_attention_backend = "sdpa"
+    if hasattr(model, "readout_attention_backend"):
+        model.readout_attention_backend = "sdpa"
     source_frequency_checkpoint = checkpoint
     if args.source_frequency_checkpoint is not None:
         source_frequency_checkpoint = torch.load(

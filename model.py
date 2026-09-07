@@ -68,16 +68,20 @@ class S0ActionBindingModel(nn.Module):
         use_locality_features: bool = False,
         source_topology_layers: int = 0,
         source_id_frequency_prior: float = 0.0,
+        identity_current_prefix: int = 0,
     ):
         super().__init__()
         if source_topology_layers < 0:
             raise ValueError("source_topology_layers must be nonnegative")
         if source_id_frequency_prior < 0:
             raise ValueError("source_id_frequency_prior must be nonnegative")
+        if not 0 <= identity_current_prefix <= current_graph_layers:
+            raise ValueError("identity_current_prefix exceeds current graph depth")
         self.width = width
         self.retrieval_width = retrieval_width
         self.use_action_history = use_action_history
         self.use_locality_features = use_locality_features
+        self.identity_current_prefix = identity_current_prefix
         self.num_gate_types = rules.num_gate_types
         self.num_sources = len(rules.source_gate_types)
         self.max_pattern = max(map(len, rules.source_gate_types))
@@ -241,6 +245,18 @@ class S0ActionBindingModel(nn.Module):
         self.current_graph_layers = nn.ModuleList(
             InitialGraphLayer(width) for _ in range(current_graph_layers)
         )
+        # When extending a trained H-hop encoder, gate only the newly appended
+        # layers.  A zero gate makes the deeper model exactly reproduce the
+        # prefix checkpoint at initialization while still allowing gradient
+        # descent to turn the extra receptive-field hops on.
+        self.current_graph_layer_scales = nn.ParameterList(
+            nn.Parameter(torch.zeros(()))
+            for _ in range(
+                current_graph_layers - identity_current_prefix
+                if identity_current_prefix
+                else 0
+            )
+        )
         self.current_fusion = nn.Sequential(
             nn.Linear(2 * width, 2 * width),
             nn.GELU(),
@@ -343,21 +359,41 @@ class S0ActionBindingModel(nn.Module):
             tokens = tokens + locality
         return tokens * live.unsqueeze(-1)
 
+    def encode_current_graph(
+        self, batch: dict
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Recompute an exact H-hop representation from the current graph.
+
+        This path deliberately consumes no action history.  Consequently a
+        rewrite followed by this method cannot retain stale embeddings for
+        deleted nodes or stale edges around the rewritten region.
+        """
+        gate_types = batch["current_types"]
+        live = gate_types.ge(0)
+        states = self.current_graph_tokens(batch, gate_types, live)
+        for layer_index, layer in enumerate(self.current_graph_layers):
+            updated = layer(
+                states,
+                live,
+                batch["current_edge_batch"],
+                batch["current_edge_src"],
+                batch["current_edge_dst"],
+                batch["current_edge_relation"],
+            )
+            if self.identity_current_prefix and (
+                layer_index >= self.identity_current_prefix
+            ):
+                scale = self.current_graph_layer_scales[
+                    layer_index - self.identity_current_prefix
+                ]
+                states = states + scale * (updated - states)
+            else:
+                states = updated
+        return states * live.unsqueeze(-1), live, gate_types
+
     def encode(self, batch: dict) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         if not self.use_action_history:
-            gate_types = batch["current_types"]
-            live = gate_types.ge(0)
-            states = self.current_graph_tokens(batch, gate_types, live)
-            for layer in self.current_graph_layers:
-                states = layer(
-                    states,
-                    live,
-                    batch["current_edge_batch"],
-                    batch["current_edge_src"],
-                    batch["current_edge_dst"],
-                    batch["current_edge_relation"],
-                )
-            return states, live, gate_types
+            return self.encode_current_graph(batch)
 
         initial_types = batch["initial_types"]
         batch_size, num_slots = initial_types.shape
@@ -465,16 +501,7 @@ class S0ActionBindingModel(nn.Module):
             states, live, gate_types = next_states, next_live, next_gate_types
         if not torch.equal(gate_types, batch["current_types"]):
             raise RuntimeError("action-derived live slots differ from incremental graph")
-        current_states = self.current_graph_tokens(batch, gate_types, live)
-        for layer in self.current_graph_layers:
-            current_states = layer(
-                current_states,
-                live,
-                batch["current_edge_batch"],
-                batch["current_edge_src"],
-                batch["current_edge_dst"],
-                batch["current_edge_relation"],
-            )
+        current_states, _, _ = self.encode_current_graph(batch)
         states = self.current_norm(
             states + self.current_fusion(torch.cat((states, current_states), dim=-1))
         ) * live.unsqueeze(-1)

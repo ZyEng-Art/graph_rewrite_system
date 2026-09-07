@@ -540,6 +540,15 @@ def main() -> None:
     parser.add_argument("--graph-layers", type=int, default=3)
     parser.add_argument("--current-graph-layers", type=int, default=5)
     parser.add_argument(
+        "--identity-current-prefix",
+        type=int,
+        default=0,
+        help=(
+            "make current-graph layers appended after this trained prefix "
+            "zero-gated identities at initialization"
+        ),
+    )
+    parser.add_argument(
         "--architecture", choices=("legacy", "paged_action"), default="legacy"
     )
     parser.add_argument("--action-layers", type=int, default=4)
@@ -765,6 +774,13 @@ def main() -> None:
         parser.error("--source-topology-layers must be nonnegative")
     if args.source_id_frequency_prior < 0:
         parser.error("--source-id-frequency-prior must be nonnegative")
+    if not 0 <= args.identity_current_prefix <= args.current_graph_layers:
+        parser.error(
+            "--identity-current-prefix must be between zero and "
+            "--current-graph-layers"
+        )
+    if args.identity_current_prefix and not args.state_only:
+        parser.error("--identity-current-prefix requires --state-only")
     if args.interleaving_positive_weight < 0:
         parser.error("--interleaving-positive-weight must be nonnegative")
     if args.interleaving_positive_scale <= 0:
@@ -970,6 +986,19 @@ def main() -> None:
                 key
                 for key in incompatible.missing_keys
                 if not key.startswith(allowed_missing)
+                and not (
+                    args.identity_current_prefix
+                    and (
+                        key.startswith("current_graph_layer_scales.")
+                        or any(
+                            key.startswith(f"current_graph_layers.{index}.")
+                            for index in range(
+                                args.identity_current_prefix,
+                                args.current_graph_layers,
+                            )
+                        )
+                    )
+                )
             ]
             if incompatible.unexpected_keys or unexpected_missing:
                 raise RuntimeError(

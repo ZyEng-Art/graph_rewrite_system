@@ -21,7 +21,12 @@ if _libgomp:
 import torch
 
 from collect_quarl_trajectories import parse_trajectory_directory
-from dataset import PrefixDataset, RuleMetadata, collate_prefixes
+from dataset import (
+    PrefixDataset,
+    RuleMetadata,
+    collate_current_graphs,
+    collate_prefixes,
+)
 from gpu_proposals import GpuRuleIndex, build_gpu_proposals
 from threshold_inference import (
     CandidateTensors,
@@ -233,7 +238,7 @@ def benchmark_cpu(
     }
 
 
-def prepare_batches(dataset, rules, batch_size: int):
+def prepare_batches(dataset, rules, batch_size: int, *, state_only: bool = False):
     batches = []
     started = time.perf_counter()
     for begin in range(0, len(dataset), batch_size):
@@ -241,7 +246,8 @@ def prepare_batches(dataset, rules, batch_size: int):
             dataset[index]
             for index in range(begin, min(begin + batch_size, len(dataset)))
         ]
-        batches.append(collate_prefixes(samples, rules))
+        collate = collate_current_graphs if state_only else collate_prefixes
+        batches.append(collate(samples, rules))
     return batches, time.perf_counter() - started
 
 
@@ -371,8 +377,11 @@ def benchmark_model(
     per_parent_cap: int,
     global_proposal_cap: int,
     repeats: int,
+    state_only: bool = False,
 ) -> dict:
-    batches, preparation_seconds = prepare_batches(dataset, rules, batch_size)
+    batches, preparation_seconds = prepare_batches(
+        dataset, rules, batch_size, state_only=state_only
+    )
     beams = [
         [
             types.SimpleNamespace(gate_count=int(gate_count))
@@ -650,12 +659,17 @@ def main() -> None:
 
     checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
     train_args = checkpoint["args"]
-    if train_args.get("architecture") != "paged_action":
-        raise ValueError("throughput benchmark requires a paged_action checkpoint")
+    architecture = train_args.get("architecture", "legacy")
+    state_only = architecture == "legacy" and bool(train_args.get("state_only"))
+    if architecture != "paged_action" and not state_only:
+        raise ValueError(
+            "throughput benchmark requires paged_action or legacy state-only"
+        )
     model = build_model(rules, len(rules.xfer_to_source), train_args).to(device)
     model.load_state_dict(checkpoint["model"])
     model.eval()
-    model.readout_attention_backend = "sdpa"
+    if hasattr(model, "readout_attention_backend"):
+        model.readout_attention_backend = "sdpa"
     threshold_config = load_threshold_config(args.calibration, args.target_recall)
 
     model_results = {}
@@ -676,6 +690,7 @@ def main() -> None:
             per_parent_cap=args.per_parent_cap,
             global_proposal_cap=args.global_proposal_cap,
             repeats=args.model_repeats,
+            state_only=state_only,
         )
 
     cpu_anchor_throughput = cpu["original_xfer_anchor"][

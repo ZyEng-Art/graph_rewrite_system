@@ -43,4 +43,5 @@ def build_model(rules, num_xfers: int, args: dict):
         use_locality_features=args.get("locality_features", False),
         source_topology_layers=args.get("source_topology_layers", 0),
         source_id_frequency_prior=args.get("source_id_frequency_prior", 0.0),
+        identity_current_prefix=args.get("identity_current_prefix", 0),
     )

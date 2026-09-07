@@ -20,7 +20,13 @@ if _libgomp:
 
 import torch
 
-from beam_search_benchmark import BeamState, Proposal, snapshot, update_slots
+from beam_search_benchmark import (
+    BeamState,
+    Proposal,
+    snapshot,
+    state_only_candidate_tensors,
+    update_slots,
+)
 from dataset import RuleMetadata
 from gpu_proposals import GpuRuleIndex, build_gpu_proposals
 from incremental_graph import parse_pattern
@@ -693,12 +699,21 @@ def main() -> None:
     rules = RuleMetadata.from_payload(payload)
     checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
     train_args = checkpoint["args"]
-    if train_args.get("architecture") != "paged_action":
-        raise ValueError("trajectory audit requires a paged_action checkpoint")
+    architecture = train_args.get("architecture", "legacy")
+    state_only = architecture == "legacy" and bool(train_args.get("state_only"))
+    if architecture != "paged_action" and not state_only:
+        raise ValueError(
+            "trajectory audit requires paged_action or legacy state-only"
+        )
+    if state_only and args.ranking_mode == "value":
+        raise ValueError("legacy state-only checkpoints do not have a value head")
+    if state_only and args.sequence_conditioned:
+        raise ValueError("sequence-conditioned audit requires paged_action")
     model = build_model(rules, len(rules.xfer_to_source), train_args).to(device)
     model.load_state_dict(checkpoint["model"])
     model.eval()
-    model.readout_attention_backend = "sdpa"
+    if hasattr(model, "readout_attention_backend"):
+        model.readout_attention_backend = "sdpa"
     threshold_config = load_threshold_config(
         args.calibration, args.target_recall
     )
@@ -817,44 +832,58 @@ def main() -> None:
         )
     load_seconds = time.perf_counter() - load_started
 
-    with torch.no_grad(), autocast_context(device):
-        states, live, gate_types = model.initialize_incremental(
-            move_batch(initial_batch_many(snapshots), device)
-        )
-    arena = PagedKVCache(
-        layers=model.action_layers_count,
-        capacity=len(beam) + 4,
-        page_size=8,
-        heads=model.action_heads,
-        head_width=model.width // model.action_heads,
-        model_width=model.width,
-        device=device,
-        dtype=torch.bfloat16 if device.type == "cuda" else states.dtype,
-        gather_backend="vectorized",
-    )
-    handles = [arena.empty_handle() for _ in beam]
     with torch.no_grad():
-        candidates, match_seconds, match_timing, encoded = paged_model_matches(
-            beam,
-            states,
-            live,
-            gate_types,
-            handles,
-            arena,
-            model,
-            device,
-            threshold_config,
-            source_vectors,
-            microbatch=args.microbatch,
-            max_candidates=args.max_source_matches,
-            near_source_reserve=args.near_source_reserve,
-            source_microbatch=args.source_microbatch,
-            source_grouping=args.source_grouping,
-            state_batch_backend="tensorized",
-            candidate_backend="gpu",
-            return_encoded_states=args.ranking_mode == "value",
-            profile_stages=True,
-        )
+        if state_only:
+            candidates, match_seconds, collation = state_only_candidate_tensors(
+                beam,
+                model,
+                device,
+                threshold_config,
+                source_vectors,
+                microbatch=args.microbatch,
+                max_candidates=args.max_source_matches,
+            )
+            match_timing = {"exact_current_graph_collation": collation}
+            encoded = None
+            live = None
+        else:
+            with autocast_context(device):
+                states, live, gate_types = model.initialize_incremental(
+                    move_batch(initial_batch_many(snapshots), device)
+                )
+            arena = PagedKVCache(
+                layers=model.action_layers_count,
+                capacity=len(beam) + 4,
+                page_size=8,
+                heads=model.action_heads,
+                head_width=model.width // model.action_heads,
+                model_width=model.width,
+                device=device,
+                dtype=torch.bfloat16 if device.type == "cuda" else states.dtype,
+                gather_backend="vectorized",
+            )
+            handles = [arena.empty_handle() for _ in beam]
+            candidates, match_seconds, match_timing, encoded = paged_model_matches(
+                beam,
+                states,
+                live,
+                gate_types,
+                handles,
+                arena,
+                model,
+                device,
+                threshold_config,
+                source_vectors,
+                microbatch=args.microbatch,
+                max_candidates=args.max_source_matches,
+                near_source_reserve=args.near_source_reserve,
+                source_microbatch=args.source_microbatch,
+                source_grouping=args.source_grouping,
+                state_batch_backend="tensorized",
+                candidate_backend="gpu",
+                return_encoded_states=args.ranking_mode == "value",
+                profile_stages=True,
+            )
         proposal_started = time.perf_counter()
         proposals, proposal_metrics, proposal_timing, _ = build_gpu_proposals(
             candidates,
