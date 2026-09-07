@@ -46,6 +46,7 @@ from threshold_inference import (
     threshold_candidate_tensors,
 )
 from train import autocast_context, move_batch
+from train_neural_successor_prefilter import NeuralSuccessorPrefilter
 
 
 @dataclass(frozen=True)
@@ -361,6 +362,100 @@ def remap_candidate_slots(
     )
 
 
+def frozen_candidate_features(
+    model,
+    states: torch.Tensor,
+    live: torch.Tensor,
+    proposal_tensors,
+    source_representations: torch.Tensor,
+) -> torch.Tensor:
+    """Reuse matcher embeddings without adding parameters to its checkpoint."""
+
+    binding_slots = proposal_tensors.bindings
+    batch_ids = proposal_tensors.parent_ids
+    binding_mask = binding_slots.ge(0)
+    safe_bindings = binding_slots.clamp_min(0)
+    num_slots = states.shape[1]
+    flat_indices = batch_ids.unsqueeze(1) * num_slots + safe_bindings
+    bound_states = states.reshape(-1, model.width)[flat_indices]
+    bound_states = bound_states.masked_fill(
+        ~binding_mask.unsqueeze(-1), 0
+    )
+    bound_pool = bound_states.sum(1)
+    bound_pool = bound_pool / binding_mask.sum(1, keepdim=True).clamp_min(1)
+    live_states = states.masked_fill(~live.unsqueeze(-1), 0)
+    graph_pool = live_states.sum(1)
+    graph_pool = graph_pool / live.sum(1, keepdim=True).clamp_min(1)
+    return torch.cat(
+        (
+            model.xfer_embedding(proposal_tensors.xfer_ids),
+            source_representations.index_select(
+                0, proposal_tensors.source_ids
+            ),
+            bound_pool,
+            graph_pool.index_select(0, batch_ids),
+        ),
+        dim=-1,
+    )
+
+
+def load_neural_successor_prefilter(path: Path, device: torch.device):
+    checkpoint = torch.load(path, map_location="cpu", weights_only=False)
+    if checkpoint.get("format") != "neural_successor_prefilter_v1":
+        raise ValueError(f"unsupported neural prefilter checkpoint: {path}")
+    train_args = checkpoint.get("args", {})
+    model = NeuralSuccessorPrefilter(
+        int(checkpoint["input_width"]),
+        int(checkpoint["hidden_width"]),
+        int(checkpoint["embedding_width"]),
+        float(train_args.get("dropout", 0.0)),
+    ).to(device)
+    model.load_state_dict(checkpoint["model"])
+    model.eval()
+    thresholds = checkpoint["thresholds"]
+    return model, {
+        "valid": float(thresholds["valid"]),
+        "duplicate": float(thresholds["duplicate"]),
+    }
+
+
+@torch.no_grad()
+def neural_prefilter_scores(
+    prefilter: NeuralSuccessorPrefilter,
+    frozen_features: torch.Tensor,
+    proposal_tensors,
+    beam: list[BeamState],
+    step: int,
+    device: torch.device,
+    batch_size: int,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Score proposal legality and duplicate propensity entirely on device."""
+
+    parent_gate_counts = torch.tensor(
+        [state.gate_count for state in beam],
+        device=device,
+        dtype=torch.float32,
+    ).index_select(0, proposal_tensors.parent_ids)
+    auxiliary = torch.stack(
+        (
+            proposal_tensors.probabilities.float(),
+            proposal_tensors.gate_deltas.float() / 8.0,
+            parent_gate_counts / 512.0,
+            torch.full_like(parent_gate_counts, (step + 1) / 64.0),
+        ),
+        dim=1,
+    )
+    inputs = torch.cat((frozen_features.float(), auxiliary), dim=1)
+    valid_scores = []
+    duplicate_scores = []
+    for begin in range(0, inputs.shape[0], batch_size):
+        with autocast_context(device):
+            valid, duplicate, _ = prefilter(inputs[begin : begin + batch_size])
+        valid_scores.append(valid.float().sigmoid())
+        duplicate_scores.append(duplicate.float().sigmoid())
+    return torch.cat(valid_scores), torch.cat(duplicate_scores)
+
+
 def exact_actions(
     state: BeamState, context
 ) -> list[tuple[int, int, tuple[int, ...] | None, float]]:
@@ -422,13 +517,21 @@ def state_only_candidate_tensors(
     source_vectors: torch.Tensor,
     microbatch: int,
     max_candidates: int,
-) -> tuple[CandidateTensors, float, dict[str, int]]:
+    *,
+    return_encoded_states: bool = False,
+):
     """Predict all retained matches from exact graphs without action tensors."""
     if not hasattr(model, "encode_current_graph"):
         raise ValueError(
             "state-only inference requires a model with encode_current_graph"
         )
     chunks = []
+    encoded_chunks = []
+    encoded_live_chunks = []
+    max_persistent_slots = max(
+        max((int(row[0]) for row in state.snapshot["nodes"]), default=-1) + 1
+        for state in states
+    )
     collation = {
         "live_nodes": 0,
         "padded_dense_slots": 0,
@@ -455,6 +558,36 @@ def state_only_candidate_tensors(
                 gate_types,
                 source_vectors=source_vectors,
             )
+        if return_encoded_states:
+            slot_map = dense_to_slot.to(device)
+            mapped = slot_map.ge(0)
+            persistent = encoded.new_zeros(
+                encoded.shape[0], max_persistent_slots, encoded.shape[-1]
+            )
+            persistent_live = torch.zeros(
+                encoded.shape[0],
+                max_persistent_slots,
+                dtype=torch.bool,
+                device=device,
+            )
+            dense_rows = (
+                torch.arange(encoded.shape[0], device=device)
+                .unsqueeze(1)
+                .expand_as(slot_map)
+            )
+            dense_columns = (
+                torch.arange(encoded.shape[1], device=device)
+                .unsqueeze(0)
+                .expand_as(slot_map)
+            )
+            parent_rows = dense_rows[mapped]
+            persistent_slots = slot_map[mapped]
+            persistent[parent_rows, persistent_slots] = encoded[
+                parent_rows, dense_columns[mapped]
+            ]
+            persistent_live[parent_rows, persistent_slots] = True
+            encoded_chunks.append(persistent)
+            encoded_live_chunks.append(persistent_live)
         local_candidates = threshold_candidate_tensors(
             model,
             batch,
@@ -472,7 +605,17 @@ def state_only_candidate_tensors(
         )
     if device.type == "cuda":
         torch.cuda.synchronize(device)
-    return CandidateTensors.cat(chunks), time.perf_counter() - started, collation
+    result = (
+        CandidateTensors.cat(chunks),
+        time.perf_counter() - started,
+        collation,
+    )
+    if not return_encoded_states:
+        return result
+    return (
+        *result,
+        (torch.cat(encoded_chunks), torch.cat(encoded_live_chunks)),
+    )
 
 
 def rank_proposals(
@@ -789,6 +932,36 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--best-qasm", type=Path)
     parser.add_argument(
+        "--neural-audit-output",
+        type=Path,
+        help=(
+            "optional torch payload of frozen matcher candidate features and "
+            "exact invalid/duplicate/unique labels"
+        ),
+    )
+    parser.add_argument(
+        "--neural-prefilter-checkpoint",
+        type=Path,
+        help=(
+            "optional learned legality/duplicate checkpoint; it is used only "
+            "to prioritize exact Quartz applies"
+        ),
+    )
+    parser.add_argument(
+        "--neural-prefilter-mode",
+        choices=("off", "shadow", "defer"),
+        default="off",
+        help=(
+            "shadow only scores proposals; defer moves high-confidence "
+            "invalid/duplicate proposals behind the other exact applies"
+        ),
+    )
+    parser.add_argument(
+        "--neural-prefilter-batch-size",
+        type=int,
+        default=8192,
+    )
+    parser.add_argument(
         "--reference-data",
         type=Path,
         help=(
@@ -907,6 +1080,50 @@ def main() -> None:
     args = parser.parse_args()
     if args.mode == "model" and (args.checkpoint is None or args.calibration is None):
         parser.error("model mode requires --checkpoint and --calibration")
+    if args.neural_audit_output is not None and (
+        args.mode != "model" or args.model_pipeline != "state_only_gpu"
+    ):
+        parser.error(
+            "--neural-audit-output requires model state_only_gpu mode"
+        )
+    if args.neural_audit_output is not None and (
+        args.preapply_fingerprint == "filter"
+        or args.preapply_direct_inverse == "filter"
+    ):
+        parser.error(
+            "neural audit collection requires all proposals to reach Quartz; "
+            "use off or shadow pre-apply modes"
+        )
+    if (
+        args.neural_audit_output is not None
+        and args.dedup_identity != "exact"
+    ):
+        parser.error("neural audit labels require --dedup-identity exact")
+    if args.neural_prefilter_mode != "off" and (
+        args.neural_prefilter_checkpoint is None
+        or args.mode != "model"
+        or args.model_pipeline != "state_only_gpu"
+    ):
+        parser.error(
+            "learned prefiltering requires --neural-prefilter-checkpoint and "
+            "model state_only_gpu mode"
+        )
+    if (
+        args.neural_prefilter_checkpoint is not None
+        and args.neural_prefilter_mode == "off"
+    ):
+        parser.error(
+            "--neural-prefilter-checkpoint requires shadow or defer mode"
+        )
+    if args.neural_prefilter_batch_size < 1:
+        parser.error("--neural-prefilter-batch-size must be positive")
+    if (
+        args.neural_audit_output is not None
+        and args.neural_prefilter_mode != "off"
+    ):
+        parser.error(
+            "neural audit collection and neural prefiltering cannot be combined"
+        )
     if (
         args.mode == "model"
         and args.model_pipeline == "state_only_gpu"
@@ -1002,7 +1219,10 @@ def main() -> None:
     model = None
     threshold_config = None
     source_vectors = None
+    candidate_source_states = None
     gpu_rule_index = None
+    neural_prefilter = None
+    neural_prefilter_thresholds = None
     if args.mode == "model":
         checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
         train_args = checkpoint["args"]
@@ -1018,9 +1238,8 @@ def main() -> None:
                     "checkpoint architecture does not support state-only inference"
                 )
             with torch.no_grad(), autocast_context(device):
-                source_vectors = model.retrieval_source(
-                    model.source_representations()
-                )
+                candidate_source_states = model.source_representations()
+                source_vectors = model.retrieval_source(candidate_source_states)
             gpu_rule_index = GpuRuleIndex.build(
                 source_to_xfers,
                 gate_deltas,
@@ -1028,6 +1247,12 @@ def main() -> None:
                 args.max_gate_increase,
                 device,
             )
+    if args.neural_prefilter_mode != "off":
+        neural_prefilter, neural_prefilter_thresholds = (
+            load_neural_successor_prefilter(
+                args.neural_prefilter_checkpoint, device
+            )
+        )
 
     graph = quartz.PyGraph.from_qasm(context=context, filename=str(args.qasm))
     guid_direct_binding_available = hasattr(
@@ -1118,6 +1343,22 @@ def main() -> None:
             "input QASM does not match the first state of the reference trajectory"
         )
     best_state = beam[0]
+    collect_neural_audit = args.neural_audit_output is not None
+    need_candidate_features = (
+        collect_neural_audit or args.neural_prefilter_mode != "off"
+    )
+    neural_feature_chunks = []
+    neural_outcome_chunks = []
+    neural_group_chunks = []
+    neural_xfer_chunks = []
+    neural_source_chunks = []
+    neural_probability_chunks = []
+    neural_gate_delta_chunks = []
+    neural_parent_gate_chunks = []
+    neural_step_chunks = []
+    if collect_neural_audit:
+        successor_groups = {exact_graph_key(graph): 0}
+        next_successor_group = 1
     best_first_seen_step = 0
     best_first_seen_seconds = 0.0
     improvement_trace = [
@@ -1144,6 +1385,15 @@ def main() -> None:
         "shadow_novel_successors": 0,
         "shadow_invalid": 0,
     }
+    neural_prefilter_totals = {
+        "candidates": 0,
+        "deferred": 0,
+        "scored_seconds": 0.0,
+        "deferred_scanned": 0,
+        "deferred_invalid": 0,
+        "deferred_duplicates": 0,
+        "deferred_novel": 0,
+    }
     step_rows = []
     reference_retention = []
     total_started = time.perf_counter()
@@ -1167,35 +1417,68 @@ def main() -> None:
         source_binding_candidates = 0
         proposal_metrics = {}
         collation_metrics = {}
+        proposal_feature_rows = None
+        selected_proposal_tensors = None
         if args.mode == "model" and args.model_pipeline == "state_only_gpu":
-            candidates, model_seconds, collation_metrics = (
-                state_only_candidate_tensors(
-                    beam,
-                    model,
-                    device,
-                    threshold_config,
-                    source_vectors,
-                    args.microbatch,
-                    args.max_source_matches,
-                )
+            candidate_result = state_only_candidate_tensors(
+                beam,
+                model,
+                device,
+                threshold_config,
+                source_vectors,
+                args.microbatch,
+                args.max_source_matches,
+                return_encoded_states=need_candidate_features,
             )
+            if need_candidate_features:
+                (
+                    candidates,
+                    model_seconds,
+                    collation_metrics,
+                    encoded_context,
+                ) = candidate_result
+            else:
+                candidates, model_seconds, collation_metrics = candidate_result
+                encoded_context = None
             source_binding_candidates = int(candidates.sources.numel())
             effective_parent_cap = max(
                 args.max_actions_per_parent,
                 math.ceil(args.beam_size / max(1, len(beam))) * 2,
             )
             proposal_started = time.perf_counter()
-            proposals, proposal_metrics, _, _ = build_gpu_proposals(
+            (
+                proposals,
+                proposal_metrics,
+                _,
+                selected_proposal_tensors,
+            ) = build_gpu_proposals(
                 candidates,
                 beam,
                 gpu_rule_index,
                 per_parent_cap=effective_parent_cap,
                 global_cap=args.beam_size * args.proposal_factor,
                 ranking_mode="gate",
+                return_selected_tensors=need_candidate_features,
             )
             proposal_seconds = time.perf_counter() - proposal_started
             if proposals is None:
                 raise RuntimeError("state-only GPU proposal materialization failed")
+            if need_candidate_features:
+                if selected_proposal_tensors is None or encoded_context is None:
+                    raise RuntimeError("neural candidate feature context is missing")
+                encoded_states, encoded_live = encoded_context
+                with torch.no_grad(), autocast_context(device):
+                    proposal_feature_rows = frozen_candidate_features(
+                        model,
+                        encoded_states,
+                        encoded_live,
+                        selected_proposal_tensors,
+                        candidate_source_states,
+                    )
+                if collect_neural_audit:
+                    proposal_feature_rows = (
+                        proposal_feature_rows.to(torch.float16).cpu()
+                    )
             total_action_candidates = int(proposal_metrics["eligible_actions"])
             matched_action_count = int(proposal_metrics["predicted_actions"])
         elif args.mode == "model":
@@ -1267,6 +1550,63 @@ def main() -> None:
                 sum(map(len, predicted)) if args.mode == "model" else 0
             )
 
+        neural_prefilter_step = {
+            "mode": args.neural_prefilter_mode,
+            "candidates": 0,
+            "deferred": 0,
+            "scored_seconds": 0.0,
+            "deferred_scanned": 0,
+            "deferred_invalid": 0,
+            "deferred_duplicates": 0,
+            "deferred_novel": 0,
+        }
+        proposal_is_deferred = [False] * len(proposals)
+        if args.neural_prefilter_mode != "off":
+            if proposal_feature_rows is None or selected_proposal_tensors is None:
+                raise RuntimeError(
+                    "learned prefilter proposal features are missing: "
+                    f"features={proposal_feature_rows is not None}, "
+                    f"tensors={selected_proposal_tensors is not None}, "
+                    f"need={need_candidate_features}"
+                )
+            neural_started = time.perf_counter()
+            valid_scores, duplicate_scores = neural_prefilter_scores(
+                neural_prefilter,
+                proposal_feature_rows,
+                selected_proposal_tensors,
+                beam,
+                step,
+                device,
+                args.neural_prefilter_batch_size,
+            )
+            defer_mask = valid_scores.lt(
+                neural_prefilter_thresholds["valid"]
+            ) | duplicate_scores.gt(neural_prefilter_thresholds["duplicate"])
+            neural_seconds = time.perf_counter() - neural_started
+            deferred = int(defer_mask.sum())
+            neural_prefilter_step.update(
+                {
+                    "candidates": len(proposals),
+                    "deferred": deferred,
+                    "scored_seconds": neural_seconds,
+                }
+            )
+            neural_prefilter_totals["candidates"] += len(proposals)
+            neural_prefilter_totals["deferred"] += deferred
+            neural_prefilter_totals["scored_seconds"] += neural_seconds
+            mask_rows = defer_mask.cpu().tolist()
+            proposal_is_deferred = mask_rows
+            if args.neural_prefilter_mode == "defer" and deferred:
+                order = [
+                    index for index, is_deferred in enumerate(mask_rows)
+                    if not is_deferred
+                ] + [
+                    index for index, is_deferred in enumerate(mask_rows)
+                    if is_deferred
+                ]
+                proposals = [proposals[index] for index in order]
+                proposal_is_deferred = [mask_rows[index] for index in order]
+
         fingerprint_before = fingerprint_audit.stats()
         fingerprint_profiles = {}
         native_fingerprint_cache = {}
@@ -1286,6 +1626,8 @@ def main() -> None:
         applied_proposal_positions = set()
         fingerprint_skipped_positions = set()
         direct_inverse_skipped_positions = set()
+        neural_step_outcomes = []
+        neural_step_groups = []
 
         def get_fingerprint_profile(parent_index: int):
             if parent_index in fingerprint_profiles:
@@ -1321,6 +1663,7 @@ def main() -> None:
             if len(children) >= args.beam_size:
                 break
             proposals_scanned += 1
+            neural_deferred = proposal_is_deferred[proposal_position]
             fingerprint = None
             direct_inverse = (
                 args.preapply_direct_inverse != "off"
@@ -1484,6 +1827,9 @@ def main() -> None:
                         continue
             attempted += 1
             applied_proposal_positions.add(proposal_position)
+            if neural_deferred:
+                neural_prefilter_step["deferred_scanned"] += 1
+                neural_prefilter_totals["deferred_scanned"] += 1
             applied = apply_rewrite(
                 beam[proposal.parent],
                 proposal,
@@ -1493,6 +1839,12 @@ def main() -> None:
             )
             if applied is None:
                 invalid += 1
+                if neural_deferred:
+                    neural_prefilter_step["deferred_invalid"] += 1
+                    neural_prefilter_totals["deferred_invalid"] += 1
+                if collect_neural_audit:
+                    neural_step_outcomes.append(0)
+                    neural_step_groups.append(-1)
                 fingerprint_audit.observe_invalid(fingerprint)
                 if direct_inverse and args.preapply_direct_inverse == "shadow":
                     direct_inverse_step["shadow_invalid"] += 1
@@ -1500,13 +1852,24 @@ def main() -> None:
                 continue
             exact_identity = (
                 exact_graph_key(applied.graph)
-                if args.preapply_fingerprint == "shadow"
-                and fingerprint is not None
+                if collect_neural_audit
+                or (
+                    args.preapply_fingerprint == "shadow"
+                    and fingerprint is not None
+                )
                 else None
             )
             if diagnostic_seen_hashes is not None:
                 diagnostic_seen_hashes.add(int(applied.graph.hash()))
             is_new_successor = seen.register(applied.graph)
+            if collect_neural_audit:
+                successor_group = successor_groups.get(exact_identity)
+                if successor_group is None:
+                    successor_group = next_successor_group
+                    successor_groups[exact_identity] = successor_group
+                    next_successor_group += 1
+                neural_step_outcomes.append(2 if is_new_successor else 1)
+                neural_step_groups.append(successor_group)
             fingerprint_audit.observe_valid(fingerprint, exact_identity)
             if direct_inverse and args.preapply_direct_inverse == "shadow":
                 inverse_result = (
@@ -1518,7 +1881,13 @@ def main() -> None:
                 direct_inverse_totals[inverse_result] += 1
             if not is_new_successor:
                 duplicates += 1
+                if neural_deferred:
+                    neural_prefilter_step["deferred_duplicates"] += 1
+                    neural_prefilter_totals["deferred_duplicates"] += 1
                 continue
+            if neural_deferred:
+                neural_prefilter_step["deferred_novel"] += 1
+                neural_prefilter_totals["deferred_novel"] += 1
             child = materialize_child(
                 beam[proposal.parent],
                 proposal,
@@ -1527,6 +1896,51 @@ def main() -> None:
             )
             children.append(child)
         apply_seconds = time.perf_counter() - apply_started
+        if collect_neural_audit:
+            if proposal_feature_rows is None or selected_proposal_tensors is None:
+                raise RuntimeError("neural audit proposal features are missing")
+            if len(neural_step_outcomes) != proposals_scanned:
+                raise RuntimeError(
+                    "neural audit labels do not align with scanned proposals"
+                )
+            selected_rows = slice(0, proposals_scanned)
+            neural_feature_chunks.append(proposal_feature_rows[selected_rows])
+            neural_outcome_chunks.append(
+                torch.tensor(neural_step_outcomes, dtype=torch.int8)
+            )
+            neural_group_chunks.append(
+                torch.tensor(neural_step_groups, dtype=torch.long)
+            )
+            neural_xfer_chunks.append(
+                selected_proposal_tensors.xfer_ids[selected_rows].cpu()
+            )
+            neural_source_chunks.append(
+                selected_proposal_tensors.source_ids[selected_rows].cpu()
+            )
+            neural_probability_chunks.append(
+                selected_proposal_tensors.probabilities[selected_rows]
+                .to(torch.float16)
+                .cpu()
+            )
+            neural_gate_delta_chunks.append(
+                selected_proposal_tensors.gate_deltas[selected_rows]
+                .to(torch.int16)
+                .cpu()
+            )
+            parent_rows = selected_proposal_tensors.parent_ids[
+                selected_rows
+            ].cpu()
+            neural_parent_gate_chunks.append(
+                torch.tensor(
+                    [state.gate_count for state in input_beam],
+                    dtype=torch.int16,
+                ).index_select(0, parent_rows)
+            )
+            neural_step_chunks.append(
+                torch.full(
+                    (proposals_scanned,), step + 1, dtype=torch.int16
+                )
+            )
         fingerprint_after = fingerprint_audit.stats()
         fingerprint_step = {
             key: fingerprint_after[key] - fingerprint_before[key]
@@ -1788,6 +2202,7 @@ def main() -> None:
                 "mode": args.preapply_direct_inverse,
                 **direct_inverse_step,
             },
+            "neural_prefilter": neural_prefilter_step,
             "model_match_seconds": model_seconds,
             "quartz_exact_match_seconds": exact_seconds,
             "exact_refresh_actions_added": exact_refresh_actions_added,
@@ -1832,6 +2247,34 @@ def main() -> None:
     total_successful_applies = sum(
         row["successful_apply_actions"] for row in step_rows
     )
+    neural_audit_rows = 0
+    if collect_neural_audit:
+        neural_audit_rows = sum(row.shape[0] for row in neural_feature_chunks)
+        if not neural_audit_rows:
+            raise RuntimeError("neural audit collection produced no rows")
+        audit_payload = {
+            "format": "frozen_candidate_successor_v1",
+            "qasm": str(args.qasm),
+            "checkpoint": str(args.checkpoint),
+            "feature_width": int(neural_feature_chunks[0].shape[1]),
+            "outcome_labels": {
+                "invalid": 0,
+                "exact_duplicate": 1,
+                "new_successor": 2,
+            },
+            "root_successor_group": 0,
+            "features": torch.cat(neural_feature_chunks),
+            "outcomes": torch.cat(neural_outcome_chunks),
+            "successor_groups": torch.cat(neural_group_chunks),
+            "xfer_ids": torch.cat(neural_xfer_chunks),
+            "source_ids": torch.cat(neural_source_chunks),
+            "probabilities": torch.cat(neural_probability_chunks),
+            "gate_deltas": torch.cat(neural_gate_delta_chunks),
+            "parent_gate_counts": torch.cat(neural_parent_gate_chunks),
+            "steps": torch.cat(neural_step_chunks),
+        }
+        args.neural_audit_output.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(audit_payload, args.neural_audit_output)
     result = {
         "mode": args.mode,
         "model_apply_backend": model_apply_backend,
@@ -1890,6 +2333,21 @@ def main() -> None:
             "profile_builds": dict(fingerprint_profile_builds),
         },
         "preapply_fingerprint_seconds": total_fingerprint_seconds,
+        "neural_audit_output": (
+            str(args.neural_audit_output)
+            if args.neural_audit_output is not None
+            else None
+        ),
+        "neural_audit_rows": neural_audit_rows,
+        "neural_prefilter": {
+            "mode": args.neural_prefilter_mode,
+            "checkpoint": (
+                str(args.neural_prefilter_checkpoint)
+                if args.neural_prefilter_checkpoint is not None
+                else None
+            ),
+            **neural_prefilter_totals,
+        },
         "preapply_fingerprint_min_proposals_per_gate": (
             args.preapply_fingerprint_min_proposals_per_gate
         ),
