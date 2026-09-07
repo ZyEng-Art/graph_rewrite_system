@@ -165,5 +165,63 @@
     "focused_unit_tests_failed": 0,
     "barenco_normalized_transitions": 116,
     "barenco_normalization_failures": 0
+  },
+  "throughput_ab_batch512": {
+    "conditions": {
+      "gpu": "NVIDIA H100 80GB HBM3",
+      "model_repeats": 10,
+      "target_recall": 0.999,
+      "per_parent_cap": 128,
+      "global_proposal_cap": 8192
+    },
+    "source_cache": {
+      "shape": [3855, 128],
+      "bytes": 986880,
+      "control_median_ms": 0.19483547657728195,
+      "control_p90_ms": 0.20515103824436665,
+      "topology_median_ms": 0.7799499435350299,
+      "topology_p90_ms": 0.7957511115819216,
+      "builds_outside_search_loop": true
+    },
+    "gf": {
+      "cpu_quartz_states_per_second": 6.111259403157838,
+      "control_cap8192": {
+        "gpu_resident_states_per_second": 2123.760266898001,
+        "gpu_proposals_full_states_per_second": 1870.8766285838599
+      },
+      "topology_cap8192": {
+        "gpu_resident_states_per_second": 2104.740310460978,
+        "gpu_proposals_full_states_per_second": 1888.1128290086815,
+        "gpu_resident_change_vs_control": -0.008955792578605903,
+        "gpu_proposals_full_change_vs_control": 0.009212900605780838
+      },
+      "topology_cap10240": {
+        "gpu_resident_states_per_second": 2075.684802567103,
+        "gpu_proposals_full_states_per_second": 1866.7238523437761,
+        "gpu_resident_change_vs_control": -0.022636954405931164,
+        "gpu_proposals_full_change_vs_control": -0.002219695396605159,
+        "gpu_proposals_full_speedup_vs_cpu": 305.45649091236317
+      }
+    },
+    "barenco": {
+      "cpu_quartz_states_per_second": 67.53981591018113,
+      "control_cap8192": {
+        "gpu_resident_states_per_second": 9624.179946925857,
+        "gpu_proposals_full_states_per_second": 7328.805335617808
+      },
+      "topology_cap8192": {
+        "gpu_resident_states_per_second": 9728.027297573395,
+        "gpu_proposals_full_states_per_second": 7070.6235333739805,
+        "gpu_resident_change_vs_control": 0.010790254465338656,
+        "gpu_proposals_full_change_vs_control": -0.035228361297723443
+      },
+      "topology_cap10240": {
+        "gpu_resident_states_per_second": 7790.119493685422,
+        "gpu_proposals_full_states_per_second": 7097.891115073293,
+        "gpu_resident_change_vs_control": -0.19056797185367136,
+        "gpu_proposals_full_change_vs_control": -0.031507757399733105,
+        "gpu_proposals_full_speedup_vs_cpu": 105.09195234574717
+      }
+    }
   }
 }
