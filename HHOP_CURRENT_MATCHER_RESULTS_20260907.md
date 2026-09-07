@@ -10,7 +10,11 @@ not selected because its cleaner candidate set missed more true matches.
 
 Selected remote checkpoint:
 
-`/SharedData/dengzy/quarl_matchformer_fresh_20260902/experiment/refresh_consistency_model_20260906/runs/hhop_h6_topo1_balanced_s907.pt`
+`/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/hhop_h6_topo1_balanced_s907.pt`
+
+Selected R99.9 calibration:
+
+`/SharedData/dengzy/quarl_matchformer_fresh_20260902/runs/hhop_h6_topo1_balanced_s907_calibration_r999.json`
 
 SHA-256:
 
