@@ -59,6 +59,14 @@ application or successor deduplication.
 | Barenco 58 | 43.79 states/s | 10,757.76 states/s | 245.66x | 982.22 states/s | 22.43x |
 | GF 495 | 4.88 states/s | 3,764.41 states/s | 770.86x | 125.40 states/s | 25.68x |
 
+The end-to-end beam driver does not yet use this full GPU proposal path. It
+currently materializes all threshold candidates on the host and performs the
+source-to-xfer expansion and ranking in Python. Its observed in-search matcher
+rates are therefore lower: 798.28 states/s for Barenco depth 128, 119.35
+states/s for GF depth 128, and 165.26 states/s for the common first eight GF
+layers. The full-proposal rows measure an available pipeline that still needs
+to be wired into the exact end-to-end driver.
+
 The batch benchmark demonstrates that the matcher itself is fast. The smaller
 end-to-end speedups arise from exact Quartz apply, invalid/duplicate successor
 handling, graph materialization, and—most importantly for quality—the global

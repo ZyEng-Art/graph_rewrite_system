@@ -102,6 +102,8 @@
   },
   "batch512_matcher_throughput": {
     "note": "The untouched original QASM is cyclically repeated to 512 states. QASM parsing is excluded.",
+    "full_gpu_proposal_path_integrated_in_end_to_end_driver": false,
+    "integration_note": "The end-to-end driver still materializes threshold candidates on the host before Python ranking; gpu_full_proposal is a separately measured available pipeline, not its observed end-to-end match rate.",
     "barenco": {
       "cpu_original_xfer_anchor_states_per_second": 43.791397476066486,
       "model_gpu_full_proposal_states_per_second": 10757.756282521934,
