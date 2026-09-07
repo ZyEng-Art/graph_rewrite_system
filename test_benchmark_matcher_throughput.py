@@ -143,6 +143,16 @@ class RawQasmBenchmarkTest(unittest.TestCase):
 
         batch, dense_to_slot, stats = collate_exact_states([first, second])
 
+        self.assertTrue(
+            {
+                "initial_types",
+                "action_xfers",
+                "action_sources",
+                "binding_slots",
+                "destination_slots",
+                "destination_types",
+            }.isdisjoint(batch)
+        )
         self.assertEqual(batch["current_types"].tolist(), [[7, 8], [6, -1]])
         self.assertEqual(dense_to_slot.tolist(), [[4, 9], [12, -1]])
         self.assertEqual(batch["current_edge_src"].tolist(), [0])

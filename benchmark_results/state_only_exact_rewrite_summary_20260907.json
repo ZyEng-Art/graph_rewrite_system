@@ -1,0 +1,89 @@
+{
+  "date": "2026-09-07",
+  "machine": "h100-gpu3",
+  "branches": {
+    "unified": "unified-graph-rewrite-20260907",
+    "unified_commit": "35625603927f5fae866958955d914869696e54f9",
+    "implementation": "state-only-exact-rewrite-20260907",
+    "implementation_code_commit": "ec5b935530e26ce3eae126897e6a218e35ed71ca",
+    "included_tips": {
+      "main": "49a909704a03ce26efa3c90f5cf972294b220c03",
+      "barenco-trajectory-repro-20260905": "73bc5e80a1966827a41e30818a58d7d737031966",
+      "barenco-trajectory-repro-clean-20260905": "c6bba2dee44658a14d51594f370b3dacab5d26c1",
+      "refresh-consistency-model-20260906": "c6b48adfaada60b4a00e7e0e2475c57544282d5d"
+    }
+  },
+  "state_only_semantics": {
+    "action_sequence_is_model_input": false,
+    "exact_current_graph_is_model_input": true,
+    "proposal_selection_backend": "gpu_full_action_topk",
+    "selected_action_application": "exact_quartz_complete_binding",
+    "successor_dedup_identity": "exact_graph_key",
+    "action_history_retained_for_trace_only": true,
+    "cpu_match_refresh": false
+  },
+  "common_benchmark_config": {
+    "beam_size": 1000,
+    "microbatch": 512,
+    "target_recall": 0.999,
+    "max_source_matches": 10240,
+    "max_actions_per_parent": 128,
+    "proposal_factor": 16,
+    "max_gate_increase": 3,
+    "eliminate_rotation": true,
+    "dedup_identity": "exact"
+  },
+  "depth_8_controlled_ab": {
+    "barenco": {
+      "baseline": {"best_gates": 55, "unique_graphs": 7116, "total_seconds": 19.17246002703905, "match_states_per_second": 795.3255967848302, "accepted_actions_per_second": 371.1052201942613},
+      "state_only": {"best_gates": 55, "unique_graphs": 7116, "total_seconds": 10.56515620648861, "match_states_per_second": 4258.403971082472, "accepted_actions_per_second": 673.4401139881217},
+      "speedup": {"end_to_end": 1.8146877956488943, "model_match": 5.354290102440339, "proposal": 8.37092648231705},
+      "best_trace_equal": true,
+      "best_qasm_equal": true,
+      "best_qasm_sha256": "f96cfb697f93ccad71087e64a45cecfe46bb79664f90406e02ebdb18f51054f0"
+    },
+    "gf2_6": {
+      "baseline": {"best_gates": 485, "unique_graphs": 7886, "total_seconds": 84.20986035652459, "match_states_per_second": 162.36768171287204, "accepted_actions_per_second": 93.63511549142558},
+      "state_only": {"best_gates": 485, "unique_graphs": 7886, "total_seconds": 37.01651734113693, "match_states_per_second": 1163.2123224826098, "accepted_actions_per_second": 213.0130159823895},
+      "speedup": {"end_to_end": 2.274926611287148, "model_match": 7.164063132585785, "proposal": 15.04775235872274},
+      "best_trace_equal": true,
+      "best_qasm_equal": true,
+      "best_qasm_sha256": "99771cdbc7d741becb3e089099d7d0f9815324f5944de9f313acebaf74adf3ea"
+    }
+  },
+  "depth_128": {
+    "barenco": {
+      "baseline": {"best_gates": 38, "best_step": 34, "best_seconds": 88.07001825235784, "total_seconds": 374.7722480110824, "match_states_per_second": 798.2772674960472, "accepted_actions_per_second": 316.7256930841099},
+      "state_only": {"best_gates": 38, "best_step": 34, "best_seconds": 47.44151291064918, "total_seconds": 203.8111223746091, "match_states_per_second": 7399.1056834716555, "accepted_actions_per_second": 601.3656103356468},
+      "speedup": {"end_to_end": 1.8388213736551785, "time_to_best": 1.8563914354550188, "model_match": 9.268841773085181, "proposal": 7.8977218129844555},
+      "best_trace_equal": true,
+      "best_qasm_equal": true,
+      "best_qasm_sha256": "89914672f7b83d10378b5283c6e9cf4bd6f9084505a4d37573118d5b63edb627"
+    },
+    "gf2_6_fixed_depth": {
+      "baseline": {"best_gates": 474, "best_step": 128, "best_seconds": 1865.9686429146677, "total_seconds": 1865.9716116581112, "match_states_per_second": 119.35351963335718, "accepted_actions_per_second": 68.53534062415922},
+      "state_only": {"best_gates": 475, "best_step": 128, "best_seconds": 555.5763428993523, "total_seconds": 555.5779225192964, "match_states_per_second": 1150.729417790372, "accepted_actions_per_second": 230.18373267983534},
+      "speedup": {"end_to_end": 3.3586136814018236, "model_match": 9.64135302691789, "proposal": 18.77245036131763},
+      "equal_quality": false
+    },
+    "gf2_6_equal_or_better_quality": {
+      "baseline": {"best_gates": 474, "best_step": 128, "best_seconds": 1865.9686429146677, "total_seconds": 1865.9716116581112},
+      "state_only": {"best_gates": 473, "best_step": 133, "best_seconds": 579.4201529938728, "total_seconds": 579.4218696430326, "match_states_per_second": 1146.2174199074657, "accepted_actions_per_second": 229.34067035106418, "unique_graphs": 132886},
+      "speedup_to_equal_or_better_result": 3.220406872755774,
+      "state_only_qasm_sha256": "85a66226b70d58b77919b5a8bdd4468862c2f0ef2c09c4bd20f6b21d5fd3b815"
+    }
+  },
+  "tests": {
+    "test_benchmark_matcher_throughput": {"passed": 6, "failed": 0},
+    "gpu_proposal_equivalence": "passed_on_gpu_and_cpu",
+    "current_graph_encoding_equivalence": "passed",
+    "exact_refresh_dedup": {"passed": 9, "failed": 0},
+    "tensorized_and_ppo_regressions": "passed"
+  },
+  "interpretation": {
+    "new_primary_bottleneck": "exact Quartz rewrite/application",
+    "barenco_36_reached": false,
+    "barenco_36_blocker": "gate-first proposal ranking loses the known reference continuation; exact matching/application is not the blocker",
+    "bf16_note": "parallel graph reductions are not bitwise deterministic at candidates immediately around the calibrated threshold"
+  }
+}

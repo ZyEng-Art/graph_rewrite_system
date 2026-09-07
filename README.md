@@ -56,6 +56,35 @@ be built separately.  The measured environment used Python 3.12 and PyTorch
 external because the training dataset and compiled Quartz tree are not part of
 this repository.
 
+## Exact state-only search
+
+`beam_search_benchmark.py` now defaults model mode to
+`--model-pipeline state_only_gpu`.  This path does not serialize or replay an
+action prefix in the neural model.  At every layer it:
+
+1. densely collates each live, exact Quartz graph;
+2. predicts and structurally decodes source bindings from that graph only;
+3. expands source bindings to rewrite actions and applies the parent/global
+   Top-K caps on GPU;
+4. copies only selected actions to the host;
+5. applies each complete binding through Quartz, deduplicates the exact
+   successor, and encodes that successor in the next layer.
+
+The old `initial graph + zero-length action tensors + Python proposal` path is
+retained as `--model-pipeline compat_host` for controlled A/B tests.  The
+state-only path deliberately rejects periodic CPU match refreshes: exact
+Quartz *rewrite and identity checking* still occur for every selected action,
+but candidate matching stays model-only so the measured boundary is clear.
+
+On H100 with beam 1000 and microbatch 512, controlled depth-8 runs preserve
+the exact best trace/QASM and improve end-to-end time by 1.81x on Barenco and
+2.27x on GF.  In long runs, Barenco reaches the same 38-gate circuit at the
+same step in 47.44 seconds rather than 88.07 seconds, and GF reaches a
+strictly better 473-gate result in 579.42 seconds versus the previous
+474-gate result in 1865.97 seconds (3.22x faster despite five more layers).
+See `benchmark_results/state_only_exact_rewrite_findings_20260907.md` for the
+Barenco/GF quality and throughput comparison.
+
 ## Corrected baseline boundary
 
 The high-accuracy checkpoint used by the previous lazy rollout,
