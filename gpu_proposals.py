@@ -5,8 +5,8 @@ import time
 
 import torch
 
-from beam_search_benchmark import BeamState, Proposal
 from ppo_core import build_policy_features, segmented_log_softmax
+from search_types import BeamState, Proposal
 from threshold_inference import CandidateTensors
 
 

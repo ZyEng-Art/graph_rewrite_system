@@ -54,6 +54,36 @@ def main() -> None:
     assert logits.shape == (*gate_types.shape, model.num_sources)
     assert eligible.shape == logits.shape
 
+    # State-only exact inference must reproduce the historical compatibility
+    # path that rebased the current graph as s0 and supplied empty actions.
+    rebased = dict(batch)
+    rebased.update(
+        {
+            "initial_types": batch["current_types"],
+            "edge_batch": batch["current_edge_batch"],
+            "edge_src": batch["current_edge_src"],
+            "edge_dst": batch["current_edge_dst"],
+            "edge_relation": batch["current_edge_relation"],
+            "action_xfers": batch["action_xfers"][:, :0],
+            "action_sources": batch["action_sources"][:, :0],
+            "binding_slots": batch["binding_slots"][:, :0],
+            "destination_slots": batch["destination_slots"][:, :0],
+            "destination_types": batch["destination_types"][:, :0],
+        }
+    )
+    with torch.no_grad():
+        compatibility_states, compatibility_live, compatibility_types = (
+            model.encode(rebased)
+        )
+        state_only_states, state_only_live, state_only_types = (
+            model.encode_current_graph(batch)
+        )
+    assert torch.equal(compatibility_live, state_only_live)
+    assert torch.equal(compatibility_types, state_only_types)
+    assert torch.allclose(
+        compatibility_states, state_only_states, atol=2e-5, rtol=2e-5
+    )
+
     # The fused SDPA readout must preserve the eager implementation, including
     # a row with no valid history. Temporarily make the normally zero-initialized
     # output projection observable for this backend equivalence check.

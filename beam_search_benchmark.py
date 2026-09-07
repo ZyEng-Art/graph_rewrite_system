@@ -29,39 +29,16 @@ from dataset import (
     compact_live_slots,
     RuleMetadata,
 )
+from gpu_proposals import GpuRuleIndex, build_gpu_proposals
 from model_factory import build_model
-from threshold_inference import load_threshold_config, threshold_candidates
+from search_types import BeamState, Proposal
+from threshold_inference import (
+    CandidateTensors,
+    load_threshold_config,
+    threshold_candidates,
+    threshold_candidate_tensors,
+)
 from train import autocast_context, move_batch
-
-
-@dataclass
-class BeamState:
-    graph: Any
-    snapshot: dict | None
-    guid_to_slot: dict[int, int]
-    next_slot: int
-    last_touched: Any
-    rewrite_distance: Any
-    previous_preferred: set[int]
-    local_streak: int
-    gate_count: int
-    depth: int
-    history: tuple[tuple[int, int], ...]
-    topology_index: Any = None
-    exact_graph_checkpoint: Any = None
-    exact_slot_checkpoint: dict[int, int] | None = None
-    exact_checkpoint_depth: int = 0
-
-
-@dataclass(frozen=True)
-class Proposal:
-    parent: int
-    xfer_id: int
-    anchor_slot: int
-    binding: tuple[int, ...] | None
-    probability: float
-    next_gate_count: int
-    value_score: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -202,6 +179,167 @@ def collate_matcher_states(states: list[BeamState], *, paged_action: bool) -> di
     return batch
 
 
+def collate_exact_states(
+    states: list[BeamState],
+) -> tuple[dict, torch.Tensor, dict[str, int]]:
+    """Collate only each state's live exact graph, with dense local slots.
+
+    Beam states retain monotonically assigned slots so Quartz bindings and
+    diagnostics remain stable across a trajectory.  Those historical holes
+    have no meaning to a state-only matcher, so this path compacts every exact
+    graph independently and returns a map back to the persistent beam slots.
+    """
+    if not states:
+        raise ValueError("cannot collate an empty state list")
+    live_counts = [len(state.snapshot["nodes"]) for state in states]
+    max_live = max(live_counts)
+    if not max_live:
+        raise ValueError("cannot match an empty circuit")
+    batch_size = len(states)
+    type_rows = []
+    distance_rows = []
+    touch_rows = []
+    slot_rows = []
+    live_slot_rows = []
+    streak_rows = []
+    edge_batches = []
+    edge_sources = []
+    edge_destinations = []
+    edge_relations = []
+    max_persistent_slots = 0
+    for batch_index, state in enumerate(states):
+        nodes = sorted(state.snapshot["nodes"], key=lambda row: int(row[0]))
+        persistent_slots = [int(row[0]) for row in nodes]
+        slot_to_dense = {
+            persistent_slot: dense_slot
+            for dense_slot, persistent_slot in enumerate(persistent_slots)
+        }
+        slot_rows.append(torch.tensor(persistent_slots, dtype=torch.long))
+        type_rows.append(
+            torch.tensor([int(row[1]) for row in nodes], dtype=torch.long)
+        )
+        distance_rows.append(
+            torch.tensor(
+                [
+                    state.rewrite_distance.get(persistent_slot, 5)
+                    for persistent_slot in persistent_slots
+                ],
+                dtype=torch.long,
+            )
+        )
+        touch_rows.append(
+            torch.tensor(
+                [
+                    _touch_age_bucket(
+                        state.depth - 1 - state.last_touched[persistent_slot]
+                    )
+                    if persistent_slot in state.last_touched
+                    else 7
+                    for persistent_slot in persistent_slots
+                ],
+                dtype=torch.long,
+            )
+        )
+        live_slot_rows.append(torch.arange(len(nodes), dtype=torch.long))
+        max_persistent_slots = max(
+            max_persistent_slots,
+            max(slot_to_dense, default=-1) + 1,
+        )
+        streak_rows.append(
+            _local_streak_bucket(bool(state.depth), state.local_streak)
+        )
+        edges = state.snapshot["edges"]
+        if edges:
+            edge_batches.append(
+                torch.full((len(edges),), batch_index, dtype=torch.long)
+            )
+            edge_sources.append(
+                torch.tensor(
+                    [slot_to_dense[int(row[0])] for row in edges],
+                    dtype=torch.long,
+                )
+            )
+            edge_destinations.append(
+                torch.tensor(
+                    [slot_to_dense[int(row[1])] for row in edges],
+                    dtype=torch.long,
+                )
+            )
+            edge_relations.append(
+                torch.tensor(
+                    [int(row[2]) * 4 + int(row[3]) for row in edges],
+                    dtype=torch.long,
+                )
+            )
+    pad = torch.nn.utils.rnn.pad_sequence
+    current_types = pad(type_rows, batch_first=True, padding_value=-1)
+    rewrite_distance = pad(distance_rows, batch_first=True, padding_value=5)
+    touch_age = pad(touch_rows, batch_first=True, padding_value=7)
+    dense_to_slot = pad(slot_rows, batch_first=True, padding_value=-1)
+    current_live_slots = pad(
+        live_slot_rows, batch_first=True, padding_value=-1
+    )
+    empty = torch.empty(0, dtype=torch.long)
+    batch = {
+        "current_types": current_types,
+        "current_live_slots": current_live_slots,
+        "current_edge_batch": (
+            torch.cat(edge_batches) if edge_batches else empty
+        ),
+        "current_edge_src": (
+            torch.cat(edge_sources) if edge_sources else empty.clone()
+        ),
+        "current_edge_dst": (
+            torch.cat(edge_destinations) if edge_destinations else empty.clone()
+        ),
+        "current_edge_relation": (
+            torch.cat(edge_relations) if edge_relations else empty.clone()
+        ),
+        "current_rewrite_distance": rewrite_distance,
+        "current_touch_age": touch_age,
+        "current_local_streak": torch.tensor(streak_rows, dtype=torch.long),
+    }
+    return batch, dense_to_slot, {
+        "live_nodes": sum(live_counts),
+        "padded_dense_slots": batch_size * max_live,
+        "padded_persistent_slots": batch_size * max_persistent_slots,
+        "max_dense_slots": max_live,
+        "max_persistent_slots": max_persistent_slots,
+    }
+
+
+def remap_candidate_slots(
+    candidates: CandidateTensors,
+    dense_to_slot: torch.Tensor,
+    *,
+    batch_offset: int,
+) -> CandidateTensors:
+    """Map state-local dense matcher slots back to persistent Quartz slots."""
+    if not candidates.batch_ids.numel():
+        return CandidateTensors(
+            batch_ids=candidates.batch_ids + batch_offset,
+            sources=candidates.sources,
+            anchors=candidates.anchors,
+            bindings=candidates.bindings,
+            probabilities=candidates.probabilities,
+        )
+    if dense_to_slot.device != candidates.batch_ids.device:
+        dense_to_slot = dense_to_slot.to(candidates.batch_ids.device)
+    anchors = dense_to_slot[candidates.batch_ids, candidates.anchors]
+    binding_present = candidates.bindings.ge(0)
+    safe_bindings = candidates.bindings.clamp_min(0)
+    binding_rows = candidates.batch_ids.unsqueeze(1).expand_as(safe_bindings)
+    bindings = dense_to_slot[binding_rows, safe_bindings]
+    bindings = torch.where(binding_present, bindings, -1)
+    return CandidateTensors(
+        batch_ids=candidates.batch_ids + batch_offset,
+        sources=candidates.sources,
+        anchors=anchors,
+        bindings=bindings,
+        probabilities=candidates.probabilities,
+    )
+
+
 def exact_actions(
     state: BeamState, context
 ) -> list[tuple[int, int, tuple[int, ...] | None, float]]:
@@ -252,6 +390,68 @@ def model_matches(
     if device.type == "cuda":
         torch.cuda.synchronize(device)
     return output, time.perf_counter() - started
+
+
+@torch.no_grad()
+def state_only_candidate_tensors(
+    states: list[BeamState],
+    model,
+    device: torch.device,
+    threshold_config: dict,
+    source_vectors: torch.Tensor,
+    microbatch: int,
+    max_candidates: int,
+) -> tuple[CandidateTensors, float, dict[str, int]]:
+    """Predict all retained matches from exact graphs without action tensors."""
+    if not hasattr(model, "encode_current_graph"):
+        raise ValueError(
+            "state-only inference requires a model with encode_current_graph"
+        )
+    chunks = []
+    collation = {
+        "live_nodes": 0,
+        "padded_dense_slots": 0,
+        "padded_persistent_slots": 0,
+        "max_dense_slots": 0,
+        "max_persistent_slots": 0,
+    }
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
+    started = time.perf_counter()
+    for begin in range(0, len(states), microbatch):
+        selected = states[begin : begin + microbatch]
+        cpu_batch, dense_to_slot, batch_stats = collate_exact_states(selected)
+        for name in ("live_nodes", "padded_dense_slots", "padded_persistent_slots"):
+            collation[name] += batch_stats[name]
+        for name in ("max_dense_slots", "max_persistent_slots"):
+            collation[name] = max(collation[name], batch_stats[name])
+        batch = move_batch(cpu_batch, device)
+        with autocast_context(device):
+            encoded, live, gate_types = model.encode_current_graph(batch)
+            logits, eligible = model.match_logits(
+                encoded,
+                live,
+                gate_types,
+                source_vectors=source_vectors,
+            )
+        local_candidates = threshold_candidate_tensors(
+            model,
+            batch,
+            logits,
+            eligible,
+            threshold_config,
+            max_candidates_per_state=max_candidates,
+        )
+        chunks.append(
+            remap_candidate_slots(
+                local_candidates,
+                dense_to_slot,
+                batch_offset=begin,
+            )
+        )
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
+    return CandidateTensors.cat(chunks), time.perf_counter() - started, collation
 
 
 def rank_proposals(
@@ -581,9 +781,28 @@ def main() -> None:
             "when available, or force the original anchor rematch for A/B"
         ),
     )
+    parser.add_argument(
+        "--model-pipeline",
+        choices=("compat_host", "state_only_gpu"),
+        default="state_only_gpu",
+        help=(
+            "compat_host preserves the previous empty-action-prefix and Python "
+            "proposal path; state_only_gpu encodes only the exact current graph "
+            "and selects expanded actions on GPU"
+        ),
+    )
     args = parser.parse_args()
     if args.mode == "model" and (args.checkpoint is None or args.calibration is None):
         parser.error("model mode requires --checkpoint and --calibration")
+    if (
+        args.mode == "model"
+        and args.model_pipeline == "state_only_gpu"
+        and args.refresh_interval
+    ):
+        parser.error(
+            "state_only_gpu does not use periodic CPU matching; set "
+            "--refresh-interval 0"
+        )
 
     # Quartz imports these optional conversion packages unconditionally, while
     # this benchmark uses only the compiled graph API.
@@ -631,6 +850,8 @@ def main() -> None:
 
     model = None
     threshold_config = None
+    source_vectors = None
+    gpu_rule_index = None
     if args.mode == "model":
         checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
         train_args = checkpoint["args"]
@@ -640,6 +861,22 @@ def main() -> None:
         model.load_state_dict(checkpoint["model"])
         model.eval()
         threshold_config = load_threshold_config(args.calibration, args.target_recall)
+        if args.model_pipeline == "state_only_gpu":
+            if not hasattr(model, "encode_current_graph"):
+                raise ValueError(
+                    "checkpoint architecture does not support state-only inference"
+                )
+            with torch.no_grad(), autocast_context(device):
+                source_vectors = model.retrieval_source(
+                    model.source_representations()
+                )
+            gpu_rule_index = GpuRuleIndex.build(
+                source_to_xfers,
+                gate_deltas,
+                model.num_sources,
+                args.max_gate_increase,
+                device,
+            )
 
     graph = quartz.PyGraph.from_qasm(context=context, filename=str(args.qasm))
     guid_direct_binding_available = hasattr(
@@ -691,7 +928,7 @@ def main() -> None:
             history=(),
         )
     ]
-    if args.mode == "model":
+    if args.mode == "model" and args.model_pipeline == "compat_host":
         model_matches(
             beam,
             model,
@@ -700,6 +937,24 @@ def main() -> None:
             args.microbatch,
             args.max_source_matches,
             paged_action=train_args.get("architecture") == "paged_action",
+        )
+    elif args.mode == "model":
+        warm_candidates, _, _ = state_only_candidate_tensors(
+            beam,
+            model,
+            device,
+            threshold_config,
+            source_vectors,
+            args.microbatch,
+            args.max_source_matches,
+        )
+        build_gpu_proposals(
+            warm_candidates,
+            beam,
+            gpu_rule_index,
+            per_parent_cap=max(args.max_actions_per_parent, args.beam_size * 2),
+            global_cap=args.beam_size * args.proposal_factor,
+            ranking_mode="gate",
         )
     else:
         graph.available_xfers_parallel(context=context, node=graph.nodes[0])
@@ -742,9 +997,44 @@ def main() -> None:
             reference_target_seen_before = (
                 reference_hashes[step + 1] in diagnostic_seen_hashes
             )
-        model_seconds = exact_seconds = 0.0
+        model_seconds = exact_seconds = proposal_seconds = 0.0
         exact_refresh_actions_added = 0
-        if args.mode == "model":
+        action_rows = None
+        source_binding_candidates = 0
+        proposal_metrics = {}
+        collation_metrics = {}
+        if args.mode == "model" and args.model_pipeline == "state_only_gpu":
+            candidates, model_seconds, collation_metrics = (
+                state_only_candidate_tensors(
+                    beam,
+                    model,
+                    device,
+                    threshold_config,
+                    source_vectors,
+                    args.microbatch,
+                    args.max_source_matches,
+                )
+            )
+            source_binding_candidates = int(candidates.sources.numel())
+            effective_parent_cap = max(
+                args.max_actions_per_parent,
+                math.ceil(args.beam_size / max(1, len(beam))) * 2,
+            )
+            proposal_started = time.perf_counter()
+            proposals, proposal_metrics, _, _ = build_gpu_proposals(
+                candidates,
+                beam,
+                gpu_rule_index,
+                per_parent_cap=effective_parent_cap,
+                global_cap=args.beam_size * args.proposal_factor,
+                ranking_mode="gate",
+            )
+            proposal_seconds = time.perf_counter() - proposal_started
+            if proposals is None:
+                raise RuntimeError("state-only GPU proposal materialization failed")
+            total_action_candidates = int(proposal_metrics["eligible_actions"])
+            matched_action_count = int(proposal_metrics["predicted_actions"])
+        elif args.mode == "model":
             predicted, model_seconds = model_matches(
                 beam,
                 model,
@@ -796,17 +1086,22 @@ def main() -> None:
                 action_rows.append(exact_actions(state, context))
                 exact_seconds += time.perf_counter() - started
 
-        proposal_started = time.perf_counter()
-        proposals, total_action_candidates = rank_proposals(
-            beam,
-            action_rows,
-            gate_deltas,
-            beam_size=args.beam_size,
-            max_actions_per_parent=args.max_actions_per_parent,
-            proposal_factor=args.proposal_factor,
-            max_gate_increase=args.max_gate_increase,
-        )
-        proposal_seconds = time.perf_counter() - proposal_started
+        if action_rows is not None:
+            proposal_started = time.perf_counter()
+            proposals, total_action_candidates = rank_proposals(
+                beam,
+                action_rows,
+                gate_deltas,
+                beam_size=args.beam_size,
+                max_actions_per_parent=args.max_actions_per_parent,
+                proposal_factor=args.proposal_factor,
+                max_gate_increase=args.max_gate_increase,
+            )
+            proposal_seconds = time.perf_counter() - proposal_started
+            matched_action_count = sum(map(len, action_rows))
+            source_binding_candidates = (
+                sum(map(len, predicted)) if args.mode == "model" else 0
+            )
 
         apply_started = time.perf_counter()
         children = []
@@ -859,7 +1154,11 @@ def main() -> None:
                 "retained": not reference_lost,
                 "beam_indices": retained_indices,
             }
-            if reference_lost and reference_parent_indices:
+            if (
+                reference_lost
+                and reference_parent_indices
+                and action_rows is not None
+            ):
                 def proposal_key(proposal):
                     return (
                         int(proposal.parent),
@@ -965,6 +1264,40 @@ def main() -> None:
                     "matching_attempted_proposal_positions": attempted_match_positions,
                     "attempted_proposals": attempted,
                 }
+            elif reference_lost and reference_parent_indices:
+                matching_positions = []
+                for proposal_index, candidate in enumerate(proposals):
+                    if candidate.parent not in reference_parent_indices:
+                        continue
+                    candidate_result = apply_rewrite(
+                        input_beam[candidate.parent],
+                        candidate,
+                        xfers,
+                        eliminate_rotation=args.eliminate_rotation,
+                        binding_backend=model_apply_backend,
+                    )
+                    if (
+                        candidate_result is not None
+                        and int(candidate_result.graph.hash()) == expected_hash
+                    ):
+                        matching_positions.append(proposal_index)
+                attempted_positions = [
+                    index for index in matching_positions if index < attempted
+                ]
+                retention_row["loss_detail"] = {
+                    "exclusion_stage": (
+                        "gpu_match_or_proposal_cap"
+                        if not matching_positions
+                        else "beam_filled_before_proposal"
+                        if not attempted_positions
+                        else "global_exact_dedup"
+                        if reference_target_seen_before
+                        else "attempted_but_not_retained"
+                    ),
+                    "matching_global_proposal_positions": matching_positions,
+                    "matching_attempted_proposal_positions": attempted_positions,
+                    "attempted_proposals": attempted,
+                }
             reference_retention.append(retention_row)
         elapsed = time.perf_counter() - step_started
         cumulative_seconds = time.perf_counter() - total_started
@@ -979,17 +1312,17 @@ def main() -> None:
                     "seconds": best_first_seen_seconds,
                 }
             )
-        matched_action_count = sum(map(len, action_rows))
         match_seconds = model_seconds + exact_seconds
         successful_applies = attempted - invalid
         row = {
             "step": step + 1,
-            "input_states": len(action_rows),
+            "input_states": len(input_beam),
             "output_states": len(beam),
             "best_gate_count": beam[0].gate_count,
             "global_best_gate_count": best_state.gate_count,
             "cumulative_seconds": cumulative_seconds,
             "predicted_or_exact_actions": matched_action_count,
+            "source_binding_candidates": source_binding_candidates,
             "eligible_actions_before_parent_cap": total_action_candidates,
             "proposals_after_caps": len(proposals),
             "attempted_actions": attempted,
@@ -1001,10 +1334,13 @@ def main() -> None:
             "quartz_exact_match_seconds": exact_seconds,
             "exact_refresh_actions_added": exact_refresh_actions_added,
             "proposal_seconds": proposal_seconds,
+            "proposal_pipeline_metrics": proposal_metrics,
+            "state_only_collation": collation_metrics,
             "quartz_apply_seconds": apply_seconds,
             "total_seconds": elapsed,
             "accepted_actions_per_second": len(beam) / elapsed,
-            "match_states_per_second": len(action_rows) / max(1e-12, match_seconds),
+            "match_states_per_second": len(input_beam)
+            / max(1e-12, match_seconds),
             "matched_actions_per_second": matched_action_count
             / max(1e-12, match_seconds),
             "successful_apply_actions": successful_applies,
@@ -1040,13 +1376,30 @@ def main() -> None:
         "model_apply_backend": model_apply_backend,
         "direct_binding_available": direct_binding_available,
         "dedup_before_child_materialization": True,
-        "proposal_selection_backend": "stable_bounded_topk",
+        "proposal_selection_backend": (
+            "gpu_full_action_topk"
+            if args.mode == "model" and args.model_pipeline == "state_only_gpu"
+            else "stable_bounded_topk"
+        ),
+        "model_pipeline": args.model_pipeline if args.mode == "model" else None,
+        "action_sequence_input": (
+            False
+            if args.mode == "model" and args.model_pipeline == "state_only_gpu"
+            else None
+            if args.mode == "quartz"
+            else "zero_length_compatibility_tensors"
+        ),
         "input_kind": "qasm_initial",
         "rule_metadata": str(args.data),
         "rule_metadata_role": "rewrite vocabulary only; not a search state",
         "eliminate_rotation": args.eliminate_rotation,
         "qasm": str(args.qasm),
         "beam_size": args.beam_size,
+        "microbatch": args.microbatch,
+        "max_source_matches": args.max_source_matches,
+        "max_actions_per_parent": args.max_actions_per_parent,
+        "proposal_factor": args.proposal_factor,
+        "max_gate_increase": args.max_gate_increase,
         "requested_depth": args.depth,
         "completed_depth": len(step_rows),
         "initial_gate_count": initial_gate_count,

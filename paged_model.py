@@ -349,6 +349,32 @@ class PagedActionBindingModel(S0ActionBindingModel):
             )
         return states, live, gate_types
 
+    def encode_current_graph(
+        self, batch: dict
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Encode one exact graph state without constructing an action prefix.
+
+        This is mathematically identical to ``encode`` on a batch rebased with
+        ``initial_types == current_types`` and a zero-length action sequence.
+        It makes that inference contract explicit and avoids touching the
+        action transformer, action bindings, or destination tensors.
+        """
+        gate_types = batch["current_types"]
+        live = gate_types.ge(0)
+        states = self.gate_embedding(gate_types.clamp_min(0)) + self.initial_marker
+        states = states * live.unsqueeze(-1)
+        for layer in self.graph_layers:
+            states = layer(
+                states,
+                live,
+                batch["current_edge_batch"],
+                batch["current_edge_src"],
+                batch["current_edge_dst"],
+                batch["current_edge_relation"],
+            )
+        states = self._fuse_readout_graph(states, live, gate_types, batch)
+        return states, live, gate_types
+
     def _fuse_action_history(
         self,
         states: torch.Tensor,

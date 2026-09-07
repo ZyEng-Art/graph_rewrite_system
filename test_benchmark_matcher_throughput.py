@@ -1,14 +1,19 @@
 from types import SimpleNamespace
 import unittest
 
+import torch
+
 from benchmark_matcher_throughput import InitialGraphDataset, snapshot_qasm_graph
 from beam_search_benchmark import (
     BeamState,
     Proposal,
     apply_rewrite,
+    collate_exact_states,
     collate_matcher_states,
+    remap_candidate_slots,
     rank_proposals,
 )
+from threshold_inference import CandidateTensors
 
 
 class FakeApplyGraph:
@@ -104,6 +109,63 @@ class RawQasmBenchmarkTest(unittest.TestCase):
         self.assertEqual(batch["current_types"].tolist(), [[7]])
         self.assertEqual(batch["action_xfers"].shape, (1, 0))
         self.assertEqual(batch["binding_slots"].shape, (1, 0, 0))
+
+    def test_state_only_collation_compacts_and_restores_persistent_slots(self) -> None:
+        first = BeamState(
+            graph=None,
+            snapshot={
+                "nodes": [(4, 7, 101), (9, 8, 305)],
+                "edges": [(4, 9, 2, 3)],
+            },
+            guid_to_slot={101: 4, 305: 9},
+            next_slot=10,
+            last_touched={9: 3},
+            rewrite_distance={4: 5, 9: 1},
+            previous_preferred={9},
+            local_streak=2,
+            gate_count=2,
+            depth=4,
+            history=(),
+        )
+        second = BeamState(
+            graph=None,
+            snapshot={"nodes": [(12, 6, 700)], "edges": []},
+            guid_to_slot={700: 12},
+            next_slot=13,
+            last_touched={},
+            rewrite_distance={12: 4},
+            previous_preferred=set(),
+            local_streak=0,
+            gate_count=1,
+            depth=1,
+            history=(),
+        )
+
+        batch, dense_to_slot, stats = collate_exact_states([first, second])
+
+        self.assertEqual(batch["current_types"].tolist(), [[7, 8], [6, -1]])
+        self.assertEqual(dense_to_slot.tolist(), [[4, 9], [12, -1]])
+        self.assertEqual(batch["current_edge_src"].tolist(), [0])
+        self.assertEqual(batch["current_edge_dst"].tolist(), [1])
+        self.assertEqual(batch["current_rewrite_distance"].tolist(), [[5, 1], [4, 5]])
+        self.assertEqual(stats["padded_dense_slots"], 4)
+        self.assertEqual(stats["padded_persistent_slots"], 26)
+
+        candidates = CandidateTensors(
+            batch_ids=torch.tensor([0, 1]),
+            sources=torch.tensor([3, 4]),
+            anchors=torch.tensor([1, 0]),
+            bindings=torch.tensor([[0, 1, -1], [0, -1, -1]]),
+            probabilities=torch.tensor([0.8, 0.7]),
+        )
+        restored = remap_candidate_slots(
+            candidates,
+            dense_to_slot,
+            batch_offset=5,
+        )
+        self.assertEqual(restored.batch_ids.tolist(), [5, 6])
+        self.assertEqual(restored.anchors.tolist(), [9, 12])
+        self.assertEqual(restored.bindings.tolist(), [[4, 9, -1], [12, -1, -1]])
 
     def test_model_binding_uses_direct_quartz_api_when_available(self) -> None:
         graph = FakeApplyGraph()
