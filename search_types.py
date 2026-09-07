@@ -21,6 +21,9 @@ class BeamState:
     exact_graph_checkpoint: Any = None
     exact_slot_checkpoint: dict[int, int] | None = None
     exact_checkpoint_depth: int = 0
+    last_xfer_id: int = -1
+    last_source_slots: tuple[int, ...] = ()
+    last_destination_slots: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)

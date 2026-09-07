@@ -1,0 +1,638 @@
+{
+  "../../data/quarl_barenco_fullseq36_normalized_20260907.pt": {
+    "trajectory_windows": 1,
+    "steps": 116,
+    "unique_inverse_xfers": 4482,
+    "independent_adjacent_pairs": 23,
+    "direct_inverse_rejections": 0,
+    "canonical_trace_order_rejections": 15,
+    "direct_inverse_rows": [],
+    "canonical_trace_order_rows": [
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 2,
+        "step": 2,
+        "xfer_id": 120,
+        "source_slots": [
+          36,
+          38,
+          40
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 7,
+        "step": 7,
+        "xfer_id": 44,
+        "source_slots": [
+          29,
+          44
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 10,
+        "step": 10,
+        "xfer_id": 45,
+        "source_slots": [
+          26,
+          28
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 13,
+        "step": 13,
+        "xfer_id": 340,
+        "source_slots": [
+          80,
+          81,
+          82,
+          13
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 15,
+        "step": 15,
+        "xfer_id": 45,
+        "source_slots": [
+          48,
+          87
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 17,
+        "step": 17,
+        "xfer_id": 39,
+        "source_slots": [
+          22,
+          83
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 19,
+        "step": 19,
+        "xfer_id": 1496,
+        "source_slots": [
+          98,
+          88,
+          89,
+          90
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 28,
+        "step": 28,
+        "xfer_id": 39,
+        "source_slots": [
+          78,
+          42
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 29,
+        "step": 29,
+        "xfer_id": 4361,
+        "source_slots": [
+          7,
+          92
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 30,
+        "step": 30,
+        "xfer_id": 44,
+        "source_slots": [
+          121,
+          122
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 40,
+        "step": 40,
+        "xfer_id": 39,
+        "source_slots": [
+          125,
+          126
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 42,
+        "step": 42,
+        "xfer_id": 39,
+        "source_slots": [
+          102,
+          155
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 69,
+        "step": 69,
+        "xfer_id": 101,
+        "source_slots": [
+          230,
+          43,
+          113
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 84,
+        "step": 84,
+        "xfer_id": 3811,
+        "source_slots": [
+          274,
+          270,
+          204,
+          250
+        ]
+      },
+      {
+        "source_path": "../../data/fullseq_36_0_forward#segment=0",
+        "offset": 86,
+        "step": 86,
+        "xfer_id": 40,
+        "source_slots": [
+          17,
+          18
+        ]
+      }
+    ]
+  },
+  "../../data/quarl_gf370_2_normalized_r1_20260905.pt": {
+    "trajectory_windows": 1,
+    "steps": 271,
+    "unique_inverse_xfers": 4482,
+    "independent_adjacent_pairs": 20,
+    "direct_inverse_rejections": 26,
+    "canonical_trace_order_rejections": 15,
+    "direct_inverse_rows": [
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 3,
+        "step": 3,
+        "previous_xfer_id": 822,
+        "xfer_id": 823,
+        "source_slots": [
+          377,
+          378,
+          379
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 5,
+        "step": 5,
+        "previous_xfer_id": 4394,
+        "xfer_id": 4397,
+        "source_slots": [
+          382,
+          383
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 6,
+        "step": 6,
+        "previous_xfer_id": 4397,
+        "xfer_id": 4394,
+        "source_slots": [
+          384,
+          385
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 18,
+        "step": 18,
+        "previous_xfer_id": 42,
+        "xfer_id": 43,
+        "source_slots": [
+          411,
+          412,
+          413,
+          414
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 52,
+        "step": 52,
+        "previous_xfer_id": 120,
+        "xfer_id": 121,
+        "source_slots": [
+          497,
+          498,
+          499
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 73,
+        "step": 73,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          550,
+          551,
+          552
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 76,
+        "step": 76,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          557,
+          558,
+          559
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 79,
+        "step": 79,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          564,
+          565,
+          566
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 80,
+        "step": 80,
+        "previous_xfer_id": 3420,
+        "xfer_id": 3417,
+        "source_slots": [
+          567,
+          568
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 81,
+        "step": 81,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          569,
+          570,
+          571
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 101,
+        "step": 101,
+        "previous_xfer_id": 121,
+        "xfer_id": 120,
+        "source_slots": [
+          620,
+          621,
+          622
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 104,
+        "step": 104,
+        "previous_xfer_id": 121,
+        "xfer_id": 120,
+        "source_slots": [
+          629,
+          630,
+          631
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 122,
+        "step": 122,
+        "previous_xfer_id": 4385,
+        "xfer_id": 4382,
+        "source_slots": [
+          673,
+          674
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 123,
+        "step": 123,
+        "previous_xfer_id": 4382,
+        "xfer_id": 4385,
+        "source_slots": [
+          675,
+          676
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 124,
+        "step": 124,
+        "previous_xfer_id": 4385,
+        "xfer_id": 4382,
+        "source_slots": [
+          677,
+          678
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 136,
+        "step": 136,
+        "previous_xfer_id": 809,
+        "xfer_id": 808,
+        "source_slots": [
+          705,
+          706
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 139,
+        "step": 139,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          712,
+          713,
+          714
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 143,
+        "step": 143,
+        "previous_xfer_id": 3417,
+        "xfer_id": 3420,
+        "source_slots": [
+          721,
+          722,
+          723
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 145,
+        "step": 145,
+        "previous_xfer_id": 3435,
+        "xfer_id": 3438,
+        "source_slots": [
+          726,
+          727,
+          728
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 146,
+        "step": 146,
+        "previous_xfer_id": 3438,
+        "xfer_id": 3435,
+        "source_slots": [
+          729,
+          730
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 164,
+        "step": 164,
+        "previous_xfer_id": 3428,
+        "xfer_id": 3430,
+        "source_slots": [
+          773,
+          774,
+          775
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 191,
+        "step": 191,
+        "previous_xfer_id": 4394,
+        "xfer_id": 4397,
+        "source_slots": [
+          838,
+          839
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 193,
+        "step": 193,
+        "previous_xfer_id": 4397,
+        "xfer_id": 4394,
+        "source_slots": [
+          842,
+          843
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 223,
+        "step": 223,
+        "previous_xfer_id": 4382,
+        "xfer_id": 4385,
+        "source_slots": [
+          907,
+          908
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 246,
+        "step": 246,
+        "previous_xfer_id": 3422,
+        "xfer_id": 3424,
+        "source_slots": [
+          958,
+          959,
+          960
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 266,
+        "step": 266,
+        "previous_xfer_id": 4382,
+        "xfer_id": 4385,
+        "source_slots": [
+          1007,
+          1008
+        ]
+      }
+    ],
+    "canonical_trace_order_rows": [
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 8,
+        "step": 8,
+        "xfer_id": 120,
+        "source_slots": [
+          159,
+          161,
+          163
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 10,
+        "step": 10,
+        "xfer_id": 120,
+        "source_slots": [
+          386,
+          375,
+          388
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 14,
+        "step": 14,
+        "xfer_id": 4385,
+        "source_slots": [
+          156,
+          157
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 15,
+        "step": 15,
+        "xfer_id": 4370,
+        "source_slots": [
+          68,
+          389
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 19,
+        "step": 19,
+        "xfer_id": 4382,
+        "source_slots": [
+          401,
+          402
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 20,
+        "step": 20,
+        "xfer_id": 4370,
+        "source_slots": [
+          409,
+          415
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 22,
+        "step": 22,
+        "xfer_id": 4370,
+        "source_slots": [
+          36,
+          39
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 33,
+        "step": 33,
+        "xfer_id": 120,
+        "source_slots": [
+          431,
+          416,
+          380
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 53,
+        "step": 53,
+        "xfer_id": 4349,
+        "source_slots": [
+          111,
+          122
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 54,
+        "step": 54,
+        "xfer_id": 120,
+        "source_slots": [
+          500,
+          501,
+          502
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 75,
+        "step": 75,
+        "xfer_id": 3417,
+        "source_slots": [
+          553,
+          554
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 78,
+        "step": 78,
+        "xfer_id": 3417,
+        "source_slots": [
+          560,
+          561
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 97,
+        "step": 97,
+        "xfer_id": 4382,
+        "source_slots": [
+          405,
+          406
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 176,
+        "step": 176,
+        "xfer_id": 4382,
+        "source_slots": [
+          417,
+          418
+        ]
+      },
+      {
+        "source_path": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/370_2#segment=0",
+        "offset": 177,
+        "step": 177,
+        "xfer_id": 812,
+        "source_slots": [
+          762,
+          718
+        ]
+      }
+    ]
+  }
+}

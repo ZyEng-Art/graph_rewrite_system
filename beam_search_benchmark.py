@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import argparse
-from collections import defaultdict, deque
+from collections import Counter, defaultdict, deque
 import ctypes
 import ctypes.util
 from dataclasses import dataclass
 import gc
+import hashlib
 import heapq
 import importlib.util
 import json
@@ -22,7 +23,7 @@ if _libgomp:
 
 import torch
 
-from circuit_identity import ExactGraphRegistry, QuartzHashRegistry
+from circuit_identity import ExactGraphRegistry, QuartzHashRegistry, exact_graph_key
 from dataset import (
     _local_streak_bucket,
     _touch_age_bucket,
@@ -30,8 +31,14 @@ from dataset import (
     RuleMetadata,
 )
 from gpu_proposals import GpuRuleIndex, build_gpu_proposals
+from incremental_graph import parse_pattern
 from model_factory import build_model
 from search_types import BeamState, Proposal
+from successor_fingerprint import (
+    FingerprintAudit,
+    build_wire_trace_profile,
+    successor_fingerprint,
+)
 from threshold_inference import (
     CandidateTensors,
     load_threshold_config,
@@ -92,6 +99,20 @@ def graph_delta(before: dict, after: dict) -> tuple[set[int], set[tuple[int, ...
     before_edges = set(map(tuple, before["edges"]))
     after_edges = set(map(tuple, after["edges"]))
     return before_nodes - after_nodes, before_edges.symmetric_difference(after_edges)
+
+
+def graph_collection_identity_digest(graphs) -> str:
+    """Compact deterministic checksum for exact A/B beam comparisons."""
+
+    rows = sorted(
+        repr(exact_graph_key(graph)).encode("utf-8") for graph in graphs
+    )
+    digest = hashlib.sha256()
+    digest.update(len(rows).to_bytes(8, "little"))
+    for row in rows:
+        digest.update(len(row).to_bytes(8, "little"))
+        digest.update(row)
+    return digest.hexdigest()
 
 
 def distances_from_core(snapshot_row: dict, core: set[int]) -> dict[int, int]:
@@ -515,6 +536,24 @@ def rank_proposals(
     return proposals, total_action_candidates
 
 
+def is_direct_inverse_proposal(
+    parent: BeamState,
+    proposal: Proposal,
+    inverse_xfer_ids: tuple[int, ...],
+) -> bool:
+    """Recognize an immediate rewrite followed by its unique reverse rule."""
+
+    previous = parent.last_xfer_id
+    return (
+        proposal.binding is not None
+        and 0 <= previous < len(inverse_xfer_ids)
+        and 0 <= proposal.xfer_id < len(inverse_xfer_ids)
+        and inverse_xfer_ids[previous] == proposal.xfer_id
+        and inverse_xfer_ids[proposal.xfer_id] == previous
+        and proposal.binding == parent.last_destination_slots
+    )
+
+
 def apply_rewrite(
     parent: BeamState,
     proposal: Proposal,
@@ -648,9 +687,10 @@ def materialize_child(
     after = snapshot(graph, guid_to_slot)
     removed, changed_edges = graph_delta(parent.snapshot, after)
     live = {int(row[0]) for row in after["nodes"]}
-    destination_slots = {
+    ordered_destination_slots = tuple(
         guid_to_slot[guid] for guid in surviving_destination_guids
-    }
+    )
+    destination_slots = set(ordered_destination_slots)
     core = set(destination_slots)
     for src, dst, _, _ in changed_edges:
         if src in live:
@@ -689,6 +729,9 @@ def materialize_child(
         gate_count=gate_count,
         depth=parent.depth + 1,
         history=parent.history + ((proposal.xfer_id, proposal.anchor_slot),),
+        last_xfer_id=proposal.xfer_id,
+        last_source_slots=source_slots,
+        last_destination_slots=ordered_destination_slots,
     )
 
 
@@ -768,6 +811,58 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--preapply-fingerprint",
+        choices=("off", "shadow", "filter"),
+        default="off",
+        help=(
+            "incrementally predict successor wire traces before Quartz apply; "
+            "shadow audits exactness without pruning, filter skips repeated "
+            "fingerprints"
+        ),
+    )
+    parser.add_argument(
+        "--preapply-direct-inverse",
+        choices=("off", "shadow", "filter"),
+        default="off",
+        help=(
+            "detect an action immediately consuming the prior action's "
+            "destination through its unique reverse xfer"
+        ),
+    )
+    parser.add_argument(
+        "--preapply-fingerprint-kind",
+        choices=(
+            "conservative",
+            "parameter_transfer",
+            "xfer_guarded",
+            "topology",
+        ),
+        default="conservative",
+        help=(
+            "xfer-specific symbolic parameters, one-to-one parameter "
+            "transfer, xfer-guarded transfer, or parameter-blind topology"
+        ),
+    )
+    parser.add_argument(
+        "--preapply-fingerprint-representatives",
+        type=int,
+        default=1,
+        help=(
+            "number of valid proposals retained per fingerprint before "
+            "filtering; use at least two with parameter_transfer"
+        ),
+    )
+    parser.add_argument(
+        "--preapply-fingerprint-min-proposals-per-gate",
+        type=float,
+        default=0.0,
+        help=(
+            "skip fingerprint construction for low-reuse parents unless "
+            "their selected proposal count is at least this fraction of "
+            "their gate count; zero fingerprints every parent"
+        ),
+    )
+    parser.add_argument(
         "--eliminate-rotation",
         action="store_true",
         help="fold parameter expressions and remove zero rotations after each Quartz rewrite",
@@ -802,6 +897,29 @@ def main() -> None:
         parser.error(
             "state_only_gpu does not use periodic CPU matching; set "
             "--refresh-interval 0"
+        )
+    if (
+        args.preapply_fingerprint == "filter"
+        and args.preapply_fingerprint_kind == "topology"
+    ):
+        parser.error(
+            "parameter-blind topology fingerprints are shadow-only; use "
+            "--preapply-fingerprint shadow or conservative filtering"
+        )
+    if args.preapply_fingerprint_min_proposals_per_gate < 0:
+        parser.error(
+            "--preapply-fingerprint-min-proposals-per-gate must be nonnegative"
+        )
+    if args.preapply_fingerprint_representatives < 1:
+        parser.error("--preapply-fingerprint-representatives must be positive")
+    if (
+        args.preapply_fingerprint == "filter"
+        and args.preapply_fingerprint_kind == "parameter_transfer"
+        and args.preapply_fingerprint_representatives < 2
+    ):
+        parser.error(
+            "parameter_transfer filtering requires at least two "
+            "representatives per fingerprint"
         )
 
     # Quartz imports these optional conversion packages unconditionally, while
@@ -847,6 +965,11 @@ def main() -> None:
     for xfer_id, source_id in enumerate(payload["xfer_to_source"]):
         source_to_xfers[int(source_id)].append(xfer_id)
     gate_deltas = [int(xfer.dst_gate_count - xfer.src_gate_count) for xfer in xfers]
+    source_patterns = tuple(parse_pattern(pattern) for pattern in rules.xfer_sources)
+    destination_patterns = tuple(
+        parse_pattern(pattern) for pattern in rules.xfer_destinations
+    )
+    inverse_xfer_ids = rules.unique_inverse_xfer_ids()
 
     model = None
     threshold_config = None
@@ -980,6 +1103,18 @@ def main() -> None:
     diagnostic_seen_hashes = (
         {int(graph.hash())} if reference_hashes is not None else None
     )
+    fingerprint_audit = FingerprintAudit.create(
+        mode=args.preapply_fingerprint,
+        kind=args.preapply_fingerprint_kind,
+        representatives=args.preapply_fingerprint_representatives,
+    )
+    direct_inverse_totals = {
+        "candidates": 0,
+        "skipped_before_apply": 0,
+        "shadow_exact_duplicates": 0,
+        "shadow_novel_successors": 0,
+        "shadow_invalid": 0,
+    }
     step_rows = []
     reference_retention = []
     total_started = time.perf_counter()
@@ -1103,13 +1238,87 @@ def main() -> None:
                 sum(map(len, predicted)) if args.mode == "model" else 0
             )
 
+        fingerprint_before = fingerprint_audit.stats()
+        fingerprint_profiles = {}
+        proposals_per_parent = Counter(
+            proposal.parent for proposal in proposals
+        )
+        fingerprint_seconds = 0.0
+        direct_inverse_step = {
+            key: 0 for key in direct_inverse_totals
+        }
         apply_started = time.perf_counter()
         children = []
-        attempted = invalid = duplicates = 0
-        for proposal in proposals:
+        attempted = invalid = duplicates = proposals_scanned = 0
+        applied_proposal_positions = set()
+        fingerprint_skipped_positions = set()
+        direct_inverse_skipped_positions = set()
+        for proposal_position, proposal in enumerate(proposals):
             if len(children) >= args.beam_size:
                 break
+            proposals_scanned += 1
+            fingerprint = None
+            direct_inverse = (
+                args.preapply_direct_inverse != "off"
+                and is_direct_inverse_proposal(
+                    beam[proposal.parent], proposal, inverse_xfer_ids
+                )
+            )
+            if direct_inverse:
+                direct_inverse_step["candidates"] += 1
+                direct_inverse_totals["candidates"] += 1
+                if args.preapply_direct_inverse == "filter":
+                    direct_inverse_step["skipped_before_apply"] += 1
+                    direct_inverse_totals["skipped_before_apply"] += 1
+                    direct_inverse_skipped_positions.add(proposal_position)
+                    continue
+            if (
+                args.preapply_fingerprint != "off"
+                and proposal.binding is not None
+            ):
+                fingerprint_started = time.perf_counter()
+                minimum_parent_proposals = max(
+                    1,
+                    math.ceil(
+                        beam[proposal.parent].gate_count
+                        * args.preapply_fingerprint_min_proposals_per_gate
+                    ),
+                )
+                if (
+                    proposals_per_parent[proposal.parent]
+                    < minimum_parent_proposals
+                ):
+                    fingerprint_audit.observe_bypassed()
+                    fingerprint_seconds += (
+                        time.perf_counter() - fingerprint_started
+                    )
+                else:
+                    if proposal.parent not in fingerprint_profiles:
+                        profile = build_wire_trace_profile(
+                            beam[proposal.parent].graph,
+                            beam[proposal.parent].guid_to_slot,
+                        )
+                        fingerprint_profiles[proposal.parent] = profile
+                    else:
+                        profile = fingerprint_profiles[proposal.parent]
+                    if profile is not None:
+                        fingerprint = successor_fingerprint(
+                            profile,
+                            source_patterns[proposal.xfer_id],
+                            destination_patterns[proposal.xfer_id],
+                            proposal.binding,
+                            xfer_id=proposal.xfer_id,
+                            kind=args.preapply_fingerprint_kind,
+                        )
+                    should_skip = fingerprint_audit.should_skip(fingerprint)
+                    fingerprint_seconds += (
+                        time.perf_counter() - fingerprint_started
+                    )
+                    if should_skip:
+                        fingerprint_skipped_positions.add(proposal_position)
+                        continue
             attempted += 1
+            applied_proposal_positions.add(proposal_position)
             applied = apply_rewrite(
                 beam[proposal.parent],
                 proposal,
@@ -1119,10 +1328,30 @@ def main() -> None:
             )
             if applied is None:
                 invalid += 1
+                fingerprint_audit.observe_invalid(fingerprint)
+                if direct_inverse and args.preapply_direct_inverse == "shadow":
+                    direct_inverse_step["shadow_invalid"] += 1
+                    direct_inverse_totals["shadow_invalid"] += 1
                 continue
+            exact_identity = (
+                exact_graph_key(applied.graph)
+                if args.preapply_fingerprint == "shadow"
+                and fingerprint is not None
+                else None
+            )
             if diagnostic_seen_hashes is not None:
                 diagnostic_seen_hashes.add(int(applied.graph.hash()))
-            if not seen.register(applied.graph):
+            is_new_successor = seen.register(applied.graph)
+            fingerprint_audit.observe_valid(fingerprint, exact_identity)
+            if direct_inverse and args.preapply_direct_inverse == "shadow":
+                inverse_result = (
+                    "shadow_novel_successors"
+                    if is_new_successor
+                    else "shadow_exact_duplicates"
+                )
+                direct_inverse_step[inverse_result] += 1
+                direct_inverse_totals[inverse_result] += 1
+            if not is_new_successor:
                 duplicates += 1
                 continue
             child = materialize_child(
@@ -1133,6 +1362,38 @@ def main() -> None:
             )
             children.append(child)
         apply_seconds = time.perf_counter() - apply_started
+        fingerprint_after = fingerprint_audit.stats()
+        fingerprint_step = {
+            key: fingerprint_after[key] - fingerprint_before[key]
+            for key in (
+                "candidates",
+                "unavailable",
+                "bypassed_low_reuse",
+                "hits",
+                "skipped_before_apply",
+                "shadow_valid_hits",
+                "shadow_invalid_hits",
+                "shadow_exact_duplicate_hits",
+                "shadow_collision_hits",
+            )
+        }
+        audited_fingerprint_hits = (
+            fingerprint_step["shadow_exact_duplicate_hits"]
+            + fingerprint_step["shadow_collision_hits"]
+        )
+        fingerprint_step.update(
+            {
+                "mode": args.preapply_fingerprint,
+                "kind": args.preapply_fingerprint_kind,
+                "seconds": fingerprint_seconds,
+                "shadow_precision": (
+                    fingerprint_step["shadow_exact_duplicate_hits"]
+                    / audited_fingerprint_hits
+                    if audited_fingerprint_hits
+                    else 1.0
+                ),
+            }
+        )
         if not children:
             break
         children.sort(key=lambda state: (state.gate_count, len(state.history)))
@@ -1242,7 +1503,9 @@ def main() -> None:
                     if key in global_positions
                 ]
                 attempted_match_positions = [
-                    index for index in global_match_positions if index < attempted
+                    index
+                    for index in global_match_positions
+                    if index in applied_proposal_positions
                 ]
                 if not matching_candidates:
                     exclusion_stage = "predicted_candidates"
@@ -1250,6 +1513,16 @@ def main() -> None:
                     exclusion_stage = "per_parent_cap"
                 elif not global_match_positions:
                     exclusion_stage = "global_proposal_cap"
+                elif any(
+                    index in direct_inverse_skipped_positions
+                    for index in global_match_positions
+                ):
+                    exclusion_stage = "preapply_direct_inverse"
+                elif any(
+                    index in fingerprint_skipped_positions
+                    for index in global_match_positions
+                ):
+                    exclusion_stage = "preapply_fingerprint"
                 elif not attempted_match_positions:
                     exclusion_stage = "beam_filled_before_proposal"
                 elif reference_target_seen_before:
@@ -1263,6 +1536,7 @@ def main() -> None:
                     "matching_global_proposal_positions": global_match_positions,
                     "matching_attempted_proposal_positions": attempted_match_positions,
                     "attempted_proposals": attempted,
+                    "proposals_scanned": proposals_scanned,
                 }
             elif reference_lost and reference_parent_indices:
                 matching_positions = []
@@ -1282,12 +1556,24 @@ def main() -> None:
                     ):
                         matching_positions.append(proposal_index)
                 attempted_positions = [
-                    index for index in matching_positions if index < attempted
+                    index
+                    for index in matching_positions
+                    if index in applied_proposal_positions
                 ]
                 retention_row["loss_detail"] = {
                     "exclusion_stage": (
                         "gpu_match_or_proposal_cap"
                         if not matching_positions
+                        else "preapply_direct_inverse"
+                        if any(
+                            index in direct_inverse_skipped_positions
+                            for index in matching_positions
+                        )
+                        else "preapply_fingerprint"
+                        if any(
+                            index in fingerprint_skipped_positions
+                            for index in matching_positions
+                        )
                         else "beam_filled_before_proposal"
                         if not attempted_positions
                         else "global_exact_dedup"
@@ -1297,6 +1583,7 @@ def main() -> None:
                     "matching_global_proposal_positions": matching_positions,
                     "matching_attempted_proposal_positions": attempted_positions,
                     "attempted_proposals": attempted,
+                    "proposals_scanned": proposals_scanned,
                 }
             reference_retention.append(retention_row)
         elapsed = time.perf_counter() - step_started
@@ -1325,11 +1612,17 @@ def main() -> None:
             "source_binding_candidates": source_binding_candidates,
             "eligible_actions_before_parent_cap": total_action_candidates,
             "proposals_after_caps": len(proposals),
+            "proposals_scanned": proposals_scanned,
             "attempted_actions": attempted,
             "accepted_actions": len(beam),
             "invalid_model_actions": invalid,
             "duplicate_successors": duplicates,
             "successor_metadata_skipped": duplicates,
+            "preapply_fingerprint": fingerprint_step,
+            "preapply_direct_inverse": {
+                "mode": args.preapply_direct_inverse,
+                **direct_inverse_step,
+            },
             "model_match_seconds": model_seconds,
             "quartz_exact_match_seconds": exact_seconds,
             "exact_refresh_actions_added": exact_refresh_actions_added,
@@ -1368,6 +1661,9 @@ def main() -> None:
     )
     total_input_states = sum(row["input_states"] for row in step_rows)
     total_apply_seconds = sum(row["quartz_apply_seconds"] for row in step_rows)
+    total_fingerprint_seconds = sum(
+        row["preapply_fingerprint"]["seconds"] for row in step_rows
+    )
     total_successful_applies = sum(
         row["successful_apply_actions"] for row in step_rows
     )
@@ -1413,7 +1709,22 @@ def main() -> None:
             and best_state.gate_count <= args.target_gate_count
         ),
         "final_beam_size": len(beam),
+        "final_beam_exact_identity_digest": graph_collection_identity_digest(
+            state.graph for state in beam
+        ),
+        "best_graph_exact_identity_digest": graph_collection_identity_digest(
+            (best_state.graph,)
+        ),
         "dedup_identity": args.dedup_identity,
+        "preapply_fingerprint": fingerprint_audit.stats(),
+        "preapply_fingerprint_seconds": total_fingerprint_seconds,
+        "preapply_fingerprint_min_proposals_per_gate": (
+            args.preapply_fingerprint_min_proposals_per_gate
+        ),
+        "preapply_direct_inverse": {
+            "mode": args.preapply_direct_inverse,
+            **direct_inverse_totals,
+        },
         "unique_graphs_seen": len(seen),
         "dedup_registry": seen.stats(),
         "total_seconds": total_seconds,

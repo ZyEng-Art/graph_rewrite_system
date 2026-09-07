@@ -1,0 +1,114 @@
+diff --git a/src/quartz/tasograph/tasograph.h b/src/quartz/tasograph/tasograph.h
+--- a/src/quartz/tasograph/tasograph.h
++++ b/src/quartz/tasograph/tasograph.h
+@@ -190,6 +190,10 @@ class Graph {
+   bool has_loop() const;
+   size_t hash();
+   std::string exact_key() const;
++  int exact_wire_trace_records(
++      std::vector<size_t> &guids, std::vector<int> &gate_types,
++      std::vector<std::vector<int>> &qubits,
++      std::vector<std::vector<double>> &parameters) const;
+   bool equal(const Graph &other) const;
+   bool check_correctness();
+   int specific_gate_count(GateType gate_type) const;
+diff --git a/src/quartz/tasograph/tasograph.cpp b/src/quartz/tasograph/tasograph.cpp
+--- a/src/quartz/tasograph/tasograph.cpp
++++ b/src/quartz/tasograph/tasograph.cpp
+@@ -478,6 +478,55 @@ size_t Graph::hash(void) {
+   return total;
+ }
+
++int Graph::exact_wire_trace_records(
++    std::vector<size_t> &guids, std::vector<int> &gate_types,
++    std::vector<std::vector<int>> &qubit_rows,
++    std::vector<std::vector<double>> &parameter_rows) const {
++  guids.clear();
++  gate_types.clear();
++  qubit_rows.clear();
++  parameter_rows.clear();
++  const int num_qubits = get_num_qubits();
++  std::vector<Op> ops;
++  topology_order_ops(ops);
++  for (const auto &op : ops) {
++    if (!op.ptr->is_quantum_gate()) {
++      continue;
++    }
++    const int gate_qubits = op.ptr->get_num_qubits();
++    const int gate_parameters = op.ptr->get_num_parameters();
++    std::vector<int> qubits(gate_qubits, -1);
++    std::vector<double> parameters(gate_parameters, 0);
++    auto incoming = inEdges.find(op);
++    if (incoming == inEdges.end()) {
++      throw std::runtime_error("quantum operation has no incoming edges");
++    }
++    for (const auto &edge : incoming->second) {
++      if (edge.dstIdx < gate_qubits) {
++        auto logical_qubit = pos_2_logical_qubit.find(Pos(op, edge.dstIdx));
++        if (logical_qubit == pos_2_logical_qubit.end()) {
++          throw std::runtime_error("logical qubit is missing from wire trace");
++        }
++        qubits[edge.dstIdx] = logical_qubit->second;
++      } else {
++        const int parameter_index = edge.dstIdx - gate_qubits;
++        auto constant = constant_param_values.find(edge.srcOp);
++        if (parameter_index < 0 || parameter_index >= gate_parameters ||
++            constant == constant_param_values.end()) {
++          throw std::runtime_error(
++              "non-constant gate parameter is unsupported by wire trace");
++        }
++        parameters[parameter_index] = constant->second;
++      }
++    }
++    guids.push_back(op.guid);
++    gate_types.push_back(static_cast<int>(op.ptr->tp));
++    qubit_rows.push_back(std::move(qubits));
++    parameter_rows.push_back(std::move(parameters));
++  }
++  return num_qubits;
++}
++
+ std::string Graph::exact_key() const {
+   // A circuit trace is completely determined by the operation sequence on
+   // every physical qubit.  Independent operations may move in a topological
+diff --git a/python/quartz/_cython/CCore.pxd b/python/quartz/_cython/CCore.pxd
+--- a/python/quartz/_cython/CCore.pxd
++++ b/python/quartz/_cython/CCore.pxd
+@@ -123,6 +123,7 @@ cdef extern from "tasograph/tasograph.h" namespace "quartz":
+         int specific_gate_count(GateType) const
+         size_t hash()
+         string exact_key() except +
++        int exact_wire_trace_records(vector[size_t] &, vector[int] &, vector[vector[int]] &, vector[vector[double]] &) except +
+         void all_edges(vector[Edge]&) const
+         void topology_order_ops(vector[Op] &) const
+         shared_ptr[Graph] ccz_flip_t(Context *)
+diff --git a/python/quartz/_cython/core.pyx b/python/quartz/_cython/core.pyx
+--- a/python/quartz/_cython/core.pyx
++++ b/python/quartz/_cython/core.pyx
+@@ -727,6 +727,26 @@ cdef class PyGraph:
+         cdef string s = deref(self.graph).exact_key()
+         return s
+
++    def wire_trace_profile(self):
++        """Return exact operation records without QASM formatting/parsing."""
++        cdef vector[size_t] guids
++        cdef vector[int] gate_types
++        cdef vector[vector[int]] qubits
++        cdef vector[vector[double]] parameters
++        cdef size_t row, item
++        cdef int num_qubits = deref(self.graph).exact_wire_trace_records(
++            guids, gate_types, qubits, parameters
++        )
++        return num_qubits, [
++            (
++                guids[row],
++                gate_types[row],
++                [qubits[row][item] for item in range(qubits[row].size())],
++                [parameters[row][item] for item in range(parameters[row].size())],
++            )
++            for row in range(guids.size())
++        ]
++
+     def rotation_merging(self, gate_type:str):
+         deref(self.graph).rotation_merging(get_gate_type_from_str(gate_type))
+         self.get_nodes()
