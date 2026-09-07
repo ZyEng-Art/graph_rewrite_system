@@ -844,6 +844,24 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--preapply-fingerprint-backend",
+        choices=("auto", "python", "native"),
+        default="auto",
+        help=(
+            "use Quartz's compact native successor profile when available, "
+            "or force the Python reference implementation for A/B"
+        ),
+    )
+    parser.add_argument(
+        "--preapply-fingerprint-native-batch-size",
+        type=int,
+        default=512,
+        help=(
+            "number of proposal positions staged per native fingerprint "
+            "batch; zero disables batching for controlled A/B"
+        ),
+    )
+    parser.add_argument(
         "--preapply-fingerprint-representatives",
         type=int,
         default=1,
@@ -912,6 +930,10 @@ def main() -> None:
         )
     if args.preapply_fingerprint_representatives < 1:
         parser.error("--preapply-fingerprint-representatives must be positive")
+    if args.preapply_fingerprint_native_batch_size < 0:
+        parser.error(
+            "--preapply-fingerprint-native-batch-size must be nonnegative"
+        )
     if (
         args.preapply_fingerprint == "filter"
         and args.preapply_fingerprint_kind == "parameter_transfer"
@@ -970,6 +992,12 @@ def main() -> None:
         parse_pattern(pattern) for pattern in rules.xfer_destinations
     )
     inverse_xfer_ids = rules.unique_inverse_xfer_ids()
+    native_fingerprint_kinds = {
+        "conservative": 0,
+        "parameter_transfer": 1,
+        "xfer_guarded": 2,
+        "topology": 3,
+    }
 
     model = None
     threshold_config = None
@@ -1108,6 +1136,7 @@ def main() -> None:
         kind=args.preapply_fingerprint_kind,
         representatives=args.preapply_fingerprint_representatives,
     )
+    fingerprint_profile_builds = Counter()
     direct_inverse_totals = {
         "candidates": 0,
         "skipped_before_apply": 0,
@@ -1240,6 +1269,10 @@ def main() -> None:
 
         fingerprint_before = fingerprint_audit.stats()
         fingerprint_profiles = {}
+        native_fingerprint_cache = {}
+        minimum_fingerprint_reuse = (
+            args.preapply_fingerprint_min_proposals_per_gate
+        )
         proposals_per_parent = Counter(
             proposal.parent for proposal in proposals
         )
@@ -1253,6 +1286,37 @@ def main() -> None:
         applied_proposal_positions = set()
         fingerprint_skipped_positions = set()
         direct_inverse_skipped_positions = set()
+
+        def get_fingerprint_profile(parent_index: int):
+            if parent_index in fingerprint_profiles:
+                return fingerprint_profiles[parent_index]
+            parent_state = beam[parent_index]
+            native_builder = getattr(
+                parent_state.graph,
+                "successor_fingerprint_profile",
+                None,
+            )
+            if (
+                args.preapply_fingerprint_backend != "python"
+                and native_builder is not None
+            ):
+                profile = native_builder(parent_state.snapshot["nodes"])
+                profile_backend = "native"
+            elif args.preapply_fingerprint_backend == "native":
+                raise RuntimeError(
+                    "native successor fingerprinting was requested, but "
+                    "the loaded Quartz extension does not provide it"
+                )
+            else:
+                profile = build_wire_trace_profile(
+                    parent_state.graph,
+                    parent_state.guid_to_slot,
+                )
+                profile_backend = "python"
+            fingerprint_profiles[parent_index] = (profile_backend, profile)
+            fingerprint_profile_builds[profile_backend] += 1
+            return profile_backend, profile
+
         for proposal_position, proposal in enumerate(proposals):
             if len(children) >= args.beam_size:
                 break
@@ -1293,23 +1357,124 @@ def main() -> None:
                         time.perf_counter() - fingerprint_started
                     )
                 else:
-                    if proposal.parent not in fingerprint_profiles:
-                        profile = build_wire_trace_profile(
-                            beam[proposal.parent].graph,
-                            beam[proposal.parent].guid_to_slot,
-                        )
-                        fingerprint_profiles[proposal.parent] = profile
-                    else:
-                        profile = fingerprint_profiles[proposal.parent]
+                    profile_backend, profile = get_fingerprint_profile(
+                        proposal.parent
+                    )
                     if profile is not None:
-                        fingerprint = successor_fingerprint(
-                            profile,
-                            source_patterns[proposal.xfer_id],
-                            destination_patterns[proposal.xfer_id],
-                            proposal.binding,
-                            xfer_id=proposal.xfer_id,
-                            kind=args.preapply_fingerprint_kind,
-                        )
+                        if profile_backend == "native":
+                            if (
+                                args.preapply_fingerprint_native_batch_size
+                                and proposal_position
+                                not in native_fingerprint_cache
+                            ):
+                                batch_end = min(
+                                    len(proposals),
+                                    proposal_position
+                                    + args.preapply_fingerprint_native_batch_size,
+                                )
+                                grouped_positions = defaultdict(list)
+                                for batch_position in range(
+                                    proposal_position, batch_end
+                                ):
+                                    if (
+                                        batch_position
+                                        in native_fingerprint_cache
+                                    ):
+                                        continue
+                                    batch_proposal = proposals[batch_position]
+                                    if batch_proposal.binding is None:
+                                        continue
+                                    minimum_batch_parent_proposals = max(
+                                        1,
+                                        math.ceil(
+                                            beam[
+                                                batch_proposal.parent
+                                            ].gate_count
+                                            * minimum_fingerprint_reuse
+                                        ),
+                                    )
+                                    if (
+                                        proposals_per_parent[
+                                            batch_proposal.parent
+                                        ]
+                                        < minimum_batch_parent_proposals
+                                    ):
+                                        continue
+                                    grouped_positions[
+                                        batch_proposal.parent
+                                    ].append(batch_position)
+                                for batch_parent, positions in (
+                                    grouped_positions.items()
+                                ):
+                                    batch_backend, batch_profile = (
+                                        get_fingerprint_profile(batch_parent)
+                                    )
+                                    if (
+                                        batch_backend != "native"
+                                        or batch_profile is None
+                                    ):
+                                        continue
+                                    batch_method = getattr(
+                                        batch_profile,
+                                        "successor_fingerprints",
+                                        None,
+                                    )
+                                    if batch_method is None:
+                                        continue
+                                    batch_proposals = [
+                                        proposals[position]
+                                        for position in positions
+                                    ]
+                                    batch_fingerprints = batch_method(
+                                        [
+                                            xfers[row.xfer_id]
+                                            for row in batch_proposals
+                                        ],
+                                        [
+                                            row.binding
+                                            for row in batch_proposals
+                                        ],
+                                        [
+                                            row.xfer_id
+                                            for row in batch_proposals
+                                        ],
+                                        native_fingerprint_kinds[
+                                            args.preapply_fingerprint_kind
+                                        ],
+                                    )
+                                    for position, batch_fingerprint in zip(
+                                        positions, batch_fingerprints
+                                    ):
+                                        native_fingerprint_cache[position] = (
+                                            batch_fingerprint
+                                        )
+                            if proposal_position in native_fingerprint_cache:
+                                native_fingerprint = native_fingerprint_cache[
+                                    proposal_position
+                                ]
+                            else:
+                                native_fingerprint = profile.successor_fingerprint(
+                                    xfer=xfers[proposal.xfer_id],
+                                    source_slots=proposal.binding,
+                                    xfer_id=proposal.xfer_id,
+                                    kind=native_fingerprint_kinds[
+                                        args.preapply_fingerprint_kind
+                                    ],
+                                )
+                            if native_fingerprint is not None:
+                                fingerprint = (
+                                    "quartz_native_successor_v1",
+                                    *native_fingerprint,
+                                )
+                        else:
+                            fingerprint = successor_fingerprint(
+                                profile,
+                                source_patterns[proposal.xfer_id],
+                                destination_patterns[proposal.xfer_id],
+                                proposal.binding,
+                                xfer_id=proposal.xfer_id,
+                                kind=args.preapply_fingerprint_kind,
+                            )
                     should_skip = fingerprint_audit.should_skip(fingerprint)
                     fingerprint_seconds += (
                         time.perf_counter() - fingerprint_started
@@ -1717,6 +1882,13 @@ def main() -> None:
         ),
         "dedup_identity": args.dedup_identity,
         "preapply_fingerprint": fingerprint_audit.stats(),
+        "preapply_fingerprint_backend": {
+            "requested": args.preapply_fingerprint_backend,
+            "native_batch_size": (
+                args.preapply_fingerprint_native_batch_size
+            ),
+            "profile_builds": dict(fingerprint_profile_builds),
+        },
         "preapply_fingerprint_seconds": total_fingerprint_seconds,
         "preapply_fingerprint_min_proposals_per_gate": (
             args.preapply_fingerprint_min_proposals_per_gate

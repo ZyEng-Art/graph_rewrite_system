@@ -1,5 +1,10 @@
 # Incremental successor fingerprint results (2026-09-07)
 
+> Update: the native Quartz/Cython adaptation is now implemented and produces
+> a net 24.0% Barenco depth-64 speedup in the adjacent H100 A/B.  See
+> `NATIVE_SUCCESSOR_FINGERPRINT_RESULTS_20260907.md`.  The measurements below
+> document the preceding Python prototype and motivated the native work.
+
 ## Outcome
 
 The implementation has two pre-apply filters:

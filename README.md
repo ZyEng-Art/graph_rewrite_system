@@ -370,6 +370,16 @@ a bounded best-circuit buffer, exact Quartz application/validation, graph-hash
 deduplication, and optional periodic exact-match refresh. Its `quartz` mode uses
 Quartz's original `available_xfers_parallel` action enumeration as the baseline.
 
+The same benchmark can avoid many duplicate Quartz copies/applies with the
+optional native successor fingerprint.  After the existing exact-key,
+direct-binding and wire-profile Quartz patches, apply
+`quartz_patches/native_successor_fingerprint.patch`, rebuild Quartz and use
+`--preapply-fingerprint filter --preapply-fingerprint-kind xfer_guarded`.
+The backend defaults to `auto`: patched Quartz uses the compact C++/Cython
+batch path, while an unpatched build falls back to the Python reference path.
+See `NATIVE_SUCCESSOR_FINGERPRINT_RESULTS_20260907.md` for the shadow safety
+audit and H100 end-to-end results.
+
 `lazy_rollout_benchmark.py` removes Quartz graph copy/apply from ordinary rollout.
 It appends the predicted action, allocates destination slots deterministically,
 and updates only a lightweight gate/port graph needed by the current structural

@@ -1,0 +1,648 @@
+diff --git a/python/quartz/_cython/CCore.pxd b/python/quartz/_cython/CCore.pxd
+index 2b50650e..9e87b773 100644
+--- a/python/quartz/_cython/CCore.pxd
++++ b/python/quartz/_cython/CCore.pxd
+@@ -1,6 +1,6 @@
+ # distutils: language=c++
+ 
+-from libc.stdint cimport uint32_t
++from libc.stdint cimport uint32_t, uint64_t
+ from libcpp cimport bool
+ from libcpp.memory cimport shared_ptr
+ from libcpp.pair cimport pair
+@@ -107,6 +107,9 @@ cdef extern from "tasograph/tasograph.h" namespace "quartz":
+ 
+ 
+ cdef extern from "tasograph/tasograph.h" namespace "quartz":
++    cdef cppclass SuccessorFingerprintProfile:
++        bool successor_fingerprint(GraphXfer *, const vector[size_t] &, size_t, int, uint64_t &, uint64_t &) const
++
+     cdef cppclass Graph:
+         Graph(Context *) except +
+         Graph(Context *, const CircuitSeq *) except +
+@@ -126,6 +129,7 @@ cdef extern from "tasograph/tasograph.h" namespace "quartz":
+         size_t hash()
+         string exact_key() except +
+         int exact_wire_trace_records(vector[size_t] &, vector[int] &, vector[vector[int]] &, vector[vector[double]] &) except +
++        shared_ptr[SuccessorFingerprintProfile] build_successor_fingerprint_profile(const vector[size_t] &, const vector[size_t] &) const
+         void all_edges(vector[Edge]&) const
+         void topology_order_ops(vector[Op] &) const
+         shared_ptr[Graph] ccz_flip_t(Context *)
+diff --git a/python/quartz/_cython/core.pyx b/python/quartz/_cython/core.pyx
+index da52a7bd..fa41c384 100644
+--- a/python/quartz/_cython/core.pyx
++++ b/python/quartz/_cython/core.pyx
+@@ -12,9 +12,11 @@ from CCore cimport (
+     GraphXfer,
+     Op,
+     QASMParser,
++    SuccessorFingerprintProfile,
+ )
+ from cython.operator cimport dereference as deref
+ from libc.stddef cimport size_t
++from libc.stdint cimport uint64_t
+ from libcpp cimport bool
+ from libcpp.memory cimport make_shared, shared_ptr
+ from libcpp.string cimport string
+@@ -240,6 +242,72 @@ cdef class PyXfer:
+             return 'NOP'
+         return self.graphXfer.dst_str().decode('utf-8')
+ 
++
++cdef class PySuccessorFingerprintProfile:
++    cdef shared_ptr[SuccessorFingerprintProfile] profile
++
++    def __cinit__(self):
++        self.profile = shared_ptr[SuccessorFingerprintProfile](NULL)
++
++    def __dealloc__(self):
++        self.profile.reset()
++
++    cdef set_this(self, shared_ptr[SuccessorFingerprintProfile] profile_):
++        self.profile = profile_
++        return self
++
++    def successor_fingerprint(self, *, PyXfer xfer, source_slots,
++                              size_t xfer_id, int kind):
++        cdef vector[size_t] slots
++        cdef uint64_t low = 0
++        cdef uint64_t high = 0
++        if self.profile.get() == NULL or xfer.graphXfer == NULL:
++            return None
++        slots.reserve(len(source_slots))
++        for value in source_slots:
++            slots.push_back(value)
++        if not deref(self.profile).successor_fingerprint(
++            xfer.graphXfer, slots, xfer_id, kind, low, high
++        ):
++            return None
++        return int(low), int(high)
++
++    def successor_fingerprints(self, xfers, source_slot_rows, xfer_ids,
++                               int kind):
++        """Compute one parent's successor keys in one Python/Cython call."""
++        cdef vector[size_t] slots
++        cdef uint64_t low = 0
++        cdef uint64_t high = 0
++        cdef PyXfer xfer
++        cdef Py_ssize_t index
++        cdef Py_ssize_t count = len(xfers)
++        cdef list result = []
++        if (
++            self.profile.get() == NULL
++            or len(source_slot_rows) != count
++            or len(xfer_ids) != count
++        ):
++            raise ValueError("native fingerprint batch columns have different lengths")
++        for index in range(count):
++            xfer = xfers[index]
++            slots.clear()
++            slots.reserve(len(source_slot_rows[index]))
++            for value in source_slot_rows[index]:
++                slots.push_back(value)
++            low = 0
++            high = 0
++            if (
++                xfer.graphXfer != NULL
++                and deref(self.profile).successor_fingerprint(
++                    xfer.graphXfer, slots, xfer_ids[index], kind, low, high
++                )
++            ):
++                result.append((int(low), int(high)))
++            else:
++                result.append(None)
++        return result
++
++
+ cdef class QuartzContext:
+     cdef Context *context
+     cdef EquivalenceSet *eqs
+@@ -748,6 +816,23 @@ cdef class PyGraph:
+             for row in range(guids.size())
+         ]
+ 
++    def successor_fingerprint_profile(self, slot_guid_rows):
++        """Build a native slot-addressable profile without Python gate rows."""
++        cdef vector[size_t] guids
++        cdef vector[size_t] slots
++        cdef shared_ptr[SuccessorFingerprintProfile] profile
++        guids.reserve(len(slot_guid_rows))
++        slots.reserve(len(slot_guid_rows))
++        for row in slot_guid_rows:
++            slots.push_back(row[0])
++            guids.push_back(row[2])
++        profile = deref(self.graph).build_successor_fingerprint_profile(
++            guids, slots
++        )
++        if profile.get() == NULL:
++            return None
++        return PySuccessorFingerprintProfile().set_this(profile)
++
+     def rotation_merging(self, gate_type:str):
+         deref(self.graph).rotation_merging(get_gate_type_from_str(gate_type))
+         self.get_nodes()
+diff --git a/src/quartz/tasograph/tasograph.cpp b/src/quartz/tasograph/tasograph.cpp
+index cb934c22..5db96740 100644
+--- a/src/quartz/tasograph/tasograph.cpp
++++ b/src/quartz/tasograph/tasograph.cpp
+@@ -2,7 +2,9 @@
+ 
+ #include "substitution.h"
+ 
++#include <algorithm>
+ #include <cassert>
++#include <cstring>
+ #include <iomanip>
+ 
+ namespace quartz {
+@@ -484,6 +486,439 @@ size_t Graph::hash(void) {
+   return total;
+ }
+ 
++namespace {
++
++constexpr uint64_t kSequenceBaseLow = 0x9e3779b185ebca87ULL;
++constexpr uint64_t kSequenceBaseHigh = 0xc2b2ae3d27d4eb4fULL;
++constexpr uint64_t kCircuitBaseLow = 0x165667b19e3779f9ULL;
++constexpr uint64_t kCircuitBaseHigh = 0x85ebca77c2b2ae63ULL;
++
++struct FingerprintHash {
++  uint64_t low = 0;
++  uint64_t high = 0;
++};
++
++struct FingerprintToken {
++  int gate_type = 0;
++  std::vector<int> qubits;
++  std::vector<uint64_t> parameter_bits;
++  bool symbolic_parameters = false;
++  uint64_t symbolic_low = 0;
++  uint64_t symbolic_high = 0;
++};
++
++uint64_t mix_fingerprint_word(uint64_t value) {
++  value ^= value >> 30;
++  value *= 0xbf58476d1ce4e5b9ULL;
++  value ^= value >> 27;
++  value *= 0x94d049bb133111ebULL;
++  return value ^ (value >> 31);
++}
++
++uint64_t double_bits(double value) {
++  uint64_t result;
++  static_assert(sizeof(result) == sizeof(value));
++  std::memcpy(&result, &value, sizeof(result));
++  return result;
++}
++
++uint64_t wrapped_power(uint64_t base, size_t exponent) {
++  uint64_t result = 1;
++  while (exponent > 0) {
++    if (exponent & 1U) {
++      result *= base;
++    }
++    base *= base;
++    exponent >>= 1U;
++  }
++  return result;
++}
++
++FingerprintHash token_fingerprint(const FingerprintToken &token,
++                                  bool include_parameters) {
++  uint64_t low = mix_fingerprint_word(
++      0x243f6a8885a308d3ULL ^ static_cast<uint64_t>(token.gate_type));
++  uint64_t high = mix_fingerprint_word(
++      0x13198a2e03707344ULL ^ static_cast<uint64_t>(token.gate_type));
++  low = mix_fingerprint_word(low ^ token.qubits.size());
++  high = mix_fingerprint_word(high ^ (token.qubits.size() << 1U));
++  for (const int qubit : token.qubits) {
++    low = mix_fingerprint_word(low ^ static_cast<uint64_t>(qubit));
++    high = mix_fingerprint_word(
++        high ^ (static_cast<uint64_t>(qubit) + 0x9e3779b97f4a7c15ULL));
++  }
++  if (!include_parameters) {
++    return {low, high};
++  }
++  if (token.symbolic_parameters) {
++    low = mix_fingerprint_word(low ^ 0xfffffffffffffff1ULL ^
++                               token.symbolic_low);
++    high = mix_fingerprint_word(high ^ 0xffffffffffffffc5ULL ^
++                                token.symbolic_high);
++    return {low, high};
++  }
++  low = mix_fingerprint_word(low ^ token.parameter_bits.size());
++  high = mix_fingerprint_word(high ^ (token.parameter_bits.size() << 1U));
++  for (const uint64_t bits : token.parameter_bits) {
++    low = mix_fingerprint_word(low ^ bits);
++    high = mix_fingerprint_word(high ^
++                                (bits + 0x517cc1b727220a95ULL));
++  }
++  return {low, high};
++}
++
++FingerprintHash append_fingerprint(FingerprintHash left,
++                                   FingerprintHash right,
++                                   size_t right_length) {
++  return {
++      left.low * wrapped_power(kSequenceBaseLow, right_length) + right.low,
++      left.high * wrapped_power(kSequenceBaseHigh, right_length) + right.high,
++  };
++}
++
++FingerprintHash slice_fingerprint(const std::vector<FingerprintHash> &prefix,
++                                  size_t begin, size_t end) {
++  return {
++      prefix[end].low -
++          prefix[begin].low * wrapped_power(kSequenceBaseLow, end - begin),
++      prefix[end].high -
++          prefix[begin].high * wrapped_power(kSequenceBaseHigh, end - begin),
++  };
++}
++
++std::vector<FingerprintHash>
++fingerprint_prefix(const std::vector<FingerprintToken> &tokens,
++                   bool include_parameters) {
++  std::vector<FingerprintHash> result(tokens.size() + 1);
++  for (size_t index = 0; index < tokens.size(); ++index) {
++    const auto token_hash = token_fingerprint(tokens[index], include_parameters);
++    result[index + 1] = {
++        result[index].low * kSequenceBaseLow + token_hash.low,
++        result[index].high * kSequenceBaseHigh + token_hash.high,
++    };
++  }
++  return result;
++}
++
++}  // namespace
++
++struct SuccessorFingerprintProfile::Impl {
++  bool valid = true;
++  std::vector<std::vector<size_t>> wire_slots;
++  std::unordered_map<size_t, FingerprintToken> slot_tokens;
++  std::unordered_map<size_t, std::vector<std::pair<int, size_t>>>
++      slot_positions;
++  std::vector<std::vector<FingerprintHash>> exact_prefixes;
++  std::vector<std::vector<FingerprintHash>> topology_prefixes;
++};
++
++SuccessorFingerprintProfile::SuccessorFingerprintProfile(
++    const Graph &graph, const std::vector<size_t> &guids,
++    const std::vector<size_t> &slots)
++    : impl_(std::make_shared<Impl>()) {
++  auto *impl = impl_.get();
++  if (guids.size() != slots.size()) {
++    impl->valid = false;
++    return;
++  }
++  std::unordered_map<size_t, size_t> guid_to_slot;
++  for (size_t index = 0; index < guids.size(); ++index) {
++    if (!guid_to_slot.emplace(guids[index], slots[index]).second) {
++      impl->valid = false;
++      return;
++    }
++  }
++
++  const int num_qubits = static_cast<int>(graph.get_num_qubits());
++  impl->wire_slots.resize(num_qubits);
++  std::vector<Op> ops;
++  graph.topology_order_ops(ops);
++  for (const auto &op : ops) {
++    if (!op.ptr->is_quantum_gate()) {
++      continue;
++    }
++    const auto slot_it = guid_to_slot.find(op.guid);
++    const auto incoming = graph.inEdges.find(op);
++    if (slot_it == guid_to_slot.end() || incoming == graph.inEdges.end()) {
++      impl->valid = false;
++      return;
++    }
++    const size_t slot = slot_it->second;
++    FingerprintToken token;
++    token.gate_type = static_cast<int>(op.ptr->tp);
++    token.qubits.resize(op.ptr->get_num_qubits(), -1);
++    token.parameter_bits.resize(op.ptr->get_num_parameters());
++    std::vector<bool> qubit_seen(token.qubits.size(), false);
++    std::vector<bool> parameter_seen(token.parameter_bits.size(), false);
++    for (const auto &edge : incoming->second) {
++      if (edge.dstIdx < static_cast<int>(token.qubits.size())) {
++        const auto logical =
++            graph.pos_2_logical_qubit.find(Pos(op, edge.dstIdx));
++        if (logical == graph.pos_2_logical_qubit.end() ||
++            logical->second < 0 || logical->second >= num_qubits) {
++          impl->valid = false;
++          return;
++        }
++        token.qubits[edge.dstIdx] = logical->second;
++        qubit_seen[edge.dstIdx] = true;
++      } else {
++        const int parameter_index =
++            edge.dstIdx - static_cast<int>(token.qubits.size());
++        const auto constant = graph.constant_param_values.find(edge.srcOp);
++        if (parameter_index < 0 ||
++            parameter_index >= static_cast<int>(token.parameter_bits.size()) ||
++            constant == graph.constant_param_values.end()) {
++          impl->valid = false;
++          return;
++        }
++        token.parameter_bits[parameter_index] = double_bits(constant->second);
++        parameter_seen[parameter_index] = true;
++      }
++    }
++    if (std::find(qubit_seen.begin(), qubit_seen.end(), false) !=
++            qubit_seen.end() ||
++        std::find(parameter_seen.begin(), parameter_seen.end(), false) !=
++            parameter_seen.end() ||
++        !impl->slot_tokens.emplace(slot, token).second) {
++      impl->valid = false;
++      return;
++    }
++    for (const int qubit : token.qubits) {
++      const size_t position = impl->wire_slots[qubit].size();
++      impl->wire_slots[qubit].push_back(slot);
++      impl->slot_positions[slot].emplace_back(qubit, position);
++    }
++  }
++
++  impl->exact_prefixes.reserve(impl->wire_slots.size());
++  impl->topology_prefixes.reserve(impl->wire_slots.size());
++  for (const auto &wire : impl->wire_slots) {
++    std::vector<FingerprintToken> tokens;
++    tokens.reserve(wire.size());
++    for (const size_t slot : wire) {
++      tokens.push_back(impl->slot_tokens.at(slot));
++    }
++    impl->exact_prefixes.push_back(fingerprint_prefix(tokens, true));
++    impl->topology_prefixes.push_back(fingerprint_prefix(tokens, false));
++  }
++}
++
++bool SuccessorFingerprintProfile::successor_fingerprint(
++    GraphXfer *xfer, const std::vector<size_t> &source_slots, size_t xfer_id,
++    int kind, uint64_t &low, uint64_t &high) const {
++  if (!impl_->valid || xfer == nullptr || kind < 0 || kind > 3 ||
++      source_slots.size() != xfer->srcOps.size()) {
++    return false;
++  }
++  std::set<size_t> distinct_slots(source_slots.begin(), source_slots.end());
++  if (distinct_slots.size() != source_slots.size()) {
++    return false;
++  }
++
++  std::unordered_map<int, int> boundary_physical;
++  std::unordered_map<TensorX, int, TensorXHash> source_outputs;
++  std::unordered_map<int, std::vector<std::vector<uint64_t>>> source_parameters;
++  FingerprintHash effect = {
++      mix_fingerprint_word(0x6a09e667f3bcc909ULL ^ xfer_id),
++      mix_fingerprint_word(0xbb67ae8584caa73bULL ^ xfer_id),
++  };
++  for (size_t index = 0; index < source_slots.size(); ++index) {
++    const auto token_it = impl_->slot_tokens.find(source_slots[index]);
++    if (token_it == impl_->slot_tokens.end()) {
++      return false;
++    }
++    const FingerprintToken &token = token_it->second;
++    OpX *source_op = xfer->srcOps[index];
++    Gate *gate = xfer->context->get_gate(source_op->type);
++    if (!gate->is_quantum_gate() ||
++        token.gate_type != static_cast<int>(source_op->type) ||
++        token.qubits.size() != static_cast<size_t>(gate->get_num_qubits()) ||
++        source_op->inputs.size() < token.qubits.size() ||
++        source_op->outputs.size() < token.qubits.size()) {
++      return false;
++    }
++    for (size_t qubit_index = 0; qubit_index < token.qubits.size();
++         ++qubit_index) {
++      const TensorX input = source_op->inputs[qubit_index];
++      const int physical = token.qubits[qubit_index];
++      if (input.op == nullptr) {
++        const auto inserted = boundary_physical.emplace(input.idx, physical);
++        if (!inserted.second && inserted.first->second != physical) {
++          return false;
++        }
++      } else {
++        const auto previous = source_outputs.find(input);
++        if (previous == source_outputs.end() || previous->second != physical) {
++          return false;
++        }
++      }
++      source_outputs[source_op->outputs[qubit_index]] = physical;
++    }
++    if (!token.parameter_bits.empty()) {
++      source_parameters[token.gate_type].push_back(token.parameter_bits);
++    }
++    const auto token_hash = token_fingerprint(token, true);
++    effect.low = mix_fingerprint_word(effect.low ^ token_hash.low);
++    effect.high = mix_fingerprint_word(effect.high ^ token_hash.high);
++  }
++
++  std::unordered_map<int, size_t> destination_counts;
++  bool parameterized_destination = false;
++  for (const OpX *destination_op : xfer->dstOps) {
++    Gate *gate = xfer->context->get_gate(destination_op->type);
++    if (!gate->is_quantum_gate()) {
++      continue;
++    }
++    ++destination_counts[static_cast<int>(destination_op->type)];
++    parameterized_destination |= gate->get_num_parameters() > 0;
++  }
++
++  std::unordered_map<TensorX, int, TensorXHash> destination_outputs;
++  std::unordered_map<int, size_t> parameter_offsets;
++  std::vector<std::vector<FingerprintToken>> destination_by_wire(
++      impl_->wire_slots.size());
++  size_t destination_operation_index = 0;
++  for (OpX *destination_op : xfer->dstOps) {
++    Gate *gate = xfer->context->get_gate(destination_op->type);
++    if (!gate->is_quantum_gate()) {
++      continue;
++    }
++    FingerprintToken token;
++    token.gate_type = static_cast<int>(destination_op->type);
++    token.qubits.resize(gate->get_num_qubits());
++    if (destination_op->inputs.size() < token.qubits.size() ||
++        destination_op->outputs.size() < token.qubits.size()) {
++      return false;
++    }
++    for (size_t qubit_index = 0; qubit_index < token.qubits.size();
++         ++qubit_index) {
++      const TensorX input = destination_op->inputs[qubit_index];
++      int physical = -1;
++      if (input.op == nullptr) {
++        const auto boundary = boundary_physical.find(input.idx);
++        if (boundary == boundary_physical.end()) {
++          return false;
++        }
++        physical = boundary->second;
++      } else {
++        const auto previous = destination_outputs.find(input);
++        if (previous == destination_outputs.end()) {
++          return false;
++        }
++        physical = previous->second;
++      }
++      token.qubits[qubit_index] = physical;
++      destination_outputs[destination_op->outputs[qubit_index]] = physical;
++    }
++
++    const int parameter_count = gate->get_num_parameters();
++    const auto parameter_rows = source_parameters.find(token.gate_type);
++    const bool transfer_parameters =
++        (kind == 1 || kind == 2) && parameter_rows != source_parameters.end() &&
++        !parameter_rows->second.empty() &&
++        parameter_rows->second.size() == destination_counts[token.gate_type];
++    if (parameter_count > 0 && transfer_parameters) {
++      const size_t offset = parameter_offsets[token.gate_type]++;
++      token.parameter_bits = parameter_rows->second[offset];
++      if (token.parameter_bits.size() != static_cast<size_t>(parameter_count)) {
++        return false;
++      }
++    } else if (parameter_count > 0 && kind != 3) {
++      token.symbolic_parameters = true;
++      token.symbolic_low =
++          mix_fingerprint_word(effect.low ^ destination_operation_index);
++      token.symbolic_high = mix_fingerprint_word(
++          effect.high ^ (destination_operation_index + 0x9e3779b97f4a7c15ULL));
++    }
++    for (const int qubit : token.qubits) {
++      if (qubit < 0 ||
++          qubit >= static_cast<int>(destination_by_wire.size())) {
++        return false;
++      }
++      destination_by_wire[qubit].push_back(token);
++    }
++    ++destination_operation_index;
++  }
++
++  std::vector<std::vector<size_t>> positions_by_wire(impl_->wire_slots.size());
++  std::vector<bool> affected(impl_->wire_slots.size(), false);
++  for (const size_t slot : source_slots) {
++    const auto positions = impl_->slot_positions.find(slot);
++    if (positions == impl_->slot_positions.end() || positions->second.empty()) {
++      return false;
++    }
++    for (const auto &[wire, position] : positions->second) {
++      positions_by_wire[wire].push_back(position);
++      affected[wire] = true;
++    }
++  }
++  for (size_t wire = 0; wire < destination_by_wire.size(); ++wire) {
++    if (!destination_by_wire[wire].empty()) {
++      affected[wire] = true;
++    }
++  }
++
++  std::vector<size_t> child_lengths(impl_->wire_slots.size());
++  std::vector<FingerprintHash> child_hashes(impl_->wire_slots.size());
++  const bool include_parameters = kind != 3;
++  const auto &parent_prefixes = include_parameters ? impl_->exact_prefixes
++                                                    : impl_->topology_prefixes;
++  for (size_t wire = 0; wire < impl_->wire_slots.size(); ++wire) {
++    const size_t parent_length = impl_->wire_slots[wire].size();
++    if (!affected[wire]) {
++      child_lengths[wire] = parent_length;
++      child_hashes[wire] = parent_prefixes[wire].back();
++      continue;
++    }
++    auto &removed = positions_by_wire[wire];
++    if (removed.empty()) {
++      return false;
++    }
++    std::sort(removed.begin(), removed.end());
++    for (size_t index = 1; index < removed.size(); ++index) {
++      if (removed[index] != removed.front() + index) {
++        return false;
++      }
++    }
++    const size_t first = removed.front();
++    const size_t after = removed.back() + 1;
++    const auto destination_prefix =
++        fingerprint_prefix(destination_by_wire[wire], include_parameters);
++    FingerprintHash combined = append_fingerprint(
++        parent_prefixes[wire][first], destination_prefix.back(),
++        destination_by_wire[wire].size());
++    combined = append_fingerprint(
++        combined,
++        slice_fingerprint(parent_prefixes[wire], after, parent_length),
++        parent_length - after);
++    child_lengths[wire] = first + destination_by_wire[wire].size() +
++                          parent_length - after;
++    child_hashes[wire] = combined;
++  }
++
++  low = 0x3c6ef372fe94f82bULL;
++  high = 0xa54ff53a5f1d36f1ULL;
++  for (size_t wire = 0; wire < child_hashes.size(); ++wire) {
++    low = low * kCircuitBaseLow + child_hashes[wire].low +
++          mix_fingerprint_word(child_lengths[wire] ^ wire);
++    high = high * kCircuitBaseHigh + child_hashes[wire].high +
++           mix_fingerprint_word((child_lengths[wire] << 1U) ^ wire);
++  }
++  if (kind == 2 && parameterized_destination) {
++    low = low * kCircuitBaseLow + mix_fingerprint_word(xfer_id);
++    high = high * kCircuitBaseHigh +
++           mix_fingerprint_word(xfer_id ^ 0x9e3779b97f4a7c15ULL);
++  }
++  return true;
++}
++
++std::shared_ptr<SuccessorFingerprintProfile>
++Graph::build_successor_fingerprint_profile(
++    const std::vector<size_t> &guids,
++    const std::vector<size_t> &slots) const {
++  return std::make_shared<SuccessorFingerprintProfile>(*this, guids, slots);
++}
++
+ int Graph::exact_wire_trace_records(
+     std::vector<size_t> &guids, std::vector<int> &gate_types,
+     std::vector<std::vector<int>> &qubit_rows,
+diff --git a/src/quartz/tasograph/tasograph.h b/src/quartz/tasograph/tasograph.h
+index 48f8df7c..61c57289 100644
+--- a/src/quartz/tasograph/tasograph.h
++++ b/src/quartz/tasograph/tasograph.h
+@@ -8,9 +8,11 @@
+ #include "../parser/qasm_parser.h"
+ 
+ #include <chrono>
++#include <cstdint>
+ #include <fstream>
+ #include <iostream>
+ #include <map>
++#include <memory>
+ #include <queue>
+ #include <set>
+ #include <stack>
+@@ -174,6 +176,23 @@ struct EdgeCompare {
+ 
+ class GraphXfer;
+ class OpX;
++class Graph;
++
++class SuccessorFingerprintProfile {
++ public:
++  struct Impl;
++
++  SuccessorFingerprintProfile(const Graph &graph,
++                              const std::vector<size_t> &guids,
++                              const std::vector<size_t> &slots);
++  bool successor_fingerprint(GraphXfer *xfer,
++                             const std::vector<size_t> &source_slots,
++                             size_t xfer_id, int kind, uint64_t &low,
++                             uint64_t &high) const;
++
++ private:
++  std::shared_ptr<Impl> impl_;
++};
+ 
+ class Graph {
+  public:
+@@ -194,6 +213,10 @@ class Graph {
+       std::vector<size_t> &guids, std::vector<int> &gate_types,
+       std::vector<std::vector<int>> &qubits,
+       std::vector<std::vector<double>> &parameters) const;
++  std::shared_ptr<SuccessorFingerprintProfile>
++  build_successor_fingerprint_profile(
++      const std::vector<size_t> &guids,
++      const std::vector<size_t> &slots) const;
+   bool equal(const Graph &other) const;
+   bool check_correctness();
+   int specific_gate_count(GateType gate_type) const;
