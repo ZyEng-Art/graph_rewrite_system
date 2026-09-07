@@ -1,0 +1,128 @@
+{
+  "date": "2026-09-07",
+  "protocol": {
+    "inputs": "untouched original QASM circuits",
+    "beam_size": 1000,
+    "model_depth": 128,
+    "barenco_cpu_depth": 128,
+    "gf_cpu_depth": 8,
+    "microbatch": 512,
+    "target_recall": 0.999,
+    "max_source_matches": 10240,
+    "max_actions_per_parent": 128,
+    "global_proposal_cap": 16000,
+    "max_gate_increase": 3,
+    "dedup_identity": "exact physical-wire trace",
+    "rotation_elimination": true,
+    "model_apply_backend": "Quartz direct GUID binding",
+    "checkpoint": "paged_action_matcher_control_s412_sourcetopo1_only_lr1e4_a06875_s414.pt"
+  },
+  "hardware": {
+    "model_and_gf_cpu_host": "h100-gpu3",
+    "barenco_cpu_host": "h100-gpu1",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "logical_cpu_count_per_host": 192
+  },
+  "barenco": {
+    "initial_gate_count": 58,
+    "target_gate_count": 36,
+    "model": {
+      "completed_depth": 128,
+      "best_gate_count": 38,
+      "target_reached": false,
+      "first_38_step": 34,
+      "first_38_seconds": 88.07001825235784,
+      "total_seconds": 374.7722480110824,
+      "match_states_per_second": 798.2772674960472,
+      "accepted_actions_per_second": 316.7256930841099,
+      "unique_graphs_seen": 118701,
+      "artifact": "e2e_current_sourcetopo_barenco_raw_b1000_d128_r999_20260907.json"
+    },
+    "cpu_quartz": {
+      "completed_depth": 128,
+      "best_gate_count": 38,
+      "target_reached": false,
+      "first_38_step": 34,
+      "first_38_seconds": 684.3411359470338,
+      "total_seconds": 2277.919098278042,
+      "match_states_per_second": 61.325658687497615,
+      "accepted_actions_per_second": 55.793026229980356,
+      "unique_graphs_seen": 127093,
+      "artifact": "e2e_current_cpuquartz_barenco_raw_b1000_d128_20260907.json"
+    },
+    "speedup": {
+      "time_to_38": 7.770421189037421,
+      "equal_depth_total_time": 6.078142419474671,
+      "in_search_match_states_per_second": 13.017019051746296
+    },
+    "reference_36_retention": {
+      "replayable_actions": 116,
+      "first_lost_after_action": 4,
+      "retained_beam_indices_after_actions_1_to_3": [10, 90, 417],
+      "lost_action": {
+        "xfer_id": 336,
+        "source_id": 323,
+        "gate_count_before": 58,
+        "gate_count_after": 58
+      },
+      "matching_predicted_candidates": 4,
+      "matching_candidates_after_parent_top128": 4,
+      "matching_candidates_after_global_top16000": 0,
+      "exclusion_stage": "global_proposal_cap",
+      "target_seen_before_layer": false,
+      "artifact": "e2e_current_sourcetopo_barenco_reference_retention_b1000_r999_20260907.json"
+    }
+  },
+  "gf2_6_mult": {
+    "initial_gate_count": 495,
+    "target_gate_count": 369,
+    "model_depth128": {
+      "completed_depth": 128,
+      "best_gate_count": 474,
+      "target_reached": false,
+      "best_first_seen_step": 128,
+      "best_first_seen_seconds": 1865.9686429146677,
+      "total_seconds": 1865.9716116581112,
+      "match_states_per_second": 119.35351963335718,
+      "accepted_actions_per_second": 68.53534062415922,
+      "unique_graphs_seen": 127886,
+      "artifact": "e2e_current_sourcetopo_gf2_6_raw_b1000_d128_r999_20260907.json"
+    },
+    "equal_depth8": {
+      "model_best_gate_count": 485,
+      "model_seconds": 84.3333801496774,
+      "model_match_states_per_second": 165.25697036759254,
+      "cpu_quartz_best_gate_count": 485,
+      "cpu_quartz_seconds": 1404.3828593734652,
+      "cpu_quartz_match_states_per_second": 5.094431938511762,
+      "equal_depth_total_time_speedup": 16.652751933824123,
+      "time_to_485_speedup": 15.804325548732314,
+      "cpu_artifact": "e2e_current_cpuquartz_gf2_6_raw_b1000_d8_20260907.json"
+    }
+  },
+  "batch512_matcher_throughput": {
+    "note": "The untouched original QASM is cyclically repeated to 512 states. QASM parsing is excluded.",
+    "barenco": {
+      "cpu_original_xfer_anchor_states_per_second": 43.791397476066486,
+      "model_gpu_full_proposal_states_per_second": 10757.756282521934,
+      "model_gpu_full_proposal_speedup": 245.6591226256577,
+      "model_including_one_time_tensor_preparation_states_per_second": 982.2156017038811,
+      "model_including_preparation_speedup": 22.429441512834626,
+      "artifact": "matcher_throughput_current_sourcetopo_raw_barenco58_b512_r999_20260907.json"
+    },
+    "gf2_6_mult": {
+      "cpu_original_xfer_anchor_states_per_second": 4.88338299187548,
+      "model_gpu_full_proposal_states_per_second": 3764.414276945663,
+      "model_gpu_full_proposal_speedup": 770.8619789208725,
+      "model_including_one_time_tensor_preparation_states_per_second": 125.40022747604768,
+      "model_including_preparation_speedup": 25.679,
+      "artifact": "matcher_throughput_current_sourcetopo_raw_gf2_6_495_b512_r999_20260907.json"
+    }
+  },
+  "conclusion": {
+    "reproduced_barenco_36": false,
+    "reproduced_gf_369": false,
+    "matcher_filter_diagnosis": "The known Barenco continuation is present in the model candidates, but the neutral fourth action is removed by immediate-gate-count global proposal ranking.",
+    "search_diagnosis": "Candidate matching is substantially faster than CPU Quartz; autonomous long-horizon quality remains limited by proposal ranking and trajectory-prefix retention."
+  }
+}

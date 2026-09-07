@@ -1,0 +1,417 @@
+{
+  "config": {
+    "calibration": "../../runs/paged_action_matcher_control_s412_sourcetopo1_only_lr1e4_a06875_s414_calibration_r999.json",
+    "checkpoint": "../../runs/paged_action_matcher_control_s412_sourcetopo1_only_lr1e4_a06875_s414.pt",
+    "cpu_count": 192,
+    "cuda_device": "NVIDIA H100 80GB HBM3",
+    "data": "../../data/quarl_gf370_2_normalized_w8_20260905.pt",
+    "device": "cuda",
+    "ecc_file": "../../quarl/experiment/ecc_set/nam_ecc.json",
+    "global_proposal_cap": 16000,
+    "input_kind": "qasm_initial",
+    "max_gate_increase": 3,
+    "max_source_matches": 10240,
+    "omp_num_threads": null,
+    "per_parent_cap": 128,
+    "qasm": "../../quarl/experiment/circs/nam_circs/gf2^6_mult.qasm",
+    "qasm_parse_seconds_excluded": 0.004605848342180252,
+    "states": 512,
+    "states_cyclically_repeated": true,
+    "target_recall": 0.999,
+    "torch_num_threads": 96,
+    "trajectory_dir": null,
+    "unique_input_states": 1
+  },
+  "cpu_quartz": {
+    "full_binding_ground_truth": {
+      "mean_seconds": 112.09984929300845,
+      "median_seconds": 112.09984929300845,
+      "min_seconds": 112.09984929300845,
+      "ms_per_state_from_median": 218.94501815040712,
+      "raw_xfer_bindings": 1233408,
+      "raw_xfer_bindings_per_state": 2409.0,
+      "repeats": 1,
+      "seconds": [
+        112.09984929300845
+      ],
+      "states_per_second_from_median": 4.567356720183681,
+      "unique_source_bindings": 934400,
+      "unique_source_bindings_per_state": 1825.0
+    },
+    "original_xfer_anchor": {
+      "actions": 1233408,
+      "actions_per_state": 2409.0,
+      "mean_seconds": 104.84535021148622,
+      "median_seconds": 104.84535021148622,
+      "min_seconds": 104.84535021148622,
+      "ms_per_state_from_median": 204.77607463180902,
+      "repeats": 1,
+      "seconds": [
+        104.84535021148622
+      ],
+      "states_per_second_from_median": 4.88338299187548
+    }
+  },
+  "model": {
+    "512": {
+      "gpu_proposals_full": {
+        "candidate_count_stable": false,
+        "eligible_actions": 1277690,
+        "expanded_xfer_actions": 1277690,
+        "expanded_xfer_actions_by_repeat": [
+          1277690,
+          1277692,
+          1277674,
+          1277692,
+          1277687
+        ],
+        "expanded_xfer_actions_per_state": 2495.48828125,
+        "including_one_time_tensor_preparation": {
+          "ms_per_state": 7.974467192980228,
+          "seconds": 4.082927202805877,
+          "states_per_second": 125.40022747604768
+        },
+        "materialized_actions": 1277690,
+        "mean_seconds": 0.13627778366208076,
+        "median_seconds": 0.1360105350613594,
+        "metrics_by_repeat": [
+          {
+            "eligible_actions": 1277690,
+            "expanded_xfer_actions": 1277690,
+            "materialized_actions": 1277690,
+            "selected_actions": 16000,
+            "source_binding_candidates": 978682
+          },
+          {
+            "eligible_actions": 1277692,
+            "expanded_xfer_actions": 1277692,
+            "materialized_actions": 1277692,
+            "selected_actions": 16000,
+            "source_binding_candidates": 978684
+          },
+          {
+            "eligible_actions": 1277674,
+            "expanded_xfer_actions": 1277674,
+            "materialized_actions": 1277674,
+            "selected_actions": 16000,
+            "source_binding_candidates": 978666
+          },
+          {
+            "eligible_actions": 1277692,
+            "expanded_xfer_actions": 1277692,
+            "materialized_actions": 1277692,
+            "selected_actions": 16000,
+            "source_binding_candidates": 978684
+          },
+          {
+            "eligible_actions": 1277687,
+            "expanded_xfer_actions": 1277687,
+            "materialized_actions": 1277687,
+            "selected_actions": 16000,
+            "source_binding_candidates": 978679
+          }
+        ],
+        "min_seconds": 0.13582113943994045,
+        "ms_per_state_from_median": 0.2656455762917176,
+        "repeats": 5,
+        "seconds": [
+          0.13740484416484833,
+          0.13620384596288204,
+          0.1359485536813736,
+          0.1360105350613594,
+          0.13582113943994045
+        ],
+        "selected_actions": 16000,
+        "source_binding_candidates": 978682,
+        "source_binding_candidates_by_repeat": [
+          978682,
+          978684,
+          978666,
+          978684,
+          978679
+        ],
+        "source_binding_candidates_max": 978684,
+        "source_binding_candidates_min": 978666,
+        "source_binding_candidates_per_state": 1911.48828125,
+        "states_per_second_from_median": 3764.414276945663
+      },
+      "gpu_proposals_preselect": {
+        "candidate_count_stable": false,
+        "eligible_actions": 1277691,
+        "expanded_xfer_actions": 1277691,
+        "expanded_xfer_actions_by_repeat": [
+          1277702,
+          1277676,
+          1277708,
+          1277691,
+          1277673
+        ],
+        "expanded_xfer_actions_per_state": 2495.490234375,
+        "including_one_time_tensor_preparation": {
+          "ms_per_state": 7.9735274230188224,
+          "seconds": 4.082446040585637,
+          "states_per_second": 125.41500730443269
+        },
+        "materialized_actions": 65536,
+        "mean_seconds": 0.13551219329237937,
+        "median_seconds": 0.13552937284111977,
+        "metrics_by_repeat": [
+          {
+            "eligible_actions": 1277702,
+            "expanded_xfer_actions": 1277702,
+            "materialized_actions": 65536,
+            "selected_actions": 16000,
+            "source_binding_candidates": 978694
+          },
+          {
+            "eligible_actions": 1277676,
+            "expanded_xfer_actions": 1277676,
+            "materialized_actions": 65536,
+            "selected_actions": 16000,
+            "source_binding_candidates": 978668
+          },
+          {
+            "eligible_actions": 1277708,
+            "expanded_xfer_actions": 1277708,
+            "materialized_actions": 65536,
+            "selected_actions": 16000,
+            "source_binding_candidates": 978700
+          },
+          {
+            "eligible_actions": 1277691,
+            "expanded_xfer_actions": 1277691,
+            "materialized_actions": 65536,
+            "selected_actions": 16000,
+            "source_binding_candidates": 978683
+          },
+          {
+            "eligible_actions": 1277673,
+            "expanded_xfer_actions": 1277673,
+            "materialized_actions": 65536,
+            "selected_actions": 16000,
+            "source_binding_candidates": 978665
+          }
+        ],
+        "min_seconds": 0.13530549593269825,
+        "ms_per_state_from_median": 0.26470580633031204,
+        "repeats": 5,
+        "seconds": [
+          0.13552937284111977,
+          0.13532236404716969,
+          0.13587245717644691,
+          0.13530549593269825,
+          0.13553127646446228
+        ],
+        "selected_actions": 16000,
+        "source_binding_candidates": 978683,
+        "source_binding_candidates_by_repeat": [
+          978694,
+          978668,
+          978700,
+          978683,
+          978665
+        ],
+        "source_binding_candidates_max": 978700,
+        "source_binding_candidates_min": 978665,
+        "source_binding_candidates_per_state": 1911.490234375,
+        "states_per_second_from_median": 3777.7788627430186
+      },
+      "gpu_resident": {
+        "candidate_count_stable": false,
+        "eligible_actions": 0,
+        "expanded_xfer_actions": 1277708,
+        "expanded_xfer_actions_by_repeat": [
+          1277713,
+          1277708,
+          1277697,
+          1277708,
+          1277692
+        ],
+        "expanded_xfer_actions_per_state": 2495.5234375,
+        "including_one_time_tensor_preparation": {
+          "ms_per_state": 7.908459585451055,
+          "seconds": 4.04913130775094,
+          "states_per_second": 126.44687491855792
+        },
+        "materialized_actions": 0,
+        "mean_seconds": 0.10248480401933194,
+        "median_seconds": 0.102214640006423,
+        "metrics_by_repeat": [
+          {
+            "eligible_actions": 0,
+            "expanded_xfer_actions": 1277713,
+            "materialized_actions": 0,
+            "selected_actions": 0,
+            "source_binding_candidates": 978705
+          },
+          {
+            "eligible_actions": 0,
+            "expanded_xfer_actions": 1277708,
+            "materialized_actions": 0,
+            "selected_actions": 0,
+            "source_binding_candidates": 978700
+          },
+          {
+            "eligible_actions": 0,
+            "expanded_xfer_actions": 1277697,
+            "materialized_actions": 0,
+            "selected_actions": 0,
+            "source_binding_candidates": 978689
+          },
+          {
+            "eligible_actions": 0,
+            "expanded_xfer_actions": 1277708,
+            "materialized_actions": 0,
+            "selected_actions": 0,
+            "source_binding_candidates": 978700
+          },
+          {
+            "eligible_actions": 0,
+            "expanded_xfer_actions": 1277692,
+            "materialized_actions": 0,
+            "selected_actions": 0,
+            "source_binding_candidates": 978684
+          }
+        ],
+        "min_seconds": 0.10170293785631657,
+        "ms_per_state_from_median": 0.19963796876254492,
+        "repeats": 5,
+        "seconds": [
+          0.10327841527760029,
+          0.10336130112409592,
+          0.102214640006423,
+          0.10186672583222389,
+          0.10170293785631657
+        ],
+        "selected_actions": 0,
+        "source_binding_candidates": 978700,
+        "source_binding_candidates_by_repeat": [
+          978705,
+          978700,
+          978689,
+          978700,
+          978684
+        ],
+        "source_binding_candidates_max": 978705,
+        "source_binding_candidates_min": 978684,
+        "source_binding_candidates_per_state": 1911.5234375,
+        "states_per_second_from_median": 5009.067193973649
+      },
+      "host_materialized": {
+        "candidate_count_stable": false,
+        "eligible_actions": 0,
+        "expanded_xfer_actions": 1277708,
+        "expanded_xfer_actions_by_repeat": [
+          1277711,
+          1277713,
+          1277692,
+          1277708,
+          1277676
+        ],
+        "expanded_xfer_actions_per_state": 2495.5234375,
+        "including_one_time_tensor_preparation": {
+          "ms_per_state": 12.623803570022574,
+          "seconds": 6.463387427851558,
+          "states_per_second": 79.21542777920553
+        },
+        "materialized_actions": 0,
+        "mean_seconds": 2.472589014098048,
+        "median_seconds": 2.5164707601070404,
+        "metrics_by_repeat": [
+          {
+            "eligible_actions": 0,
+            "expanded_xfer_actions": 1277711,
+            "materialized_actions": 0,
+            "selected_actions": 0,
+            "source_binding_candidates": 978703
+          },
+          {
+            "eligible_actions": 0,
+            "expanded_xfer_actions": 1277713,
+            "materialized_actions": 0,
+            "selected_actions": 0,
+            "source_binding_candidates": 978705
+          },
+          {
+            "eligible_actions": 0,
+            "expanded_xfer_actions": 1277692,
+            "materialized_actions": 0,
+            "selected_actions": 0,
+            "source_binding_candidates": 978684
+          },
+          {
+            "eligible_actions": 0,
+            "expanded_xfer_actions": 1277708,
+            "materialized_actions": 0,
+            "selected_actions": 0,
+            "source_binding_candidates": 978700
+          },
+          {
+            "eligible_actions": 0,
+            "expanded_xfer_actions": 1277676,
+            "materialized_actions": 0,
+            "selected_actions": 0,
+            "source_binding_candidates": 978668
+          }
+        ],
+        "min_seconds": 2.292970234528184,
+        "ms_per_state_from_median": 4.914981953334063,
+        "repeats": 5,
+        "seconds": [
+          2.5201823338866234,
+          2.292970234528184,
+          2.5164707601070404,
+          2.5097736958414316,
+          2.5235480461269617
+        ],
+        "selected_actions": 0,
+        "source_binding_candidates": 978700,
+        "source_binding_candidates_by_repeat": [
+          978703,
+          978705,
+          978684,
+          978700,
+          978668
+        ],
+        "source_binding_candidates_max": 978705,
+        "source_binding_candidates_min": 978668,
+        "source_binding_candidates_per_state": 1911.5234375,
+        "states_per_second_from_median": 203.45954664628076
+      },
+      "tensor_preparation": {
+        "ms_per_state": 7.70882161668851,
+        "note": "PrefixDataset replay plus CPU collation; excluded from core matcher timings",
+        "seconds": 3.9469166677445173,
+        "states_per_second": 129.72151253768035
+      }
+    }
+  },
+  "speedup": {
+    "512": {
+      "gpu_proposals_full": {
+        "vs_full_binding_ground_truth": 824.1997521915199,
+        "vs_original_xfer_anchor": 770.8619789208725
+      },
+      "gpu_proposals_preselect": {
+        "vs_full_binding_ground_truth": 827.1258616714946,
+        "vs_original_xfer_anchor": 773.598726339535
+      },
+      "gpu_resident": {
+        "vs_full_binding_ground_truth": 1096.7103077011695,
+        "vs_original_xfer_anchor": 1025.7371175488943
+      },
+      "host_materialized": {
+        "vs_full_binding_ground_truth": 44.546454133343545,
+        "vs_original_xfer_anchor": 41.663647308592815
+      }
+    }
+  },
+  "timing_boundaries": {
+    "cpu_full_binding_ground_truth": "all graph nodes plus available_xfer_bindings_parallel and source-binding deduplication; graphs/context are preloaded",
+    "cpu_original_xfer_anchor": "all graph nodes plus available_xfers_parallel; graphs/context are preloaded",
+    "model_gpu_proposals_full": "GPU matcher, full source-to-xfer expansion, gate/parent/global ranking and caps, then D2H packing of selected proposals only",
+    "model_gpu_proposals_preselect": "GPU matcher, exact per-parent match preselection before xfer expansion, gate/parent/global ranking and caps, then D2H packing of selected proposals only",
+    "model_gpu_resident": "CPU-to-GPU tensor transfer, encode, source-anchor scoring, r99.9 threshold, per-state cap, and structural decode; output remains as GPU tensors",
+    "model_host_materialized": "same logical matcher stages plus device-to-host copies and Python packing of source-anchor-binding-probability rows"
+  }
+}

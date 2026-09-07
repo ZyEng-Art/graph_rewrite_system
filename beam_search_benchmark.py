@@ -546,6 +546,19 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--best-qasm", type=Path)
     parser.add_argument(
+        "--reference-data",
+        type=Path,
+        help=(
+            "optional trajectory payload whose first trajectory is checked "
+            "for Quartz-hash retention after every beam layer"
+        ),
+    )
+    parser.add_argument(
+        "--stop-on-reference-loss",
+        action="store_true",
+        help="stop as soon as the expected reference prefix leaves the beam",
+    )
+    parser.add_argument(
         "--dedup-identity",
         choices=("exact", "quartz_hash"),
         default="exact",
@@ -582,6 +595,23 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     payload = torch.load(args.data, map_location="cpu", weights_only=False)
     rules = RuleMetadata.from_payload(payload)
+    reference_hashes = None
+    if args.reference_data is not None:
+        reference_payload = (
+            payload
+            if args.reference_data.resolve() == args.data.resolve()
+            else torch.load(args.reference_data, map_location="cpu", weights_only=False)
+        )
+        reference_trajectories = (
+            reference_payload["train_trajectories"]
+            + reference_payload["test_trajectories"]
+        )
+        if not reference_trajectories:
+            raise RuntimeError("reference payload contains no trajectories")
+        reference_trajectory = reference_trajectories[0]
+        reference_hashes = [
+            int(step["graph_hash"]) for step in reference_trajectory["steps"]
+        ] + [int(reference_trajectory["terminal_graph_hash"])]
     context = quartz.QuartzContext(
         gate_set=["h", "cx", "x", "rz", "add"],
         filename=str(args.ecc_file),
@@ -677,6 +707,10 @@ def main() -> None:
     gc.collect()
     gc.disable()
     initial_gate_count = beam[0].gate_count
+    if reference_hashes is not None and int(graph.hash()) != reference_hashes[0]:
+        raise RuntimeError(
+            "input QASM does not match the first state of the reference trajectory"
+        )
     best_state = beam[0]
     best_first_seen_step = 0
     best_first_seen_seconds = 0.0
@@ -688,10 +722,26 @@ def main() -> None:
         if args.dedup_identity == "exact"
         else QuartzHashRegistry.seeded(graph)
     )
+    diagnostic_seen_hashes = (
+        {int(graph.hash())} if reference_hashes is not None else None
+    )
     step_rows = []
+    reference_retention = []
     total_started = time.perf_counter()
     for step in range(args.depth):
         step_started = time.perf_counter()
+        input_beam = beam
+        reference_parent_indices = []
+        reference_target_seen_before = False
+        if reference_hashes is not None and step + 1 < len(reference_hashes):
+            reference_parent_indices = [
+                index
+                for index, state in enumerate(input_beam)
+                if int(state.graph.hash()) == reference_hashes[step]
+            ]
+            reference_target_seen_before = (
+                reference_hashes[step + 1] in diagnostic_seen_hashes
+            )
         model_seconds = exact_seconds = 0.0
         exact_refresh_actions_added = 0
         if args.mode == "model":
@@ -775,6 +825,8 @@ def main() -> None:
             if applied is None:
                 invalid += 1
                 continue
+            if diagnostic_seen_hashes is not None:
+                diagnostic_seen_hashes.add(int(applied.graph.hash()))
             if not seen.register(applied.graph):
                 duplicates += 1
                 continue
@@ -790,6 +842,130 @@ def main() -> None:
             break
         children.sort(key=lambda state: (state.gate_count, len(state.history)))
         beam = children[: args.beam_size]
+        reference_lost = False
+        if reference_hashes is not None and step + 1 < len(reference_hashes):
+            expected_hash = reference_hashes[step + 1]
+            retained_indices = [
+                index
+                for index, state in enumerate(beam)
+                if int(state.graph.hash()) == expected_hash
+            ]
+            reference_lost = not retained_indices
+            retention_row = {
+                "step": step + 1,
+                "expected_quartz_hash": expected_hash,
+                "parent_beam_indices": reference_parent_indices,
+                "target_seen_before_layer": reference_target_seen_before,
+                "retained": not reference_lost,
+                "beam_indices": retained_indices,
+            }
+            if reference_lost and reference_parent_indices:
+                def proposal_key(proposal):
+                    return (
+                        int(proposal.parent),
+                        int(proposal.xfer_id),
+                        int(proposal.anchor_slot),
+                        None
+                        if proposal.binding is None
+                        else tuple(map(int, proposal.binding)),
+                    )
+
+                matching_candidates = []
+                for parent_index in reference_parent_indices:
+                    state = input_beam[parent_index]
+                    for xfer_id, anchor, binding, probability in action_rows[
+                        parent_index
+                    ]:
+                        if gate_deltas[xfer_id] > args.max_gate_increase:
+                            continue
+                        candidate = Proposal(
+                            parent=parent_index,
+                            xfer_id=xfer_id,
+                            anchor_slot=anchor,
+                            binding=binding,
+                            probability=probability,
+                            next_gate_count=state.gate_count + gate_deltas[xfer_id],
+                        )
+                        candidate_result = apply_rewrite(
+                            state,
+                            candidate,
+                            xfers,
+                            eliminate_rotation=args.eliminate_rotation,
+                            binding_backend=model_apply_backend,
+                        )
+                        if (
+                            candidate_result is not None
+                            and int(candidate_result.graph.hash()) == expected_hash
+                        ):
+                            matching_candidates.append(candidate)
+
+                effective_parent_cap = max(
+                    args.max_actions_per_parent,
+                    math.ceil(args.beam_size / max(1, len(input_beam))) * 2,
+                )
+                parent_selected_keys = set()
+                for parent_index in reference_parent_indices:
+                    state = input_beam[parent_index]
+                    eligible_rows = [
+                        row
+                        for row in action_rows[parent_index]
+                        if gate_deltas[row[0]] <= args.max_gate_increase
+                    ]
+                    selected_rows = heapq.nsmallest(
+                        effective_parent_cap,
+                        eligible_rows,
+                        key=lambda row: (
+                            state.gate_count + gate_deltas[row[0]],
+                            -row[3],
+                            row[0],
+                        ),
+                    )
+                    parent_selected_keys.update(
+                        (
+                            parent_index,
+                            int(xfer_id),
+                            int(anchor),
+                            None if binding is None else tuple(map(int, binding)),
+                        )
+                        for xfer_id, anchor, binding, _ in selected_rows
+                    )
+                global_positions = {
+                    proposal_key(proposal): index
+                    for index, proposal in enumerate(proposals)
+                }
+                matching_keys = [proposal_key(row) for row in matching_candidates]
+                parent_selected_matches = [
+                    key for key in matching_keys if key in parent_selected_keys
+                ]
+                global_match_positions = [
+                    global_positions[key]
+                    for key in parent_selected_matches
+                    if key in global_positions
+                ]
+                attempted_match_positions = [
+                    index for index in global_match_positions if index < attempted
+                ]
+                if not matching_candidates:
+                    exclusion_stage = "predicted_candidates"
+                elif not parent_selected_matches:
+                    exclusion_stage = "per_parent_cap"
+                elif not global_match_positions:
+                    exclusion_stage = "global_proposal_cap"
+                elif not attempted_match_positions:
+                    exclusion_stage = "beam_filled_before_proposal"
+                elif reference_target_seen_before:
+                    exclusion_stage = "global_exact_dedup"
+                else:
+                    exclusion_stage = "attempted_but_not_retained"
+                retention_row["loss_detail"] = {
+                    "exclusion_stage": exclusion_stage,
+                    "matching_predicted_candidates": len(matching_candidates),
+                    "matching_parent_selected_candidates": len(parent_selected_matches),
+                    "matching_global_proposal_positions": global_match_positions,
+                    "matching_attempted_proposal_positions": attempted_match_positions,
+                    "attempted_proposals": attempted,
+                }
+            reference_retention.append(retention_row)
         elapsed = time.perf_counter() - step_started
         cumulative_seconds = time.perf_counter() - total_started
         if beam[0].gate_count < best_state.gate_count:
@@ -841,6 +1017,8 @@ def main() -> None:
             args.target_gate_count is not None
             and best_state.gate_count <= args.target_gate_count
         ):
+            break
+        if args.stop_on_reference_loss and reference_lost:
             break
 
     total_seconds = time.perf_counter() - total_started
@@ -897,6 +1075,10 @@ def main() -> None:
         "refresh_interval": args.refresh_interval,
         "refresh_count": args.refresh_count,
         "target_recall": args.target_recall if args.mode == "model" else None,
+        "reference_data": (
+            str(args.reference_data) if args.reference_data is not None else None
+        ),
+        "reference_retention": reference_retention,
         "steps": step_rows,
     }
     rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
