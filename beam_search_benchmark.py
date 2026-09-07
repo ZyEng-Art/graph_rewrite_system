@@ -49,6 +49,59 @@ from train import autocast_context, move_batch
 from train_neural_successor_prefilter import NeuralSuccessorPrefilter
 
 
+NATIVE_APPLY_PROFILE_NAMES = (
+    "native_guid_lookup",
+    "native_source_match",
+    "native_input_validation",
+    "native_destination_creation",
+    "native_output_validation",
+    "native_graph_rewrite",
+    "native_loop_check",
+    "native_trace",
+    "native_rotation_elimination",
+    "native_unmatch_cleanup",
+)
+NATIVE_GRAPH_REWRITE_PROFILE_NAMES = (
+    "native_graph_allocate",
+    "native_graph_copy_constants",
+    "native_graph_copy_special_guid",
+    "native_graph_copy_qubit_map",
+    "native_graph_copy_in_edges",
+    "native_graph_copy_out_edges",
+    "native_graph_reconnect_outputs",
+    "native_graph_remove_source_ops",
+    "native_graph_add_destination_ops",
+    "native_graph_rebuild_qubit_index",
+)
+NATIVE_APPLY_RESULT_NAMES = {
+    0: "success",
+    1: "source_match_rejected",
+    2: "input_qubit_alias_rejected",
+    3: "destination_creation_rejected",
+    4: "output_boundary_rejected",
+    5: "cycle_rejected",
+    6: "guid_lookup_rejected",
+}
+
+
+def add_profile_ns(profile: Counter, name: str, started_ns: int) -> None:
+    profile[f"{name}_ns"] += time.perf_counter_ns() - started_ns
+
+
+def rendered_apply_profile(profile: Counter) -> dict:
+    seconds = {
+        key.removesuffix("_ns"): value / 1e9
+        for key, value in sorted(profile.items())
+        if key.endswith("_ns")
+    }
+    counts = {
+        key.removesuffix("_count"): int(value)
+        for key, value in sorted(profile.items())
+        if key.endswith("_count")
+    }
+    return {"seconds": seconds, "counts": counts}
+
+
 @dataclass(frozen=True)
 class AppliedRewrite:
     """A Quartz successor before expensive BeamState metadata is materialized."""
@@ -75,23 +128,37 @@ def update_slots(graph, guid_to_slot: dict[int, int], next_slot: int, preferred=
     return next_slot
 
 
-def snapshot(graph, guid_to_slot: dict[int, int]) -> dict:
+def snapshot(
+    graph, guid_to_slot: dict[int, int], *, profile: Counter | None = None
+) -> dict:
+    started = time.perf_counter_ns() if profile is not None else 0
     nodes = list(graph.nodes)
-    return {
-        "nodes": sorted(
-            (guid_to_slot[int(node.guid)], int(node.gate_tp), int(node.guid))
-            for node in nodes
-        ),
-        "edges": sorted(
-            (
-                guid_to_slot[int(nodes[int(src)].guid)],
-                guid_to_slot[int(nodes[int(dst)].guid)],
-                int(src_port),
-                int(dst_port),
-            )
-            for src, dst, src_port, dst_port in graph.all_edges()
-        ),
-    }
+    if profile is not None:
+        add_profile_ns(profile, "child_snapshot_nodes", started)
+    started = time.perf_counter_ns() if profile is not None else 0
+    node_rows = sorted(
+        (guid_to_slot[int(node.guid)], int(node.gate_tp), int(node.guid))
+        for node in nodes
+    )
+    if profile is not None:
+        add_profile_ns(profile, "child_snapshot_node_rows", started)
+    started = time.perf_counter_ns() if profile is not None else 0
+    raw_edges = graph.all_edges()
+    if profile is not None:
+        add_profile_ns(profile, "child_snapshot_native_edges", started)
+    started = time.perf_counter_ns() if profile is not None else 0
+    edge_rows = sorted(
+        (
+            guid_to_slot[int(nodes[int(src)].guid)],
+            guid_to_slot[int(nodes[int(dst)].guid)],
+            int(src_port),
+            int(dst_port),
+        )
+        for src, dst, src_port, dst_port in raw_edges
+    )
+    if profile is not None:
+        add_profile_ns(profile, "child_snapshot_edge_rows", started)
+    return {"nodes": node_rows, "edges": edge_rows}
 
 
 def graph_delta(before: dict, after: dict) -> tuple[set[int], set[tuple[int, ...]]]:
@@ -704,6 +771,7 @@ def apply_rewrite(
     *,
     eliminate_rotation: bool = False,
     binding_backend: str = "auto",
+    profile: Counter | None = None,
 ) -> AppliedRewrite | None:
     """Apply one proposal without constructing metadata for duplicate children.
 
@@ -712,9 +780,13 @@ def apply_rewrite(
     rediscover a binding the model already supplied.  Original Quartz actions
     contain only an anchor and continue to use the original exact API.
     """
+    started = time.perf_counter_ns() if profile is not None else 0
     slot_to_guid = {
         int(slot): int(guid) for slot, _, guid in parent.snapshot["nodes"]
     }
+    if profile is not None:
+        profile["attempted_count"] += 1
+        add_profile_ns(profile, "python_slot_to_guid", started)
     guid_direct_method = getattr(
         parent.graph, "apply_xfer_with_guid_binding", None
     )
@@ -735,16 +807,61 @@ def apply_rewrite(
                 "extension does not provide a direct binding API"
             )
         try:
+            started = time.perf_counter_ns() if profile is not None else 0
             source_guids = [slot_to_guid[slot] for slot in proposal.binding]
         except KeyError:
+            if profile is not None:
+                add_profile_ns(profile, "python_binding_to_guid", started)
+                profile["python_missing_slot_count"] += 1
             return None
+        if profile is not None:
+            add_profile_ns(profile, "python_binding_to_guid", started)
         prefer_guid = binding_backend != "node_direct"
         if guid_direct_method is not None and prefer_guid:
-            graph, destination_guids = guid_direct_method(
-                xfer=xfers[proposal.xfer_id],
-                source_node_guids=source_guids,
-                eliminate_rotation=eliminate_rotation,
-            )
+            call_started = time.perf_counter_ns() if profile is not None else 0
+            if profile is not None:
+                profiled_method = getattr(
+                    parent.graph,
+                    "apply_xfer_with_guid_binding_profiled",
+                    None,
+                )
+                if profiled_method is None:
+                    raise RuntimeError(
+                        "detailed apply profiling requires the profiled "
+                        "Quartz direct-binding API"
+                    )
+                graph, destination_guids, native_values = profiled_method(
+                    xfer=xfers[proposal.xfer_id],
+                    source_node_guids=source_guids,
+                    eliminate_rotation=eliminate_rotation,
+                )
+                native_wall_ns = time.perf_counter_ns() - call_started
+                profile["native_call_wall_ns"] += native_wall_ns
+                for name, value in zip(
+                    NATIVE_APPLY_PROFILE_NAMES, native_values[:10]
+                ):
+                    profile[f"{name}_ns"] += int(value)
+                for name, value in zip(
+                    NATIVE_GRAPH_REWRITE_PROFILE_NAMES,
+                    native_values[12:22],
+                ):
+                    profile[f"{name}_ns"] += int(value)
+                result_code = int(native_values[10])
+                result_name = NATIVE_APPLY_RESULT_NAMES.get(
+                    result_code, f"unknown_{result_code}"
+                )
+                profile[f"native_result_{result_name}_count"] += 1
+                native_cpp_ns = int(native_values[11])
+                profile["native_cpp_total_ns"] += native_cpp_ns
+                profile["native_wrapper_unattributed_ns"] += max(
+                    0, native_wall_ns - native_cpp_ns
+                )
+            else:
+                graph, destination_guids = guid_direct_method(
+                    xfer=xfers[proposal.xfer_id],
+                    source_node_guids=source_guids,
+                    eliminate_rotation=eliminate_rotation,
+                )
             if graph is None:
                 return None
             return AppliedRewrite(
@@ -809,26 +926,48 @@ def materialize_child(
     applied: AppliedRewrite,
     *,
     eliminate_rotation: bool = False,
+    profile: Counter | None = None,
 ) -> BeamState:
     """Construct model/search metadata only after exact dedup accepts a graph."""
+    total_started = time.perf_counter_ns() if profile is not None else 0
     graph = applied.graph
+    started = time.perf_counter_ns() if profile is not None else 0
     source_slots = tuple(
         parent.guid_to_slot[guid] for guid in applied.source_guids
     )
+    if profile is not None:
+        profile["materialized_children_count"] += 1
+        add_profile_ns(profile, "child_source_slots", started)
 
+    started = time.perf_counter_ns() if profile is not None else 0
     live_guids = {int(node.guid) for node in graph.nodes}
+    if profile is not None:
+        add_profile_ns(profile, "child_materialize_nodes", started)
+    started = time.perf_counter_ns() if profile is not None else 0
     surviving_destination_guids = tuple(
         guid for guid in applied.destination_guids if guid in live_guids
     )
+    if profile is not None:
+        add_profile_ns(profile, "child_filter_destinations", started)
+    started = time.perf_counter_ns() if profile is not None else 0
     guid_to_slot = dict(parent.guid_to_slot)
+    if profile is not None:
+        add_profile_ns(profile, "child_copy_slot_map", started)
+    started = time.perf_counter_ns() if profile is not None else 0
     next_slot = update_slots(
         graph,
         guid_to_slot,
         parent.next_slot,
         surviving_destination_guids,
     )
-    after = snapshot(graph, guid_to_slot)
+    if profile is not None:
+        add_profile_ns(profile, "child_update_slots", started)
+    after = snapshot(graph, guid_to_slot, profile=profile)
+    started = time.perf_counter_ns() if profile is not None else 0
     removed, changed_edges = graph_delta(parent.snapshot, after)
+    if profile is not None:
+        add_profile_ns(profile, "child_graph_delta", started)
+    started = time.perf_counter_ns() if profile is not None else 0
     live = {int(row[0]) for row in after["nodes"]}
     ordered_destination_slots = tuple(
         guid_to_slot[guid] for guid in surviving_destination_guids
@@ -856,17 +995,24 @@ def materialize_child(
     continued = proposal.anchor_slot in parent.previous_preferred
     local_streak = parent.local_streak + 1 if continued else 0
     gate_count = int(graph.gate_count)
+    if profile is not None:
+        add_profile_ns(profile, "child_local_metadata", started)
     if not eliminate_rotation and gate_count != proposal.next_gate_count:
         raise RuntimeError(
             f"gate delta mismatch: expected {proposal.next_gate_count}, got {gate_count}"
         )
-    return BeamState(
+    started = time.perf_counter_ns() if profile is not None else 0
+    rewrite_distance = distances_from_core(after, core)
+    if profile is not None:
+        add_profile_ns(profile, "child_rewrite_distance", started)
+    started = time.perf_counter_ns() if profile is not None else 0
+    child = BeamState(
         graph=graph,
         snapshot=after,
         guid_to_slot=guid_to_slot,
         next_slot=next_slot,
         last_touched=last_touched,
-        rewrite_distance=distances_from_core(after, core),
+        rewrite_distance=rewrite_distance,
         previous_preferred=previous_preferred,
         local_streak=local_streak,
         gate_count=gate_count,
@@ -876,6 +1022,10 @@ def materialize_child(
         last_source_slots=source_slots,
         last_destination_slots=ordered_destination_slots,
     )
+    if profile is not None:
+        add_profile_ns(profile, "child_state_construction", started)
+        add_profile_ns(profile, "child_total", total_started)
+    return child
 
 
 def make_child(
@@ -931,6 +1081,15 @@ def main() -> None:
     )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--best-qasm", type=Path)
+    parser.add_argument(
+        "--apply-profile",
+        choices=("off", "detailed"),
+        default="off",
+        help=(
+            "collect Python and native C++ timings for every direct-binding "
+            "apply stage; intended for profiling runs only"
+        ),
+    )
     parser.add_argument(
         "--neural-audit-output",
         type=Path,
@@ -1117,6 +1276,8 @@ def main() -> None:
         )
     if args.neural_prefilter_batch_size < 1:
         parser.error("--neural-prefilter-batch-size must be positive")
+    if args.apply_profile == "detailed" and args.dedup_identity != "exact":
+        parser.error("detailed apply profiling requires exact graph identity")
     if (
         args.neural_audit_output is not None
         and args.neural_prefilter_mode != "off"
@@ -1286,6 +1447,14 @@ def main() -> None:
         model_apply_backend = "node_direct"
     else:
         model_apply_backend = "anchor"
+    if args.apply_profile == "detailed" and (
+        model_apply_backend != "guid_direct"
+        or not hasattr(graph, "apply_xfer_with_guid_binding_profiled")
+    ):
+        raise RuntimeError(
+            "detailed apply profiling requires the patched Quartz GUID "
+            "direct-binding profiling API"
+        )
     guid_to_slot: dict[int, int] = {}
     next_slot = update_slots(graph, guid_to_slot, 0)
     initial_snapshot = snapshot(graph, guid_to_slot)
@@ -1394,6 +1563,7 @@ def main() -> None:
         "deferred_duplicates": 0,
         "deferred_novel": 0,
     }
+    apply_profile_totals = Counter()
     step_rows = []
     reference_retention = []
     total_started = time.perf_counter()
@@ -1628,11 +1798,18 @@ def main() -> None:
         direct_inverse_skipped_positions = set()
         neural_step_outcomes = []
         neural_step_groups = []
+        apply_profile_step = Counter()
+        detailed_profile = (
+            apply_profile_step if args.apply_profile == "detailed" else None
+        )
 
         def get_fingerprint_profile(parent_index: int):
             if parent_index in fingerprint_profiles:
                 return fingerprint_profiles[parent_index]
             parent_state = beam[parent_index]
+            profile_started = (
+                time.perf_counter_ns() if detailed_profile is not None else 0
+            )
             native_builder = getattr(
                 parent_state.graph,
                 "successor_fingerprint_profile",
@@ -1657,6 +1834,15 @@ def main() -> None:
                 profile_backend = "python"
             fingerprint_profiles[parent_index] = (profile_backend, profile)
             fingerprint_profile_builds[profile_backend] += 1
+            if detailed_profile is not None:
+                add_profile_ns(
+                    detailed_profile,
+                    f"fingerprint_{profile_backend}_profile_build",
+                    profile_started,
+                )
+                detailed_profile[
+                    f"fingerprint_{profile_backend}_profile_build_count"
+                ] += 1
             return profile_backend, profile
 
         for proposal_position, proposal in enumerate(proposals):
@@ -1768,6 +1954,11 @@ def main() -> None:
                                         proposals[position]
                                         for position in positions
                                     ]
+                                    compute_started = (
+                                        time.perf_counter_ns()
+                                        if detailed_profile is not None
+                                        else 0
+                                    )
                                     batch_fingerprints = batch_method(
                                         [
                                             xfers[row.xfer_id]
@@ -1785,6 +1976,15 @@ def main() -> None:
                                             args.preapply_fingerprint_kind
                                         ],
                                     )
+                                    if detailed_profile is not None:
+                                        add_profile_ns(
+                                            detailed_profile,
+                                            "fingerprint_native_compute",
+                                            compute_started,
+                                        )
+                                        detailed_profile[
+                                            "fingerprint_native_compute_count"
+                                        ] += len(batch_proposals)
                                     for position, batch_fingerprint in zip(
                                         positions, batch_fingerprints
                                     ):
@@ -1796,6 +1996,11 @@ def main() -> None:
                                     proposal_position
                                 ]
                             else:
+                                compute_started = (
+                                    time.perf_counter_ns()
+                                    if detailed_profile is not None
+                                    else 0
+                                )
                                 native_fingerprint = profile.successor_fingerprint(
                                     xfer=xfers[proposal.xfer_id],
                                     source_slots=proposal.binding,
@@ -1804,12 +2009,26 @@ def main() -> None:
                                         args.preapply_fingerprint_kind
                                     ],
                                 )
+                                if detailed_profile is not None:
+                                    add_profile_ns(
+                                        detailed_profile,
+                                        "fingerprint_native_compute",
+                                        compute_started,
+                                    )
+                                    detailed_profile[
+                                        "fingerprint_native_compute_count"
+                                    ] += 1
                             if native_fingerprint is not None:
                                 fingerprint = (
                                     "quartz_native_successor_v1",
                                     *native_fingerprint,
                                 )
                         else:
+                            compute_started = (
+                                time.perf_counter_ns()
+                                if detailed_profile is not None
+                                else 0
+                            )
                             fingerprint = successor_fingerprint(
                                 profile,
                                 source_patterns[proposal.xfer_id],
@@ -1818,7 +2037,28 @@ def main() -> None:
                                 xfer_id=proposal.xfer_id,
                                 kind=args.preapply_fingerprint_kind,
                             )
+                            if detailed_profile is not None:
+                                add_profile_ns(
+                                    detailed_profile,
+                                    "fingerprint_python_compute",
+                                    compute_started,
+                                )
+                                detailed_profile[
+                                    "fingerprint_python_compute_count"
+                                ] += 1
+                    registry_started = (
+                        time.perf_counter_ns()
+                        if detailed_profile is not None
+                        else 0
+                    )
                     should_skip = fingerprint_audit.should_skip(fingerprint)
+                    if detailed_profile is not None:
+                        add_profile_ns(
+                            detailed_profile,
+                            "fingerprint_registry",
+                            registry_started,
+                        )
+                        detailed_profile["fingerprint_registry_count"] += 1
                     fingerprint_seconds += (
                         time.perf_counter() - fingerprint_started
                     )
@@ -1836,6 +2076,7 @@ def main() -> None:
                 xfers,
                 eliminate_rotation=args.eliminate_rotation,
                 binding_backend=model_apply_backend,
+                profile=detailed_profile,
             )
             if applied is None:
                 invalid += 1
@@ -1850,18 +2091,34 @@ def main() -> None:
                     direct_inverse_step["shadow_invalid"] += 1
                     direct_inverse_totals["shadow_invalid"] += 1
                 continue
-            exact_identity = (
-                exact_graph_key(applied.graph)
-                if collect_neural_audit
-                or (
-                    args.preapply_fingerprint == "shadow"
-                    and fingerprint is not None
+            if detailed_profile is not None:
+                identity_started = time.perf_counter_ns()
+                exact_identity = exact_graph_key(applied.graph)
+                add_profile_ns(
+                    detailed_profile, "exact_graph_key", identity_started
                 )
-                else None
-            )
+                detailed_profile["exact_graph_key_count"] += 1
+            else:
+                exact_identity = (
+                    exact_graph_key(applied.graph)
+                    if collect_neural_audit
+                    or (
+                        args.preapply_fingerprint == "shadow"
+                        and fingerprint is not None
+                    )
+                    else None
+                )
             if diagnostic_seen_hashes is not None:
                 diagnostic_seen_hashes.add(int(applied.graph.hash()))
-            is_new_successor = seen.register(applied.graph)
+            if detailed_profile is not None:
+                registry_started = time.perf_counter_ns()
+                is_new_successor = seen.register_native_key(exact_identity)
+                add_profile_ns(
+                    detailed_profile, "exact_registry", registry_started
+                )
+                detailed_profile["exact_registry_count"] += 1
+            else:
+                is_new_successor = seen.register(applied.graph)
             if collect_neural_audit:
                 successor_group = successor_groups.get(exact_identity)
                 if successor_group is None:
@@ -1870,7 +2127,16 @@ def main() -> None:
                     next_successor_group += 1
                 neural_step_outcomes.append(2 if is_new_successor else 1)
                 neural_step_groups.append(successor_group)
+            audit_started = (
+                time.perf_counter_ns() if detailed_profile is not None else 0
+            )
             fingerprint_audit.observe_valid(fingerprint, exact_identity)
+            if detailed_profile is not None:
+                add_profile_ns(
+                    detailed_profile,
+                    "post_apply_fingerprint_audit",
+                    audit_started,
+                )
             if direct_inverse and args.preapply_direct_inverse == "shadow":
                 inverse_result = (
                     "shadow_novel_successors"
@@ -1893,9 +2159,12 @@ def main() -> None:
                 proposal,
                 applied,
                 eliminate_rotation=args.eliminate_rotation,
+                profile=detailed_profile,
             )
             children.append(child)
         apply_seconds = time.perf_counter() - apply_started
+        if detailed_profile is not None:
+            apply_profile_totals.update(apply_profile_step)
         if collect_neural_audit:
             if proposal_feature_rows is None or selected_proposal_tensors is None:
                 raise RuntimeError("neural audit proposal features are missing")
@@ -2203,6 +2472,11 @@ def main() -> None:
                 **direct_inverse_step,
             },
             "neural_prefilter": neural_prefilter_step,
+            "apply_profile": (
+                rendered_apply_profile(apply_profile_step)
+                if detailed_profile is not None
+                else None
+            ),
             "model_match_seconds": model_seconds,
             "quartz_exact_match_seconds": exact_seconds,
             "exact_refresh_actions_added": exact_refresh_actions_added,
@@ -2347,6 +2621,14 @@ def main() -> None:
                 else None
             ),
             **neural_prefilter_totals,
+        },
+        "apply_profile": {
+            "mode": args.apply_profile,
+            **(
+                rendered_apply_profile(apply_profile_totals)
+                if args.apply_profile == "detailed"
+                else {"seconds": {}, "counts": {}}
+            ),
         },
         "preapply_fingerprint_min_proposals_per_gate": (
             args.preapply_fingerprint_min_proposals_per_gate

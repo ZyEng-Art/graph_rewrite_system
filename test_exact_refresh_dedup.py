@@ -139,6 +139,21 @@ class ExactRefreshDedupTest(unittest.TestCase):
         self.assertEqual(registry.stats()["native_identity_calls"], 3)
         self.assertEqual(registry.stats()["native_duplicates"], 1)
 
+    def test_registry_accepts_precomputed_native_key_without_reencoding(self) -> None:
+        first = FakeNativeGraph(b"first")
+        registry = ExactGraphRegistry.seeded(first)
+
+        self.assertTrue(
+            registry.register_native_key(("quartz_wire_trace_v1", b"second"))
+        )
+        self.assertFalse(
+            registry.register_native_key(("quartz_wire_trace_v1", b"second"))
+        )
+        self.assertEqual(first.key_calls, 1)
+        self.assertEqual(registry.stats()["registrations"], 3)
+        self.assertEqual(registry.stats()["native_identity_calls"], 3)
+        self.assertEqual(registry.stats()["native_duplicates"], 1)
+
     def test_legacy_quartz_hash_registry_exposes_false_merge(self) -> None:
         first = FakeGraph(HEADER + "cx q[0],q[1];\n", graph_hash=31)
         distinct = FakeGraph(HEADER + "cx q[0],q[2];\n", graph_hash=31)

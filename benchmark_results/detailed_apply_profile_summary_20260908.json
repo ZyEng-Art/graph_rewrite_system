@@ -1,0 +1,484 @@
+[
+  {
+    "apply_loop_seconds": 10.267386545659974,
+    "attempted_applies": 52085,
+    "average_microseconds": {
+      "child_metadata_per_materialized_child": 158.31100277869666,
+      "exact_graph_key_per_success": 32.870746514910884,
+      "fingerprint_compute": 2.4927682399010718,
+      "fingerprint_profile_build": 61.5794029147982,
+      "native_apply_wall_per_attempt": 75.73125752135931
+    },
+    "best_gate_count": 48,
+    "child_metadata": [
+      {
+        "percent": 20.490179560287476,
+        "seconds": 0.490303525,
+        "stage": "child_rewrite_distance"
+      },
+      {
+        "percent": 18.934443166534063,
+        "seconds": 0.453076763,
+        "stage": "child_materialize_nodes"
+      },
+      {
+        "percent": 12.2126278671258,
+        "seconds": 0.292232407,
+        "stage": "child_snapshot_edge_rows"
+      },
+      {
+        "percent": 10.631891210163442,
+        "seconds": 0.254407421,
+        "stage": "child_graph_delta"
+      },
+      {
+        "percent": 8.372832683398606,
+        "seconds": 0.200351069,
+        "stage": "child_snapshot_native_edges"
+      },
+      {
+        "percent": 8.039364032410129,
+        "seconds": 0.192371595,
+        "stage": "child_local_metadata"
+      },
+      {
+        "percent": 7.9568980675018945,
+        "seconds": 0.190398291,
+        "stage": "child_snapshot_node_rows"
+      },
+      {
+        "percent": 5.811150505627778,
+        "seconds": 0.139053324,
+        "stage": "child_update_slots"
+      },
+      {
+        "percent": 1.8112971194771235,
+        "seconds": 0.043342,
+        "stage": "child_state_construction"
+      },
+      {
+        "percent": 1.124062775195201,
+        "seconds": 0.02689737,
+        "stage": "child_source_slots"
+      },
+      {
+        "percent": 0.615398832102514,
+        "seconds": 0.014725699,
+        "stage": "child_filter_destinations"
+      },
+      {
+        "percent": 0.5733774660906713,
+        "seconds": 0.013720182,
+        "stage": "child_copy_slot_map"
+      },
+      {
+        "percent": 0.3116690620397543,
+        "seconds": 0.007457838,
+        "stage": "child_snapshot_nodes"
+      }
+    ],
+    "completed_depth": 16,
+    "graph_rewrite": [
+      {
+        "percent": 50.926955387780346,
+        "seconds": 1.007628059,
+        "stage": "native_graph_rebuild_qubit_index"
+      },
+      {
+        "percent": 14.018511496471117,
+        "seconds": 0.277366778,
+        "stage": "native_graph_copy_out_edges"
+      },
+      {
+        "percent": 13.968276051807043,
+        "seconds": 0.276372832,
+        "stage": "native_graph_copy_in_edges"
+      },
+      {
+        "percent": 9.204919384053241,
+        "seconds": 0.182126243,
+        "stage": "native_graph_remove_source_ops"
+      },
+      {
+        "percent": 4.08065293853104,
+        "seconds": 0.080738783,
+        "stage": "native_graph_add_destination_ops"
+      },
+      {
+        "percent": 3.1107803271602985,
+        "seconds": 0.061549125,
+        "stage": "native_graph_copy_constants"
+      },
+      {
+        "percent": 2.813141738813381,
+        "seconds": 0.055660122,
+        "stage": "native_graph_reconnect_outputs"
+      },
+      {
+        "percent": 0.977467066588745,
+        "seconds": 0.01933992,
+        "stage": "native_graph_copy_qubit_map"
+      },
+      {
+        "percent": 0.24668838688676092,
+        "seconds": 0.004880915,
+        "stage": "native_graph_allocate"
+      },
+      {
+        "percent": 0.05166708099598187,
+        "seconds": 0.001022272,
+        "stage": "native_graph_copy_special_guid"
+      }
+    ],
+    "materialized_children": 15115,
+    "native": [
+      {
+        "percent": 50.16082867875666,
+        "seconds": 1.978575101,
+        "stage": "native_graph_rewrite"
+      },
+      {
+        "percent": 21.707376596442714,
+        "seconds": 0.85623934,
+        "stage": "native_rotation_elimination"
+      },
+      {
+        "percent": 17.947849431577364,
+        "seconds": 0.707946199,
+        "stage": "native_loop_check"
+      },
+      {
+        "percent": 2.9482232518334968,
+        "seconds": 0.116291562,
+        "stage": "native_guid_lookup"
+      },
+      {
+        "percent": 2.609711151958946,
+        "seconds": 0.102939079,
+        "stage": "native_source_match"
+      },
+      {
+        "percent": 2.0303793235559455,
+        "seconds": 0.080087552,
+        "stage": "native_wrapper_unattributed"
+      },
+      {
+        "percent": 0.7984073271520387,
+        "seconds": 0.031492878,
+        "stage": "native_output_validation"
+      },
+      {
+        "percent": 0.5374596093135475,
+        "seconds": 0.021199893,
+        "stage": "native_input_validation"
+      },
+      {
+        "percent": 0.33745137234853523,
+        "seconds": 0.013310643,
+        "stage": "native_unmatch_cleanup"
+      },
+      {
+        "percent": 0.13992149583974195,
+        "seconds": 0.005519151,
+        "stage": "native_trace"
+      },
+      {
+        "percent": 0.13829404978799661,
+        "seconds": 0.005454957,
+        "stage": "native_destination_creation"
+      }
+    ],
+    "path": "benchmark_results/detailed_apply_profile_barenco3_d16_hybrid.json",
+    "qasm": "../../quarl/experiment/circs/nam_circs/barenco_tof_3.qasm",
+    "result_counts": {
+      "native_result_cycle_rejected": 3006,
+      "native_result_input_qubit_alias_rejected": 3743,
+      "native_result_success": 45336
+    },
+    "successful_applies": 45336,
+    "top_level": [
+      {
+        "percent_of_apply_loop": 38.41739599905611,
+        "seconds": 3.944462548,
+        "stage": "native_apply_wall"
+      },
+      {
+        "percent_of_apply_loop": 23.305549044624865,
+        "seconds": 2.392870807,
+        "stage": "accepted_child_metadata"
+      },
+      {
+        "percent_of_apply_loop": 14.514191682302245,
+        "seconds": 1.490228164,
+        "stage": "exact_graph_key"
+      },
+      {
+        "percent_of_apply_loop": 9.741389667043029,
+        "seconds": 1.0001861320342869,
+        "stage": "preapply_fingerprint"
+      },
+      {
+        "percent_of_apply_loop": 8.984323133481407,
+        "seconds": 0.9224551846256865,
+        "stage": "python_loop_and_unattributed"
+      },
+      {
+        "percent_of_apply_loop": 3.6253915769572638,
+        "seconds": 0.372232967,
+        "stage": "python_binding_preparation"
+      },
+      {
+        "percent_of_apply_loop": 0.9072346169666148,
+        "seconds": 0.093149285,
+        "stage": "exact_registry"
+      },
+      {
+        "percent_of_apply_loop": 0.5045242795684602,
+        "seconds": 0.051801458,
+        "stage": "post_apply_fingerprint_audit"
+      }
+    ],
+    "total_seconds": 13.020141594810411
+  },
+  {
+    "apply_loop_seconds": 22.781874074833468,
+    "attempted_applies": 11456,
+    "average_microseconds": {
+      "child_metadata_per_materialized_child": 1160.276430006698,
+      "exact_graph_key_per_success": 296.4473345264317,
+      "fingerprint_compute": 3.4937736900097947,
+      "fingerprint_profile_build": 545.8653984261149,
+      "native_apply_wall_per_attempt": 678.0412836941341
+    },
+    "best_gate_count": 485,
+    "child_metadata": [
+      {
+        "percent": 24.041401882941596,
+        "seconds": 2.082337261,
+        "stage": "child_materialize_nodes"
+      },
+      {
+        "percent": 22.996707686889707,
+        "seconds": 1.991851454,
+        "stage": "child_rewrite_distance"
+      },
+      {
+        "percent": 13.980924944260718,
+        "seconds": 1.210952718,
+        "stage": "child_snapshot_edge_rows"
+      },
+      {
+        "percent": 11.73469671877797,
+        "seconds": 1.016396479,
+        "stage": "child_graph_delta"
+      },
+      {
+        "percent": 8.03635480287855,
+        "seconds": 0.696065942,
+        "stage": "child_snapshot_native_edges"
+      },
+      {
+        "percent": 7.085997827699685,
+        "seconds": 0.613751119,
+        "stage": "child_snapshot_node_rows"
+      },
+      {
+        "percent": 5.110708374452491,
+        "seconds": 0.442662143,
+        "stage": "child_update_slots"
+      },
+      {
+        "percent": 4.8837927858046575,
+        "seconds": 0.423007932,
+        "stage": "child_local_metadata"
+      },
+      {
+        "percent": 0.3378164421184916,
+        "seconds": 0.029259848,
+        "stage": "child_state_construction"
+      },
+      {
+        "percent": 0.2914872394746728,
+        "seconds": 0.025247061,
+        "stage": "child_copy_slot_map"
+      },
+      {
+        "percent": 0.23211043819493993,
+        "seconds": 0.020104161,
+        "stage": "child_source_slots"
+      },
+      {
+        "percent": 0.10973735495313607,
+        "seconds": 0.009504861,
+        "stage": "child_snapshot_nodes"
+      },
+      {
+        "percent": 0.10682953229076396,
+        "seconds": 0.009253001,
+        "stage": "child_filter_destinations"
+      }
+    ],
+    "completed_depth": 8,
+    "graph_rewrite": [
+      {
+        "percent": 63.85937969481958,
+        "seconds": 2.23367433,
+        "stage": "native_graph_rebuild_qubit_index"
+      },
+      {
+        "percent": 16.550592702690555,
+        "seconds": 0.578906877,
+        "stage": "native_graph_copy_out_edges"
+      },
+      {
+        "percent": 12.820090539140525,
+        "seconds": 0.448421317,
+        "stage": "native_graph_copy_in_edges"
+      },
+      {
+        "percent": 3.2493097607849575,
+        "seconds": 0.113654405,
+        "stage": "native_graph_copy_constants"
+      },
+      {
+        "percent": 1.7237451094076286,
+        "seconds": 0.060293182,
+        "stage": "native_graph_remove_source_ops"
+      },
+      {
+        "percent": 0.6482295839314789,
+        "seconds": 0.022673784,
+        "stage": "native_graph_add_destination_ops"
+      },
+      {
+        "percent": 0.6091336830735742,
+        "seconds": 0.021306287,
+        "stage": "native_graph_reconnect_outputs"
+      },
+      {
+        "percent": 0.35864345249349877,
+        "seconds": 0.012544636,
+        "stage": "native_graph_copy_qubit_map"
+      },
+      {
+        "percent": 0.06488218416711101,
+        "seconds": 0.00226945,
+        "stage": "native_graph_allocate"
+      },
+      {
+        "percent": 0.007070012440726043,
+        "seconds": 0.000247295,
+        "stage": "native_graph_copy_special_guid"
+      }
+    ],
+    "materialized_children": 7465,
+    "native": [
+      {
+        "percent": 45.03042181424744,
+        "seconds": 3.497801483,
+        "stage": "native_graph_rewrite"
+      },
+      {
+        "percent": 27.518505474956847,
+        "seconds": 2.137538699,
+        "stage": "native_rotation_elimination"
+      },
+      {
+        "percent": 22.122601378542143,
+        "seconds": 1.718404243,
+        "stage": "native_loop_check"
+      },
+      {
+        "percent": 3.800002588327671,
+        "seconds": 0.295170557,
+        "stage": "native_guid_lookup"
+      },
+      {
+        "percent": 0.46130541111651424,
+        "seconds": 0.035832548,
+        "stage": "native_source_match"
+      },
+      {
+        "percent": 0.4110411670925862,
+        "seconds": 0.031928202,
+        "stage": "native_wrapper_unattributed"
+      },
+      {
+        "percent": 0.25149777307948185,
+        "seconds": 0.019535444,
+        "stage": "native_output_validation"
+      },
+      {
+        "percent": 0.12058872269094194,
+        "seconds": 0.009366899,
+        "stage": "native_input_validation"
+      },
+      {
+        "percent": 0.05967093525849489,
+        "seconds": 0.004635024,
+        "stage": "native_unmatch_cleanup"
+      },
+      {
+        "percent": 0.05582615146794402,
+        "seconds": 0.004336375,
+        "stage": "native_trace"
+      },
+      {
+        "percent": 0.03591766173791422,
+        "seconds": 0.002789955,
+        "stage": "native_destination_creation"
+      }
+    ],
+    "path": "benchmark_results/detailed_apply_profile_gf6_d8_hybrid.json",
+    "qasm": "../../quarl/experiment/circs/nam_circs/gf2^6_mult.qasm",
+    "result_counts": {
+      "native_result_cycle_rejected": 184,
+      "native_result_input_qubit_alias_rejected": 376,
+      "native_result_success": 10896
+    },
+    "successful_applies": 10896,
+    "top_level": [
+      {
+        "percent_of_apply_loop": 38.019100279235104,
+        "seconds": 8.66146355,
+        "stage": "accepted_child_metadata"
+      },
+      {
+        "percent_of_apply_loop": 34.09570661520207,
+        "seconds": 7.767640946,
+        "stage": "native_apply_wall"
+      },
+      {
+        "percent_of_apply_loop": 14.178333820957226,
+        "seconds": 3.230090157,
+        "stage": "exact_graph_key"
+      },
+      {
+        "percent_of_apply_loop": 8.843518713869535,
+        "seconds": 2.0147192971780896,
+        "stage": "preapply_fingerprint"
+      },
+      {
+        "percent_of_apply_loop": 2.3131298984639423,
+        "seconds": 0.5269743406553786,
+        "stage": "python_loop_and_unattributed"
+      },
+      {
+        "percent_of_apply_loop": 1.9954737635135626,
+        "seconds": 0.45460632,
+        "stage": "python_binding_preparation"
+      },
+      {
+        "percent_of_apply_loop": 0.4792455161562388,
+        "seconds": 0.10918111,
+        "stage": "exact_registry"
+      },
+      {
+        "percent_of_apply_loop": 0.07549139260232575,
+        "seconds": 0.017198354,
+        "stage": "post_apply_fingerprint_audit"
+      }
+    ],
+    "total_seconds": 29.501649260986596
+  }
+]

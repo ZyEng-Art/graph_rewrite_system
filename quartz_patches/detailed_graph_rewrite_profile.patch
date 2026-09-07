@@ -1,0 +1,145 @@
+diff --git a/src/quartz/tasograph/substitution.h b/src/quartz/tasograph/substitution.h
+--- a/src/quartz/tasograph/substitution.h
++++ b/src/quartz/tasograph/substitution.h
+@@ -97,5 +97,7 @@ class GraphXfer {
+   std::shared_ptr<Graph> run_1_time(int depth, Graph *graph);
+   std::shared_ptr<Graph> create_new_graph(const Graph *graph) const;
++  std::shared_ptr<Graph> create_new_graph_profiled(
++      const Graph *graph, std::vector<uint64_t> &profile) const;
+   bool create_new_operator(const OpX *opx, Op &op);
+   int num_src_op();
+   int num_dst_op();
+diff --git a/src/quartz/tasograph/substitution.cpp b/src/quartz/tasograph/substitution.cpp
+--- a/src/quartz/tasograph/substitution.cpp
++++ b/src/quartz/tasograph/substitution.cpp
+@@ -1044,6 +1044,109 @@ std::shared_ptr<Graph> GraphXfer::create_new_graph(const Graph *graph) const {
+   return new_graph;
+ }
+ 
++std::shared_ptr<Graph> GraphXfer::create_new_graph_profiled(
++    const Graph *graph, std::vector<uint64_t> &profile) const {
++  using Clock = std::chrono::steady_clock;
++  auto elapsed_ns = [](Clock::time_point started) {
++    return static_cast<uint64_t>(
++        std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() -
++                                                             started)
++            .count());
++  };
++  if (profile.size() < 22)
++    profile.resize(22, 0);
++
++  auto started = Clock::now();
++  std::shared_ptr<Graph> new_graph(new Graph(graph->context));
++  profile[12] += elapsed_ns(started);
++  started = Clock::now();
++  new_graph->constant_param_values = graph->constant_param_values;
++  profile[13] += elapsed_ns(started);
++  started = Clock::now();
++  new_graph->special_op_guid = graph->special_op_guid;
++  profile[14] += elapsed_ns(started);
++  started = Clock::now();
++  new_graph->input_qubit_op_2_qubit_idx =
++      graph->input_qubit_op_2_qubit_idx;
++  profile[15] += elapsed_ns(started);
++  started = Clock::now();
++  new_graph->inEdges = graph->inEdges;
++  profile[16] += elapsed_ns(started);
++  started = Clock::now();
++  new_graph->outEdges = graph->outEdges;
++  profile[17] += elapsed_ns(started);
++
++  started = Clock::now();
++  // Step 1: add gates from mapped source operations to unmapped outputs.
++  for (auto it = mappedOps.cbegin(); it != mappedOps.cend(); it++) {
++    auto mapped_op = it->first;
++    auto mapped_op_it = new_graph->outEdges.find(mapped_op);
++    if (mapped_op_it == new_graph->outEdges.end())
++      continue;
++    auto mapped_op_out_edges = mapped_op_it->second;
++    auto mapped_opx = it->second;
++    for (auto e_it = mapped_op_out_edges.cbegin();
++         e_it != mapped_op_out_edges.cend(); e_it++) {
++      if (mappedOps.find(e_it->dstOp) == mappedOps.end()) {
++        auto src_idx = e_it->srcIdx;
++        TensorX src_output_tensor = TensorX(mapped_opx, src_idx);
++        assert(mappedOutputs.find(src_output_tensor) != mappedOutputs.end());
++        TensorX dst_output_tensor =
++            mappedOutputs.find(src_output_tensor)->second;
++        if (dst_output_tensor.op == nullptr) {
++          auto mapped_input_it = mappedInputs.find(dst_output_tensor.idx);
++          assert(mapped_input_it != mappedInputs.end());
++          std::pair<Op, int> src_pos = mapped_input_it->second;
++          new_graph->add_edge(src_pos.first, e_it->dstOp, src_pos.second,
++                              e_it->dstIdx);
++        } else {
++          new_graph->add_edge(dst_output_tensor.op->mapOp, e_it->dstOp,
++                              dst_output_tensor.idx, e_it->dstIdx);
++        }
++      }
++    }
++  }
++  profile[18] += elapsed_ns(started);
++
++  started = Clock::now();
++  for (auto it = mappedOps.cbegin(); it != mappedOps.cend(); it++)
++    new_graph->remove_node_wo_input_output_connect(it->first);
++  profile[19] += elapsed_ns(started);
++
++  started = Clock::now();
++  for (auto dst_op_it = dstOps.cbegin(); dst_op_it != dstOps.cend();
++       dst_op_it++) {
++    OpX *dst_opx = *dst_op_it;
++    for (size_t i = 0; i < dst_opx->inputs.size(); i++) {
++      if (dst_opx->inputs[i].op == NULL) {
++        if (paramValues.find(dst_opx->inputs[i].idx) != paramValues.end()) {
++          Op input_constant_param_op(context->next_global_unique_id(),
++                                     context->get_gate(GateType::input_param));
++          new_graph->constant_param_values[input_constant_param_op] =
++              paramValues.find(dst_opx->inputs[i].idx)->second;
++          new_graph->add_edge(input_constant_param_op, dst_opx->mapOp, 0, i);
++          continue;
++        }
++        auto it = mappedInputs.find(dst_opx->inputs[i].idx);
++        assert(it != mappedInputs.end());
++        std::pair<Op, int> src_edge = it->second;
++        new_graph->add_edge(src_edge.first, dst_opx->mapOp,
++                            src_edge.second, i);
++      } else {
++        OpX *src_op = dst_opx->inputs[i].op;
++        int src_idx = dst_opx->inputs[i].idx;
++        new_graph->add_edge(src_op->mapOp, dst_opx->mapOp, src_idx, i);
++      }
++    }
++  }
++  profile[20] += elapsed_ns(started);
++
++  started = Clock::now();
++  new_graph->_construct_pos_2_logical_qubit();
++  profile[21] += elapsed_ns(started);
++  return new_graph;
++}
++
+ int GraphXfer::num_src_op() {
+   int cnt = 0;
+   for (auto Op : srcOps) {
+diff --git a/src/quartz/tasograph/tasograph.cpp b/src/quartz/tasograph/tasograph.cpp
+--- a/src/quartz/tasograph/tasograph.cpp
++++ b/src/quartz/tasograph/tasograph.cpp
+@@ -3418,7 +3418,7 @@ Graph::apply_xfer_with_op_binding_and_bindings_profiled(
+   if (success) {
+     assert(seen_ops.size() == xfer->srcOps.size());
+     started = Clock::now();
+-    new_graph = xfer->create_new_graph(this);
++    new_graph = xfer->create_new_graph_profiled(this, profile);
+     profile[5] += elapsed_ns(started);
+     started = Clock::now();
+     if (new_graph->has_loop()) {
+@@ -3470,7 +3470,7 @@ Graph::apply_xfer_with_guid_binding_and_bindings_profiled(
+     std::vector<uint64_t> &profile) const {
+   using Clock = std::chrono::steady_clock;
+   const auto total_started = Clock::now();
+-  profile.assign(12, 0);
++  profile.assign(22, 0);
+   std::vector<Op> source_ops;
+   source_ops.reserve(source_guids.size());
+   const auto guid_started = Clock::now();

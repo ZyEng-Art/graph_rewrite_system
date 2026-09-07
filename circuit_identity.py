@@ -102,17 +102,12 @@ class ExactGraphRegistry:
         return registry
 
     def register(self, graph: Any) -> bool:
-        self.registrations += 1
         native_exact_key = getattr(graph, "exact_key", None)
         if native_exact_key is not None:
-            self.native_identity_calls += 1
             key = ("quartz_wire_trace_v1", bytes(native_exact_key()))
-            if key in self.canonical_keys:
-                self.native_duplicates += 1
-                return False
-            self.canonical_keys.add(key)
-            return True
+            return self.register_native_key(key)
 
+        self.registrations += 1
         qasm = graph.to_qasm_str()
         if qasm in self.raw_qasm:
             self.raw_duplicates += 1
@@ -122,6 +117,17 @@ class ExactGraphRegistry:
         self.canonicalized_serializations += 1
         if key in self.canonical_keys:
             self.reordered_duplicates += 1
+            return False
+        self.canonical_keys.add(key)
+        return True
+
+    def register_native_key(self, key: Hashable) -> bool:
+        """Register a key already produced by the native exact-key method."""
+
+        self.registrations += 1
+        self.native_identity_calls += 1
+        if key in self.canonical_keys:
+            self.native_duplicates += 1
             return False
         self.canonical_keys.add(key)
         return True

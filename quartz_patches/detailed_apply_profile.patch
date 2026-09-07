@@ -1,0 +1,272 @@
+diff --git a/src/quartz/tasograph/tasograph.h b/src/quartz/tasograph/tasograph.h
+--- a/src/quartz/tasograph/tasograph.h
++++ b/src/quartz/tasograph/tasograph.h
+@@ -319,6 +319,16 @@ class Graph {
+   apply_xfer_with_guid_binding_and_bindings(
+       GraphXfer *xfer, std::vector<size_t> source_guids,
+       bool eliminate_rotation, std::vector<size_t> &dst_guids) const;
++  std::shared_ptr<Graph>
++  apply_xfer_with_op_binding_and_bindings_profiled(
++      GraphXfer *xfer, std::vector<Op> source_ops, bool eliminate_rotation,
++      std::vector<size_t> &src_guids, std::vector<size_t> &dst_guids,
++      std::vector<uint64_t> &profile) const;
++  std::shared_ptr<Graph>
++  apply_xfer_with_guid_binding_and_bindings_profiled(
++      GraphXfer *xfer, std::vector<size_t> source_guids,
++      bool eliminate_rotation, std::vector<size_t> &dst_guids,
++      std::vector<uint64_t> &profile) const;
+   void all_ops(std::vector<Op> &ops);
+   void all_edges(std::vector<Edge> &edges);
+   void topology_order_ops(std::vector<Op> &ops) const;
+diff --git a/src/quartz/tasograph/tasograph.cpp b/src/quartz/tasograph/tasograph.cpp
+--- a/src/quartz/tasograph/tasograph.cpp
++++ b/src/quartz/tasograph/tasograph.cpp
+@@ -3322,6 +3322,202 @@ Graph::apply_xfer_with_guid_binding_and_bindings(
+       dst_guids);
+ }
+ 
++std::shared_ptr<Graph>
++Graph::apply_xfer_with_op_binding_and_bindings_profiled(
++    GraphXfer *xfer, std::vector<Op> source_ops, bool eliminate_rotation,
++    std::vector<size_t> &src_guids, std::vector<size_t> &dst_guids,
++    std::vector<uint64_t> &profile) const {
++  using Clock = std::chrono::steady_clock;
++  auto elapsed_ns = [](Clock::time_point started) {
++    return static_cast<uint64_t>(
++        std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() -
++                                                             started)
++            .count());
++  };
++  // 0 is populated by the GUID wrapper. 1..9 are the native apply phases,
++  // 10 is a result code, and 11 is total time in the profiled C++ API.
++  if (profile.size() < 12)
++    profile.resize(12, 0);
++  src_guids.clear();
++  dst_guids.clear();
++  std::shared_ptr<Graph> new_graph(nullptr);
++  bool success = source_ops.size() == xfer->srcOps.size();
++  uint64_t result_code = success ? 0 : 1;
++  std::deque<std::pair<OpX *, Op>> matched_opx_op_pairs_dq;
++  std::unordered_set<Op, OpHash> seen_ops;
++
++  auto started = Clock::now();
++  if (success) {
++    for (size_t i = 0; i < source_ops.size(); ++i) {
++      OpX *src_opx = xfer->srcOps[i];
++      Op op = source_ops[i];
++      if (seen_ops.find(op) != seen_ops.end() ||
++          xfer->mappedOps.find(op) != xfer->mappedOps.end() ||
++          !xfer->can_match(src_opx, op, this)) {
++        success = false;
++        result_code = 1;
++        break;
++      }
++      xfer->match(src_opx, op, this);
++      seen_ops.insert(op);
++      matched_opx_op_pairs_dq.push_back(std::make_pair(src_opx, op));
++    }
++  }
++  profile[1] += elapsed_ns(started);
++
++  started = Clock::now();
++  if (success) {
++    std::set<int> qubits;
++    for (auto it = xfer->mappedInputs.cbegin();
++         it != xfer->mappedInputs.cend(); ++it) {
++      if (it->second.first.ptr->is_quantum_gate() ||
++          it->second.first.ptr->tp == GateType::input_qubit) {
++        Pos p = Pos(it->second.first, it->second.second);
++        auto q = pos_2_logical_qubit.find(p)->second;
++        if (qubits.find(q) != qubits.end()) {
++          success = false;
++          result_code = 2;
++          break;
++        }
++        qubits.insert(q);
++      }
++    }
++  }
++  profile[2] += elapsed_ns(started);
++
++  started = Clock::now();
++  if (success) {
++    for (auto dst_it = xfer->dstOps.cbegin();
++         dst_it != xfer->dstOps.cend(); ++dst_it) {
++      OpX *dst_op = *dst_it;
++      if (!xfer->create_new_operator(dst_op, dst_op->mapOp)) {
++        success = false;
++        result_code = 3;
++        break;
++      }
++    }
++  }
++  profile[3] += elapsed_ns(started);
++
++  started = Clock::now();
++  if (success) {
++    for (auto mapped_ops_it = xfer->mappedOps.cbegin();
++         mapped_ops_it != xfer->mappedOps.cend() && success;
++         ++mapped_ops_it) {
++      if (outEdges.find(mapped_ops_it->first) == outEdges.end())
++        continue;
++      const std::set<Edge, EdgeCompare> &list =
++          outEdges.find(mapped_ops_it->first)->second;
++      for (auto edge_it = list.cbegin(); edge_it != list.cend() && success;
++           ++edge_it) {
++        if (xfer->mappedOps.find(edge_it->dstOp) == xfer->mappedOps.end()) {
++          TensorX src_ten;
++          src_ten.op = mapped_ops_it->second;
++          src_ten.idx = edge_it->srcIdx;
++          if (xfer->mappedOutputs.find(src_ten) == xfer->mappedOutputs.end()) {
++            success = false;
++            result_code = 4;
++          }
++        }
++      }
++    }
++  }
++  profile[4] += elapsed_ns(started);
++
++  if (success) {
++    assert(seen_ops.size() == xfer->srcOps.size());
++    started = Clock::now();
++    new_graph = xfer->create_new_graph(this);
++    profile[5] += elapsed_ns(started);
++    started = Clock::now();
++    if (new_graph->has_loop()) {
++      new_graph.reset();
++      success = false;
++      result_code = 5;
++    }
++    profile[6] += elapsed_ns(started);
++  }
++
++  started = Clock::now();
++  if (success) {
++    src_guids.reserve(xfer->srcOps.size());
++    for (const auto *opx : xfer->srcOps)
++      src_guids.emplace_back(opx->mapOp.guid);
++    dst_guids.reserve(xfer->dstOps.size());
++    for (const auto *opx : xfer->dstOps)
++      dst_guids.emplace_back(opx->mapOp.guid);
++  }
++  profile[7] += elapsed_ns(started);
++
++  started = Clock::now();
++  if (success && eliminate_rotation)
++    new_graph->constant_and_rotation_elimination();
++  profile[8] += elapsed_ns(started);
++
++  started = Clock::now();
++  while (!matched_opx_op_pairs_dq.empty()) {
++    auto opx_op_pair = matched_opx_op_pairs_dq.back();
++    matched_opx_op_pairs_dq.pop_back();
++    xfer->unmatch(opx_op_pair.first, opx_op_pair.second, this);
++  }
++  profile[9] += elapsed_ns(started);
++  if (!success) {
++    src_guids.clear();
++    dst_guids.clear();
++  }
++  profile[10] = result_code;
++  return new_graph;
++}
++
++std::shared_ptr<Graph>
++Graph::apply_xfer_with_guid_binding_and_bindings_profiled(
++    GraphXfer *xfer, std::vector<size_t> source_guids,
++    bool eliminate_rotation, std::vector<size_t> &dst_guids,
++    std::vector<uint64_t> &profile) const {
++  using Clock = std::chrono::steady_clock;
++  const auto total_started = Clock::now();
++  profile.assign(12, 0);
++  std::vector<Op> source_ops;
++  source_ops.reserve(source_guids.size());
++  const auto guid_started = Clock::now();
++  for (const auto guid : source_guids) {
++    bool found = false;
++    for (auto it = inEdges.cbegin(); it != inEdges.cend(); ++it) {
++      if (it->first.guid == guid) {
++        source_ops.emplace_back(it->first);
++        found = true;
++        break;
++      }
++    }
++    if (!found) {
++      dst_guids.clear();
++      profile[0] = static_cast<uint64_t>(
++          std::chrono::duration_cast<std::chrono::nanoseconds>(
++              Clock::now() - guid_started)
++              .count());
++      profile[10] = 6;
++      profile[11] = static_cast<uint64_t>(
++          std::chrono::duration_cast<std::chrono::nanoseconds>(
++              Clock::now() - total_started)
++              .count());
++      return std::shared_ptr<Graph>(nullptr);
++    }
++  }
++  profile[0] = static_cast<uint64_t>(
++      std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() -
++                                                           guid_started)
++          .count());
++  std::vector<size_t> matched_src_guids;
++  auto result = apply_xfer_with_op_binding_and_bindings_profiled(
++      xfer, std::move(source_ops), eliminate_rotation, matched_src_guids,
++      dst_guids, profile);
++  profile[11] = static_cast<uint64_t>(
++      std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() -
++                                                           total_started)
++          .count());
++  return result;
++}
++
+ std::vector<size_t>
+ Graph::appliable_xfers(Op op, const std::vector<GraphXfer *> &xfer_v) const {
+   std::vector<size_t> appliable_xfer_v;
+diff --git a/python/quartz/_cython/CCore.pxd b/python/quartz/_cython/CCore.pxd
+--- a/python/quartz/_cython/CCore.pxd
++++ b/python/quartz/_cython/CCore.pxd
+@@ -120,5 +120,6 @@ cdef extern from "tasograph/tasograph.h" namespace "quartz":
+         shared_ptr[Graph] apply_xfer_with_op_binding_and_bindings(GraphXfer *, vector[Op], bool, vector[size_t] &, vector[size_t] &) const
+         shared_ptr[Graph] apply_xfer_with_guid_binding_and_bindings(GraphXfer *, vector[size_t], bool, vector[size_t] &) const
++        shared_ptr[Graph] apply_xfer_with_guid_binding_and_bindings_profiled(GraphXfer *, vector[size_t], bool, vector[size_t] &, vector[uint64_t] &) const
+         vector[size_t] appliable_xfers(Op, const vector[GraphXfer *] &) const
+         vector[size_t] appliable_xfers_parallel(Op, const vector[GraphXfer *] &) const
+         vector[vector[size_t]] appliable_xfer_bindings_parallel(Op, const vector[GraphXfer *] &) const
+diff --git a/python/quartz/_cython/core.pyx b/python/quartz/_cython/core.pyx
+--- a/python/quartz/_cython/core.pyx
++++ b/python/quartz/_cython/core.pyx
+@@ -704,6 +704,32 @@ cdef class PyGraph:
+             [dst_guids[i] for i in range(dst_guids.size())],
+         )
+ 
++    def apply_xfer_with_guid_binding_profiled(self, *, PyXfer xfer, source_node_guids, eliminate_rotation:bool = False):
++        """Apply a known binding and return native nanosecond stage timings."""
++        cdef vector[size_t] source_guids
++        cdef vector[size_t] dst_guids
++        cdef vector[uint64_t] profile
++        if xfer.is_nop:
++            return self, [], [0] * 12
++        source_guids.reserve(len(source_node_guids))
++        for value in source_node_guids:
++            source_guids.push_back(value)
++        ret = deref(self.graph).apply_xfer_with_guid_binding_and_bindings_profiled(
++            xfer.graphXfer,
++            source_guids,
++            eliminate_rotation,
++            dst_guids,
++            profile,
++        )
++        profile_values = [profile[i] for i in range(profile.size())]
++        if ret.get() == NULL:
++            return None, [], profile_values
++        return (
++            PyGraph().set_this_deferred(ret),
++            [dst_guids[i] for i in range(dst_guids.size())],
++            profile_values,
++        )
++
+     def all_nodes(self):
+         return self.nodes
+ 
