@@ -121,8 +121,12 @@ def main() -> None:
         node_checkpoint = torch.load(
             args.node_checkpoint, map_location="cpu", weights_only=False
         )
-        if node_checkpoint.get("format") != "hierarchical-node-training-v1":
-            raise ValueError("unsupported hierarchical node checkpoint")
+        if node_checkpoint.get("format") not in {
+            "hierarchical-node-training-v1",
+            "hierarchical-action-training-v1",
+            "hierarchical-ppo-v1",
+        }:
+            raise ValueError("unsupported hierarchical actor checkpoint")
         if int(node_checkpoint["width"]) != model.width:
             raise ValueError("node checkpoint width differs from the base model")
     actor = HierarchicalPPOActorCritic(

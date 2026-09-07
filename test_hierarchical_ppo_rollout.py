@@ -8,6 +8,7 @@ from gpu_proposals import SelectedProposalTensors
 from hierarchical_ppo_rollout import (
     HierarchicalPPOTransition,
     hierarchical_ppo_update,
+    mask_rejected_proposals,
     pad_proposal_node_positions,
     proposal_node_positions,
 )
@@ -15,6 +16,39 @@ from ppo_core import HierarchicalPPOActorCritic
 
 
 class HierarchicalRolloutTest(unittest.TestCase):
+    def test_exact_rejection_cache_masks_full_action_only(self) -> None:
+        proposals = SelectedProposalTensors(
+            parent_ids=torch.tensor([0, 0, 1]),
+            xfer_ids=torch.tensor([8, 9, 8]),
+            source_ids=torch.tensor([2, 2, 2]),
+            anchor_slots=torch.tensor([7, 7, 7]),
+            bindings=torch.tensor([[7, 8, -1], [7, 8, -1], [7, 8, -1]]),
+            probabilities=torch.ones(3),
+            gate_deltas=torch.zeros(3, dtype=torch.long),
+            next_gate_counts=torch.full((3,), 10),
+            value_scores=torch.zeros(3),
+        )
+        candidate_indices = torch.tensor([[0, 1], [2, 0]])
+        candidate_mask = torch.tensor([[True, True], [True, False]])
+        state_keys = [(100, 200), (100, 201)]
+        cache = {(100, 200): {(8, (7, 8))}}
+
+        masked = mask_rejected_proposals(
+            candidate_mask,
+            candidate_indices,
+            proposals,
+            state_keys,
+            cache,
+        )
+
+        self.assertEqual(masked, 1)
+        self.assertTrue(
+            torch.equal(
+                candidate_mask,
+                torch.tensor([[False, True], [True, False]]),
+            )
+        )
+
     def test_expanded_actions_map_back_to_selected_node_branch(self) -> None:
         proposals = SelectedProposalTensors(
             parent_ids=torch.tensor([0, 0, 1]),

@@ -1,0 +1,174 @@
+{
+  "args": {
+    "batch_size": 64,
+    "calibration": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "checkpoint": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "cycle_reward": -1.0,
+    "data": "../../data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "ecc_file": "../../quarl/experiment/ecc_set/nam_ecc.json",
+    "gae_lambda": 0.95,
+    "gamma": 0.99,
+    "greedy": false,
+    "initial_gate_bias": 1.0,
+    "invalid_reward": -2.0,
+    "max_actions": 256,
+    "max_rejected_actions_per_step": 4,
+    "max_steps": 16,
+    "node_checkpoint": "../../runs/hierarchical_action_barenco_zeroleak_n32_m2_e30_s981.pt",
+    "node_k": 16,
+    "output": "benchmark_results/hierarchical_action_barenco39_eval_refresh1_s984.json",
+    "page_size": 8,
+    "pattern_k": 16,
+    "ppo_clip_epsilon": 0.2,
+    "ppo_entropy_coefficient": 0.01,
+    "ppo_epochs": 4,
+    "ppo_iterations": 0,
+    "ppo_learning_rate": 0.0001,
+    "ppo_max_grad_norm": 1.0,
+    "ppo_minibatch_size": 128,
+    "ppo_output": null,
+    "ppo_target_kl": 0.02,
+    "ppo_value_coefficient": 0.5,
+    "qasm": "../../data/quarl_hard_paths_20260905/barenco_tof_3/38_3/0_39_-2_5_40.qasm",
+    "refresh_interval": 1,
+    "seed": 984,
+    "step_penalty": 0.02,
+    "target_recall": 0.99,
+    "terminate_on_improvement": false,
+    "warmup_episodes": 8,
+    "warmup_steps": 2
+  },
+  "artifacts": {
+    "actor_checkpoint_format": "hierarchical-action-training-v1",
+    "calibration": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "checkpoint": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "data": "../../data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "node_checkpoint": "../../runs/hierarchical_action_barenco_zeroleak_n32_m2_e30_s981.pt",
+    "qasm": "../../data/quarl_hard_paths_20260905/barenco_tof_3/38_3/0_39_-2_5_40.qasm"
+  },
+  "best_so_far": {
+    "episode_depth": 0,
+    "gate_count": 39,
+    "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[5];\nh q[4];\ncx q[3],q[4];\nrz(pi*1.750000) q[4];\ncx q[2],q[4];\nrz(pi*0.250000) q[4];\ncx q[3],q[2];\nrz(pi*1.750000) q[2];\ncx q[2],q[4];\ncx q[3],q[2];\nrz(pi*0.250000) q[3];\nh q[3];\ncx q[1],q[3];\nrz(pi*1.750000) q[3];\ncx q[0],q[3];\nrz(pi*0.250000) q[3];\ncx q[1],q[3];\nrz(pi*1.750000) q[3];\ncx q[0],q[3];\nrz(pi*0.250000) q[3];\nh q[3];\ncx q[4],q[3];\nrz(pi*0.250000) q[3];\ncx q[2],q[3];\nrz(pi*1.750000) q[3];\ncx q[4],q[3];\nh q[4];\nrz(pi*0.250000) q[3];\ncx q[2],q[3];\nrz(pi*1.750000) q[3];\nh q[3];\ncx q[1],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\nrz(pi*1.750000) q[3];\ncx q[1],q[3];\nrz(pi*0.250000) q[3];\ncx q[0],q[3];\nrz(pi*1.750000) q[3];\nh q[3];\n"
+  },
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "peak_cuda_allocated_gib": 0.1571183204650879,
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-ppo-rollout-benchmark-v1",
+  "stored_transition_count": 77,
+  "summary": {
+    "accepted_rewrites": 13,
+    "accepted_rewrites_per_second": 100.38309589225828,
+    "committed_gate_delta_histogram": {
+      "0": 8,
+      "1": 5
+    },
+    "cycle_actions": 6,
+    "cycle_xfers": {
+      "38": 2,
+      "4391": 1,
+      "44": 3
+    },
+    "episodes": 64,
+    "exact_refresh_seconds_recorded": 0.0024826049339026213,
+    "exact_refreshes": 77,
+    "exact_replay_actions": 27,
+    "improved_episodes": 0,
+    "initial_gate_count": 39,
+    "invalid_actions": 58,
+    "invalid_xfers": {
+      "1482": 1,
+      "2955": 10,
+      "3434": 13,
+      "3435": 18,
+      "3566": 2,
+      "4398": 1,
+      "4407": 8,
+      "4431": 1,
+      "816": 1,
+      "822": 1,
+      "952": 2
+    },
+    "legal_actions": 19,
+    "maximum_total_reward": -1.02,
+    "mean_best_gate_count": 39.0,
+    "mean_candidates": 99.03645833333333,
+    "mean_policy_entropy": 2.618735225312412,
+    "mean_total_reward": -1.9884375,
+    "minimum_best_gate_count": 39,
+    "minimum_final_gate_count": 39,
+    "minimum_total_reward": -5.08,
+    "selected_xfers_top20": {
+      "1482": 1,
+      "2955": 10,
+      "3434": 13,
+      "3435": 19,
+      "3566": 2,
+      "38": 2,
+      "39": 7,
+      "4372": 1,
+      "4391": 1,
+      "4398": 1,
+      "44": 4,
+      "4407": 9,
+      "4431": 1,
+      "816": 1,
+      "818": 2,
+      "822": 1,
+      "952": 2
+    },
+    "termination_reasons": {
+      "exact_cycle": 6,
+      "exact_refresh_failure": 58
+    },
+    "timing": {
+      "cache_advance_seconds": 0.014494203962385654,
+      "eligible_actions": 7792.0,
+      "hierarchical_match_seconds": 0.036038165679201484,
+      "lazy_apply_seconds": 0.007112298859283328,
+      "policy_preparation_seconds": 0.019599025137722492,
+      "policy_sample_seconds": 0.016245632665231824,
+      "proposal_seconds": 0.02295484719797969,
+      "refresh_seconds": 0.003437445964664221,
+      "selected_actions": 7792.0,
+      "stages": {
+        "cache_advance_seconds": {
+          "fraction": 0.11192100509523915,
+          "seconds": 0.014494203962385654
+        },
+        "hierarchical_match_seconds": {
+          "fraction": 0.27827866470433643,
+          "seconds": 0.036038165679201484
+        },
+        "lazy_apply_seconds": {
+          "fraction": 0.05491958295429519,
+          "seconds": 0.007112298859283328
+        },
+        "policy_preparation_seconds": {
+          "fraction": 0.15133929383036748,
+          "seconds": 0.019599025137722492
+        },
+        "policy_sample_seconds": {
+          "fraction": 0.1254451462818746,
+          "seconds": 0.016245632665231824
+        },
+        "proposal_seconds": {
+          "fraction": 0.17725220211284087,
+          "seconds": 0.02295484719797969
+        },
+        "refresh_seconds": {
+          "fraction": 0.026543189838103443,
+          "seconds": 0.003437445964664221
+        }
+      },
+      "total_seconds": 0.12950387597084045
+    },
+    "transitions": 77,
+    "transitions_per_second": 594.5767987464529,
+    "unique_selected_xfers": 17
+  },
+  "training_iterations": []
+}

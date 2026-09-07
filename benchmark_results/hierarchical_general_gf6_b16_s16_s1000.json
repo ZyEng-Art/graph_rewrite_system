@@ -1,0 +1,223 @@
+{
+  "args": {
+    "batch_size": 16,
+    "best_start_probability": 0.25,
+    "calibration": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "checkpoint": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "cycle_reward": -1.0,
+    "data": "../../data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "disable_rejected_action_cache": false,
+    "ecc_file": "../../quarl/experiment/ecc_set/nam_ecc.json",
+    "gae_lambda": 0.95,
+    "gamma": 0.99,
+    "greedy": false,
+    "initial_gate_bias": 1.0,
+    "invalid_reward": -2.0,
+    "max_actions": 256,
+    "max_exact_rejections_per_episode": 8,
+    "max_rejected_actions_per_step": 4,
+    "max_steps": 16,
+    "node_checkpoint": "../../runs/hierarchical_action_allpaths_dedup_pathsplit_n16_m2_rtg025_e30_s996.pt",
+    "node_k": 16,
+    "output": "benchmark_results/hierarchical_general_gf6_b16_s16_s1000.json",
+    "page_size": 8,
+    "pattern_k": 16,
+    "ppo_clip_epsilon": 0.2,
+    "ppo_entropy_coefficient": 0.01,
+    "ppo_epochs": 4,
+    "ppo_iterations": 0,
+    "ppo_learning_rate": 0.0001,
+    "ppo_max_grad_norm": 1.0,
+    "ppo_minibatch_size": 128,
+    "ppo_output": null,
+    "ppo_target_kl": 0.02,
+    "ppo_value_coefficient": 0.5,
+    "qasm": "../../quarl/experiment/circs/nam_circs/gf2^6_mult.qasm",
+    "refresh_interval": 1,
+    "replay_start_probability": 0.25,
+    "resume_search_state": false,
+    "seed": 1000,
+    "start_from_best": false,
+    "step_penalty": 0.02,
+    "target_recall": 0.95,
+    "terminate_on_improvement": false,
+    "use_replay_starts": false,
+    "warmup_episodes": 4,
+    "warmup_steps": 2
+  },
+  "artifacts": {
+    "actor_checkpoint_format": "hierarchical-action-training-v1",
+    "calibration": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274_calibration.json",
+    "checkpoint": "../../runs/paged_action_quarl_all_holdout_r4_w64_aw4_lw2_bw1_m1_lr2e5_bs32_s274.pt",
+    "data": "../../data/binding_longmix_quarl_all_holdout_r4_w64_20260905.pt",
+    "node_checkpoint": "../../runs/hierarchical_action_allpaths_dedup_pathsplit_n16_m2_rtg025_e30_s996.pt",
+    "qasm": "../../quarl/experiment/circs/nam_circs/gf2^6_mult.qasm"
+  },
+  "best_so_far": {
+    "episode_depth": 14,
+    "gate_count": 488,
+    "qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[18];\nh q[12];\nh q[13];\nh q[14];\nh q[15];\nh q[16];\nh q[17];\ncx q[7],q[12];\nrz(pi*1.750000) q[12];\ncx q[5],q[12];\nrz(pi*0.250000) q[12];\ncx q[7],q[12];\nrz(pi*1.750000) q[12];\ncx q[5],q[12];\ncx q[5],q[7];\nrz(pi*0.250000) q[12];\nrz(pi*1.750000) q[7];\ncx q[8],q[12];\ncx q[5],q[7];\nrz(pi*0.250000) q[12];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[7];\ncx q[4],q[12];\nrz(pi*1.750000) q[12];\ncx q[8],q[12];\nrz(pi*0.250000) q[12];\ncx q[4],q[12];\ncx q[4],q[8];\nrz(pi*1.750000) q[12];\nrz(pi*0.250000) q[8];\ncx q[9],q[12];\ncx q[4],q[8];\nrz(pi*1.750000) q[12];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[8];\ncx q[3],q[12];\ncx q[8],q[13];\nrz(pi*0.250000) q[12];\nrz(pi*1.750000) q[13];\ncx q[9],q[12];\ncx q[5],q[13];\nrz(pi*1.750000) q[12];\nrz(pi*0.250000) q[13];\ncx q[3],q[12];\ncx q[8],q[13];\ncx q[3],q[9];\nrz(pi*0.250000) q[12];\nrz(pi*1.750000) q[13];\nrz(pi*1.750000) q[9];\ncx q[10],q[12];\ncx q[5],q[13];\ncx q[3],q[9];\nrz(pi*0.250000) q[12];\ncx q[5],q[8];\nrz(pi*0.250000) q[13];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[9];\ncx q[2],q[12];\nrz(pi*1.750000) q[8];\ncx q[9],q[13];\nrz(pi*1.750000) q[12];\ncx q[5],q[8];\nrz(pi*0.250000) q[13];\ncx q[10],q[12];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[8];\ncx q[4],q[13];\nrz(pi*0.250000) q[12];\nrz(pi*1.750000) q[13];\ncx q[2],q[12];\ncx q[9],q[13];\ncx q[2],q[10];\nrz(pi*1.750000) q[12];\nrz(pi*0.250000) q[13];\nrz(pi*0.250000) q[10];\ncx q[11],q[12];\ncx q[4],q[13];\ncx q[2],q[10];\nrz(pi*1.750000) q[12];\ncx q[4],q[9];\nrz(pi*1.750000) q[13];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[10];\ncx q[1],q[12];\nrz(pi*0.250000) q[9];\ncx q[10],q[13];\nrz(pi*0.250000) q[12];\ncx q[4],q[9];\nrz(pi*1.750000) q[13];\ncx q[11],q[12];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[9];\ncx q[3],q[13];\nrz(pi*1.750000) q[12];\ncx q[9],q[14];\nrz(pi*0.250000) q[13];\ncx q[1],q[12];\nrz(pi*1.750000) q[14];\ncx q[10],q[13];\ncx q[1],q[11];\nrz(pi*0.250000) q[12];\ncx q[5],q[14];\nrz(pi*1.750000) q[13];\nrz(pi*1.750000) q[11];\nrz(pi*0.250000) q[14];\ncx q[3],q[13];\ncx q[1],q[11];\ncx q[9],q[14];\ncx q[3],q[10];\nrz(pi*0.250000) q[13];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[11];\nrz(pi*1.750000) q[14];\nrz(pi*1.750000) q[10];\ncx q[11],q[13];\ncx q[5],q[14];\ncx q[3],q[10];\nrz(pi*0.250000) q[13];\ncx q[5],q[9];\nrz(pi*0.250000) q[14];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[10];\ncx q[2],q[13];\nrz(pi*1.750000) q[9];\ncx q[10],q[14];\nrz(pi*1.750000) q[13];\ncx q[5],q[9];\nrz(pi*0.250000) q[14];\ncx q[11],q[13];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[9];\ncx q[4],q[14];\nrz(pi*0.250000) q[13];\nrz(pi*1.750000) q[14];\ncx q[2],q[13];\ncx q[10],q[14];\ncx q[2],q[11];\nrz(pi*1.750000) q[13];\nrz(pi*0.250000) q[14];\nrz(pi*0.250000) q[11];\ncx q[4],q[14];\ncx q[2],q[11];\ncx q[4],q[10];\nrz(pi*1.750000) q[14];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[11];\nrz(pi*0.250000) q[10];\ncx q[11],q[14];\ncx q[4],q[10];\nrz(pi*1.750000) q[14];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[10];\ncx q[3],q[14];\ncx q[10],q[15];\nrz(pi*0.250000) q[14];\nrz(pi*1.750000) q[15];\ncx q[11],q[14];\ncx q[5],q[15];\nrz(pi*1.750000) q[14];\nrz(pi*0.250000) q[15];\ncx q[3],q[14];\ncx q[10],q[15];\ncx q[3],q[11];\nrz(pi*0.250000) q[14];\nrz(pi*1.750000) q[15];\nrz(pi*1.750000) q[11];\ncx q[5],q[15];\ncx q[3],q[11];\ncx q[5],q[10];\nrz(pi*0.250000) q[15];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[11];\nrz(pi*1.750000) q[10];\ncx q[11],q[15];\ncx q[5],q[10];\nrz(pi*0.250000) q[15];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[10];\ncx q[4],q[15];\nrz(pi*1.750000) q[15];\ncx q[11],q[15];\nrz(pi*0.250000) q[15];\ncx q[4],q[15];\ncx q[4],q[11];\nrz(pi*1.750000) q[15];\nrz(pi*0.250000) q[11];\ncx q[4],q[11];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[11];\ncx q[11],q[16];\nrz(pi*1.750000) q[16];\ncx q[5],q[16];\nrz(pi*0.250000) q[16];\ncx q[11],q[16];\nrz(pi*1.750000) q[16];\ncx q[5],q[16];\ncx q[5],q[11];\ncx q[16],q[15];\nrz(pi*1.750000) q[11];\nrz(pi*0.250000) q[16];\ncx q[17],q[15];\ncx q[5],q[11];\ncx q[15],q[14];\ncx q[17],q[16];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[11];\nh q[14];\ncx q[6],q[17];\nh q[14];\nrz(pi*1.750000) q[17];\ncx q[14],q[13];\ncx q[5],q[17];\ncx q[13],q[12];\nrz(pi*0.250000) q[17];\ncx q[6],q[17];\nrz(pi*1.750000) q[17];\ncx q[5],q[17];\ncx q[5],q[6];\nrz(pi*0.250000) q[17];\nrz(pi*1.750000) q[6];\ncx q[7],q[17];\ncx q[5],q[6];\nrz(pi*0.250000) q[17];\nrz(pi*0.250000) q[5];\nrz(pi*0.250000) q[6];\ncx q[4],q[17];\ncx q[6],q[16];\nrz(pi*1.750000) q[17];\nrz(pi*0.250000) q[16];\ncx q[7],q[17];\nrz(pi*0.250000) q[17];\ncx q[4],q[17];\ncx q[4],q[7];\nrz(pi*1.750000) q[17];\nrz(pi*0.250000) q[7];\ncx q[8],q[17];\ncx q[4],q[7];\nrz(pi*1.750000) q[17];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[7];\ncx q[3],q[17];\ncx q[4],q[16];\nrz(pi*0.250000) q[17];\nrz(pi*1.750000) q[16];\ncx q[8],q[17];\ncx q[6],q[16];\nrz(pi*1.750000) q[17];\nrz(pi*0.250000) q[16];\ncx q[3],q[17];\ncx q[4],q[16];\ncx q[3],q[8];\nrz(pi*0.250000) q[17];\ncx q[4],q[6];\nrz(pi*1.750000) q[16];\nrz(pi*1.750000) q[8];\ncx q[9],q[17];\nrz(pi*0.250000) q[6];\ncx q[7],q[16];\ncx q[3],q[8];\nrz(pi*0.250000) q[17];\ncx q[4],q[6];\nrz(pi*1.750000) q[16];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[8];\ncx q[2],q[17];\nrz(pi*1.750000) q[4];\nrz(pi*1.750000) q[6];\ncx q[3],q[16];\nrz(pi*1.750000) q[17];\ncx q[6],q[15];\nrz(pi*0.250000) q[16];\ncx q[9],q[17];\nrz(pi*1.750000) q[15];\ncx q[7],q[16];\nrz(pi*0.250000) q[17];\nrz(pi*1.750000) q[16];\ncx q[2],q[17];\ncx q[3],q[16];\ncx q[2],q[9];\nrz(pi*1.750000) q[17];\ncx q[3],q[7];\nrz(pi*0.250000) q[16];\nrz(pi*0.250000) q[9];\ncx q[10],q[17];\nrz(pi*1.750000) q[7];\ncx q[8],q[16];\ncx q[2],q[9];\nrz(pi*0.250000) q[17];\ncx q[3],q[7];\nrz(pi*0.250000) q[16];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[9];\ncx q[1],q[17];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[7];\ncx q[2],q[16];\nrz(pi*1.750000) q[17];\ncx q[3],q[15];\nrz(pi*1.750000) q[16];\ncx q[10],q[17];\nrz(pi*0.250000) q[15];\ncx q[8],q[16];\nrz(pi*0.250000) q[17];\ncx q[6],q[15];\nrz(pi*0.250000) q[16];\ncx q[1],q[17];\nrz(pi*1.750000) q[15];\ncx q[2],q[16];\ncx q[1],q[10];\nrz(pi*1.750000) q[17];\ncx q[3],q[15];\ncx q[2],q[8];\nrz(pi*1.750000) q[16];\nrz(pi*0.250000) q[10];\ncx q[11],q[17];\ncx q[3],q[6];\nrz(pi*0.250000) q[15];\nrz(pi*0.250000) q[8];\ncx q[9],q[16];\ncx q[1],q[10];\nrz(pi*1.750000) q[17];\nrz(pi*1.750000) q[6];\ncx q[7],q[15];\ncx q[2],q[8];\nrz(pi*1.750000) q[16];\nrz(pi*1.750000) q[1];\nrz(pi*1.750000) q[10];\ncx q[0],q[17];\ncx q[3],q[6];\nrz(pi*0.250000) q[15];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[8];\ncx q[1],q[16];\nrz(pi*0.250000) q[17];\nrz(pi*0.250000) q[3];\nrz(pi*0.250000) q[6];\ncx q[2],q[15];\nrz(pi*0.250000) q[16];\ncx q[11],q[17];\ncx q[6],q[14];\nrz(pi*1.750000) q[15];\ncx q[9],q[16];\nrz(pi*1.750000) q[17];\nrz(pi*0.250000) q[14];\ncx q[7],q[15];\nrz(pi*1.750000) q[16];\ncx q[0],q[17];\nrz(pi*0.250000) q[15];\ncx q[1],q[16];\ncx q[0],q[11];\nrz(pi*0.250000) q[17];\ncx q[2],q[15];\ncx q[1],q[9];\nrz(pi*0.250000) q[16];\nrz(pi*1.750000) q[11];\nh q[17];\ncx q[2],q[7];\nrz(pi*1.750000) q[15];\nrz(pi*1.750000) q[9];\ncx q[10],q[16];\ncx q[0],q[11];\nrz(pi*0.250000) q[7];\ncx q[8],q[15];\ncx q[1],q[9];\nrz(pi*1.750000) q[16];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[11];\ncx q[2],q[7];\nrz(pi*0.250000) q[15];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[9];\ncx q[0],q[16];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[7];\ncx q[1],q[15];\nrz(pi*0.250000) q[16];\ncx q[2],q[14];\nrz(pi*1.750000) q[15];\ncx q[10],q[16];\nrz(pi*1.750000) q[14];\ncx q[8],q[15];\nrz(pi*1.750000) q[16];\ncx q[6],q[14];\nrz(pi*0.250000) q[15];\ncx q[0],q[16];\nrz(pi*0.250000) q[14];\ncx q[1],q[15];\ncx q[0],q[10];\nrz(pi*0.250000) q[16];\ncx q[2],q[14];\ncx q[1],q[8];\nrz(pi*1.750000) q[15];\nrz(pi*1.750000) q[10];\nh q[16];\ncx q[2],q[6];\nrz(pi*1.750000) q[14];\nrz(pi*0.250000) q[8];\ncx q[9],q[15];\ncx q[0],q[10];\nrz(pi*0.250000) q[6];\ncx q[7],q[14];\ncx q[1],q[8];\nrz(pi*1.750000) q[15];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[10];\ncx q[2],q[6];\nrz(pi*1.750000) q[14];\nrz(pi*1.750000) q[1];\nrz(pi*1.750000) q[8];\ncx q[0],q[15];\nrz(pi*1.750000) q[2];\nrz(pi*1.750000) q[6];\ncx q[1],q[14];\nrz(pi*0.250000) q[15];\ncx q[6],q[13];\nrz(pi*0.250000) q[14];\ncx q[9],q[15];\nrz(pi*0.250000) q[13];\ncx q[7],q[14];\nrz(pi*1.750000) q[15];\nrz(pi*1.750000) q[14];\ncx q[0],q[15];\ncx q[1],q[14];\ncx q[0],q[9];\nrz(pi*0.250000) q[15];\ncx q[1],q[7];\nrz(pi*0.250000) q[14];\nrz(pi*1.750000) q[9];\nh q[15];\nrz(pi*1.750000) q[7];\ncx q[8],q[14];\ncx q[0],q[9];\ncx q[1],q[7];\nrz(pi*1.750000) q[14];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[9];\nrz(pi*0.250000) q[1];\nrz(pi*0.250000) q[7];\ncx q[0],q[14];\ncx q[1],q[13];\nrz(pi*0.250000) q[14];\nrz(pi*1.750000) q[13];\ncx q[8],q[14];\ncx q[6],q[13];\nrz(pi*1.750000) q[14];\nrz(pi*0.250000) q[13];\ncx q[0],q[14];\ncx q[1],q[13];\ncx q[0],q[8];\nrz(pi*0.250000) q[14];\ncx q[1],q[6];\nrz(pi*1.750000) q[13];\nrz(pi*1.750000) q[8];\nh q[14];\nrz(pi*0.250000) q[6];\ncx q[7],q[13];\ncx q[0],q[8];\ncx q[1],q[6];\nrz(pi*1.750000) q[13];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[8];\nrz(pi*1.750000) q[1];\nrz(pi*1.750000) q[6];\ncx q[0],q[13];\ncx q[6],q[12];\nrz(pi*0.250000) q[13];\nrz(pi*1.750000) q[12];\ncx q[7],q[13];\nrz(pi*1.750000) q[13];\ncx q[0],q[13];\ncx q[0],q[7];\nrz(pi*0.250000) q[13];\nrz(pi*1.750000) q[7];\nh q[13];\ncx q[0],q[7];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[7];\ncx q[0],q[12];\nrz(pi*0.250000) q[12];\ncx q[6],q[12];\nrz(pi*1.750000) q[12];\ncx q[0],q[12];\ncx q[0],q[6];\nrz(pi*0.250000) q[12];\nrz(pi*1.750000) q[6];\nh q[12];\ncx q[0],q[6];\nrz(pi*0.250000) q[0];\nrz(pi*0.250000) q[6];\n"
+  },
+  "environment": {
+    "device": "cuda",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "peak_cuda_allocated_gib": 0.17440128326416016,
+    "torch": "2.4.0+cu121"
+  },
+  "format": "hierarchical-ppo-rollout-benchmark-v1",
+  "rejected_action_cache": {
+    "actions": 36,
+    "enabled": true,
+    "states": 29
+  },
+  "replay_pool": {
+    "gf2^6_mult.qasm": {
+      "max_gate_count": 508,
+      "min_gate_count": 488,
+      "retained_states": 64,
+      "unique_states_seen": 249
+    }
+  },
+  "stored_transition_count": 292,
+  "summary": {
+    "accepted_rewrites": 256,
+    "accepted_rewrites_per_second": 196.1517839606378,
+    "committed_gate_delta_histogram": {
+      "-1": 2,
+      "-2": 29,
+      "0": 60,
+      "1": 165
+    },
+    "cycle_actions": 20,
+    "cycle_xfers": {
+      "3564": 1,
+      "39": 2,
+      "4368": 2,
+      "44": 1,
+      "45": 1,
+      "46": 2,
+      "4682": 4,
+      "4699": 1,
+      "58": 2,
+      "68": 1,
+      "820": 1,
+      "877": 1,
+      "920": 1
+    },
+    "episodes": 16,
+    "exact_refresh_seconds_recorded": 0.35772857698611915,
+    "exact_refreshes": 292,
+    "exact_replay_actions": 284,
+    "improved_episodes": 8,
+    "initial_gate_count": 495,
+    "initial_gate_count_histogram": {
+      "495": 16
+    },
+    "invalid_actions": 16,
+    "invalid_xfers": {
+      "1005": 1,
+      "1229": 1,
+      "1608": 2,
+      "3435": 2,
+      "4362": 1,
+      "4375": 2,
+      "4382": 1,
+      "4384": 2,
+      "4396": 1,
+      "4407": 1,
+      "4411": 1,
+      "956": 1
+    },
+    "legal_actions": 276,
+    "maximum_initial_gate_count": 495,
+    "maximum_total_reward": -2.3200000000000003,
+    "mean_best_gate_count": 492.625,
+    "mean_candidates": 155.56040587836011,
+    "mean_initial_gate_count": 495.0,
+    "mean_policy_entropy": 2.9527642661964015,
+    "mean_total_reward": -10.1325,
+    "minimum_best_gate_count": 488,
+    "minimum_final_gate_count": 490,
+    "minimum_initial_gate_count": 495,
+    "minimum_total_reward": -19.32,
+    "selected_xfers_top20": {
+      "27": 15,
+      "3417": 9,
+      "3422": 5,
+      "3428": 5,
+      "3429": 16,
+      "3434": 5,
+      "3435": 18,
+      "39": 4,
+      "4347": 4,
+      "4375": 5,
+      "4383": 5,
+      "4384": 7,
+      "4407": 29,
+      "4411": 12,
+      "46": 14,
+      "4682": 10,
+      "58": 16,
+      "810": 5,
+      "820": 13,
+      "978": 6
+    },
+    "termination_reasons": {
+      "horizon": 16
+    },
+    "timing": {
+      "cache_advance_seconds": 0.10956272738985717,
+      "eligible_actions": 45565.0,
+      "exact_rejection_retries": 36.0,
+      "hierarchical_match_seconds": 0.29040412977337837,
+      "lazy_apply_seconds": 0.08764111623167992,
+      "policy_preparation_seconds": 0.12624274683184922,
+      "policy_sample_seconds": 0.046491534914821386,
+      "proposal_seconds": 0.018125484231859446,
+      "refresh_seconds": 0.5461847048718482,
+      "rejected_action_cache_hits": 44.0,
+      "rejected_action_cache_inserts": 36.0,
+      "rejected_action_mask_seconds": 0.013029047753661871,
+      "selected_actions": 45329.0,
+      "stages": {
+        "cache_advance_seconds": {
+          "fraction": 0.08394892356684967,
+          "seconds": 0.10956272738985717
+        },
+        "hierarchical_match_seconds": {
+          "fraction": 0.22251284423665912,
+          "seconds": 0.29040412977337837
+        },
+        "lazy_apply_seconds": {
+          "fraction": 0.0671521925669751,
+          "seconds": 0.08764111623167992
+        },
+        "policy_preparation_seconds": {
+          "fraction": 0.09672945313733743,
+          "seconds": 0.12624274683184922
+        },
+        "policy_sample_seconds": {
+          "fraction": 0.03562264653363474,
+          "seconds": 0.046491534914821386
+        },
+        "proposal_seconds": {
+          "fraction": 0.013888070575115785,
+          "seconds": 0.018125484231859446
+        },
+        "refresh_seconds": {
+          "fraction": 0.4184965009087011,
+          "seconds": 0.5461847048718482
+        },
+        "rejected_action_mask_seconds": {
+          "fraction": 0.009983089688238736,
+          "seconds": 0.013029047753661871
+        }
+      },
+      "total_seconds": 1.3051117600407451
+    },
+    "transitions": 292,
+    "transitions_per_second": 223.73562858010249,
+    "unique_selected_xfers": 78
+  },
+  "training_iterations": []
+}

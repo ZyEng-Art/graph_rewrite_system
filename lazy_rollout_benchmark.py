@@ -866,6 +866,7 @@ def replay_state(
     replay_cache_prefixes: set[tuple[LazyAction, ...]] | None = None,
     prefer_direct_binding: bool = True,
     eliminate_rotation: bool = False,
+    validate_topology: bool = True,
 ):
     """Materialize one speculative trajectory in Quartz for an out-of-band audit."""
     def lookup_source_node_ids(action: LazyAction) -> list[int] | None:
@@ -1092,15 +1093,45 @@ def replay_state(
             break
         add_seconds("binding_validation_seconds", validation_started)
         update_started = now()
-        live_guids = {int(node.guid) for node in next_graph.nodes}
-        surviving_destination_pairs = tuple(
-            (int(guid), int(slot))
-            for guid, slot in zip(destination_guids, action.destination_slots)
-            if int(guid) in live_guids
+        expected_gate_count = (
+            int(graph.gate_count)
+            - len(action.source_slots)
+            + len(action.destination_slots)
         )
+        rotation_changed_gate_count = (
+            eliminate_rotation
+            and int(next_graph.gate_count) != expected_gate_count
+        )
+        if rotation_changed_gate_count:
+            live_guids = {int(node.guid) for node in next_graph.nodes}
+            surviving_destination_pairs = tuple(
+                (int(guid), int(slot))
+                for guid, slot in zip(destination_guids, action.destination_slots)
+                if int(guid) in live_guids
+            )
+            add_count("rotation_live_guid_scans")
+        else:
+            surviving_destination_pairs = tuple(
+                (int(guid), int(slot))
+                for guid, slot in zip(destination_guids, action.destination_slots)
+            )
+        if eliminate_rotation:
+            for guid in source_guids:
+                removed_slot = guid_to_slot.pop(int(guid), None)
+                if removed_slot is not None:
+                    slot_to_guid.pop(int(removed_slot), None)
         for guid, slot in surviving_destination_pairs:
             guid_to_slot[int(guid)] = int(slot)
             slot_to_guid[int(slot)] = int(guid)
+        if rotation_changed_gate_count:
+            guid_to_slot = {
+                guid: slot
+                for guid, slot in guid_to_slot.items()
+                if guid in live_guids
+            }
+            slot_to_guid = {
+                slot: guid for guid, slot in guid_to_slot.items()
+            }
         graph = next_graph
         add_seconds("slot_update_and_graph_swap_seconds", update_started)
         add_count("actions_applied")
@@ -1118,15 +1149,20 @@ def replay_state(
         add_count("failed_states")
         result = (None, failure_step, False)
         return (*result, None) if return_checkpoint else result
-    signature_started = now()
-    exact_signature = graph_topology_signature(graph, guid_to_slot)
-    expected_signature = (
-        indexed_topology_signature(state.topology_index)
-        if state.topology_index is not None
-        else snapshot_signature(state.snapshot)
-    )
-    topology_matches = exact_signature == expected_signature
-    add_seconds("topology_signature_compare_seconds", signature_started)
+    if validate_topology:
+        signature_started = now()
+        exact_signature = graph_topology_signature(graph, guid_to_slot)
+        expected_signature = (
+            indexed_topology_signature(state.topology_index)
+            if state.topology_index is not None
+            else snapshot_signature(state.snapshot)
+        )
+        topology_matches = exact_signature == expected_signature
+        add_seconds("topology_signature_compare_seconds", signature_started)
+        add_count("topology_audits")
+    else:
+        topology_matches = True
+        add_count("topology_audits_skipped")
     add_count("valid_states")
     if not topology_matches:
         add_count("topology_mismatch_states")

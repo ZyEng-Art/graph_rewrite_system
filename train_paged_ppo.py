@@ -32,6 +32,7 @@ from gpu_proposals import (
 from incremental_graph import parse_pattern
 from lazy_rollout_benchmark import (
     ExactReplayCacheEntry,
+    distances_from_components,
     indexed_topology,
     lazy_child,
     replay_state,
@@ -122,6 +123,8 @@ class EpisodeRuntime:
     exact_refreshes: int = 0
     exact_replay_actions: int = 0
     exact_refresh_seconds: float = 0.0
+    wide_candidates: bool = False
+    paged_topology_changed: bool = False
 
 
 def make_replay_bucket(graph) -> dict:
@@ -144,8 +147,9 @@ def retain_replay_state(
     graph,
     *,
     capacity: int,
+    graph_hash: int | None = None,
 ) -> bool:
-    graph_hash = int(graph.hash())
+    graph_hash = int(graph.hash()) if graph_hash is None else int(graph_hash)
     if graph_hash in bucket["retained_hashes"]:
         return False
     bucket["unique_states_seen"] += 1
@@ -153,14 +157,26 @@ def retain_replay_state(
     if len(states) < capacity:
         replacement = len(states)
     else:
-        replacement = random.randrange(bucket["unique_states_seen"])
-        if replacement >= capacity:
-            return False
+        minimum_index = min(
+            range(len(states)), key=lambda index: states[index]["gate_count"]
+        )
+        minimum_gate_count = states[minimum_index]["gate_count"]
+        if int(graph.gate_count) < minimum_gate_count:
+            replacement = max(
+                range(len(states)), key=lambda index: states[index]["gate_count"]
+            )
+        else:
+            replacement = random.randrange(bucket["unique_states_seen"])
+            if replacement >= capacity:
+                return False
+            if replacement == minimum_index:
+                return False
         bucket["retained_hashes"].remove(states[replacement]["graph_hash"])
     row = {
         "graph_hash": graph_hash,
         "gate_count": int(graph.gate_count),
-        "qasm": graph.to_qasm_str(),
+        "qasm": None,
+        "graph": graph,
     }
     if replacement == len(states):
         states.append(row)
@@ -168,6 +184,32 @@ def retain_replay_state(
         states[replacement] = row
     bucket["retained_hashes"].add(graph_hash)
     return True
+
+
+def replay_state_qasm(row: dict) -> str:
+    qasm = row.get("qasm")
+    if qasm is None:
+        qasm = row["graph"].to_qasm_str()
+        row["qasm"] = qasm
+    return qasm
+
+
+def serializable_replay_pool(replay_pool: dict[str, dict]) -> dict[str, dict]:
+    return {
+        circuit: {
+            "states": [
+                {
+                    "graph_hash": row["graph_hash"],
+                    "gate_count": row["gate_count"],
+                    "qasm": replay_state_qasm(row),
+                }
+                for row in bucket["states"]
+            ],
+            "retained_hashes": bucket["retained_hashes"],
+            "unique_states_seen": bucket["unique_states_seen"],
+        }
+        for circuit, bucket in replay_pool.items()
+    }
 
 
 def replay_pool_metrics(replay_pool: dict[str, dict]) -> dict:
@@ -180,6 +222,101 @@ def replay_pool_metrics(replay_pool: dict[str, dict]) -> dict:
         }
         for circuit, bucket in replay_pool.items()
     }
+
+
+def topology_audit_required(
+    runtime: EpisodeRuntime,
+    best_by_circuit: dict[str, dict],
+    interval: int,
+) -> bool:
+    state = runtime.state
+    return (
+        interval == 1
+        or runtime.stopped
+        or state.depth % interval == 0
+        or state.gate_count < best_by_circuit[runtime.circuit]["gate_count"]
+    )
+
+
+def reconcile_rotation_normalized_state(
+    runtime: EpisodeRuntime,
+    exact_graph,
+    exact_slots: dict[int, int],
+    *,
+    step_penalty: float,
+    topology_mismatch: bool = False,
+) -> bool:
+    """Replace a static lazy topology with Quartz's normalized result."""
+
+    state = runtime.state
+    if int(exact_graph.gate_count) == state.gate_count and not topology_mismatch:
+        return False
+    exact_snapshot = snapshot(exact_graph, exact_slots)
+    exact_topology = indexed_topology(exact_snapshot)
+    current_topology = (
+        state.topology_index
+        if state.topology_index is not None
+        else indexed_topology(state.snapshot)
+    )
+    changed = (
+        int(exact_graph.gate_count) != state.gate_count
+        or exact_topology.nodes != current_topology.nodes
+        or exact_topology.edges != current_topology.edges
+    )
+    if not changed:
+        return False
+    if len(runtime.pending_transition_indices) != 1:
+        raise RuntimeError(
+            "rotation reconciliation requires exactly one pending transition"
+        )
+    if exact_topology.nodes and max(exact_topology.nodes) >= state.next_slot:
+        raise RuntimeError("Quartz normalization introduced an unreserved slot")
+
+    live_slots = set(exact_topology.nodes)
+    destination_slots = set(state.history[-1].destination_slots) & live_slots
+    if isinstance(state.rewrite_distance, dict):
+        distance_items = state.rewrite_distance.items()
+    else:
+        distance_items = enumerate(state.rewrite_distance)
+    previous_core = {
+        int(slot)
+        for slot, distance in distance_items
+        if int(distance) == 0 and int(slot) in live_slots
+    }
+    core = destination_slots | previous_core
+
+    if isinstance(state.last_touched, dict):
+        touched_items = state.last_touched.items()
+    else:
+        touched_items = enumerate(state.last_touched)
+    state.last_touched = {
+        int(slot): int(touched)
+        for slot, touched in touched_items
+        if int(touched) >= 0 and int(slot) in live_slots
+    }
+    state.rewrite_distance = distances_from_components(
+        exact_topology.nodes, exact_topology.edges, core
+    )
+    state.previous_preferred &= live_slots
+    state.snapshot = None
+    state.topology_index = exact_topology
+    state.gate_count = int(exact_graph.gate_count)
+
+    runtime.topology_hashes.discard(int(current_topology.fingerprint))
+    runtime.topology_hashes.add(int(exact_topology.fingerprint))
+    runtime.paged_topology_changed = True
+    runtime.final_gate_count = state.gate_count
+
+    transition = runtime.transitions[runtime.pending_transition_indices[-1]]
+    transition.next_gate_count = state.gate_count
+    transition.reward = shaped_transition_reward(
+        transition.previous_gate_count,
+        state.gate_count,
+        repeated_state=False,
+        step_penalty=step_penalty,
+        cycle_reward=0.0,
+    )
+    return True
 
 
 def initialize_episode(
@@ -318,6 +455,7 @@ def initialize_episode_batch(
     replay_start_probability: float,
     best_by_circuit: dict[str, dict],
     replay_pool: dict[str, dict],
+    best_start_probability: float = 1.0,
 ) -> tuple[
     list[EpisodeRuntime],
     torch.Tensor,
@@ -326,16 +464,24 @@ def initialize_episode_batch(
     PagedKVCache,
     list,
 ]:
+    if not 0.0 <= best_start_probability <= 1.0:
+        raise ValueError("best start probability must be in [0, 1]")
     episode_starts = []
     for _ in range(batch_size):
-        start_qasm = best_by_circuit[qasm.name]["qasm"] if start_from_best else None
+        use_best = start_from_best and (
+            best_start_probability == 1.0
+            or random.random() < best_start_probability
+        )
+        start_qasm = best_by_circuit[qasm.name]["qasm"] if use_best else None
         started_from_replay = False
         if (
             use_replay_starts
             and len(replay_pool[qasm.name]["states"]) > 1
             and random.random() < replay_start_probability
         ):
-            start_qasm = random.choice(replay_pool[qasm.name]["states"])["qasm"]
+            start_qasm = replay_state_qasm(
+                random.choice(replay_pool[qasm.name]["states"])
+            )
             started_from_replay = True
         episode_starts.append((start_qasm, started_from_replay))
 
@@ -754,7 +900,9 @@ def collect_episode(
         and len(replay_pool[qasm.name]["states"]) > 1
         and random.random() < replay_start_probability
     ):
-        start_qasm = random.choice(replay_pool[qasm.name]["states"])["qasm"]
+        start_qasm = replay_state_qasm(
+            random.choice(replay_pool[qasm.name]["states"])
+        )
         started_from_replay = True
     (
         state,
@@ -1050,8 +1198,29 @@ def refresh_speculative_runtimes(
     replay_capacity_per_circuit: int,
     best_by_circuit: dict[str, dict],
     replay_pool: dict[str, dict],
+    topology_audit_interval: int = 1,
+    eliminate_rotation: bool = False,
+    step_penalty: float = 0.0,
+    terminate_on_improvement: bool = False,
+    profile_timing: dict[str, float] | None = None,
+    profile_counts: dict[str, float] | None = None,
 ) -> None:
     """Validate pending action suffixes and advance exact checkpoints."""
+    if topology_audit_interval < 1:
+        raise ValueError("topology audit interval must be positive")
+
+    def add_seconds(name: str, started: float) -> None:
+        if profile_timing is not None:
+            profile_timing[name] = (
+                profile_timing.get(name, 0.0) + time.perf_counter() - started
+            )
+
+    def add_count(name: str, amount: int = 1) -> None:
+        if profile_counts is not None:
+            profile_counts[name] = profile_counts.get(name, 0.0) + amount
+
+    refresh_started = time.perf_counter()
+    grouping_started = time.perf_counter()
     grouped: dict[tuple[str, int, int], list[EpisodeRuntime]] = defaultdict(list)
     for runtime in runtimes:
         if not runtime.pending_transition_indices:
@@ -1061,14 +1230,24 @@ def refresh_speculative_runtimes(
         grouped[
             (runtime.circuit, state.exact_checkpoint_depth, checkpoint_hash)
         ].append(runtime)
+    add_seconds("refresh_grouping_seconds", grouping_started)
+    add_count("refresh_runtime_count", sum(map(len, grouped.values())))
+    add_count("refresh_group_count", len(grouped))
 
     for group in grouped.values():
         group_states = [runtime.state for runtime in group]
+        prefix_started = time.perf_counter()
         replay_prefixes = shared_replay_prefixes(group_states)
+        add_seconds("refresh_prefix_analysis_seconds", prefix_started)
+        add_count("refresh_shared_prefix_count", len(replay_prefixes))
         replay_cache: dict[tuple, ExactReplayCacheEntry] = {}
         for runtime in group:
             state = runtime.state
-            profile_counts: dict[str, int] = {}
+            validate_topology = topology_audit_required(
+                runtime, best_by_circuit, topology_audit_interval
+            )
+            replay_counts: dict[str, int] = {}
+            replay_timing: dict[str, float] = {}
             started = time.perf_counter()
             exact_graph, failure_step, topology_ok, exact_slots = replay_state(
                 state,
@@ -1077,16 +1256,33 @@ def refresh_speculative_runtimes(
                 xfers,
                 runtime.initial_qasm,
                 return_checkpoint=True,
-                profile_counts=profile_counts,
+                profile_timing=replay_timing,
+                profile_counts=replay_counts,
                 replay_cache=replay_cache,
                 replay_cache_prefixes=replay_prefixes,
+                eliminate_rotation=eliminate_rotation,
+                validate_topology=validate_topology,
             )
-            runtime.exact_refresh_seconds += time.perf_counter() - started
+            replay_seconds = time.perf_counter() - started
+            runtime.exact_refresh_seconds += replay_seconds
             runtime.exact_refreshes += 1
-            runtime.exact_replay_actions += profile_counts.get(
+            runtime.exact_replay_actions += replay_counts.get(
                 "actions_attempted", 0
             )
+            if profile_timing is not None:
+                profile_timing["refresh_replay_total_seconds"] = (
+                    profile_timing.get("refresh_replay_total_seconds", 0.0)
+                    + replay_seconds
+                )
+                for name, seconds in replay_timing.items():
+                    key = f"refresh_replay_{name}"
+                    profile_timing[key] = profile_timing.get(key, 0.0) + seconds
+            if profile_counts is not None:
+                for name, count in replay_counts.items():
+                    key = f"refresh_replay_{name}"
+                    profile_counts[key] = profile_counts.get(key, 0.0) + count
 
+            result_started = time.perf_counter()
             if failure_step is not None or exact_graph is None:
                 failed_depth = int(failure_step or len(state.history))
                 failed_index = next(
@@ -1107,7 +1303,22 @@ def refresh_speculative_runtimes(
                 runtime.final_gate_count = failed.previous_gate_count
                 runtime.terminated_reason = "exact_refresh_failure"
                 runtime.stopped = True
+                add_seconds("refresh_result_processing_seconds", result_started)
                 continue
+
+            if eliminate_rotation:
+                reconciled = reconcile_rotation_normalized_state(
+                    runtime,
+                    exact_graph,
+                    exact_slots,
+                    step_penalty=step_penalty,
+                    topology_mismatch=not topology_ok,
+                )
+                add_count(
+                    "rotation_topology_reconciliations" if reconciled
+                    else "rotation_topology_unchanged"
+                )
+                topology_ok = True
 
             if not topology_ok:
                 failed_index = runtime.pending_transition_indices[-1]
@@ -1120,9 +1331,12 @@ def refresh_speculative_runtimes(
                 runtime.final_gate_count = failed.previous_gate_count
                 runtime.terminated_reason = "exact_topology_mismatch"
                 runtime.stopped = True
+                add_seconds("refresh_result_processing_seconds", result_started)
                 continue
 
+            hash_started = time.perf_counter()
             graph_hash = int(exact_graph.hash())
+            add_seconds("refresh_result_graph_hash_seconds", hash_started)
             if graph_hash in runtime.exact_hashes:
                 cycle_index = runtime.pending_transition_indices[-1]
                 cycle = runtime.transitions[cycle_index]
@@ -1134,6 +1348,7 @@ def refresh_speculative_runtimes(
                 runtime.final_gate_count = cycle.next_gate_count
                 runtime.terminated_reason = "exact_cycle"
                 runtime.stopped = True
+                add_seconds("refresh_result_processing_seconds", result_started)
                 continue
 
             state.exact_graph_checkpoint = exact_graph
@@ -1142,16 +1357,30 @@ def refresh_speculative_runtimes(
             runtime.exact_hashes.add(graph_hash)
             runtime.pending_transition_indices.clear()
             runtime.final_gate_count = state.gate_count
+            archive_started = time.perf_counter()
             retain_replay_state(
                 replay_pool[runtime.circuit],
                 exact_graph,
                 capacity=replay_capacity_per_circuit,
+                graph_hash=graph_hash,
             )
+            add_seconds("refresh_result_archive_seconds", archive_started)
             circuit_best = best_by_circuit[runtime.circuit]
             if state.gate_count < circuit_best["gate_count"]:
+                best_started = time.perf_counter()
                 circuit_best["gate_count"] = state.gate_count
                 circuit_best["qasm"] = exact_graph.to_qasm_str()
                 circuit_best["episode_depth"] = state.depth
+                add_seconds("refresh_result_best_qasm_seconds", best_started)
+            if (
+                terminate_on_improvement
+                and state.gate_count < runtime.initial_gate_count
+            ):
+                runtime.transitions[-1].done = True
+                runtime.terminated_reason = "improvement"
+                runtime.stopped = True
+            add_seconds("refresh_result_processing_seconds", result_started)
+    add_seconds("refresh_profiled_total_seconds", refresh_started)
 
 
 def collect_episode_batch(
@@ -2543,7 +2772,7 @@ def main() -> None:
                 "set_heads": args.set_heads,
                 "base_checkpoint": str(args.checkpoint),
                 "best_by_circuit": best_by_circuit,
-                "replay_pool": replay_pool,
+                "replay_pool": serializable_replay_pool(replay_pool),
                 "args": serialized_args(args),
             },
             args.output,

@@ -1,0 +1,510 @@
+{
+  "emphasis_max_negatives": null,
+  "emphasis_repeat": 1,
+  "emphasis_suffixes": [],
+  "force_train_suffixes": [],
+  "kind": "teacher_action_vs_legal_hard_negatives",
+  "max_negatives_per_action": 16,
+  "paths": {
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/38_0": {
+      "pairs": 608,
+      "split": "train",
+      "steps": 38
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/38_4": {
+      "pairs": 64,
+      "split": "train",
+      "steps": 4
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/38_5": {
+      "pairs": 928,
+      "split": "train",
+      "steps": 58
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_0": {
+      "pairs": 64,
+      "split": "train",
+      "steps": 4
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_1": {
+      "pairs": 304,
+      "split": "test",
+      "steps": 19
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_2": {
+      "pairs": 64,
+      "split": "train",
+      "steps": 4
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_3": {
+      "pairs": 144,
+      "split": "train",
+      "steps": 9
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_4": {
+      "pairs": 544,
+      "split": "train",
+      "steps": 34
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/39_5": {
+      "pairs": 544,
+      "split": "test",
+      "steps": 34
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/46_0": {
+      "pairs": 16,
+      "split": "test",
+      "steps": 1
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/46_1": {
+      "pairs": 80,
+      "split": "train",
+      "steps": 5
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/46_4": {
+      "pairs": 32,
+      "split": "train",
+      "steps": 2
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/46_5": {
+      "pairs": 48,
+      "split": "train",
+      "steps": 3
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/47_1": {
+      "pairs": 192,
+      "split": "train",
+      "steps": 12
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/50_0": {
+      "pairs": 160,
+      "split": "train",
+      "steps": 10
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/50_2": {
+      "pairs": 256,
+      "split": "train",
+      "steps": 16
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/52_5": {
+      "pairs": 560,
+      "split": "train",
+      "steps": 35
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/53_5": {
+      "pairs": 400,
+      "split": "test",
+      "steps": 25
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/54_2": {
+      "pairs": 240,
+      "split": "train",
+      "steps": 15
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/371_5": {
+      "pairs": 4176,
+      "split": "train",
+      "steps": 261
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/373_1": {
+      "pairs": 2864,
+      "split": "test",
+      "steps": 179
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/374_2": {
+      "pairs": 3728,
+      "split": "train",
+      "steps": 233
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/375_0": {
+      "pairs": 2896,
+      "split": "train",
+      "steps": 181
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/376_0": {
+      "pairs": 1648,
+      "split": "train",
+      "steps": 103
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/377_2": {
+      "pairs": 592,
+      "split": "train",
+      "steps": 37
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/378_0": {
+      "pairs": 1264,
+      "split": "train",
+      "steps": 79
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/378_2": {
+      "pairs": 400,
+      "split": "train",
+      "steps": 25
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/378_3": {
+      "pairs": 80,
+      "split": "train",
+      "steps": 5
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/378_4": {
+      "pairs": 544,
+      "split": "train",
+      "steps": 34
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/378_5": {
+      "pairs": 448,
+      "split": "train",
+      "steps": 28
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/379_0": {
+      "pairs": 112,
+      "split": "train",
+      "steps": 7
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/379_3": {
+      "pairs": 304,
+      "split": "train",
+      "steps": 19
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/379_4": {
+      "pairs": 496,
+      "split": "test",
+      "steps": 31
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/379_5": {
+      "pairs": 368,
+      "split": "train",
+      "steps": 23
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/380_3": {
+      "pairs": 512,
+      "split": "train",
+      "steps": 32
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/381_1": {
+      "pairs": 592,
+      "split": "test",
+      "steps": 37
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/382_1": {
+      "pairs": 1168,
+      "split": "train",
+      "steps": 73
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/382_2": {
+      "pairs": 656,
+      "split": "train",
+      "steps": 41
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/383_0": {
+      "pairs": 688,
+      "split": "train",
+      "steps": 43
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/383_1": {
+      "pairs": 848,
+      "split": "train",
+      "steps": 53
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/383_2": {
+      "pairs": 528,
+      "split": "train",
+      "steps": 33
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/383_5": {
+      "pairs": 1424,
+      "split": "train",
+      "steps": 89
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/384_2": {
+      "pairs": 992,
+      "split": "train",
+      "steps": 62
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/384_4": {
+      "pairs": 1040,
+      "split": "train",
+      "steps": 65
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/385_2": {
+      "pairs": 480,
+      "split": "train",
+      "steps": 30
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/385_3": {
+      "pairs": 480,
+      "split": "test",
+      "steps": 30
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/386_1": {
+      "pairs": 128,
+      "split": "train",
+      "steps": 8
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/386_2": {
+      "pairs": 160,
+      "split": "train",
+      "steps": 10
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/386_3": {
+      "pairs": 480,
+      "split": "test",
+      "steps": 30
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/386_4": {
+      "pairs": 240,
+      "split": "train",
+      "steps": 15
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/386_5": {
+      "pairs": 272,
+      "split": "test",
+      "steps": 17
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/387_0": {
+      "pairs": 80,
+      "split": "train",
+      "steps": 5
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/387_3": {
+      "pairs": 240,
+      "split": "train",
+      "steps": 15
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/388_0": {
+      "pairs": 144,
+      "split": "train",
+      "steps": 9
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/388_1": {
+      "pairs": 32,
+      "split": "train",
+      "steps": 2
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/388_2": {
+      "pairs": 144,
+      "split": "train",
+      "steps": 9
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/388_3": {
+      "pairs": 112,
+      "split": "test",
+      "steps": 7
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/388_4": {
+      "pairs": 96,
+      "split": "train",
+      "steps": 6
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/388_5": {
+      "pairs": 288,
+      "split": "train",
+      "steps": 18
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/389_0": {
+      "pairs": 64,
+      "split": "train",
+      "steps": 4
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/389_1": {
+      "pairs": 80,
+      "split": "train",
+      "steps": 5
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/389_2": {
+      "pairs": 48,
+      "split": "train",
+      "steps": 3
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/389_3": {
+      "pairs": 32,
+      "split": "train",
+      "steps": 2
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/389_4": {
+      "pairs": 48,
+      "split": "train",
+      "steps": 3
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/389_5": {
+      "pairs": 208,
+      "split": "test",
+      "steps": 13
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/390_0": {
+      "pairs": 256,
+      "split": "train",
+      "steps": 16
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/390_2": {
+      "pairs": 96,
+      "split": "test",
+      "steps": 6
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/390_5": {
+      "pairs": 112,
+      "split": "train",
+      "steps": 7
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/391_1": {
+      "pairs": 160,
+      "split": "test",
+      "steps": 10
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/391_3": {
+      "pairs": 240,
+      "split": "train",
+      "steps": 15
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/391_4": {
+      "pairs": 256,
+      "split": "train",
+      "steps": 16
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/391_5": {
+      "pairs": 208,
+      "split": "test",
+      "steps": 13
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/392_0": {
+      "pairs": 240,
+      "split": "train",
+      "steps": 15
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/392_2": {
+      "pairs": 80,
+      "split": "test",
+      "steps": 5
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/393_1": {
+      "pairs": 144,
+      "split": "train",
+      "steps": 9
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/393_3": {
+      "pairs": 224,
+      "split": "train",
+      "steps": 14
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/393_4": {
+      "pairs": 240,
+      "split": "train",
+      "steps": 15
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/393_5": {
+      "pairs": 192,
+      "split": "test",
+      "steps": 12
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/394_0": {
+      "pairs": 224,
+      "split": "train",
+      "steps": 14
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/394_2": {
+      "pairs": 64,
+      "split": "train",
+      "steps": 4
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/395_1": {
+      "pairs": 128,
+      "split": "train",
+      "steps": 8
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/395_3": {
+      "pairs": 208,
+      "split": "train",
+      "steps": 13
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/395_4": {
+      "pairs": 224,
+      "split": "train",
+      "steps": 14
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/395_5": {
+      "pairs": 176,
+      "split": "test",
+      "steps": 11
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/396_0": {
+      "pairs": 96,
+      "split": "train",
+      "steps": 6
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/396_2": {
+      "pairs": 240,
+      "split": "test",
+      "steps": 15
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/396_4": {
+      "pairs": 224,
+      "split": "train",
+      "steps": 14
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/397_0": {
+      "pairs": 64,
+      "split": "test",
+      "steps": 4
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/397_1": {
+      "pairs": 32,
+      "split": "train",
+      "steps": 2
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/397_2": {
+      "pairs": 112,
+      "split": "train",
+      "steps": 7
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/397_3": {
+      "pairs": 144,
+      "split": "train",
+      "steps": 9
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/397_4": {
+      "pairs": 128,
+      "split": "train",
+      "steps": 8
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/397_5": {
+      "pairs": 48,
+      "split": "train",
+      "steps": 3
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/399_0": {
+      "pairs": 16,
+      "split": "train",
+      "steps": 1
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/399_1": {
+      "pairs": 16,
+      "split": "train",
+      "steps": 1
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/399_2": {
+      "pairs": 48,
+      "split": "train",
+      "steps": 3
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/399_3": {
+      "pairs": 16,
+      "split": "train",
+      "steps": 1
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/399_4": {
+      "pairs": 16,
+      "split": "train",
+      "steps": 1
+    },
+    "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/gf2^6_mult/399_5": {
+      "pairs": 16,
+      "split": "test",
+      "steps": 1
+    }
+  },
+  "test_modulo": 5,
+  "test_preferences": 8000,
+  "test_remainder": 0,
+  "train_preferences": 34160,
+  "unique_teacher_steps": 2635
+}

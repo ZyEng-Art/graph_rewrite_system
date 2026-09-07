@@ -16,6 +16,32 @@ def split_bucket(source_path: str, modulo: int) -> int:
     return int.from_bytes(digest[:8], "little") % modulo
 
 
+def base_trajectory_path(source_path: str) -> str:
+    return source_path.split("#segment=", 1)[0].split("#window=", 1)[0]
+
+
+def trajectory_gate_counts(trajectory: dict, rules: RuleMetadata) -> list[int]:
+    initial = trajectory["initial_graph"]
+    counts = [
+        len(initial["nodes"])
+        if "nodes" in initial
+        else len(initial.get("gate_types", ()))
+    ]
+    for step in trajectory["steps"]:
+        delta = step.get("delta")
+        if delta is not None:
+            change = len(delta["added_nodes"]) - len(delta["removed_slots"])
+        else:
+            xfer_id = int(step["action"]["xfer_id"])
+            source_id = int(rules.xfer_to_source[xfer_id])
+            change = (
+                len(rules.destination_gate_types[xfer_id])
+                - len(rules.source_gate_types[source_id])
+            )
+        counts.append(counts[-1] + change)
+    return counts
+
+
 def candidate_action(match: dict, xfer_id: int) -> dict:
     return {
         "xfer_id": int(xfer_id),
@@ -87,7 +113,8 @@ def collect_preferences(
     paths = defaultdict(lambda: {"steps": 0, "pairs": 0, "split": None})
     for trajectory in payload["train_trajectories"] + payload["test_trajectories"]:
         source_path = str(trajectory.get("source_path", trajectory["trajectory_id"]))
-        base_path = source_path.split("#segment=", 1)[0]
+        base_path = base_trajectory_path(source_path)
+        gate_counts = trajectory_gate_counts(trajectory, rules)
         force_train = any(
             base_path.replace("\\", "/").endswith(suffix.replace("\\", "/"))
             for suffix in force_train_suffixes
@@ -144,6 +171,13 @@ def collect_preferences(
                     "remaining_after_action": len(trajectory["steps"])
                     - step_index
                     - 1,
+                    "teacher_action_gate_delta": (
+                        gate_counts[step_index + 1] - gate_counts[step_index]
+                    ),
+                    "future_best_reduction": (
+                        gate_counts[step_index]
+                        - min(gate_counts[step_index + 1 :])
+                    ),
                     "preferred_descendants": 1,
                     "rejected_descendants": 1,
                     "source_history": source_path,

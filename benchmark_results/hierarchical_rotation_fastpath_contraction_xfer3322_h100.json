@@ -1,0 +1,21 @@
+{
+  "benchmark": "hierarchical-rotation-fastpath-contraction-guard-v1",
+  "circuit": "barenco_tof_3/40_2",
+  "device": "NVIDIA H100 80GB HBM3",
+  "host": "gpu5",
+  "xfer_id": 3322,
+  "before_gates": 42,
+  "lazy_nominal_gates": 42,
+  "exact_normalized_gates": 40,
+  "exact_slot_mappings": 40,
+  "transition_reward": 1.98,
+  "target_hash_match": true,
+  "counts": {
+    "refresh_replay_actions_attempted": 1.0,
+    "refresh_replay_actions_applied": 1.0,
+    "refresh_replay_rotation_live_guid_scans": 1.0,
+    "refresh_replay_topology_audits": 1.0,
+    "refresh_replay_topology_mismatch_states": 1.0,
+    "rotation_topology_reconciliations": 1.0
+  }
+}

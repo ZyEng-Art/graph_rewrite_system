@@ -1,0 +1,36 @@
+{
+  "benchmark": "hierarchical-rotation-contraction-reconciliation-v1",
+  "circuit": "barenco_tof_3/40_2",
+  "device": "NVIDIA H100 80GB HBM3",
+  "host": "gpu5",
+  "source_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/40_2/3_42_2_7_3322.qasm",
+  "target_qasm": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/quarl_hard_paths_20260905/barenco_tof_3/40_2/4_40_0_0_0.qasm",
+  "xfer_id": 3322,
+  "resolved_node_id": 7,
+  "binding_slots": [
+    7,
+    9
+  ],
+  "before_gates": 42,
+  "lazy_nominal_gates": 42,
+  "exact_normalized_gates": 40,
+  "declared_destinations": 2,
+  "exact_live_slots": 40,
+  "transition_reward": 1.98,
+  "target_hash_match": true,
+  "counts": {
+    "refresh_group_count": 1.0,
+    "refresh_runtime_count": 1.0,
+    "refresh_replay_actions_attempted": 1.0,
+    "refresh_replay_actions_applied": 1.0,
+    "refresh_replay_quartz_direct_guid_apply_calls": 1.0,
+    "rotation_topology_reconciliations": 1.0
+  },
+  "timing_seconds": {
+    "refresh_profiled_total": 0.0005278319586068392,
+    "refresh_replay_total": 0.00017463485710322857,
+    "refresh_replay_quartz_apply": 0.00010278006084263325,
+    "refresh_replay_slot_update_and_graph_swap": 0.00003757793456315994,
+    "refresh_result_processing": 0.00031561986543238163
+  }
+}
