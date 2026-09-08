@@ -24,6 +24,11 @@ class BeamState:
     last_xfer_id: int = -1
     last_source_slots: tuple[int, ...] = ()
     last_destination_slots: tuple[int, ...] = ()
+    path_best_gate_count: int | None = None
+    stagnation_steps: int = 0
+    survivor_lane: str = "root"
+    exploration_ancestor: bool = False
+    recovered_after_exploration: bool = False
 
 
 @dataclass(frozen=True)

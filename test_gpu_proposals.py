@@ -230,6 +230,37 @@ def main() -> None:
     assert list(map(simplify, materialize_selected_proposals(selected_tensors))) == list(
         map(simplify, actual)
     )
+
+    beam[0].previous_preferred = {4}
+    locality_actual, _, _, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=1,
+        global_cap=3,
+        ranking_mode="gate",
+        locality_action_reserve=1,
+    )
+    parent_zero = [row for row in locality_actual if row.parent == 0]
+    assert len(parent_zero) == 1
+    assert parent_zero[0].xfer_id == 2
+    assert parent_zero[0].binding == (4,)
+
+    locality_wide, _, _, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=2,
+        global_cap=6,
+        ranking_mode="gate",
+        locality_action_reserve=1,
+    )
+    assert sum(row.parent == 0 for row in locality_wide) == 2
+    assert any(
+        row.parent == 0 and row.xfer_id == 2 and row.binding == (4,)
+        for row in locality_wide
+    )
+    beam[0].previous_preferred = set()
     deferred, deferred_metrics, _, deferred_tensors = build_gpu_proposals(
         candidates,
         beam,

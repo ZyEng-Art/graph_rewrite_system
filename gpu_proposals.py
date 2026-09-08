@@ -281,6 +281,7 @@ def build_gpu_proposals(
     preserve_parent_best: bool = False,
     parent_diversity_actions: int = 1,
     parent_diversity_parent_cap: int = 0,
+    locality_action_reserve: int = 0,
     action_value_microbatch: int = 16384,
     ppo_actor_critic=None,
     ppo_model=None,
@@ -339,6 +340,8 @@ def build_gpu_proposals(
         raise ValueError("parent diversity actions must be positive")
     if parent_diversity_parent_cap < 0:
         raise ValueError("parent diversity parent cap must be nonnegative")
+    if locality_action_reserve < 0 or locality_action_reserve > per_parent_cap:
+        raise ValueError("locality action reserve must be within the per-parent cap")
     device = candidates.sources.device
     timing: dict[str, float] = {}
 
@@ -420,6 +423,33 @@ def build_gpu_proposals(
         random_priorities = torch.rand(
             materialized_count, device=device, generator=generator
         )
+    local_continuations = torch.zeros(
+        materialized_count, dtype=torch.bool, device=device
+    )
+    if locality_action_reserve and bindings.numel():
+        max_slot = max(
+            max((int(state.next_slot) for state in beam), default=0),
+            int(bindings.max().item()) + 1,
+        )
+        if max_slot:
+            preferred = torch.zeros(
+                (len(beam), max_slot), dtype=torch.bool, device=device
+            )
+            for parent_index, state in enumerate(beam):
+                slots = sorted(
+                    int(slot)
+                    for slot in state.previous_preferred
+                    if 0 <= int(slot) < max_slot
+                )
+                if slots:
+                    preferred[parent_index, slots] = True
+            valid_bindings = bindings.ge(0)
+            local_continuations = (
+                preferred[
+                    parents.unsqueeze(1), bindings.clamp_min(0)
+                ]
+                & valid_bindings
+            ).any(dim=1)
     finish_timing("gpu_action_expansion_seconds", stage_started)
 
     stage_started = time.perf_counter()
@@ -439,7 +469,77 @@ def build_gpu_proposals(
     group_start_positions = torch.where(new_parent, positions, 0)
     group_start_positions = torch.cummax(group_start_positions, dim=0).values
     parent_rank = positions - group_start_positions
-    if ranking_mode == "value" and value_increase_cap:
+    if locality_action_reserve:
+        local_rows = torch.where(local_continuations)[0]
+        if local_rows.numel():
+            local_rank_keys = [
+                (values[local_rows], descending)
+                for values, descending in rank_keys
+            ]
+            local_order = local_rows[
+                _stable_lexsort(
+                    [
+                        (parents[local_rows], False),
+                        *local_rank_keys,
+                        (xfer_ids[local_rows], False),
+                    ]
+                )
+            ]
+            ordered_local_parents = parents[local_order]
+            local_positions = torch.arange(
+                local_order.numel(), device=device
+            )
+            new_local_parent = torch.ones(
+                local_order.numel(), dtype=torch.bool, device=device
+            )
+            new_local_parent[1:] = (
+                ordered_local_parents[1:] != ordered_local_parents[:-1]
+            )
+            local_starts = torch.where(
+                new_local_parent, local_positions, 0
+            )
+            local_starts = torch.cummax(local_starts, dim=0).values
+            local_rank = local_positions - local_starts
+            local_rows = local_order[
+                local_rank < locality_action_reserve
+            ]
+        local_selected_mask = torch.zeros(
+            materialized_count, dtype=torch.bool, device=device
+        )
+        local_selected_mask[local_rows] = True
+        selected_local_counts = torch.bincount(
+            parents[local_rows], minlength=len(beam)
+        )
+
+        # Fill every parent's remaining capacity from its original ranking.
+        # Excluding reserved local rows first avoids losing width when a local
+        # row was already present in the ordinary top-k prefix.
+        remaining_order = parent_order[
+            ~local_selected_mask[parent_order]
+        ]
+        remaining_parents = parents[remaining_order]
+        remaining_positions = torch.arange(
+            remaining_order.numel(), device=device
+        )
+        new_remaining_parent = torch.ones(
+            remaining_order.numel(), dtype=torch.bool, device=device
+        )
+        new_remaining_parent[1:] = (
+            remaining_parents[1:] != remaining_parents[:-1]
+        )
+        remaining_starts = torch.where(
+            new_remaining_parent, remaining_positions, 0
+        )
+        remaining_starts = torch.cummax(remaining_starts, dim=0).values
+        remaining_rank = remaining_positions - remaining_starts
+        remaining_caps = per_parent_cap - selected_local_counts
+        fill_rows = remaining_order[
+            remaining_rank < remaining_caps[remaining_parents]
+        ]
+        selected_mask = local_selected_mask.clone()
+        selected_mask[fill_rows] = True
+        parent_order = torch.where(selected_mask)[0]
+    elif ranking_mode == "value" and value_increase_cap:
         base_cap = per_parent_cap - value_increase_cap
         base_rows = parent_order[parent_rank < base_cap]
         increasing_rows = torch.where(rule_index.gate_deltas[xfer_ids] > 0)[0]
@@ -749,6 +849,18 @@ def build_gpu_proposals(
     }
     if preselect_matches:
         metrics["materialized_actions"] = materialized_count
+    if locality_action_reserve:
+        metrics.update(
+            {
+                "locality_action_reserve": locality_action_reserve,
+                "local_continuation_candidates": int(
+                    local_continuations.sum().item()
+                ),
+                "selected_local_continuations": int(
+                    local_continuations[selected].sum().item()
+                ),
+            }
+        )
     if preserve_parent_best:
         metrics["selected_parent_best_actions"] = parent_diverse_count
     if action_values is not None:

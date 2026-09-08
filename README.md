@@ -370,6 +370,13 @@ The 80-state, two-seed H100 result is documented in
 ranking for already-improving roots but zero realized delayed-gain outcomes by
 depth 64, so the signal is not used as a hard optimizer filter.
 
+`DUAL_LANE_DEPTH_SEARCH.md` describes the follow-up fixed-budget search. It
+keeps the historical gate beam as the default, adds an opt-in exploration
+reservation for bounded plateau/detour paths, exposes a global attempted-apply
+budget, and extends reference-trajectory logs through survivor selection.
+The negative equal-budget results and the action-cap diagnosis are recorded in
+`DUAL_LANE_RESULTS_20260908.md`.
+
 ## Legacy copied documentation
 
 This directory is an independent implementation of the corrected task:

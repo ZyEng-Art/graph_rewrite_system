@@ -1,0 +1,31 @@
+{
+  "format": "continuation-runner-config-v1",
+  "environment": {
+    "LD_LIBRARY_PATH": "./quartz_exact_key/build",
+    "OMP_NUM_THREADS": "16",
+    "PYTHONPATH": "./quartz_exact_key/python"
+  },
+  "args": [
+    "--mode", "model",
+    "--data", "../../data/binding_longmix_randomrefresh_complex_holdout_20260906.pt",
+    "--checkpoint", "../../runs/hhop_h6_topo1_balanced_s907.pt",
+    "--calibration", "../../runs/hhop_h6_topo1_balanced_s907_calibration_r999.json",
+    "--target-recall", "0.999",
+    "--ecc-file", "../../quarl/experiment/ecc_set/nam_ecc.json",
+    "--beam-size", "256",
+    "--microbatch", "512",
+    "--proposal-ranking", "stochastic",
+    "--max-source-matches", "10240",
+    "--max-actions-per-parent", "128",
+    "--proposal-factor", "16",
+    "--max-gate-increase", "3",
+    "--model-pipeline", "state_only_gpu",
+    "--model-apply-binding", "direct",
+    "--dedup-identity", "exact",
+    "--transactional-apply", "on",
+    "--eliminate-rotation",
+    "--survivor-policy", "gate",
+    "--max-total-attempted-actions", "100000",
+    "--apply-profile", "off"
+  ]
+}

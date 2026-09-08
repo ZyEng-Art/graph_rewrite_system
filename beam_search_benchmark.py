@@ -35,6 +35,7 @@ from gpu_proposals import GpuRuleIndex, build_gpu_proposals
 from incremental_graph import parse_pattern
 from model_factory import build_model
 from search_types import BeamState, Proposal
+from search_survivor import path_best_gate_count, select_survivors
 from successor_fingerprint import (
     FingerprintAudit,
     build_wire_trace_profile,
@@ -1229,6 +1230,20 @@ def materialize_child(
     continued = proposal.anchor_slot in parent.previous_preferred
     local_streak = parent.local_streak + 1 if continued else 0
     gate_count = len(after["nodes"])
+    parent_path_best = path_best_gate_count(parent)
+    child_path_best = min(parent_path_best, gate_count)
+    stagnation_steps = (
+        0
+        if gate_count < parent_path_best
+        else int(getattr(parent, "stagnation_steps", 0)) + 1
+    )
+    exploration_ancestor = bool(
+        getattr(parent, "exploration_ancestor", False)
+        or getattr(parent, "survivor_lane", "root") == "exploration"
+    )
+    recovered_after_exploration = bool(
+        exploration_ancestor and gate_count < parent_path_best
+    )
     if profile is not None:
         add_profile_ns(profile, "child_local_metadata", started)
     if not eliminate_rotation and gate_count != proposal.next_gate_count:
@@ -1255,6 +1270,11 @@ def materialize_child(
         last_xfer_id=proposal.xfer_id,
         last_source_slots=source_slots,
         last_destination_slots=ordered_destination_slots,
+        path_best_gate_count=child_path_best,
+        stagnation_steps=stagnation_steps,
+        survivor_lane="unselected",
+        exploration_ancestor=exploration_ancestor,
+        recovered_after_exploration=recovered_after_exploration,
     )
     if profile is not None:
         add_profile_ns(profile, "child_state_construction", started)
@@ -1305,6 +1325,43 @@ def main() -> None:
     parser.add_argument("--max-source-matches", type=int, default=2048)
     parser.add_argument("--max-actions-per-parent", type=int, default=128)
     parser.add_argument("--proposal-factor", type=int, default=8)
+    parser.add_argument(
+        "--survivor-policy",
+        choices=("gate", "dual_lane"),
+        default="gate",
+        help=(
+            "historical gate-count beam, or reserve fixed beam slots for "
+            "bounded no-improvement paths"
+        ),
+    )
+    parser.add_argument("--exploration-fraction", type=float, default=0.25)
+    parser.add_argument("--exploration-max-stagnation", type=int, default=8)
+    parser.add_argument("--exploration-max-detour", type=int, default=2)
+    parser.add_argument("--exploration-seed", type=int, default=73)
+    parser.add_argument(
+        "--locality-action-reserve",
+        type=int,
+        default=0,
+        help=(
+            "per-parent action slots reserved for bindings overlapping the "
+            "previous rewrite neighborhood"
+        ),
+    )
+    parser.add_argument(
+        "--survivor-candidate-factor",
+        type=float,
+        default=1.25,
+        help=(
+            "novel children collected before fixed-size survivor selection; "
+            "gate policy always uses 1.0 for historical equivalence"
+        ),
+    )
+    parser.add_argument(
+        "--max-total-attempted-actions",
+        type=int,
+        default=0,
+        help="global exact-apply budget; zero means unlimited",
+    )
     parser.add_argument(
         "--proposal-ranking",
         choices=("gate", "probability", "stochastic"),
@@ -1531,6 +1588,20 @@ def main() -> None:
         )
     if args.neural_prefilter_batch_size < 1:
         parser.error("--neural-prefilter-batch-size must be positive")
+    if not 0.0 <= args.exploration_fraction < 1.0:
+        parser.error("--exploration-fraction must be in [0, 1)")
+    if args.exploration_max_stagnation < 1:
+        parser.error("--exploration-max-stagnation must be positive")
+    if args.exploration_max_detour < 0:
+        parser.error("--exploration-max-detour must be nonnegative")
+    if not 0 <= args.locality_action_reserve <= args.max_actions_per_parent:
+        parser.error(
+            "--locality-action-reserve must be within the per-parent action cap"
+        )
+    if args.survivor_candidate_factor < 1.0:
+        parser.error("--survivor-candidate-factor must be at least 1")
+    if args.max_total_attempted_actions < 0:
+        parser.error("--max-total-attempted-actions must be nonnegative")
     if args.apply_profile == "detailed" and args.dedup_identity != "exact":
         parser.error("detailed apply profiling requires exact graph identity")
     if args.transactional_apply == "on" and args.dedup_identity != "exact":
@@ -1737,6 +1808,11 @@ def main() -> None:
             gate_count=int(graph.gate_count),
             depth=0,
             history=(),
+            path_best_gate_count=int(graph.gate_count),
+            stagnation_steps=0,
+            survivor_lane="root",
+            exploration_ancestor=False,
+            recovered_after_exploration=False,
         )
     ]
     if args.mode == "model" and args.model_pipeline == "compat_host":
@@ -1797,7 +1873,13 @@ def main() -> None:
     best_first_seen_step = 0
     best_first_seen_seconds = 0.0
     improvement_trace = [
-        {"step": 0, "gate_count": initial_gate_count, "seconds": 0.0}
+        {
+            "step": 0,
+            "gate_count": initial_gate_count,
+            "seconds": 0.0,
+            "exploration_ancestor": False,
+            "recovered_after_exploration": False,
+        }
     ]
     seen = (
         ExactGraphRegistry.seeded(graph)
@@ -1837,6 +1919,7 @@ def main() -> None:
     apply_profile_totals = Counter()
     step_rows = []
     reference_retention = []
+    total_attempted_actions = 0
     total_started = time.perf_counter()
     for step in range(args.depth):
         step_started = time.perf_counter()
@@ -1898,7 +1981,11 @@ def main() -> None:
                 gpu_rule_index,
                 per_parent_cap=effective_parent_cap,
                 global_cap=args.beam_size * args.proposal_factor,
-                ranking_mode="gate",
+                ranking_mode=args.proposal_ranking,
+                ranking_seed=args.proposal_ranking_seed + step,
+                locality_action_reserve=min(
+                    args.locality_action_reserve, effective_parent_cap
+                ),
                 return_selected_tensors=need_candidate_features,
             )
             proposal_seconds = time.perf_counter() - proposal_started
@@ -2118,8 +2205,21 @@ def main() -> None:
                 ] += 1
             return profile_backend, profile
 
+        candidate_capacity = (
+            args.beam_size
+            if args.survivor_policy == "gate"
+            else max(
+                args.beam_size,
+                math.ceil(args.beam_size * args.survivor_candidate_factor),
+            )
+        )
         for proposal_position, proposal in enumerate(proposals):
-            if len(children) >= args.beam_size:
+            if len(children) >= candidate_capacity:
+                break
+            if (
+                args.max_total_attempted_actions
+                and total_attempted_actions >= args.max_total_attempted_actions
+            ):
                 break
             proposals_scanned += 1
             neural_deferred = proposal_is_deferred[proposal_position]
@@ -2339,6 +2439,7 @@ def main() -> None:
                         fingerprint_skipped_positions.add(proposal_position)
                         continue
             attempted += 1
+            total_attempted_actions += 1
             applied_proposal_positions.add(proposal_position)
             if neural_deferred:
                 neural_prefilter_step["deferred_scanned"] += 1
@@ -2525,8 +2626,28 @@ def main() -> None:
         )
         if not children:
             break
-        children.sort(key=lambda state: (state.gate_count, len(state.history)))
-        beam = children[: args.beam_size]
+        reference_candidate_indices = []
+        if reference_hashes is not None and step + 1 < len(reference_hashes):
+            expected_hash = reference_hashes[step + 1]
+            reference_candidate_indices = [
+                index
+                for index, state in enumerate(children)
+                if int(state.graph.hash()) == expected_hash
+            ]
+        survivor_selection = select_survivors(
+            children,
+            beam_size=args.beam_size,
+            exploration_fraction=(
+                args.exploration_fraction
+                if args.survivor_policy == "dual_lane"
+                else 0.0
+            ),
+            exploration_max_stagnation=args.exploration_max_stagnation,
+            exploration_max_detour=args.exploration_max_detour,
+            seed=args.exploration_seed,
+            step=step + 1,
+        )
+        beam = survivor_selection.states
         reference_lost = False
         if reference_hashes is not None and step + 1 < len(reference_hashes):
             expected_hash = reference_hashes[step + 1]
@@ -2541,8 +2662,12 @@ def main() -> None:
                 "expected_quartz_hash": expected_hash,
                 "parent_beam_indices": reference_parent_indices,
                 "target_seen_before_layer": reference_target_seen_before,
+                "candidate_indices_before_survivor": reference_candidate_indices,
                 "retained": not reference_lost,
                 "beam_indices": retained_indices,
+                "retained_lanes": [
+                    beam[index].survivor_lane for index in retained_indices
+                ],
             }
             if (
                 reference_lost
@@ -2654,6 +2779,8 @@ def main() -> None:
                     exclusion_stage = "preapply_fingerprint"
                 elif not attempted_match_positions:
                     exclusion_stage = "beam_filled_before_proposal"
+                elif reference_candidate_indices:
+                    exclusion_stage = "survivor_selection"
                 elif reference_target_seen_before:
                     exclusion_stage = "global_exact_dedup"
                 else:
@@ -2705,6 +2832,8 @@ def main() -> None:
                         )
                         else "beam_filled_before_proposal"
                         if not attempted_positions
+                        else "survivor_selection"
+                        if reference_candidate_indices
                         else "global_exact_dedup"
                         if reference_target_seen_before
                         else "attempted_but_not_retained"
@@ -2726,6 +2855,12 @@ def main() -> None:
                     "step": best_first_seen_step,
                     "gate_count": best_state.gate_count,
                     "seconds": best_first_seen_seconds,
+                    "exploration_ancestor": bool(
+                        best_state.exploration_ancestor
+                    ),
+                    "recovered_after_exploration": bool(
+                        best_state.recovered_after_exploration
+                    ),
                 }
             )
         match_seconds = model_seconds + exact_seconds
@@ -2733,7 +2868,13 @@ def main() -> None:
         row = {
             "step": step + 1,
             "input_states": len(input_beam),
+            "input_survivor_lanes": dict(
+                Counter(state.survivor_lane for state in input_beam)
+            ),
             "output_states": len(beam),
+            "output_survivor_lanes": dict(
+                Counter(state.survivor_lane for state in beam)
+            ),
             "best_gate_count": beam[0].gate_count,
             "global_best_gate_count": best_state.gate_count,
             "cumulative_seconds": cumulative_seconds,
@@ -2744,6 +2885,16 @@ def main() -> None:
             "proposals_scanned": proposals_scanned,
             "attempted_actions": attempted,
             "accepted_actions": len(beam),
+            "survivor_selection": survivor_selection.metrics,
+            "candidate_path_improvements": sum(
+                state.stagnation_steps == 0 for state in children
+            ),
+            "candidate_recoveries_after_exploration": sum(
+                state.recovered_after_exploration for state in children
+            ),
+            "selected_recoveries_after_exploration": sum(
+                state.recovered_after_exploration for state in beam
+            ),
             "invalid_model_actions": invalid,
             "duplicate_successors": duplicates,
             "successor_metadata_skipped": duplicates,
@@ -2783,6 +2934,11 @@ def main() -> None:
         ):
             break
         if args.stop_on_reference_loss and reference_lost:
+            break
+        if (
+            args.max_total_attempted_actions
+            and total_attempted_actions >= args.max_total_attempted_actions
+        ):
             break
 
     total_seconds = time.perf_counter() - total_started
@@ -2866,6 +3022,23 @@ def main() -> None:
         "proposal_factor": args.proposal_factor,
         "proposal_ranking": args.proposal_ranking,
         "proposal_ranking_seed": args.proposal_ranking_seed,
+        "survivor_policy": args.survivor_policy,
+        "exploration_fraction": (
+            args.exploration_fraction
+            if args.survivor_policy == "dual_lane"
+            else 0.0
+        ),
+        "exploration_max_stagnation": args.exploration_max_stagnation,
+        "exploration_max_detour": args.exploration_max_detour,
+        "exploration_seed": args.exploration_seed,
+        "locality_action_reserve": args.locality_action_reserve,
+        "survivor_candidate_factor": (
+            args.survivor_candidate_factor
+            if args.survivor_policy == "dual_lane"
+            else 1.0
+        ),
+        "max_total_attempted_actions": args.max_total_attempted_actions,
+        "total_attempted_actions": total_attempted_actions,
         "max_gate_increase": args.max_gate_increase,
         "requested_depth": args.depth,
         "completed_depth": len(step_rows),
@@ -2873,6 +3046,12 @@ def main() -> None:
         "best_gate_count": best_state.gate_count,
         "best_first_seen_step": best_first_seen_step,
         "best_first_seen_seconds": best_first_seen_seconds,
+        "best_has_exploration_ancestor": bool(
+            best_state.exploration_ancestor
+        ),
+        "best_recovered_after_exploration": bool(
+            best_state.recovered_after_exploration
+        ),
         "improvement_trace": improvement_trace,
         "target_gate_count": args.target_gate_count,
         "target_reached": (
