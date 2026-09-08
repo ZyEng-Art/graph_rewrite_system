@@ -377,6 +377,11 @@ budget, and extends reference-trajectory logs through survivor selection.
 The negative equal-budget results and the action-cap diagnosis are recorded in
 `DUAL_LANE_RESULTS_20260908.md`.
 
+`PROGRESSIVE_WIDENING_RESULTS_20260908.md` records the follow-up model-independent
+rank-band search. It revisits exact parent graphs with disjoint later action
+rank bands and recovered a 371-gate GF result in one of two fixed-budget seeds,
+while leaving the historical policy as the default.
+
 ## Legacy copied documentation
 
 This directory is an independent implementation of the corrected task:

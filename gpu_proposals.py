@@ -81,6 +81,7 @@ class SelectedProposalTensors:
     gate_deltas: torch.Tensor
     next_gate_counts: torch.Tensor
     value_scores: torch.Tensor
+    parent_ranks: torch.Tensor
 
 
 def materialize_selected_proposals(
@@ -101,6 +102,7 @@ def materialize_selected_proposals(
             tensors.xfer_ids[indices],
             tensors.anchor_slots[indices],
             tensors.next_gate_counts[indices],
+            tensors.parent_ranks[indices],
         ),
         dim=1,
     ).cpu()
@@ -112,7 +114,7 @@ def materialize_selected_proposals(
     for row, binding, score in zip(
         metadata.tolist(), bindings.tolist(), scores.tolist()
     ):
-        parent, xfer_id, anchor, next_gate_count = row
+        parent, xfer_id, anchor, next_gate_count, parent_rank = row
         proposals.append(
             Proposal(
                 parent=parent,
@@ -122,6 +124,7 @@ def materialize_selected_proposals(
                 probability=score[0],
                 next_gate_count=next_gate_count,
                 value_score=score[1],
+                parent_rank=parent_rank,
             )
         )
     return proposals
@@ -282,6 +285,7 @@ def build_gpu_proposals(
     parent_diversity_actions: int = 1,
     parent_diversity_parent_cap: int = 0,
     locality_action_reserve: int = 0,
+    parent_rank_offsets: list[int] | torch.Tensor | None = None,
     action_value_microbatch: int = 16384,
     ppo_actor_critic=None,
     ppo_model=None,
@@ -342,7 +346,21 @@ def build_gpu_proposals(
         raise ValueError("parent diversity parent cap must be nonnegative")
     if locality_action_reserve < 0 or locality_action_reserve > per_parent_cap:
         raise ValueError("locality action reserve must be within the per-parent cap")
+    if parent_rank_offsets is not None and locality_action_reserve:
+        raise ValueError(
+            "parent rank offsets cannot be combined with locality action reserve"
+        )
     device = candidates.sources.device
+    if parent_rank_offsets is None:
+        rank_offsets = torch.zeros(len(beam), dtype=torch.long, device=device)
+    else:
+        rank_offsets = torch.as_tensor(
+            parent_rank_offsets, dtype=torch.long, device=device
+        )
+        if rank_offsets.ndim != 1 or rank_offsets.numel() != len(beam):
+            raise ValueError("parent rank offsets must have one value per beam state")
+        if bool(rank_offsets.lt(0).any().item()):
+            raise ValueError("parent rank offsets must be nonnegative")
     timing: dict[str, float] = {}
 
     def finish_timing(name: str, started: float) -> None:
@@ -469,7 +487,15 @@ def build_gpu_proposals(
     group_start_positions = torch.where(new_parent, positions, 0)
     group_start_positions = torch.cummax(group_start_positions, dim=0).values
     parent_rank = positions - group_start_positions
-    if locality_action_reserve:
+    rank_by_materialized_row = torch.empty_like(parent_rank)
+    rank_by_materialized_row[parent_order] = parent_rank
+    if bool(rank_offsets.any().item()):
+        lower_ranks = rank_offsets[ordered_parents]
+        parent_order = parent_order[
+            (parent_rank >= lower_ranks)
+            & (parent_rank < lower_ranks + per_parent_cap)
+        ]
+    elif locality_action_reserve:
         local_rows = torch.where(local_continuations)[0]
         if local_rows.numel():
             local_rank_keys = [
@@ -822,6 +848,7 @@ def build_gpu_proposals(
         gate_deltas=rule_index.gate_deltas[xfer_ids[selected]],
         next_gate_counts=next_gate_counts[selected],
         value_scores=selected_value_scores,
+        parent_ranks=rank_by_materialized_row[selected],
     )
     selected_tensors = proposal_tensors if return_selected_tensors else None
 
@@ -847,6 +874,28 @@ def build_gpu_proposals(
         ),
         "selected_value_exploration_proposals": selected_value_exploration,
     }
+    if parent_rank_offsets is not None:
+        selected_parent_ranks = rank_by_materialized_row[selected]
+        metrics.update(
+            {
+                "parent_rank_offset_min": int(rank_offsets.min().item()),
+                "parent_rank_offset_max": int(rank_offsets.max().item()),
+                "selected_parent_rank_min": (
+                    int(selected_parent_ranks.min().item())
+                    if selected_parent_ranks.numel()
+                    else -1
+                ),
+                "selected_parent_rank_max": (
+                    int(selected_parent_ranks.max().item())
+                    if selected_parent_ranks.numel()
+                    else -1
+                ),
+                "rank_band_candidates": int(parent_order.numel()),
+                "selected_actions_from_widened_parents": int(
+                    rank_offsets[parents[selected]].gt(0).sum().item()
+                ),
+            }
+        )
     if preselect_matches:
         metrics["materialized_actions"] = materialized_count
     if locality_action_reserve:

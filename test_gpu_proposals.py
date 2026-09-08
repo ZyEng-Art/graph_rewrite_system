@@ -261,6 +261,38 @@ def main() -> None:
         for row in locality_wide
     )
     beam[0].previous_preferred = set()
+
+    widened, widened_metrics, _, _ = build_gpu_proposals(
+        candidates,
+        beam,
+        rule_index,
+        per_parent_cap=1,
+        global_cap=3,
+        ranking_mode="gate",
+        parent_rank_offsets=[1, 0, 0],
+        preserve_parent_best=True,
+    )
+    widened_parent_zero = [row for row in widened if row.parent == 0]
+    assert len(widened_parent_zero) == 1
+    assert widened_parent_zero[0].xfer_id == 0
+    assert widened_metrics["parent_rank_offset_max"] == 1
+    assert widened_metrics["selected_parent_rank_max"] >= 1
+    assert widened_metrics["selected_actions_from_widened_parents"] == 1
+
+    try:
+        build_gpu_proposals(
+            candidates,
+            beam,
+            rule_index,
+            per_parent_cap=1,
+            global_cap=3,
+            parent_rank_offsets=[0, 0],
+        )
+    except ValueError as error:
+        assert "one value per beam state" in str(error)
+    else:
+        raise AssertionError("invalid parent rank offsets were accepted")
+
     deferred, deferred_metrics, _, deferred_tensors = build_gpu_proposals(
         candidates,
         beam,

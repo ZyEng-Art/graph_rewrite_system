@@ -29,6 +29,10 @@ class BeamState:
     survivor_lane: str = "root"
     exploration_ancestor: bool = False
     recovered_after_exploration: bool = False
+    expansion_round: int = 0
+    last_action_parent_rank: int = -1
+    widening_ancestor: bool = False
+    widened_action_trace: tuple[tuple[int, int, int, int], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -40,3 +44,4 @@ class Proposal:
     probability: float
     next_gate_count: int
     value_score: float = 0.0
+    parent_rank: int = -1

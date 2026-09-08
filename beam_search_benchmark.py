@@ -4,7 +4,7 @@ import argparse
 from collections import Counter, defaultdict, deque
 import ctypes
 import ctypes.util
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import gc
 import hashlib
 import heapq
@@ -35,7 +35,8 @@ from gpu_proposals import GpuRuleIndex, build_gpu_proposals
 from incremental_graph import parse_pattern
 from model_factory import build_model
 from search_types import BeamState, Proposal
-from search_survivor import path_best_gate_count, select_survivors
+from search_survivor import gate_priority, path_best_gate_count, select_survivors
+from search_widening import select_widening_revisits
 from successor_fingerprint import (
     FingerprintAudit,
     build_wire_trace_profile,
@@ -1275,6 +1276,24 @@ def materialize_child(
         survivor_lane="unselected",
         exploration_ancestor=exploration_ancestor,
         recovered_after_exploration=recovered_after_exploration,
+        expansion_round=0,
+        last_action_parent_rank=proposal.parent_rank,
+        widening_ancestor=(
+            parent.widening_ancestor or parent.expansion_round > 0
+        ),
+        widened_action_trace=(
+            parent.widened_action_trace
+            + (
+                (
+                    parent.depth + 1,
+                    proposal.parent_rank,
+                    proposal.xfer_id,
+                    proposal.anchor_slot,
+                ),
+            )
+            if parent.expansion_round > 0
+            else parent.widened_action_trace
+        ),
     )
     if profile is not None:
         add_profile_ns(profile, "child_state_construction", started)
@@ -1362,6 +1381,27 @@ def main() -> None:
         default=0,
         help="global exact-apply budget; zero means unlimited",
     )
+    parser.add_argument(
+        "--progressive-widening",
+        choices=("off", "on"),
+        default="off",
+        help=(
+            "reserve beam slots to revisit exact parent graphs and expand "
+            "successive disjoint per-parent action-rank bands"
+        ),
+    )
+    parser.add_argument("--widening-revisit-fraction", type=float, default=0.25)
+    parser.add_argument("--widening-max-expansions", type=int, default=4)
+    parser.add_argument(
+        "--widening-min-actions-per-parent",
+        type=int,
+        default=4,
+        help=(
+            "minimum globally selected proposals per live parent when "
+            "progressive widening is enabled"
+        ),
+    )
+    parser.add_argument("--widening-seed", type=int, default=73)
     parser.add_argument(
         "--proposal-ranking",
         choices=("gate", "probability", "stochastic"),
@@ -1602,6 +1642,31 @@ def main() -> None:
         parser.error("--survivor-candidate-factor must be at least 1")
     if args.max_total_attempted_actions < 0:
         parser.error("--max-total-attempted-actions must be nonnegative")
+    if not 0.0 <= args.widening_revisit_fraction < 1.0:
+        parser.error("--widening-revisit-fraction must be in [0, 1)")
+    if args.widening_max_expansions < 1:
+        parser.error("--widening-max-expansions must be positive")
+    if args.widening_min_actions_per_parent < 1:
+        parser.error("--widening-min-actions-per-parent must be positive")
+    if args.progressive_widening == "on" and (
+        args.mode != "model" or args.model_pipeline != "state_only_gpu"
+    ):
+        parser.error(
+            "progressive widening requires model state_only_gpu mode"
+        )
+    if args.progressive_widening == "on" and args.proposal_ranking == "stochastic":
+        parser.error(
+            "progressive widening requires a stable gate or probability ranking"
+        )
+    if args.progressive_widening == "on" and args.locality_action_reserve:
+        parser.error(
+            "progressive widening cannot be combined with locality action reserve"
+        )
+    if args.progressive_widening == "on" and args.reference_data is not None:
+        parser.error(
+            "reference trajectory layers assume one action per search layer; "
+            "use candidate audit rather than --reference-data with widening"
+        )
     if args.apply_profile == "detailed" and args.dedup_identity != "exact":
         parser.error("detailed apply profiling requires exact graph identity")
     if args.transactional_apply == "on" and args.dedup_identity != "exact":
@@ -1879,6 +1944,8 @@ def main() -> None:
             "seconds": 0.0,
             "exploration_ancestor": False,
             "recovered_after_exploration": False,
+            "widening_ancestor": False,
+            "action_depth": 0,
         }
     ]
     seen = (
@@ -1965,9 +2032,21 @@ def main() -> None:
                 candidates, model_seconds, collation_metrics = candidate_result
                 encoded_context = None
             source_binding_candidates = int(candidates.sources.numel())
-            effective_parent_cap = max(
-                args.max_actions_per_parent,
-                math.ceil(args.beam_size / max(1, len(beam))) * 2,
+            effective_parent_cap = (
+                args.max_actions_per_parent
+                if args.progressive_widening == "on"
+                else max(
+                    args.max_actions_per_parent,
+                    math.ceil(args.beam_size / max(1, len(beam))) * 2,
+                )
+            )
+            parent_rank_offsets = (
+                [
+                    int(state.expansion_round) * args.max_actions_per_parent
+                    for state in beam
+                ]
+                if args.progressive_widening == "on"
+                else None
             )
             proposal_started = time.perf_counter()
             (
@@ -1985,6 +2064,13 @@ def main() -> None:
                 ranking_seed=args.proposal_ranking_seed + step,
                 locality_action_reserve=min(
                     args.locality_action_reserve, effective_parent_cap
+                ),
+                parent_rank_offsets=parent_rank_offsets,
+                preserve_parent_best=args.progressive_widening == "on",
+                parent_diversity_actions=(
+                    args.widening_min_actions_per_parent
+                    if args.progressive_widening == "on"
+                    else 1
                 ),
                 return_selected_tensors=need_candidate_features,
             )
@@ -2153,6 +2239,10 @@ def main() -> None:
         apply_started = time.perf_counter()
         children = []
         attempted = invalid = duplicates = proposals_scanned = 0
+        scanned_parent_ranks = []
+        attempted_parent_ranks = []
+        scanned_widened_actions = 0
+        attempted_widened_actions = 0
         applied_proposal_positions = set()
         fingerprint_skipped_positions = set()
         direct_inverse_skipped_positions = set()
@@ -2222,6 +2312,10 @@ def main() -> None:
             ):
                 break
             proposals_scanned += 1
+            if proposal.parent_rank >= 0:
+                scanned_parent_ranks.append(proposal.parent_rank)
+            if beam[proposal.parent].expansion_round > 0:
+                scanned_widened_actions += 1
             neural_deferred = proposal_is_deferred[proposal_position]
             fingerprint = None
             direct_inverse = (
@@ -2440,6 +2534,10 @@ def main() -> None:
                         continue
             attempted += 1
             total_attempted_actions += 1
+            if proposal.parent_rank >= 0:
+                attempted_parent_ranks.append(proposal.parent_rank)
+            if beam[proposal.parent].expansion_round > 0:
+                attempted_widened_actions += 1
             applied_proposal_positions.add(proposal_position)
             if neural_deferred:
                 neural_prefilter_step["deferred_scanned"] += 1
@@ -2624,7 +2722,31 @@ def main() -> None:
                 ),
             }
         )
-        if not children:
+        if args.progressive_widening == "on":
+            revisit_target = int(
+                math.floor(args.beam_size * args.widening_revisit_fraction)
+            )
+            widening_selection = select_widening_revisits(
+                input_beam,
+                slots=revisit_target,
+                max_expansions=args.widening_max_expansions,
+                seed=args.widening_seed,
+                step=step + 1,
+            )
+            widening_revisits = [
+                replace(
+                    input_beam[index],
+                    expansion_round=input_beam[index].expansion_round + 1,
+                    survivor_lane="widening",
+                )
+                for index in widening_selection.indices
+            ]
+        else:
+            widening_revisits = []
+            widening_selection = select_widening_revisits(
+                [], slots=0, max_expansions=1, step=step + 1
+            )
+        if not children and not widening_revisits:
             break
         reference_candidate_indices = []
         if reference_hashes is not None and step + 1 < len(reference_hashes):
@@ -2634,9 +2756,10 @@ def main() -> None:
                 for index, state in enumerate(children)
                 if int(state.graph.hash()) == expected_hash
             ]
+        child_beam_capacity = args.beam_size - len(widening_revisits)
         survivor_selection = select_survivors(
             children,
-            beam_size=args.beam_size,
+            beam_size=child_beam_capacity,
             exploration_fraction=(
                 args.exploration_fraction
                 if args.survivor_policy == "dual_lane"
@@ -2647,7 +2770,9 @@ def main() -> None:
             seed=args.exploration_seed,
             step=step + 1,
         )
-        beam = survivor_selection.states
+        selected_children = survivor_selection.states
+        beam = selected_children + widening_revisits
+        beam.sort(key=gate_priority)
         reference_lost = False
         if reference_hashes is not None and step + 1 < len(reference_hashes):
             expected_hash = reference_hashes[step + 1]
@@ -2861,6 +2986,11 @@ def main() -> None:
                     "recovered_after_exploration": bool(
                         best_state.recovered_after_exploration
                     ),
+                    "widening_ancestor": bool(best_state.widening_ancestor),
+                    "action_depth": int(best_state.depth),
+                    "last_action_parent_rank": int(
+                        best_state.last_action_parent_rank
+                    ),
                 }
             )
         match_seconds = model_seconds + exact_seconds
@@ -2868,10 +2998,16 @@ def main() -> None:
         row = {
             "step": step + 1,
             "input_states": len(input_beam),
+            "input_max_action_depth": max(
+                (state.depth for state in input_beam), default=0
+            ),
             "input_survivor_lanes": dict(
                 Counter(state.survivor_lane for state in input_beam)
             ),
             "output_states": len(beam),
+            "output_max_action_depth": max(
+                (state.depth for state in beam), default=0
+            ),
             "output_survivor_lanes": dict(
                 Counter(state.survivor_lane for state in beam)
             ),
@@ -2884,8 +3020,28 @@ def main() -> None:
             "proposals_after_caps": len(proposals),
             "proposals_scanned": proposals_scanned,
             "attempted_actions": attempted,
-            "accepted_actions": len(beam),
+            "accepted_actions": len(selected_children),
             "survivor_selection": survivor_selection.metrics,
+            "progressive_widening": widening_selection.metrics,
+            "widening_action_usage": {
+                "scanned_widened_actions": scanned_widened_actions,
+                "attempted_widened_actions": attempted_widened_actions,
+                "scanned_parent_rank_min": (
+                    min(scanned_parent_ranks) if scanned_parent_ranks else None
+                ),
+                "scanned_parent_rank_max": (
+                    max(scanned_parent_ranks) if scanned_parent_ranks else None
+                ),
+                "attempted_parent_rank_min": (
+                    min(attempted_parent_ranks) if attempted_parent_ranks else None
+                ),
+                "attempted_parent_rank_max": (
+                    max(attempted_parent_ranks) if attempted_parent_ranks else None
+                ),
+            },
+            "output_expansion_rounds": dict(
+                Counter(state.expansion_round for state in beam)
+            ),
             "candidate_path_improvements": sum(
                 state.stagnation_steps == 0 for state in children
             ),
@@ -2917,7 +3073,7 @@ def main() -> None:
             "state_only_collation": collation_metrics,
             "quartz_apply_seconds": apply_seconds,
             "total_seconds": elapsed,
-            "accepted_actions_per_second": len(beam) / elapsed,
+            "accepted_actions_per_second": len(selected_children) / elapsed,
             "match_states_per_second": len(input_beam)
             / max(1e-12, match_seconds),
             "matched_actions_per_second": matched_action_count
@@ -3039,13 +3195,39 @@ def main() -> None:
         ),
         "max_total_attempted_actions": args.max_total_attempted_actions,
         "total_attempted_actions": total_attempted_actions,
+        "progressive_widening": args.progressive_widening,
+        "widening_revisit_fraction": (
+            args.widening_revisit_fraction
+            if args.progressive_widening == "on"
+            else 0.0
+        ),
+        "widening_max_expansions": args.widening_max_expansions,
+        "widening_rank_stride": args.max_actions_per_parent,
+        "widening_min_actions_per_parent": (
+            args.widening_min_actions_per_parent
+            if args.progressive_widening == "on"
+            else 0
+        ),
+        "widening_seed": args.widening_seed,
         "max_gate_increase": args.max_gate_increase,
         "requested_depth": args.depth,
         "completed_depth": len(step_rows),
+        "maximum_action_depth": max(
+            (state.depth for state in beam), default=0
+        ),
         "initial_gate_count": initial_gate_count,
         "best_gate_count": best_state.gate_count,
         "best_first_seen_step": best_first_seen_step,
         "best_first_seen_seconds": best_first_seen_seconds,
+        "best_action_depth": int(best_state.depth),
+        "best_last_action_parent_rank": int(
+            best_state.last_action_parent_rank
+        ),
+        "best_has_widening_ancestor": bool(best_state.widening_ancestor),
+        "best_history": [list(map(int, action)) for action in best_state.history],
+        "best_widened_action_trace": [
+            list(map(int, action)) for action in best_state.widened_action_trace
+        ],
         "best_has_exploration_ancestor": bool(
             best_state.exploration_ancestor
         ),
