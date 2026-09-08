@@ -12,6 +12,7 @@ import importlib.util
 import json
 import math
 from pathlib import Path
+import random
 import sys
 import time
 import types
@@ -833,6 +834,8 @@ def rank_proposals(
     max_actions_per_parent: int,
     proposal_factor: int,
     max_gate_increase: int,
+    ranking_mode: str = "gate",
+    ranking_seed: int = 0,
 ) -> tuple[list[Proposal], int]:
     """Select stable bounded top-k actions before creating Proposal objects.
 
@@ -841,6 +844,9 @@ def rank_proposals(
     Selecting raw tuples first preserves the old stable sort order but avoids
     allocating and sorting a Python dataclass for every discarded action.
     """
+    if ranking_mode not in {"gate", "probability", "stochastic"}:
+        raise ValueError(f"unknown proposal ranking mode: {ranking_mode}")
+    generator = random.Random(ranking_seed)
     effective_parent_cap = max(
         max_actions_per_parent,
         math.ceil(beam_size / max(1, len(beam))) * 2,
@@ -852,35 +858,46 @@ def rank_proposals(
             row for row in rows if gate_deltas[row[0]] <= max_gate_increase
         ]
         total_action_candidates += len(eligible_rows)
+        decorated_rows = [(row, generator.random()) for row in eligible_rows]
+
+        def parent_rank(item):
+            row, random_priority = item
+            next_gate_count = state.gate_count + gate_deltas[row[0]]
+            if ranking_mode == "probability":
+                return (-row[3], next_gate_count, row[0])
+            if ranking_mode == "stochastic":
+                return (-random_priority, next_gate_count, row[0])
+            return (next_gate_count, -row[3], row[0])
+
         selected_rows = heapq.nsmallest(
             effective_parent_cap,
-            eligible_rows,
-            key=lambda row: (
-                state.gate_count + gate_deltas[row[0]],
-                -row[3],
-                row[0],
-            ),
+            decorated_rows,
+            key=parent_rank,
         )
         proposals.extend(
             Proposal(
                 parent=parent_index,
-                xfer_id=xfer_id,
-                anchor_slot=anchor,
-                binding=binding,
-                probability=probability,
-                next_gate_count=state.gate_count + gate_deltas[xfer_id],
+                xfer_id=row[0],
+                anchor_slot=row[1],
+                binding=row[2],
+                probability=row[3],
+                next_gate_count=state.gate_count + gate_deltas[row[0]],
+                value_score=random_priority if ranking_mode == "stochastic" else 0.0,
             )
-            for xfer_id, anchor, binding, probability in selected_rows
+            for row, random_priority in selected_rows
         )
+
+    def global_rank(row: Proposal):
+        if ranking_mode == "probability":
+            return (-row.probability, row.next_gate_count, beam[row.parent].gate_count)
+        if ranking_mode == "stochastic":
+            return (-row.value_score, row.next_gate_count, beam[row.parent].gate_count)
+        return (row.next_gate_count, -row.probability, beam[row.parent].gate_count)
 
     proposals = heapq.nsmallest(
         beam_size * proposal_factor,
         proposals,
-        key=lambda row: (
-            row.next_gate_count,
-            -row.probability,
-            beam[row.parent].gate_count,
-        ),
+        key=global_rank,
     )
     return proposals, total_action_candidates
 
@@ -1288,6 +1305,18 @@ def main() -> None:
     parser.add_argument("--max-source-matches", type=int, default=2048)
     parser.add_argument("--max-actions-per-parent", type=int, default=128)
     parser.add_argument("--proposal-factor", type=int, default=8)
+    parser.add_argument(
+        "--proposal-ranking",
+        choices=("gate", "probability", "stochastic"),
+        default="gate",
+        help="rank selected model actions by immediate cost, probability, or a seeded random key",
+    )
+    parser.add_argument(
+        "--proposal-ranking-seed",
+        type=int,
+        default=73,
+        help="base seed for reproducible stochastic proposal ranking",
+    )
     parser.add_argument("--max-gate-increase", type=int, default=1)
     parser.add_argument("--refresh-interval", type=int, default=0)
     parser.add_argument("--refresh-count", type=int, default=100)
@@ -1955,6 +1984,8 @@ def main() -> None:
                 max_actions_per_parent=args.max_actions_per_parent,
                 proposal_factor=args.proposal_factor,
                 max_gate_increase=args.max_gate_increase,
+                ranking_mode=args.proposal_ranking,
+                ranking_seed=args.proposal_ranking_seed + step,
             )
             proposal_seconds = time.perf_counter() - proposal_started
             matched_action_count = sum(map(len, action_rows))
@@ -2833,6 +2864,8 @@ def main() -> None:
         "max_source_matches": args.max_source_matches,
         "max_actions_per_parent": args.max_actions_per_parent,
         "proposal_factor": args.proposal_factor,
+        "proposal_ranking": args.proposal_ranking,
+        "proposal_ranking_seed": args.proposal_ranking_seed,
         "max_gate_increase": args.max_gate_increase,
         "requested_depth": args.depth,
         "completed_depth": len(step_rows),

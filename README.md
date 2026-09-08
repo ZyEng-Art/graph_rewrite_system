@@ -347,6 +347,19 @@ range from 24.5x to 125.8x, so the `hwb6` 83.8x result should not be treated as
 a universal constant.  Full results are in
 `benchmark_results/cross_circuit_final_summary.json`.
 
+## Fixed-budget continuation value
+
+`build_continuation_manifest.py` and `continuation_value_benchmark.py` measure
+whether a short search probe can identify circuits that deserve a larger depth
+budget. The experiment records immutable QASM digests, exact fixed-budget
+outcomes, duplicate/invalid/unique-successor rates, complete runner logs, and
+top-subset lift over random selection. The state-only beam runner also supports
+reproducible stochastic proposal ranking for repeated outcomes while preserving
+the historical gate-ranking default. See
+`CONTINUATION_VALUE_BENCHMARK.md` for the H100 workflow and interpretation
+constraints. The first logged pilot and its artifact digests are recorded in
+`CONTINUATION_VALUE_PILOT_20260908.md`.
+
 ## Legacy copied documentation
 
 This directory is an independent implementation of the corrected task:
