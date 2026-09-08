@@ -82,6 +82,47 @@ NATIVE_APPLY_RESULT_NAMES = {
     5: "cycle_rejected",
     6: "guid_lookup_rejected",
 }
+NATIVE_TRANSACTION_PROFILE_NAMES = (
+    "transaction_guid_lookup",
+    "transaction_source_match",
+    "transaction_input_validation",
+    "transaction_destination_creation",
+    "transaction_output_validation",
+    "transaction_rewrite",
+    "transaction_loop_check",
+    "transaction_binding_export",
+    "transaction_rotation_elimination",
+    "transaction_exact_key",
+    "transaction_registry",
+    "transaction_novel_clone",
+    "transaction_rollback",
+    "transaction_unmatch",
+    "transaction_cpp_total",
+)
+NATIVE_TRANSACTION_RESULT_NAMES = {
+    0: "novel",
+    1: "exact_duplicate",
+    2: "source_match_rejected",
+    3: "input_qubit_alias_rejected",
+    4: "destination_creation_rejected",
+    5: "output_boundary_rejected",
+    6: "cycle_rejected",
+    7: "guid_lookup_rejected",
+}
+NATIVE_TRANSACTION_COUNTER_NAMES = (
+    "transaction_captured_in_entries",
+    "transaction_captured_out_entries",
+    "transaction_captured_constant_entries",
+    "transaction_captured_position_entries",
+    "transaction_incremental_position_updates",
+    "transaction_graph_copies",
+)
+NATIVE_TRANSACTION_DELTA_COUNTER_NAMES = (
+    "transaction_removed_nodes",
+    "transaction_added_nodes",
+    "transaction_removed_edges",
+    "transaction_added_edges",
+)
 
 
 def add_profile_ns(profile: Counter, name: str, started_ns: int) -> None:
@@ -109,6 +150,9 @@ class AppliedRewrite:
     graph: Any
     source_guids: tuple[int, ...]
     destination_guids: tuple[int, ...]
+    exact_identity: Any | None = None
+    transaction_status: int | None = None
+    structural_delta: dict[str, Any] | None = None
 
 
 def update_slots(graph, guid_to_slot: dict[int, int], next_slot: int, preferred=()):
@@ -167,6 +211,101 @@ def graph_delta(before: dict, after: dict) -> tuple[set[int], set[tuple[int, ...
     before_edges = set(map(tuple, before["edges"]))
     after_edges = set(map(tuple, after["edges"]))
     return before_nodes - after_nodes, before_edges.symmetric_difference(after_edges)
+
+
+def incremental_snapshot_from_delta(
+    parent: BeamState,
+    applied: AppliedRewrite,
+    *,
+    profile: Counter | None = None,
+) -> tuple[
+    dict,
+    dict[int, int],
+    int,
+    tuple[int, ...],
+    set[int],
+    set[tuple[int, ...]],
+]:
+    """Apply Quartz's exact local node/edge delta to cached search metadata."""
+
+    started = time.perf_counter_ns() if profile is not None else 0
+    delta = applied.structural_delta
+    if delta is None:
+        raise ValueError("incremental snapshot requires a structural delta")
+    removed_guids = set(map(int, delta["removed_node_guids"]))
+    added_nodes = [
+        (int(guid), int(gate_type)) for guid, gate_type in delta["added_nodes"]
+    ]
+    added_types = dict(added_nodes)
+    guid_to_slot = dict(parent.guid_to_slot)
+    next_slot = parent.next_slot
+
+    surviving_destination_guids = tuple(
+        guid for guid in applied.destination_guids if guid in added_types
+    )
+    for guid in surviving_destination_guids:
+        if guid not in guid_to_slot:
+            guid_to_slot[guid] = next_slot
+            next_slot += 1
+    for guid, _gate_type in added_nodes:
+        if guid not in guid_to_slot:
+            guid_to_slot[guid] = next_slot
+            next_slot += 1
+
+    node_rows = [
+        tuple(map(int, row))
+        for row in parent.snapshot["nodes"]
+        if int(row[2]) not in removed_guids
+    ]
+    node_rows.extend(
+        (guid_to_slot[guid], gate_type, guid)
+        for guid, gate_type in added_nodes
+    )
+    node_rows.sort()
+
+    def slot_edge(raw_edge) -> tuple[int, int, int, int]:
+        src_guid, dst_guid, src_port, dst_port = map(int, raw_edge)
+        try:
+            return (
+                guid_to_slot[src_guid],
+                guid_to_slot[dst_guid],
+                src_port,
+                dst_port,
+            )
+        except KeyError as error:
+            raise RuntimeError(
+                f"transaction delta references unknown GUID {error.args[0]}"
+            ) from error
+
+    removed_edges = set(map(slot_edge, delta["removed_edges"]))
+    added_edges = set(map(slot_edge, delta["added_edges"]))
+    after_edges = set(map(tuple, parent.snapshot["edges"]))
+    if not removed_edges.issubset(after_edges):
+        raise RuntimeError("transaction delta removes an absent cached edge")
+    after_edges.difference_update(removed_edges)
+    after_edges.update(added_edges)
+    after = {"nodes": node_rows, "edges": sorted(after_edges)}
+    removed_slots = {
+        parent.guid_to_slot[guid]
+        for guid in removed_guids
+        if guid in parent.guid_to_slot
+    }
+    changed_edges = removed_edges | added_edges
+    if profile is not None:
+        add_profile_ns(profile, "child_incremental_snapshot", started)
+        profile["child_incremental_snapshot_count"] += 1
+        profile["child_incremental_removed_nodes_count"] += len(removed_guids)
+        profile["child_incremental_added_nodes_count"] += len(added_nodes)
+        profile["child_incremental_removed_edges_count"] += len(removed_edges)
+        profile["child_incremental_added_edges_count"] += len(added_edges)
+    return (
+        after,
+        guid_to_slot,
+        next_slot,
+        surviving_destination_guids,
+        removed_slots,
+        changed_edges,
+    )
 
 
 def graph_collection_identity_digest(graphs) -> str:
@@ -772,6 +911,7 @@ def apply_rewrite(
     eliminate_rotation: bool = False,
     binding_backend: str = "auto",
     profile: Counter | None = None,
+    transactional_registry: Any | None = None,
 ) -> AppliedRewrite | None:
     """Apply one proposal without constructing metadata for duplicate children.
 
@@ -819,6 +959,73 @@ def apply_rewrite(
         prefer_guid = binding_backend != "node_direct"
         if guid_direct_method is not None and prefer_guid:
             call_started = time.perf_counter_ns() if profile is not None else 0
+            if transactional_registry is not None:
+                transactional_method = getattr(
+                    parent.graph,
+                    "apply_xfer_with_guid_binding_transactional",
+                    None,
+                )
+                if transactional_method is None:
+                    raise RuntimeError(
+                        "transactional apply requires the patched Quartz API"
+                    )
+                (
+                    graph,
+                    destination_guids,
+                    native_key,
+                    status,
+                    native_values,
+                    structural_delta,
+                ) = transactional_method(
+                    xfer=xfers[proposal.xfer_id],
+                    source_node_guids=source_guids,
+                    registry=transactional_registry,
+                    eliminate_rotation=eliminate_rotation,
+                )
+                if profile is not None:
+                    native_wall_ns = time.perf_counter_ns() - call_started
+                    profile["transaction_call_wall_ns"] += native_wall_ns
+                    for name, value in zip(
+                        NATIVE_TRANSACTION_PROFILE_NAMES,
+                        native_values[:15],
+                    ):
+                        profile[f"{name}_ns"] += int(value)
+                    result_name = NATIVE_TRANSACTION_RESULT_NAMES.get(
+                        int(status), f"unknown_{int(status)}"
+                    )
+                    profile[f"transaction_result_{result_name}_count"] += 1
+                    for name, value in zip(
+                        NATIVE_TRANSACTION_COUNTER_NAMES,
+                        native_values[16:22],
+                    ):
+                        profile[f"{name}_count"] += int(value)
+                    if len(native_values) > 22:
+                        profile["transaction_delta_export_ns"] += int(
+                            native_values[22]
+                        )
+                    for name, value in zip(
+                        NATIVE_TRANSACTION_DELTA_COUNTER_NAMES,
+                        native_values[23:27],
+                    ):
+                        profile[f"{name}_count"] += int(value)
+                    cpp_ns = int(native_values[14])
+                    profile["transaction_wrapper_unattributed_ns"] += max(
+                        0, native_wall_ns - cpp_ns
+                    )
+                if int(status) >= 2:
+                    return None
+                exact_identity = (
+                    "quartz_wire_trace_v1",
+                    bytes(native_key),
+                )
+                return AppliedRewrite(
+                    graph=graph,
+                    source_guids=tuple(source_guids),
+                    destination_guids=tuple(map(int, destination_guids)),
+                    exact_identity=exact_identity,
+                    transaction_status=int(status),
+                    structural_delta=structural_delta,
+                )
             if profile is not None:
                 profiled_method = getattr(
                     parent.graph,
@@ -939,34 +1146,44 @@ def materialize_child(
         profile["materialized_children_count"] += 1
         add_profile_ns(profile, "child_source_slots", started)
 
-    started = time.perf_counter_ns() if profile is not None else 0
-    live_guids = {int(node.guid) for node in graph.nodes}
-    if profile is not None:
-        add_profile_ns(profile, "child_materialize_nodes", started)
-    started = time.perf_counter_ns() if profile is not None else 0
-    surviving_destination_guids = tuple(
-        guid for guid in applied.destination_guids if guid in live_guids
-    )
-    if profile is not None:
-        add_profile_ns(profile, "child_filter_destinations", started)
-    started = time.perf_counter_ns() if profile is not None else 0
-    guid_to_slot = dict(parent.guid_to_slot)
-    if profile is not None:
-        add_profile_ns(profile, "child_copy_slot_map", started)
-    started = time.perf_counter_ns() if profile is not None else 0
-    next_slot = update_slots(
-        graph,
-        guid_to_slot,
-        parent.next_slot,
-        surviving_destination_guids,
-    )
-    if profile is not None:
-        add_profile_ns(profile, "child_update_slots", started)
-    after = snapshot(graph, guid_to_slot, profile=profile)
-    started = time.perf_counter_ns() if profile is not None else 0
-    removed, changed_edges = graph_delta(parent.snapshot, after)
-    if profile is not None:
-        add_profile_ns(profile, "child_graph_delta", started)
+    if applied.structural_delta is not None:
+        (
+            after,
+            guid_to_slot,
+            next_slot,
+            surviving_destination_guids,
+            removed,
+            changed_edges,
+        ) = incremental_snapshot_from_delta(parent, applied, profile=profile)
+    else:
+        started = time.perf_counter_ns() if profile is not None else 0
+        live_guids = {int(node.guid) for node in graph.nodes}
+        if profile is not None:
+            add_profile_ns(profile, "child_materialize_nodes", started)
+        started = time.perf_counter_ns() if profile is not None else 0
+        surviving_destination_guids = tuple(
+            guid for guid in applied.destination_guids if guid in live_guids
+        )
+        if profile is not None:
+            add_profile_ns(profile, "child_filter_destinations", started)
+        started = time.perf_counter_ns() if profile is not None else 0
+        guid_to_slot = dict(parent.guid_to_slot)
+        if profile is not None:
+            add_profile_ns(profile, "child_copy_slot_map", started)
+        started = time.perf_counter_ns() if profile is not None else 0
+        next_slot = update_slots(
+            graph,
+            guid_to_slot,
+            parent.next_slot,
+            surviving_destination_guids,
+        )
+        if profile is not None:
+            add_profile_ns(profile, "child_update_slots", started)
+        after = snapshot(graph, guid_to_slot, profile=profile)
+        started = time.perf_counter_ns() if profile is not None else 0
+        removed, changed_edges = graph_delta(parent.snapshot, after)
+        if profile is not None:
+            add_profile_ns(profile, "child_graph_delta", started)
     started = time.perf_counter_ns() if profile is not None else 0
     live = {int(row[0]) for row in after["nodes"]}
     ordered_destination_slots = tuple(
@@ -994,7 +1211,7 @@ def materialize_child(
     previous_preferred = (destination_slots | predecessors) & live
     continued = proposal.anchor_slot in parent.previous_preferred
     local_streak = parent.local_streak + 1 if continued else 0
-    gate_count = int(graph.gate_count)
+    gate_count = len(after["nodes"])
     if profile is not None:
         add_profile_ns(profile, "child_local_metadata", started)
     if not eliminate_rotation and gate_count != proposal.next_gate_count:
@@ -1088,6 +1305,15 @@ def main() -> None:
         help=(
             "collect Python and native C++ timings for every direct-binding "
             "apply stage; intended for profiling runs only"
+        ),
+    )
+    parser.add_argument(
+        "--transactional-apply",
+        choices=("off", "on"),
+        default="off",
+        help=(
+            "temporarily rewrite the parent, compute exact identity, roll "
+            "back duplicates, and clone only novel successors"
         ),
     )
     parser.add_argument(
@@ -1278,6 +1504,8 @@ def main() -> None:
         parser.error("--neural-prefilter-batch-size must be positive")
     if args.apply_profile == "detailed" and args.dedup_identity != "exact":
         parser.error("detailed apply profiling requires exact graph identity")
+    if args.transactional_apply == "on" and args.dedup_identity != "exact":
+        parser.error("transactional apply requires --dedup-identity exact")
     if (
         args.neural_audit_output is not None
         and args.neural_prefilter_mode != "off"
@@ -1455,6 +1683,15 @@ def main() -> None:
             "detailed apply profiling requires the patched Quartz GUID "
             "direct-binding profiling API"
         )
+    if args.transactional_apply == "on" and (
+        model_apply_backend != "guid_direct"
+        or not hasattr(graph, "apply_xfer_with_guid_binding_transactional")
+        or not hasattr(quartz, "PyExactKeyRegistry")
+    ):
+        raise RuntimeError(
+            "transactional apply requires patched Quartz and GUID-direct "
+            "model binding"
+        )
     guid_to_slot: dict[int, int] = {}
     next_slot = update_slots(graph, guid_to_slot, 0)
     initial_snapshot = snapshot(graph, guid_to_slot)
@@ -1538,6 +1775,11 @@ def main() -> None:
         if args.dedup_identity == "exact"
         else QuartzHashRegistry.seeded(graph)
     )
+    transactional_native_registry = None
+    if args.transactional_apply == "on":
+        transactional_native_registry = quartz.PyExactKeyRegistry()
+        if not transactional_native_registry.insert(graph.exact_key()):
+            raise RuntimeError("failed to seed native exact-key registry")
     diagnostic_seen_hashes = (
         {int(graph.hash())} if reference_hashes is not None else None
     )
@@ -2077,6 +2319,7 @@ def main() -> None:
                 eliminate_rotation=args.eliminate_rotation,
                 binding_backend=model_apply_backend,
                 profile=detailed_profile,
+                transactional_registry=transactional_native_registry,
             )
             if applied is None:
                 invalid += 1
@@ -2091,7 +2334,9 @@ def main() -> None:
                     direct_inverse_step["shadow_invalid"] += 1
                     direct_inverse_totals["shadow_invalid"] += 1
                 continue
-            if detailed_profile is not None:
+            if applied.exact_identity is not None:
+                exact_identity = applied.exact_identity
+            elif detailed_profile is not None:
                 identity_started = time.perf_counter_ns()
                 exact_identity = exact_graph_key(applied.graph)
                 add_profile_ns(
@@ -2108,9 +2353,14 @@ def main() -> None:
                     )
                     else None
                 )
-            if diagnostic_seen_hashes is not None:
+            if diagnostic_seen_hashes is not None and applied.graph is not None:
                 diagnostic_seen_hashes.add(int(applied.graph.hash()))
-            if detailed_profile is not None:
+            if applied.transaction_status is not None:
+                is_new_successor = seen.record_prechecked_native_key(
+                    exact_identity,
+                    is_new=applied.transaction_status == 0,
+                )
+            elif detailed_profile is not None:
                 registry_started = time.perf_counter_ns()
                 is_new_successor = seen.register_native_key(exact_identity)
                 add_profile_ns(
@@ -2554,6 +2804,12 @@ def main() -> None:
         "model_apply_backend": model_apply_backend,
         "direct_binding_available": direct_binding_available,
         "dedup_before_child_materialization": True,
+        "transactional_apply": args.transactional_apply,
+        "transactional_native_registry_size": (
+            None
+            if transactional_native_registry is None
+            else int(transactional_native_registry.size)
+        ),
         "proposal_selection_backend": (
             "gpu_full_action_topk"
             if args.mode == "model" and args.model_pipeline == "state_only_gpu"

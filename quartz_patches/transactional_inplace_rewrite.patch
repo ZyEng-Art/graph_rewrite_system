@@ -1,0 +1,953 @@
+diff --git a/python/quartz/_cython/CCore.pxd b/python/quartz/_cython/CCore.pxd
+index 48e3243..b2e3775 100644
+--- a/python/quartz/_cython/CCore.pxd
++++ b/python/quartz/_cython/CCore.pxd
+@@ -107,6 +107,11 @@ cdef extern from "tasograph/tasograph.h" namespace "quartz":
+ 
+ 
+ cdef extern from "tasograph/tasograph.h" namespace "quartz":
++    cdef cppclass ExactKeyRegistry:
++        ExactKeyRegistry() except +
++        bool insert(const string &) except +
++        size_t size() const
++
+     cdef cppclass SuccessorFingerprintProfile:
+         bool successor_fingerprint(GraphXfer *, const vector[size_t] &, size_t, int, uint64_t &, uint64_t &) const
+ 
+@@ -120,6 +125,7 @@ cdef extern from "tasograph/tasograph.h" namespace "quartz":
+         shared_ptr[Graph] apply_xfer_with_op_binding_and_bindings(GraphXfer *, vector[Op], bool, vector[size_t] &, vector[size_t] &) const
+         shared_ptr[Graph] apply_xfer_with_guid_binding_and_bindings(GraphXfer *, vector[size_t], bool, vector[size_t] &) const
+         shared_ptr[Graph] apply_xfer_with_guid_binding_and_bindings_profiled(GraphXfer *, vector[size_t], bool, vector[size_t] &, vector[uint64_t] &) const
++        shared_ptr[Graph] apply_xfer_with_guid_binding_transactional(GraphXfer *, vector[size_t], bool, ExactKeyRegistry *, vector[size_t] &, string &, vector[size_t] &, vector[size_t] &, vector[int] &, vector[vector[size_t]] &, vector[vector[size_t]] &, vector[uint64_t] &) except +
+         vector[size_t] appliable_xfers(Op, const vector[GraphXfer *] &) const
+         vector[size_t] appliable_xfers_parallel(Op, const vector[GraphXfer *] &) const
+         vector[vector[size_t]] appliable_xfer_bindings_parallel(Op, const vector[GraphXfer *] &) const
+diff --git a/python/quartz/_cython/core.pyx b/python/quartz/_cython/core.pyx
+index d10dcbc..6c1658f 100644
+--- a/python/quartz/_cython/core.pyx
++++ b/python/quartz/_cython/core.pyx
+@@ -6,6 +6,7 @@ from CCore cimport (
+     Context,
+     Edge,
+     EquivalenceSet,
++    ExactKeyRegistry,
+     Gate,
+     GateType,
+     Graph,
+@@ -31,6 +32,31 @@ import torch
+ ctypedef GraphXfer* GraphXfer_ptr
+ 
+ 
++cdef class PyExactKeyRegistry:
++    """Native exact-key set shared by transactional rewrite calls."""
++    cdef ExactKeyRegistry *registry
++
++    def __cinit__(self):
++        self.registry = new ExactKeyRegistry()
++
++    def __dealloc__(self):
++        del self.registry
++
++    def insert(self, key):
++        cdef bytes encoded
++        cdef string native_key
++        if isinstance(key, bytes):
++            encoded = key
++        else:
++            encoded = str(key).encode('utf-8')
++        native_key = encoded
++        return self.registry.insert(native_key)
++
++    @property
++    def size(self):
++        return self.registry.size()
++
++
+ def get_gate_type_from_str(gate_type_str):
+     if gate_type_str == "h": return GateType.h
+     if gate_type_str == "x": return GateType.x
+@@ -728,6 +754,88 @@ cdef class PyGraph:
+             profile_values,
+         )
+ 
++    def apply_xfer_with_guid_binding_transactional(
++        self, *, PyXfer xfer, source_node_guids,
++        PyExactKeyRegistry registry, eliminate_rotation: bool = False
++    ):
++        """Rewrite this graph temporarily, deduplicate, clone only if novel.
++
++        Returns ``(child, destination_guids, exact_key, status, profile,
++        structural_delta)``.
++        Status 0 is novel, 1 duplicate, and 2..7 are invalid proposals.
++        The parent is restored before this method returns in every case.
++        """
++        cdef vector[size_t] source_guids
++        cdef vector[size_t] dst_guids
++        cdef vector[uint64_t] profile
++        cdef vector[size_t] removed_node_guids
++        cdef vector[size_t] added_node_guids
++        cdef vector[int] added_node_types
++        cdef vector[vector[size_t]] removed_edges
++        cdef vector[vector[size_t]] added_edges
++        cdef string exact_key
++        cdef shared_ptr[Graph] ret
++        cdef uint64_t status
++        cdef size_t row, item
++        if xfer.is_nop:
++            return None, [], self.exact_key(), 1, [0] * 27, None
++        source_guids.reserve(len(source_node_guids))
++        for value in source_node_guids:
++            source_guids.push_back(value)
++        ret = deref(self.graph).apply_xfer_with_guid_binding_transactional(
++            xfer.graphXfer,
++            source_guids,
++            eliminate_rotation,
++            registry.registry,
++            dst_guids,
++            exact_key,
++            removed_node_guids,
++            added_node_guids,
++            added_node_types,
++            removed_edges,
++            added_edges,
++            profile,
++        )
++        profile_values = [profile[i] for i in range(profile.size())]
++        status = profile[15] if profile.size() > 15 else 7
++        child = None
++        if ret.get() != NULL:
++            child = PyGraph().set_this_deferred(ret)
++        delta = None
++        if status == 0:
++            delta = {
++                "removed_node_guids": [
++                    removed_node_guids[row]
++                    for row in range(removed_node_guids.size())
++                ],
++                "added_nodes": [
++                    (added_node_guids[row], added_node_types[row])
++                    for row in range(added_node_guids.size())
++                ],
++                "removed_edges": [
++                    tuple(
++                        removed_edges[row][item]
++                        for item in range(removed_edges[row].size())
++                    )
++                    for row in range(removed_edges.size())
++                ],
++                "added_edges": [
++                    tuple(
++                        added_edges[row][item]
++                        for item in range(added_edges[row].size())
++                    )
++                    for row in range(added_edges.size())
++                ],
++            }
++        return (
++            child,
++            [dst_guids[i] for i in range(dst_guids.size())],
++            exact_key,
++            int(status),
++            profile_values,
++            delta,
++        )
++
+     def all_nodes(self):
+         return self.nodes
+ 
+diff --git a/src/quartz/tasograph/substitution.cpp b/src/quartz/tasograph/substitution.cpp
+index c9df2e2..e5b896f 100644
+--- a/src/quartz/tasograph/substitution.cpp
++++ b/src/quartz/tasograph/substitution.cpp
+@@ -1045,6 +1045,68 @@ std::shared_ptr<Graph> GraphXfer::create_new_graph(const Graph *graph) const {
+   return new_graph;
+ }
+ 
++void GraphXfer::rewrite_graph_in_place(Graph *graph) const {
++  // Connect replacement outputs to the untouched part of the parent before
++  // deleting the matched source. The destination operators were allocated by
++  // the caller and are held in OpX::mapOp.
++  for (auto mapped_it = mappedOps.cbegin(); mapped_it != mappedOps.cend();
++       ++mapped_it) {
++    const auto output_it = graph->outEdges.find(mapped_it->first);
++    if (output_it == graph->outEdges.end())
++      continue;
++    const auto output_edges = output_it->second;
++    for (const auto &edge : output_edges) {
++      if (mappedOps.find(edge.dstOp) != mappedOps.end())
++        continue;
++      const TensorX source_tensor(mapped_it->second, edge.srcIdx);
++      const auto mapped_output_it = mappedOutputs.find(source_tensor);
++      assert(mapped_output_it != mappedOutputs.end());
++      const TensorX destination_tensor = mapped_output_it->second;
++      if (destination_tensor.op == nullptr) {
++        const auto input_it = mappedInputs.find(destination_tensor.idx);
++        assert(input_it != mappedInputs.end());
++        graph->add_edge(input_it->second.first, edge.dstOp,
++                        input_it->second.second, edge.dstIdx);
++      } else {
++        graph->add_edge(destination_tensor.op->mapOp, edge.dstOp,
++                        destination_tensor.idx, edge.dstIdx);
++      }
++    }
++  }
++
++  for (const auto &mapped : mappedOps)
++    graph->remove_node_wo_input_output_connect(mapped.first);
++
++  // Materialize replacement inputs and internal edges. add_edge performs the
++  // incremental logical-wire propagation while the transaction is active.
++  for (OpX *destination_opx : dstOps) {
++    for (size_t input_index = 0; input_index < destination_opx->inputs.size();
++         ++input_index) {
++      if (destination_opx->inputs[input_index].op == nullptr) {
++        const int tensor_index = destination_opx->inputs[input_index].idx;
++        const auto parameter_it = paramValues.find(tensor_index);
++        if (parameter_it != paramValues.end()) {
++          const Op constant_op(context->next_global_unique_id(),
++                               context->get_gate(GateType::input_param));
++          graph->set_constant_param_value(constant_op, parameter_it->second);
++          graph->add_edge(constant_op, destination_opx->mapOp, 0,
++                          input_index);
++          continue;
++        }
++        const auto input_it = mappedInputs.find(tensor_index);
++        assert(input_it != mappedInputs.end());
++        graph->add_edge(input_it->second.first, destination_opx->mapOp,
++                        input_it->second.second, input_index);
++      } else {
++        OpX *source_opx = destination_opx->inputs[input_index].op;
++        graph->add_edge(source_opx->mapOp, destination_opx->mapOp,
++                        destination_opx->inputs[input_index].idx,
++                        input_index);
++      }
++    }
++  }
++}
++
+ std::shared_ptr<Graph> GraphXfer::create_new_graph_profiled(
+     const Graph *graph, std::vector<uint64_t> &profile) const {
+   using Clock = std::chrono::steady_clock;
+diff --git a/src/quartz/tasograph/substitution.h b/src/quartz/tasograph/substitution.h
+index c264206..d9fb439 100644
+--- a/src/quartz/tasograph/substitution.h
++++ b/src/quartz/tasograph/substitution.h
+@@ -100,6 +100,7 @@ class GraphXfer {
+   std::shared_ptr<Graph> create_new_graph(const Graph *graph) const;
+   std::shared_ptr<Graph> create_new_graph_profiled(
+       const Graph *graph, std::vector<uint64_t> &profile) const;
++  void rewrite_graph_in_place(Graph *graph) const;
+   bool create_new_operator(const OpX *opx, Op &op);
+   int num_src_op();
+   int num_dst_op();
+diff --git a/src/quartz/tasograph/tasograph.cpp b/src/quartz/tasograph/tasograph.cpp
+index d94be06..d0aeb72 100644
+--- a/src/quartz/tasograph/tasograph.cpp
++++ b/src/quartz/tasograph/tasograph.cpp
+@@ -6,9 +6,173 @@
+ #include <cassert>
+ #include <cstring>
+ #include <iomanip>
++#include <stdexcept>
+ 
+ namespace quartz {
+ 
++bool ExactKeyRegistry::insert(const std::string &key) {
++  return keys_.insert(key).second;
++}
++
++size_t ExactKeyRegistry::size() const { return keys_.size(); }
++
++GraphMutationTransaction::GraphMutationTransaction(Graph &graph)
++    : graph_(&graph), active_(true) {
++  assert(graph.active_transaction_ == nullptr &&
++         "nested graph mutation transactions are not supported");
++  graph.active_transaction_ = this;
++}
++
++GraphMutationTransaction::~GraphMutationTransaction() { rollback(); }
++
++void GraphMutationTransaction::record_in_edges(const Op &op) {
++  if (original_in_edges_.find(op) != original_in_edges_.end())
++    return;
++  const auto it = graph_->inEdges.find(op);
++  if (it == graph_->inEdges.end())
++    original_in_edges_.emplace(op, std::nullopt);
++  else
++    original_in_edges_.emplace(op, it->second);
++}
++
++void GraphMutationTransaction::record_out_edges(const Op &op) {
++  if (original_out_edges_.find(op) != original_out_edges_.end())
++    return;
++  const auto it = graph_->outEdges.find(op);
++  if (it == graph_->outEdges.end())
++    original_out_edges_.emplace(op, std::nullopt);
++  else
++    original_out_edges_.emplace(op, it->second);
++}
++
++void GraphMutationTransaction::record_constant(const Op &op) {
++  if (original_constants_.find(op) != original_constants_.end())
++    return;
++  const auto it = graph_->constant_param_values.find(op);
++  if (it == graph_->constant_param_values.end())
++    original_constants_.emplace(op, std::nullopt);
++  else
++    original_constants_.emplace(op, it->second);
++}
++
++void GraphMutationTransaction::record_position(const Pos &pos) {
++  if (original_positions_.find(pos) != original_positions_.end())
++    return;
++  const auto it = graph_->pos_2_logical_qubit.find(pos);
++  if (it == graph_->pos_2_logical_qubit.end())
++    original_positions_.emplace(pos, std::nullopt);
++  else
++    original_positions_.emplace(pos, it->second);
++}
++
++void GraphMutationTransaction::note_incremental_position_update() {
++  ++incremental_position_updates_;
++}
++
++void GraphMutationTransaction::export_structural_delta(
++    std::vector<size_t> &removed_node_guids,
++    std::vector<size_t> &added_node_guids,
++    std::vector<int> &added_node_types,
++    std::vector<std::vector<size_t>> &removed_edges,
++    std::vector<std::vector<size_t>> &added_edges) const {
++  removed_node_guids.clear();
++  added_node_guids.clear();
++  added_node_types.clear();
++  removed_edges.clear();
++  added_edges.clear();
++  auto visible_node = [](const Op &op) {
++    return op.ptr->tp != GateType::input_qubit &&
++           op.ptr->tp != GateType::input_param;
++  };
++
++  for (const auto &entry : original_in_edges_) {
++    if (!visible_node(entry.first))
++      continue;
++    const bool existed_before = entry.second.has_value();
++    const bool exists_after =
++        graph_->inEdges.find(entry.first) != graph_->inEdges.end();
++    if (existed_before && !exists_after) {
++      removed_node_guids.emplace_back(entry.first.guid);
++    } else if (!existed_before && exists_after) {
++      added_node_guids.emplace_back(entry.first.guid);
++      added_node_types.emplace_back(static_cast<int>(entry.first.ptr->tp));
++    }
++  }
++
++  auto edge_row = [](const Edge &edge) {
++    return std::vector<size_t>{edge.srcOp.guid, edge.dstOp.guid,
++                               static_cast<size_t>(edge.srcIdx),
++                               static_cast<size_t>(edge.dstIdx)};
++  };
++  for (const auto &entry : original_out_edges_) {
++    if (!visible_node(entry.first))
++      continue;
++    static const std::set<Edge, EdgeCompare> empty_edges;
++    const auto &before =
++        entry.second.has_value() ? *entry.second : empty_edges;
++    const auto current = graph_->outEdges.find(entry.first);
++    const auto &after = current == graph_->outEdges.end()
++                            ? empty_edges
++                            : current->second;
++    for (const auto &edge : before) {
++      if (after.find(edge) == after.end())
++        removed_edges.emplace_back(edge_row(edge));
++    }
++    for (const auto &edge : after) {
++      if (before.find(edge) == before.end())
++        added_edges.emplace_back(edge_row(edge));
++    }
++  }
++}
++
++void GraphMutationTransaction::rollback() {
++  if (!active_)
++    return;
++  // Disable recording first: restoring the snapshots must not extend them.
++  graph_->active_transaction_ = nullptr;
++  for (const auto &entry : original_in_edges_) {
++    if (entry.second.has_value())
++      graph_->inEdges[entry.first] = *entry.second;
++    else
++      graph_->inEdges.erase(entry.first);
++  }
++  for (const auto &entry : original_out_edges_) {
++    if (entry.second.has_value())
++      graph_->outEdges[entry.first] = *entry.second;
++    else
++      graph_->outEdges.erase(entry.first);
++  }
++  for (const auto &entry : original_constants_) {
++    if (entry.second.has_value())
++      graph_->constant_param_values[entry.first] = *entry.second;
++    else
++      graph_->constant_param_values.erase(entry.first);
++  }
++  for (const auto &entry : original_positions_) {
++    if (entry.second.has_value())
++      graph_->pos_2_logical_qubit[entry.first] = *entry.second;
++    else
++      graph_->pos_2_logical_qubit.erase(entry.first);
++  }
++  active_ = false;
++}
++
++size_t GraphMutationTransaction::captured_in_entries() const {
++  return original_in_edges_.size();
++}
++size_t GraphMutationTransaction::captured_out_entries() const {
++  return original_out_edges_.size();
++}
++size_t GraphMutationTransaction::captured_constant_entries() const {
++  return original_constants_.size();
++}
++size_t GraphMutationTransaction::captured_position_entries() const {
++  return original_positions_.size();
++}
++size_t GraphMutationTransaction::incremental_position_updates() const {
++  return incremental_position_updates_;
++}
++
+ // TODO: GUID_PRESERVED depends on the global guid in Context class, need to
+ // modify
+ enum {
+@@ -319,6 +483,8 @@ void Graph::set_special_op_guid(size_t _special_op_guid) {
+ }
+ 
+ void Graph::add_edge(const Op &srcOp, const Op &dstOp, int srcIdx, int dstIdx) {
++  record_in_edges_before_change(dstOp);
++  record_out_edges_before_change(srcOp);
+   if (inEdges.find(dstOp) == inEdges.end()) {
+     inEdges[dstOp];
+   }
+@@ -328,6 +494,79 @@ void Graph::add_edge(const Op &srcOp, const Op &dstOp, int srcIdx, int dstIdx) {
+   Edge e(srcOp, dstOp, srcIdx, dstIdx);
+   inEdges[dstOp].insert(e);
+   outEdges[srcOp].insert(e);
++  propagate_position_for_edge(srcOp, dstOp, srcIdx, dstIdx);
++}
++
++void Graph::set_constant_param_value(const Op &op, ParamType value) {
++  record_constant_before_change(op);
++  constant_param_values[op] = value;
++}
++
++void Graph::record_in_edges_before_change(const Op &op) {
++  if (active_transaction_ != nullptr)
++    active_transaction_->record_in_edges(op);
++}
++
++void Graph::record_out_edges_before_change(const Op &op) {
++  if (active_transaction_ != nullptr)
++    active_transaction_->record_out_edges(op);
++}
++
++void Graph::record_constant_before_change(const Op &op) {
++  if (active_transaction_ != nullptr)
++    active_transaction_->record_constant(op);
++}
++
++void Graph::record_position_before_change(const Pos &pos) {
++  if (active_transaction_ != nullptr)
++    active_transaction_->record_position(pos);
++}
++
++void Graph::erase_positions_for_op(const Op &op) {
++  if (active_transaction_ == nullptr)
++    return;
++  const int num_qubits = op.ptr->get_num_qubits();
++  for (int index = 0; index < num_qubits; ++index) {
++    const Pos pos(op, index);
++    record_position_before_change(pos);
++    pos_2_logical_qubit.erase(pos);
++  }
++}
++
++void Graph::propagate_position_for_edge(const Op &srcOp, const Op &dstOp,
++                                        int srcIdx, int dstIdx) {
++  if (active_transaction_ == nullptr ||
++      dstIdx >= dstOp.ptr->get_num_qubits())
++    return;
++  const auto source_it = pos_2_logical_qubit.find(Pos(srcOp, srcIdx));
++  if (source_it == pos_2_logical_qubit.end())
++    return;
++
++  const int logical_qubit = source_it->second;
++  std::queue<Pos> pending;
++  std::unordered_set<Pos, PosHash> visited;
++  pending.emplace(dstOp, dstIdx);
++  while (!pending.empty()) {
++    const Pos pos = pending.front();
++    pending.pop();
++    if (!visited.insert(pos).second)
++      continue;
++    const auto current = pos_2_logical_qubit.find(pos);
++    if (current != pos_2_logical_qubit.end() &&
++        current->second == logical_qubit)
++      continue;
++    record_position_before_change(pos);
++    pos_2_logical_qubit[pos] = logical_qubit;
++    active_transaction_->note_incremental_position_update();
++    const auto output_it = outEdges.find(pos.op);
++    if (output_it == outEdges.end())
++      continue;
++    for (const auto &edge : output_it->second) {
++      if (edge.srcIdx == pos.idx &&
++          edge.dstIdx < edge.dstOp.ptr->get_num_qubits())
++        pending.emplace(edge.dstOp, edge.dstIdx);
++    }
++  }
+ }
+ 
+ bool Graph::has_edge(const Op &srcOp, const Op &dstOp, int srcIdx,
+@@ -1151,12 +1390,17 @@ int Graph::circuit_depth() const {
+ 
+ void Graph::remove_node(Op oldOp) {
+   assert(oldOp.ptr->tp != GateType::input_qubit);
++  record_in_edges_before_change(oldOp);
++  record_out_edges_before_change(oldOp);
++  record_constant_before_change(oldOp);
++  erase_positions_for_op(oldOp);
+   int num_qubits = oldOp.ptr->get_num_qubits();
+   if (inEdges.find(oldOp) != inEdges.end()) {
+     // Remove out edges of in-ops
+     auto in_edges = inEdges[oldOp];
+     for (auto edge : in_edges) {
+       auto src_op = edge.srcOp;
++      record_out_edges_before_change(src_op);
+       assert(outEdges.find(src_op) != outEdges.end());
+       auto out_edges = outEdges[src_op];
+       for (auto out_edge : out_edges) {
+@@ -1174,6 +1418,7 @@ void Graph::remove_node(Op oldOp) {
+     auto out_edges = outEdges[oldOp];
+     for (auto out_edge : out_edges) {
+       auto dst_op = out_edge.dstOp;
++      record_in_edges_before_change(dst_op);
+       assert(inEdges.find(dst_op) != inEdges.end());
+       auto in_edges = inEdges[dst_op];
+       for (auto in_edge : in_edges) {
+@@ -1211,11 +1456,16 @@ void Graph::remove_node(Op oldOp) {
+ 
+ void Graph::remove_node_wo_input_output_connect(Op oldOp) {
+   assert(oldOp.ptr->tp != GateType::input_qubit);
++  record_in_edges_before_change(oldOp);
++  record_out_edges_before_change(oldOp);
++  record_constant_before_change(oldOp);
++  erase_positions_for_op(oldOp);
+   int num_qubits = oldOp.ptr->get_num_qubits();
+   if (inEdges.find(oldOp) != inEdges.end()) {
+     auto in_edges = inEdges[oldOp];
+     for (auto edge : in_edges) {
+       auto src_op = edge.srcOp;
++      record_out_edges_before_change(src_op);
+       assert(outEdges.find(src_op) != outEdges.end());
+       auto out_edges = outEdges[src_op];
+       for (auto out_edge : out_edges) {
+@@ -1232,6 +1482,7 @@ void Graph::remove_node_wo_input_output_connect(Op oldOp) {
+     auto out_edges = outEdges[oldOp];
+     for (auto out_edge : out_edges) {
+       auto dst_op = out_edge.dstOp;
++      record_in_edges_before_change(dst_op);
+       assert(inEdges.find(dst_op) != inEdges.end());
+       auto in_edges = inEdges[dst_op];
+       for (auto in_edge : in_edges) {
+@@ -1250,6 +1501,8 @@ void Graph::remove_node_wo_input_output_connect(Op oldOp) {
+ }
+ 
+ void Graph::remove_edge(Op srcOp, Op dstOp) {
++  record_in_edges_before_change(dstOp);
++  record_out_edges_before_change(srcOp);
+   if (inEdges.find(dstOp) != inEdges.end()) {
+     auto &edge_list = inEdges[dstOp];
+     for (auto edge : edge_list) {
+@@ -1342,7 +1595,7 @@ void Graph::constant_and_rotation_elimination() {
+           Op merged_op(context->next_global_unique_id(),
+                        context->get_gate(GateType::input_param));
+           add_edge(merged_op, output_dst_op, 0, output_dst_idx);
+-          constant_param_values[merged_op] = result;
++          set_constant_param_value(merged_op, result);
+         } else if (op.ptr->tp == GateType::neg) {
+           ParamType param = 0, result = 0;
+           auto edge = *list.begin();
+@@ -1352,7 +1605,7 @@ void Graph::constant_and_rotation_elimination() {
+           result = std::fmod(result, 2 * PI);
+           if (result < 0)
+             result += 2 * PI;
+-          constant_param_values[edge.srcOp] = result;
++          set_constant_param_value(edge.srcOp, result);
+           // Find destination
+           assert(outEdges[op].size() == 1);
+           auto output_dst_op = (*outEdges[op].begin()).dstOp;
+@@ -3521,6 +3774,243 @@ Graph::apply_xfer_with_guid_binding_and_bindings_profiled(
+   return result;
+ }
+ 
++std::shared_ptr<Graph> Graph::apply_xfer_with_guid_binding_transactional(
++    GraphXfer *xfer, std::vector<size_t> source_guids,
++    bool eliminate_rotation, ExactKeyRegistry *registry,
++    std::vector<size_t> &dst_guids, std::string &exact_key,
++    std::vector<size_t> &removed_node_guids,
++    std::vector<size_t> &added_node_guids,
++    std::vector<int> &added_node_types,
++    std::vector<std::vector<size_t>> &removed_edges,
++    std::vector<std::vector<size_t>> &added_edges,
++    std::vector<uint64_t> &profile) {
++  using Clock = std::chrono::steady_clock;
++  auto elapsed_ns = [](Clock::time_point started) {
++    return static_cast<uint64_t>(
++        std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() -
++                                                             started)
++            .count());
++  };
++  // Timings: 0 GUID lookup, 1 source match, 2 input validation,
++  // 3 destination allocation, 4 output validation, 5 in-place rewrite,
++  // 6 loop check, 7 binding export, 8 rotation cleanup, 9 exact key,
++  // 10 registry lookup/insert, 11 novel-child clone, 12 rollback, 13 unmatch,
++  // 14 total. Counters: 15 result, 16..19 captured map entries,
++  // 20 incremental wire-position updates, 21 graph copies, 22 delta-export
++  // time, and 23..26 exported node/edge counts.
++  profile.assign(27, 0);
++  const auto total_started = Clock::now();
++  dst_guids.clear();
++  exact_key.clear();
++  removed_node_guids.clear();
++  added_node_guids.clear();
++  added_node_types.clear();
++  removed_edges.clear();
++  added_edges.clear();
++  std::shared_ptr<Graph> new_graph(nullptr);
++  uint64_t result_code = 0;
++
++  if (registry == nullptr)
++    throw std::invalid_argument("transactional apply requires a key registry");
++
++  std::vector<Op> source_ops;
++  source_ops.reserve(source_guids.size());
++  auto started = Clock::now();
++  for (const size_t guid : source_guids) {
++    bool found = false;
++    for (auto it = inEdges.cbegin(); it != inEdges.cend(); ++it) {
++      if (it->first.guid == guid) {
++        source_ops.emplace_back(it->first);
++        found = true;
++        break;
++      }
++    }
++    if (!found) {
++      result_code = 7;
++      profile[0] += elapsed_ns(started);
++      profile[15] = result_code;
++      profile[14] = elapsed_ns(total_started);
++      return nullptr;
++    }
++  }
++  profile[0] += elapsed_ns(started);
++
++  bool success = source_ops.size() == xfer->srcOps.size();
++  result_code = success ? 0 : 2;
++  std::deque<std::pair<OpX *, Op>> matched_pairs;
++  std::unordered_set<Op, OpHash> seen_ops;
++  auto unmatch_all = [&]() {
++    const auto unmatch_started = Clock::now();
++    while (!matched_pairs.empty()) {
++      const auto pair = matched_pairs.back();
++      matched_pairs.pop_back();
++      xfer->unmatch(pair.first, pair.second, this);
++    }
++    profile[13] += elapsed_ns(unmatch_started);
++  };
++
++  started = Clock::now();
++  if (success) {
++    for (size_t index = 0; index < source_ops.size(); ++index) {
++      OpX *source_opx = xfer->srcOps[index];
++      const Op source_op = source_ops[index];
++      if (seen_ops.find(source_op) != seen_ops.end() ||
++          xfer->mappedOps.find(source_op) != xfer->mappedOps.end() ||
++          !xfer->can_match(source_opx, source_op, this)) {
++        success = false;
++        result_code = 2;
++        break;
++      }
++      xfer->match(source_opx, source_op, this);
++      seen_ops.insert(source_op);
++      matched_pairs.emplace_back(source_opx, source_op);
++    }
++  }
++  profile[1] += elapsed_ns(started);
++
++  started = Clock::now();
++  if (success) {
++    std::set<int> qubits;
++    for (const auto &mapped_input : xfer->mappedInputs) {
++      const Op input_op = mapped_input.second.first;
++      if (input_op.ptr->is_quantum_gate() ||
++          input_op.ptr->tp == GateType::input_qubit) {
++        const auto position =
++            pos_2_logical_qubit.find(Pos(input_op, mapped_input.second.second));
++        if (position == pos_2_logical_qubit.end() ||
++            !qubits.insert(position->second).second) {
++          success = false;
++          result_code = 3;
++          break;
++        }
++      }
++    }
++  }
++  profile[2] += elapsed_ns(started);
++
++  started = Clock::now();
++  if (success) {
++    for (OpX *destination_op : xfer->dstOps) {
++      if (!xfer->create_new_operator(destination_op,
++                                     destination_op->mapOp)) {
++        success = false;
++        result_code = 4;
++        break;
++      }
++    }
++  }
++  profile[3] += elapsed_ns(started);
++
++  started = Clock::now();
++  if (success) {
++    for (const auto &mapped : xfer->mappedOps) {
++      const auto outputs = outEdges.find(mapped.first);
++      if (outputs == outEdges.end())
++        continue;
++      for (const auto &edge : outputs->second) {
++        if (xfer->mappedOps.find(edge.dstOp) == xfer->mappedOps.end()) {
++          const TensorX source_tensor(mapped.second, edge.srcIdx);
++          if (xfer->mappedOutputs.find(source_tensor) ==
++              xfer->mappedOutputs.end()) {
++            success = false;
++            result_code = 5;
++            break;
++          }
++        }
++      }
++      if (!success)
++        break;
++    }
++  }
++  profile[4] += elapsed_ns(started);
++
++  if (!success) {
++    unmatch_all();
++    profile[15] = result_code;
++    profile[14] = elapsed_ns(total_started);
++    return nullptr;
++  }
++
++  try {
++    GraphMutationTransaction transaction(*this);
++    started = Clock::now();
++    xfer->rewrite_graph_in_place(this);
++    profile[5] += elapsed_ns(started);
++
++    started = Clock::now();
++    if (has_loop()) {
++      success = false;
++      result_code = 6;
++    }
++    profile[6] += elapsed_ns(started);
++
++    started = Clock::now();
++    if (success) {
++      dst_guids.reserve(xfer->dstOps.size());
++      for (const OpX *destination_op : xfer->dstOps)
++        dst_guids.emplace_back(destination_op->mapOp.guid);
++    }
++    profile[7] += elapsed_ns(started);
++
++    started = Clock::now();
++    if (success && eliminate_rotation)
++      constant_and_rotation_elimination();
++    profile[8] += elapsed_ns(started);
++
++    started = Clock::now();
++    if (success)
++      exact_key = this->exact_key();
++    profile[9] += elapsed_ns(started);
++
++    bool is_novel = false;
++    started = Clock::now();
++    if (success)
++      is_novel = registry->insert(exact_key);
++    profile[10] += elapsed_ns(started);
++    if (success && !is_novel)
++      result_code = 1;
++
++    started = Clock::now();
++    if (success && is_novel) {
++      new_graph = std::make_shared<Graph>(*this);
++      profile[21] = 1;
++    }
++    profile[11] += elapsed_ns(started);
++
++    profile[16] = transaction.captured_in_entries();
++    profile[17] = transaction.captured_out_entries();
++    profile[18] = transaction.captured_constant_entries();
++    profile[19] = transaction.captured_position_entries();
++    profile[20] = transaction.incremental_position_updates();
++    started = Clock::now();
++    if (success && is_novel) {
++      transaction.export_structural_delta(
++          removed_node_guids, added_node_guids, added_node_types,
++          removed_edges, added_edges);
++    }
++    profile[22] += elapsed_ns(started);
++    profile[23] = removed_node_guids.size();
++    profile[24] = added_node_guids.size();
++    profile[25] = removed_edges.size();
++    profile[26] = added_edges.size();
++    started = Clock::now();
++    transaction.rollback();
++    profile[12] += elapsed_ns(started);
++  } catch (...) {
++    unmatch_all();
++    throw;
++  }
++
++  unmatch_all();
++  if (!success || result_code != 0) {
++    dst_guids.clear();
++    new_graph.reset();
++  }
++  profile[15] = result_code;
++  profile[14] = elapsed_ns(total_started);
++  return new_graph;
++}
++
+ std::vector<size_t>
+ Graph::appliable_xfers(Op op, const std::vector<GraphXfer *> &xfer_v) const {
+   std::vector<size_t> appliable_xfer_v;
+diff --git a/src/quartz/tasograph/tasograph.h b/src/quartz/tasograph/tasograph.h
+index 32b241a..40e9741 100644
+--- a/src/quartz/tasograph/tasograph.h
++++ b/src/quartz/tasograph/tasograph.h
+@@ -13,10 +13,12 @@
+ #include <iostream>
+ #include <map>
+ #include <memory>
++#include <optional>
+ #include <queue>
+ #include <set>
+ #include <stack>
+ #include <unordered_map>
++#include <unordered_set>
+ #include <vector>
+ 
+ namespace quartz {
+@@ -177,6 +179,55 @@ struct EdgeCompare {
+ class GraphXfer;
+ class OpX;
+ class Graph;
++class GraphMutationTransaction;
++
++class ExactKeyRegistry {
++ public:
++  bool insert(const std::string &key);
++  size_t size() const;
++
++ private:
++  std::unordered_set<std::string> keys_;
++};
++
++class GraphMutationTransaction {
++ public:
++  explicit GraphMutationTransaction(Graph &graph);
++  ~GraphMutationTransaction();
++  GraphMutationTransaction(const GraphMutationTransaction &) = delete;
++  GraphMutationTransaction &operator=(const GraphMutationTransaction &) =
++      delete;
++
++  void record_in_edges(const Op &op);
++  void record_out_edges(const Op &op);
++  void record_constant(const Op &op);
++  void record_position(const Pos &pos);
++  void note_incremental_position_update();
++  void export_structural_delta(
++      std::vector<size_t> &removed_node_guids,
++      std::vector<size_t> &added_node_guids,
++      std::vector<int> &added_node_types,
++      std::vector<std::vector<size_t>> &removed_edges,
++      std::vector<std::vector<size_t>> &added_edges) const;
++  void rollback();
++
++  size_t captured_in_entries() const;
++  size_t captured_out_entries() const;
++  size_t captured_constant_entries() const;
++  size_t captured_position_entries() const;
++  size_t incremental_position_updates() const;
++
++ private:
++  Graph *graph_;
++  bool active_;
++  std::map<Op, std::optional<std::set<Edge, EdgeCompare>>, OpCompare>
++      original_in_edges_;
++  std::map<Op, std::optional<std::set<Edge, EdgeCompare>>, OpCompare>
++      original_out_edges_;
++  std::map<Op, std::optional<ParamType>, OpCompare> original_constants_;
++  std::unordered_map<Pos, std::optional<int>, PosHash> original_positions_;
++  size_t incremental_position_updates_ = 0;
++};
+ 
+ class SuccessorFingerprintProfile {
+  public:
+@@ -202,6 +253,7 @@ class Graph {
+   [[nodiscard]] std::unique_ptr<CircuitSeq> to_circuit_sequence() const;
+   void _construct_pos_2_logical_qubit();
+   void add_edge(const Op &srcOp, const Op &dstOp, int srcIdx, int dstIdx);
++  void set_constant_param_value(const Op &op, ParamType value);
+   bool has_edge(const Op &srcOp, const Op &dstOp, int srcIdx, int dstIdx) const;
+   Op add_qubit(int qubit_idx);
+   Op add_parameter(const ParamType p);
+@@ -351,6 +403,17 @@ class Graph {
+       GraphXfer *xfer, std::vector<size_t> source_guids,
+       bool eliminate_rotation, std::vector<size_t> &dst_guids,
+       std::vector<uint64_t> &profile) const;
++  std::shared_ptr<Graph>
++  apply_xfer_with_guid_binding_transactional(
++      GraphXfer *xfer, std::vector<size_t> source_guids,
++      bool eliminate_rotation, ExactKeyRegistry *registry,
++      std::vector<size_t> &dst_guids, std::string &exact_key,
++      std::vector<size_t> &removed_node_guids,
++      std::vector<size_t> &added_node_guids,
++      std::vector<int> &added_node_types,
++      std::vector<std::vector<size_t>> &removed_edges,
++      std::vector<std::vector<size_t>> &added_edges,
++      std::vector<uint64_t> &profile);
+   void all_ops(std::vector<Op> &ops);
+   void all_edges(std::vector<Edge> &edges);
+   void topology_order_ops(std::vector<Op> &ops) const;
+@@ -366,6 +429,14 @@ class Graph {
+   topology_partition(const int partition_gate_count) const;
+ 
+  private:
++  friend class GraphMutationTransaction;
++  void record_in_edges_before_change(const Op &op);
++  void record_out_edges_before_change(const Op &op);
++  void record_constant_before_change(const Op &op);
++  void record_position_before_change(const Pos &pos);
++  void erase_positions_for_op(const Op &op);
++  void propagate_position_for_edge(const Op &srcOp, const Op &dstOp,
++                                   int srcIdx, int dstIdx);
+   void replace_node(Op oldOp, Op newOp);
+   void remove_edge(Op srcOp, Op dstOp);
+   uint64_t xor_bitmap(uint64_t src_bitmap, int src_idx, uint64_t dst_bitmap,
+@@ -396,6 +467,7 @@ class Graph {
+   std::map<Op, ParamType> constant_param_values;
+   std::unordered_map<Op, int, OpHash> input_qubit_op_2_qubit_idx;
+   std::unordered_map<Pos, int, PosHash> pos_2_logical_qubit;
++  GraphMutationTransaction *active_transaction_ = nullptr;
+ };
+ 
+ };  // namespace quartz

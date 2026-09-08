@@ -1,0 +1,109 @@
+{
+  "date": "2026-09-08",
+  "branch": "transactional-inplace-rewrite-20260908",
+  "hardware": "H100",
+  "correctness": {
+    "all_parents_restored": true,
+    "all_reference_successors_equal": true,
+    "all_incremental_deltas_reconstruct_full_children": true,
+    "duplicates_clone_free": true,
+    "rotation_elimination_enabled": true,
+    "barenco_single_step_actions": 248,
+    "barenco_single_step_xfers": 49,
+    "gf2_6_single_step_actions": 256,
+    "gf2_6_single_step_xfers": 97,
+    "multistep_depth_per_circuit": 24
+  },
+  "raw_dedup_ab": {
+    "common": {
+      "beam_size": 1000,
+      "depth": 3,
+      "preapply_fingerprint": "off",
+      "neural_prefilter": "off",
+      "dedup_identity": "exact"
+    },
+    "barenco_tof_3": {
+      "baseline_total_seconds": 2.1885686579626054,
+      "transactional_incremental_total_seconds": 1.6393919500987977,
+      "total_speedup": 1.3349880471419368,
+      "baseline_apply_seconds": 1.94892339291982,
+      "transactional_incremental_apply_seconds": 1.42079322086647,
+      "apply_speedup": 1.37171501404777,
+      "attempted_actions": 11662,
+      "successful_applies": 10956,
+      "exact_duplicates": 8841,
+      "novel_children": 2115,
+      "native_graph_copies": 2115,
+      "unique_identities_including_root": 2116,
+      "best_gate_count": 58
+    },
+    "gf2_6_mult": {
+      "baseline_total_seconds": 10.579546103952453,
+      "transactional_incremental_total_seconds": 7.909323472995311,
+      "total_speedup": 1.3376044285044157,
+      "baseline_apply_seconds": 9.39476592233405,
+      "transactional_incremental_apply_seconds": 6.74877605796792,
+      "apply_speedup": 1.3920695903433,
+      "attempted_actions": 6331,
+      "successful_applies": 5771,
+      "exact_duplicates": 3306,
+      "novel_children": 2465,
+      "native_graph_copies": 2465,
+      "unique_identities_including_root": 2466,
+      "best_gate_count": 489
+    }
+  },
+  "hybrid_pipeline_ab": {
+    "common": {
+      "beam_size": 1000,
+      "preapply_fingerprint": "native conservative filter",
+      "neural_prefilter": "defer",
+      "dedup_identity": "exact"
+    },
+    "barenco_tof_3_depth_16": {
+      "baseline_total_seconds": 13.020141594810411,
+      "transactional_incremental_total_seconds": 11.381869358941913,
+      "total_speedup": 1.143937009308706,
+      "baseline_apply_seconds": 10.26738654566,
+      "transactional_incremental_apply_seconds": 8.31834355229512,
+      "apply_speedup": 1.23430662380217,
+      "attempted_actions": 52094,
+      "successful_applies": 45344,
+      "exact_duplicates": 30229,
+      "novel_children": 15115,
+      "native_graph_copies": 15115,
+      "unique_identities_including_root": 15116,
+      "best_gate_count": 48,
+      "best_identity_equal_to_baseline": true,
+      "final_beam_identity_digest_equal_to_baseline": true,
+      "baseline_child_metadata_seconds": 2.392870807,
+      "incremental_child_metadata_seconds": 1.364859928,
+      "child_metadata_speedup": 1.753198813966498
+    },
+    "gf2_6_mult_depth_8": {
+      "baseline_total_seconds": 29.501649260986596,
+      "transactional_incremental_total_seconds": 23.529118119040504,
+      "total_speedup": 1.253835741387729,
+      "baseline_apply_seconds": 22.7818740748335,
+      "transactional_incremental_apply_seconds": 16.892425943166,
+      "apply_speedup": 1.34864430671369,
+      "attempted_actions": 11456,
+      "successful_applies": 10896,
+      "exact_duplicates": 3431,
+      "novel_children": 7465,
+      "native_graph_copies": 7465,
+      "unique_identities_including_root": 7466,
+      "best_gate_count": 485,
+      "best_identity_equal_to_baseline": true,
+      "final_beam_identity_digest_equal_to_baseline": false,
+      "baseline_child_metadata_seconds": 8.66146355,
+      "incremental_child_metadata_seconds": 4.269664559,
+      "child_metadata_speedup": 2.028605158628341
+    }
+  },
+  "tests": {
+    "top_level_pytest_cpu": "97 passed, 1 warning",
+    "focused_transactional_pytest": "20 passed",
+    "quartz_cpp_and_cython_build": "passed"
+  }
+}

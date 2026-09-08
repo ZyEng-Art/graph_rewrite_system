@@ -1,21 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -lt 4 || $# -gt 5 ]]; then
-  echo "usage: $0 GPU_ID QASM_NAME DEPTH OUTPUT_TAG [TRANSACTIONAL_MODE]" >&2
+if [[ $# -ne 5 ]]; then
+  echo "usage: $0 GPU_ID QASM_NAME DEPTH TRANSACTIONAL_MODE OUTPUT_TAG" >&2
   exit 2
 fi
 
 gpu_id=$1
 qasm_name=$2
 depth=$3
-output_tag=$4
-transactional_mode=${5:-off}
+transactional_mode=$4
+output_tag=$5
 python_bin=/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/bin/python
+
+if [[ "$transactional_mode" != off && "$transactional_mode" != on ]]; then
+  echo "TRANSACTIONAL_MODE must be off or on" >&2
+  exit 2
+fi
 
 CUDA_VISIBLE_DEVICES="$gpu_id" \
 PYTHONPATH=./quartz_exact_key/python \
 LD_LIBRARY_PATH=./quartz_exact_key/build \
+OMP_NUM_THREADS=16 \
 "$python_bin" beam_search_benchmark.py \
   --mode model \
   --data ../../data/binding_longmix_randomrefresh_complex_holdout_20260906.pt \
@@ -35,11 +41,9 @@ LD_LIBRARY_PATH=./quartz_exact_key/build \
   --model-apply-binding direct \
   --dedup-identity exact \
   --eliminate-rotation \
-  --preapply-fingerprint filter \
-  --preapply-fingerprint-backend native \
-  --preapply-fingerprint-kind conservative \
-  --neural-prefilter-checkpoint benchmark_results/neural_successor_prefilter_cross_circuit_s907.pt \
-  --neural-prefilter-mode defer \
+  --preapply-fingerprint off \
+  --neural-prefilter-mode off \
   --apply-profile detailed \
   --transactional-apply "$transactional_mode" \
-  --output "benchmark_results/${output_tag}.json"
+  --output "benchmark_results/${output_tag}.json" \
+  > "benchmark_results/${output_tag}.log" 2>&1

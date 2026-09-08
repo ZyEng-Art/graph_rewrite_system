@@ -1,0 +1,486 @@
+{
+  "all_parents_restored": true,
+  "all_reference_successors_equal": true,
+  "circuits": [
+    {
+      "initial_gate_count": 58,
+      "multistep": {
+        "completed_steps": 24,
+        "duplicate_candidates": 0,
+        "native_registry_size": 25,
+        "trace": [
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 60,
+            "incremental_position_updates": 5,
+            "step": 1,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 62,
+            "incremental_position_updates": 5,
+            "step": 2,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 64,
+            "incremental_position_updates": 5,
+            "step": 3,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 66,
+            "incremental_position_updates": 5,
+            "step": 4,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 68,
+            "incremental_position_updates": 5,
+            "step": 5,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 70,
+            "incremental_position_updates": 5,
+            "step": 6,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 72,
+            "incremental_position_updates": 5,
+            "step": 7,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 74,
+            "incremental_position_updates": 5,
+            "step": 8,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 76,
+            "incremental_position_updates": 5,
+            "step": 9,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 78,
+            "incremental_position_updates": 5,
+            "step": 10,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 80,
+            "incremental_position_updates": 5,
+            "step": 11,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 82,
+            "incremental_position_updates": 5,
+            "step": 12,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 84,
+            "incremental_position_updates": 5,
+            "step": 13,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 86,
+            "incremental_position_updates": 5,
+            "step": 14,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 88,
+            "incremental_position_updates": 5,
+            "step": 15,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 90,
+            "incremental_position_updates": 5,
+            "step": 16,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 92,
+            "incremental_position_updates": 5,
+            "step": 17,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 94,
+            "incremental_position_updates": 5,
+            "step": 18,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 96,
+            "incremental_position_updates": 5,
+            "step": 19,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 98,
+            "incremental_position_updates": 5,
+            "step": 20,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 100,
+            "incremental_position_updates": 5,
+            "step": 21,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 102,
+            "incremental_position_updates": 5,
+            "step": 22,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 104,
+            "incremental_position_updates": 5,
+            "step": 23,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 106,
+            "incremental_position_updates": 5,
+            "step": 24,
+            "xfer_id": 22
+          }
+        ]
+      },
+      "qasm": "../../quarl/experiment/circs/nam_circs/barenco_tof_3.qasm",
+      "single_step": {
+        "actions": 248,
+        "captured_in_entries": 2105,
+        "captured_out_entries": 2307,
+        "captured_position_entries": 2578,
+        "duplicate_replays": 248,
+        "graph_copies": 248,
+        "identity_rewrites": 0,
+        "incremental_position_updates": 1573,
+        "novel": 248,
+        "xfers": 49
+      }
+    },
+    {
+      "initial_gate_count": 495,
+      "multistep": {
+        "completed_steps": 24,
+        "duplicate_candidates": 0,
+        "native_registry_size": 25,
+        "trace": [
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 497,
+            "incremental_position_updates": 5,
+            "step": 1,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 499,
+            "incremental_position_updates": 5,
+            "step": 2,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 501,
+            "incremental_position_updates": 5,
+            "step": 3,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 503,
+            "incremental_position_updates": 5,
+            "step": 4,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 505,
+            "incremental_position_updates": 5,
+            "step": 5,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 507,
+            "incremental_position_updates": 5,
+            "step": 6,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 509,
+            "incremental_position_updates": 5,
+            "step": 7,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 511,
+            "incremental_position_updates": 5,
+            "step": 8,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 513,
+            "incremental_position_updates": 5,
+            "step": 9,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 515,
+            "incremental_position_updates": 5,
+            "step": 10,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 517,
+            "incremental_position_updates": 5,
+            "step": 11,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 519,
+            "incremental_position_updates": 5,
+            "step": 12,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 521,
+            "incremental_position_updates": 5,
+            "step": 13,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 523,
+            "incremental_position_updates": 5,
+            "step": 14,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 525,
+            "incremental_position_updates": 5,
+            "step": 15,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 527,
+            "incremental_position_updates": 5,
+            "step": 16,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 529,
+            "incremental_position_updates": 5,
+            "step": 17,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 531,
+            "incremental_position_updates": 5,
+            "step": 18,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 533,
+            "incremental_position_updates": 5,
+            "step": 19,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 535,
+            "incremental_position_updates": 5,
+            "step": 20,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 537,
+            "incremental_position_updates": 5,
+            "step": 21,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 539,
+            "incremental_position_updates": 5,
+            "step": 22,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 541,
+            "incremental_position_updates": 5,
+            "step": 23,
+            "xfer_id": 22
+          },
+          {
+            "captured_in_entries": 8,
+            "captured_out_entries": 8,
+            "captured_position_entries": 8,
+            "gate_count": 543,
+            "incremental_position_updates": 5,
+            "step": 24,
+            "xfer_id": 22
+          }
+        ]
+      },
+      "qasm": "../../quarl/experiment/circs/nam_circs/gf2^6_mult.qasm",
+      "single_step": {
+        "actions": 256,
+        "captured_in_entries": 2328,
+        "captured_out_entries": 2487,
+        "captured_position_entries": 2764,
+        "duplicate_replays": 256,
+        "graph_copies": 256,
+        "identity_rewrites": 0,
+        "incremental_position_updates": 1636,
+        "novel": 256,
+        "xfers": 97
+      }
+    }
+  ],
+  "duplicates_clone_free": true,
+  "rotation_elimination": true
+}

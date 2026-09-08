@@ -5,11 +5,13 @@ import torch
 
 from benchmark_matcher_throughput import InitialGraphDataset, snapshot_qasm_graph
 from beam_search_benchmark import (
+    AppliedRewrite,
     BeamState,
     Proposal,
     apply_rewrite,
     collate_exact_states,
     collate_matcher_states,
+    incremental_snapshot_from_delta,
     remap_candidate_slots,
     rank_proposals,
 )
@@ -26,6 +28,7 @@ class FakeApplyGraph:
         self.guid_direct_calls = []
         self.anchor_calls = []
         self.successor = SimpleNamespace()
+        self.transaction_response = None
 
     def apply_xfer_with_node_id_binding(self, **kwargs):
         self.direct_calls.append(kwargs)
@@ -34,6 +37,11 @@ class FakeApplyGraph:
     def apply_xfer_with_guid_binding(self, **kwargs):
         self.guid_direct_calls.append(kwargs)
         return self.successor, [900]
+
+    def apply_xfer_with_guid_binding_transactional(self, **kwargs):
+        if self.transaction_response is None:
+            raise AssertionError("unexpected transactional apply")
+        return self.transaction_response
 
     def get_node_from_id(self, *, id):
         return self.nodes[id]
@@ -228,6 +236,107 @@ class RawQasmBenchmarkTest(unittest.TestCase):
         self.assertEqual(len(graph.anchor_calls), 1)
         self.assertEqual(graph.direct_calls, [])
         self.assertEqual(graph.guid_direct_calls, [])
+
+    def test_transactional_apply_returns_novel_identity_without_rekeying(self) -> None:
+        graph = FakeApplyGraph()
+        profile = [0] * 22
+        profile[15] = 0
+        profile[21] = 1
+        graph.transaction_response = (
+            graph.successor,
+            [900],
+            b"native-child",
+            0,
+            profile,
+            {
+                "removed_node_guids": [],
+                "added_nodes": [],
+                "removed_edges": [],
+                "added_edges": [],
+            },
+        )
+        proposal = Proposal(
+            parent=0,
+            xfer_id=7,
+            anchor_slot=4,
+            binding=(4, 9),
+            probability=0.8,
+            next_gate_count=2,
+        )
+
+        applied = apply_rewrite(
+            self.apply_state(graph),
+            proposal,
+            [None] * 8,
+            transactional_registry=object(),
+        )
+
+        self.assertIs(applied.graph, graph.successor)
+        self.assertEqual(
+            applied.exact_identity,
+            ("quartz_wire_trace_v1", b"native-child"),
+        )
+        self.assertEqual(applied.transaction_status, 0)
+
+    def test_transactional_duplicate_has_no_materialized_graph(self) -> None:
+        graph = FakeApplyGraph()
+        profile = [0] * 22
+        profile[15] = 1
+        graph.transaction_response = (None, [], b"duplicate", 1, profile, None)
+        proposal = Proposal(
+            parent=0,
+            xfer_id=7,
+            anchor_slot=4,
+            binding=(4, 9),
+            probability=0.8,
+            next_gate_count=2,
+        )
+
+        applied = apply_rewrite(
+            self.apply_state(graph),
+            proposal,
+            [None] * 8,
+            transactional_registry=object(),
+        )
+
+        self.assertIsNone(applied.graph)
+        self.assertEqual(applied.transaction_status, 1)
+        self.assertEqual(
+            applied.exact_identity,
+            ("quartz_wire_trace_v1", b"duplicate"),
+        )
+
+    def test_transaction_delta_updates_cached_snapshot_without_graph_walk(self) -> None:
+        parent = self.apply_state(FakeApplyGraph())
+        parent.snapshot["edges"] = [(4, 9, 0, 1)]
+        applied = AppliedRewrite(
+            graph=SimpleNamespace(),
+            source_guids=(305,),
+            destination_guids=(900,),
+            structural_delta={
+                "removed_node_guids": [305],
+                "added_nodes": [(900, 9)],
+                "removed_edges": [(101, 305, 0, 1)],
+                "added_edges": [(101, 900, 0, 2)],
+            },
+        )
+
+        after, guid_to_slot, next_slot, destinations, removed, changed = (
+            incremental_snapshot_from_delta(parent, applied)
+        )
+
+        self.assertEqual(
+            after,
+            {
+                "nodes": [(4, 7, 101), (10, 9, 900)],
+                "edges": [(4, 10, 0, 2)],
+            },
+        )
+        self.assertEqual(guid_to_slot[900], 10)
+        self.assertEqual(next_slot, 11)
+        self.assertEqual(destinations, (900,))
+        self.assertEqual(removed, {9})
+        self.assertEqual(changed, {(4, 9, 0, 1), (4, 10, 0, 2)})
 
     def test_bounded_topk_preserves_full_stable_sort_order(self) -> None:
         beam = [

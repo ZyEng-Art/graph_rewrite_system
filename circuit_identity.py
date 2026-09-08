@@ -132,6 +132,33 @@ class ExactGraphRegistry:
         self.canonical_keys.add(key)
         return True
 
+    def record_prechecked_native_key(
+        self, key: Hashable, *, is_new: bool
+    ) -> bool:
+        """Mirror a decision already made by Quartz's native exact registry.
+
+        Transactional apply must decide duplication before allocating a child.
+        This method keeps the reporting registry synchronized without repeating
+        the membership lookup on a materialized graph.
+        """
+
+        self.registrations += 1
+        self.native_identity_calls += 1
+        already_present = key in self.canonical_keys
+        if is_new:
+            if already_present:
+                raise RuntimeError(
+                    "native registry marked an existing exact key as novel"
+                )
+            self.canonical_keys.add(key)
+        else:
+            self.native_duplicates += 1
+            if not already_present:
+                raise RuntimeError(
+                    "native registry marked an unseen exact key as duplicate"
+                )
+        return is_new
+
     def __len__(self) -> int:
         return len(self.canonical_keys)
 
