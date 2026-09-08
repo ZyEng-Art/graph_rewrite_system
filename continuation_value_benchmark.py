@@ -606,6 +606,7 @@ def continuation_transition_aggregates(runs: list[dict]) -> list[dict]:
                 "source_id": source.get("source_id"),
                 "trajectory_step": source.get("trajectory_step"),
                 "behavior_stratum": source.get("behavior_stratum"),
+                "teacher_behavior": source.get("teacher_behavior"),
                 "probe_budget": probe_budget,
                 "target_budget": target_budget,
                 "seeds": len(rows),

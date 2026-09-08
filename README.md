@@ -365,6 +365,11 @@ budgets (`4 -> 16`, `16 -> 64`), classifies delayed/saturated/no-gain outcomes,
 handles right-censored trajectory suffixes, and builds diversity-constrained
 corpora across many trajectory directories.
 
+The 80-state, two-seed H100 result is documented in
+`CONTINUATION_MARGINAL_RESULTS_20260908.md`. It finds useful marginal-value
+ranking for already-improving roots but zero realized delayed-gain outcomes by
+depth 64, so the signal is not used as a hard optimizer filter.
+
 ## Legacy copied documentation
 
 This directory is an independent implementation of the corrected task:
