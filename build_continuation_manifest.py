@@ -138,6 +138,68 @@ def future_labels(
     return labels
 
 
+def trajectory_behavior(
+    states: list[QasmState], index: int, probe_horizon: int, target_horizon: int
+) -> dict[str, int | str | bool | None]:
+    """Describe teacher-trajectory behavior without claiming causal necessity."""
+
+    initial = states[index].gate_count
+    target_states = states[index + 1 : min(len(states), index + target_horizon + 1)]
+    probe_states = target_states[:probe_horizon]
+    probe_best = min((state.gate_count for state in probe_states), default=initial)
+    target_best = min((state.gate_count for state in target_states), default=initial)
+    probe_gain = max(0, initial - probe_best)
+    target_gain = max(0, initial - target_best)
+    right_censored = len(target_states) < target_horizon
+    first_improvement = next(
+        (
+            offset
+            for offset, state in enumerate(target_states, start=1)
+            if state.gate_count < initial
+        ),
+        None,
+    )
+    observed_until_gain = (
+        target_states[:first_improvement]
+        if first_improvement is not None
+        else target_states
+    )
+    peak_increase = max(
+        [0, *(state.gate_count - initial for state in observed_until_gain)]
+    )
+    if probe_gain == 0 and target_gain > 0:
+        behavior_class = "delayed_gain"
+    elif probe_gain > 0 and target_gain > probe_gain:
+        behavior_class = "continued_gain"
+    elif probe_gain > 0 and right_censored:
+        behavior_class = "censored_after_probe"
+    elif probe_gain > 0:
+        behavior_class = "saturated_after_probe"
+    elif right_censored:
+        behavior_class = "censored_no_gain"
+    else:
+        behavior_class = "no_gain"
+    return {
+        "class": behavior_class,
+        "probe_horizon": probe_horizon,
+        "target_horizon": target_horizon,
+        "observed_probe_steps": len(probe_states),
+        "observed_target_steps": len(target_states),
+        "right_censored": right_censored,
+        "probe_improvement": probe_gain,
+        "target_improvement": target_gain,
+        "additional_improvement": max(0, probe_best - target_best),
+        "first_improvement_step": first_improvement,
+        "plateau_steps": (
+            first_improvement - 1
+            if first_improvement is not None
+            else len(target_states)
+        ),
+        "observed_peak_increase_before_improvement": peak_increase,
+        "observed_increase_then_gain": peak_increase > 0 and target_gain > 0,
+    }
+
+
 def qasm_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -147,14 +209,80 @@ def qasm_sha256(path: Path) -> str:
 
 
 def build_manifest(
-    specs: list[TrajectorySpec], states_per_trajectory: int, horizons: list[int]
+    specs: list[TrajectorySpec],
+    states_per_trajectory: int,
+    horizons: list[int],
+    *,
+    selection_method: str = "uniform",
+    probe_horizon: int = 4,
+    target_horizon: int = 64,
+    states_per_stratum: int | None = None,
 ) -> dict:
+    if selection_method not in {"uniform", "behavior_stratified"}:
+        raise ValueError(f"unknown selection method: {selection_method}")
+    if probe_horizon <= 0 or target_horizon <= probe_horizon:
+        raise ValueError("target horizon must be greater than the positive probe horizon")
+    if states_per_stratum is not None and states_per_stratum <= 0:
+        raise ValueError("states_per_stratum must be positive")
     rows = []
+    source_selection = []
     for spec in specs:
         states = read_trajectory(spec.path)
         # The last file is a terminal state and has no continuation action.
         candidate_count = len(states) - 1
-        for index in uniform_indices(candidate_count, states_per_trajectory):
+        behaviors = {
+            index: trajectory_behavior(
+                states, index, probe_horizon, target_horizon
+            )
+            for index in range(candidate_count)
+        }
+        available_counts = {
+            name: sum(row["class"] == name for row in behaviors.values())
+            for name in (
+                "delayed_gain",
+                "continued_gain",
+                "saturated_after_probe",
+                "no_gain",
+                "censored_after_probe",
+                "censored_no_gain",
+            )
+        }
+        if selection_method == "uniform":
+            selected_indices = uniform_indices(candidate_count, states_per_trajectory)
+        else:
+            quota = states_per_stratum or states_per_trajectory
+            selected_indices = []
+            for name in available_counts:
+                bucket = [
+                    index
+                    for index, behavior in behaviors.items()
+                    if behavior["class"] == name
+                ]
+                selected_indices.extend(
+                    bucket[position]
+                    for position in uniform_indices(len(bucket), quota)
+                )
+            selected_indices = sorted(set(selected_indices))
+        selected_counts = {
+            name: sum(behaviors[index]["class"] == name for index in selected_indices)
+            for name in available_counts
+        }
+        source_selection.append(
+            {
+                "source_id": spec.source_id,
+                "available_behavior_counts": available_counts,
+                "selected_behavior_counts": selected_counts,
+                "observed_increase_then_gain_available": sum(
+                    bool(row["observed_increase_then_gain"])
+                    for row in behaviors.values()
+                ),
+                "observed_increase_then_gain_selected": sum(
+                    bool(behaviors[index]["observed_increase_then_gain"])
+                    for index in selected_indices
+                ),
+            }
+        )
+        for index in selected_indices:
             state = states[index]
             rows.append(
                 {
@@ -173,6 +301,7 @@ def build_manifest(
                         "reward": state.reward,
                     },
                     "teacher_future": future_labels(states, index, horizons),
+                    "teacher_behavior": behaviors[index],
                 }
             )
     ids = [row["id"] for row in rows]
@@ -182,8 +311,16 @@ def build_manifest(
         "format": "continuation-value-manifest-v1",
         "horizons": horizons,
         "selection": {
-            "method": "uniform_endpoint_inclusive",
+            "method": (
+                "uniform_endpoint_inclusive"
+                if selection_method == "uniform"
+                else "teacher_behavior_stratified"
+            ),
             "states_per_trajectory": states_per_trajectory,
+            "states_per_stratum": states_per_stratum,
+            "probe_horizon": probe_horizon,
+            "target_horizon": target_horizon,
+            "source_counts": source_selection,
         },
         "sources": [
             {
@@ -209,6 +346,14 @@ def main() -> None:
         help="SOURCE_ID|CIRCUIT|KIND|PATH; repeat for every trajectory",
     )
     parser.add_argument("--states-per-trajectory", type=int, default=16)
+    parser.add_argument(
+        "--selection",
+        choices=("uniform", "behavior_stratified"),
+        default="uniform",
+    )
+    parser.add_argument("--states-per-stratum", type=int)
+    parser.add_argument("--probe-horizon", type=int, default=4)
+    parser.add_argument("--target-horizon", type=int, default=64)
     parser.add_argument("--horizons", default="8,32,64,128")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
@@ -217,7 +362,15 @@ def main() -> None:
     try:
         specs = [parse_trajectory_spec(value) for value in args.trajectory]
         horizons = parse_int_csv(args.horizons)
-        manifest = build_manifest(specs, args.states_per_trajectory, horizons)
+        manifest = build_manifest(
+            specs,
+            args.states_per_trajectory,
+            horizons,
+            selection_method=args.selection,
+            probe_horizon=args.probe_horizon,
+            target_horizon=args.target_horizon,
+            states_per_stratum=args.states_per_stratum,
+        )
     except ValueError as error:
         parser.error(str(error))
     args.output.parent.mkdir(parents=True, exist_ok=True)

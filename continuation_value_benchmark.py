@@ -149,6 +149,25 @@ def sum_step_aliases(payload: dict, *names: str) -> int:
 
 def normalize_result(job: Job, payload: dict, wall_seconds: float) -> dict:
     initial = int(payload.get("initial_gate_count", job.state["initial_gate_count"]))
+    frontier_history = []
+    global_history = []
+    running_best = initial
+    for step in payload.get("steps", []):
+        frontier = int(
+            step.get(
+                "best_gate_count",
+                step.get("global_best_gate_count", running_best),
+            )
+        )
+        recorded_global = int(
+            step.get(
+                "best_exact_gate_count_so_far",
+                step.get("global_best_gate_count", min(running_best, frontier)),
+            )
+        )
+        running_best = min(running_best, recorded_global, frontier)
+        frontier_history.append(frontier)
+        global_history.append(running_best)
     best = payload.get("best_exact_gate_count")
     if best is None:
         best = payload.get("best_gate_count")
@@ -180,18 +199,30 @@ def normalize_result(job: Job, payload: dict, wall_seconds: float) -> dict:
         )
     )
     return {
-        "format": "continuation-value-run-v1",
+        "format": "continuation-value-run-v2",
         "state_id": job.state["id"],
         "circuit": job.state.get("circuit"),
         "kind": job.state.get("kind"),
         "source_id": job.state.get("source_id"),
         "trajectory_step": job.state.get("trajectory_step"),
+        "behavior_stratum": job.state.get("behavior_stratum"),
+        "teacher_behavior": job.state.get("teacher_behavior"),
         "budget": job.budget,
         "seed": job.seed,
         "gpu": job.gpu,
         "initial_gate_count": initial,
         "best_gate_count": best,
         "improvement": max(0, initial - best),
+        "frontier_best_gate_count_by_depth": frontier_history,
+        "global_best_gate_count_by_depth": global_history,
+        "first_improvement_depth": next(
+            (
+                depth
+                for depth, gate_count in enumerate(global_history, start=1)
+                if gate_count < initial
+            ),
+            None,
+        ),
         "completed_depth": completed_depth,
         "search_seconds": search_seconds,
         "wall_seconds": wall_seconds,
@@ -412,6 +443,7 @@ def aggregate_runs(runs: list[dict]) -> list[dict]:
                 "kind": first.get("kind"),
                 "source_id": first.get("source_id"),
                 "trajectory_step": first.get("trajectory_step"),
+                "behavior_stratum": first.get("behavior_stratum"),
                 "budget": budget,
                 "seeds": len(rows),
                 "initial_gate_count": int(first["initial_gate_count"]),
@@ -434,6 +466,338 @@ def aggregate_runs(runs: list[dict]) -> list[dict]:
                 "teacher_future": first.get("teacher_future", {}),
             }
         )
+    return output
+
+
+def continuation_transition_aggregates(runs: list[dict]) -> list[dict]:
+    """Pair identical state/seed runs and measure only the added-budget value.
+
+    Cumulative improvement at the probe is deliberately excluded from the
+    target.  For example, a state that improves by four gates at depth 4 and is
+    unchanged at depth 16 has zero 4->16 continuation value.
+    """
+
+    completed = [row for row in runs if row.get("status") == "completed"]
+    budgets = sorted({int(row["budget"]) for row in completed})
+    if len(budgets) < 2:
+        return []
+    by_key = {
+        (row["state_id"], int(row["seed"]), int(row["budget"])): row
+        for row in completed
+    }
+    state_metadata = {}
+    for row in completed:
+        state_metadata.setdefault(row["state_id"], row)
+
+    paired: dict[tuple[str, int, int], list[dict]] = defaultdict(list)
+    for probe_budget, target_budget in zip(budgets, budgets[1:]):
+        state_seeds = sorted(
+            {
+                (state_id, seed)
+                for state_id, seed, budget in by_key
+                if budget == probe_budget
+                and (state_id, seed, target_budget) in by_key
+            }
+        )
+        for state_id, seed in state_seeds:
+            probe = by_key[(state_id, seed, probe_budget)]
+            target = by_key[(state_id, seed, target_budget)]
+            probe_best = int(probe["best_gate_count"])
+            target_best = int(target["best_gate_count"])
+            additional = max(0, probe_best - target_best)
+            probe_improvement = int(probe["improvement"])
+            if additional > 0 and probe_improvement == 0:
+                outcome_class = "delayed_gain"
+            elif additional > 0:
+                outcome_class = "continued_gain"
+            elif probe_improvement > 0:
+                outcome_class = "saturated_after_probe"
+            else:
+                outcome_class = "no_gain"
+
+            global_history = list(target.get("global_best_gate_count_by_depth", []))
+            frontier_history = list(
+                target.get("frontier_best_gate_count_by_depth", [])
+            )
+            first_depth = next(
+                (
+                    depth
+                    for depth in range(probe_budget + 1, len(global_history) + 1)
+                    if int(global_history[depth - 1]) < probe_best
+                ),
+                None,
+            )
+            observed_end = first_depth or min(target_budget, len(frontier_history))
+            observed_frontier = frontier_history[probe_budget:observed_end]
+            observed_peak = max(
+                [0, *(int(value) - probe_best for value in observed_frontier)]
+            )
+            paired[(state_id, probe_budget, target_budget)].append(
+                {
+                    "seed": seed,
+                    "probe_best_gate_count": probe_best,
+                    "target_best_gate_count": target_best,
+                    "probe_improvement": probe_improvement,
+                    "additional_improvement": additional,
+                    "outcome_class": outcome_class,
+                    "first_additional_improvement_depth": first_depth,
+                    "additional_first_passage_steps": (
+                        first_depth - probe_budget if first_depth is not None else None
+                    ),
+                    "observed_frontier_peak_increase": observed_peak,
+                    "additional_search_seconds": max(
+                        0.0,
+                        float(target["search_seconds"])
+                        - float(probe["search_seconds"]),
+                    ),
+                    "additional_attempted_actions": max(
+                        0,
+                        int(target["attempted_actions"])
+                        - int(probe["attempted_actions"]),
+                    ),
+                    "additional_accepted_actions": max(
+                        0,
+                        int(target["accepted_actions"])
+                        - int(probe["accepted_actions"]),
+                    ),
+                    "additional_duplicates": max(
+                        0,
+                        int(target["speculative_duplicates"])
+                        + int(target["exact_refresh_duplicates"])
+                        - int(probe["speculative_duplicates"])
+                        - int(probe["exact_refresh_duplicates"]),
+                    ),
+                    "additional_invalid_actions": max(
+                        0,
+                        int(target["invalid_actions"])
+                        - int(probe["invalid_actions"]),
+                    ),
+                }
+            )
+
+    output = []
+    for (state_id, probe_budget, target_budget), rows in sorted(paired.items()):
+        source = state_metadata[state_id]
+        additional = [row["additional_improvement"] for row in rows]
+        attempted = [row["additional_attempted_actions"] for row in rows]
+        first_passages = [
+            row["additional_first_passage_steps"]
+            for row in rows
+            if row["additional_first_passage_steps"] is not None
+        ]
+        class_counts = {
+            name: sum(row["outcome_class"] == name for row in rows)
+            for name in (
+                "delayed_gain",
+                "continued_gain",
+                "saturated_after_probe",
+                "no_gain",
+            )
+        }
+        dominant_class = max(
+            class_counts,
+            key=lambda name: (class_counts[name], name),
+        )
+        output.append(
+            {
+                "state_id": state_id,
+                "circuit": source.get("circuit"),
+                "kind": source.get("kind"),
+                "source_id": source.get("source_id"),
+                "trajectory_step": source.get("trajectory_step"),
+                "behavior_stratum": source.get("behavior_stratum"),
+                "probe_budget": probe_budget,
+                "target_budget": target_budget,
+                "seeds": len(rows),
+                "probe_improvement_mean": mean(
+                    row["probe_improvement"] for row in rows
+                ),
+                "additional_improvement_mean": mean(additional),
+                "additional_improvement_max": max(additional),
+                "additional_success_rate": mean(value > 0 for value in additional),
+                "additional_search_seconds_mean": mean(
+                    row["additional_search_seconds"] for row in rows
+                ),
+                "additional_attempted_actions_mean": mean(attempted),
+                "additional_accepted_actions_mean": mean(
+                    row["additional_accepted_actions"] for row in rows
+                ),
+                "additional_duplicates_mean": mean(
+                    row["additional_duplicates"] for row in rows
+                ),
+                "additional_invalid_actions_mean": mean(
+                    row["additional_invalid_actions"] for row in rows
+                ),
+                "additional_improvement_per_1000_attempts": (
+                    1000.0 * sum(additional) / max(1, sum(attempted))
+                ),
+                "first_passage_steps_mean": (
+                    mean(first_passages) if first_passages else None
+                ),
+                "observed_frontier_peak_increase_mean": mean(
+                    row["observed_frontier_peak_increase"] for row in rows
+                ),
+                "observed_frontier_peak_increase_max": max(
+                    row["observed_frontier_peak_increase"] for row in rows
+                ),
+                "delayed_gain_rate": class_counts["delayed_gain"] / len(rows),
+                "continued_gain_rate": class_counts["continued_gain"] / len(rows),
+                "saturated_after_probe_rate": (
+                    class_counts["saturated_after_probe"] / len(rows)
+                ),
+                "no_gain_rate": class_counts["no_gain"] / len(rows),
+                "dominant_class": dominant_class,
+                "seed_outcomes": rows,
+            }
+        )
+    return output
+
+
+def group_transition_aggregates(transitions: list[dict]) -> list[dict]:
+    grouped: dict[tuple[str, str, int, int], list[dict]] = defaultdict(list)
+    for row in transitions:
+        grouped[
+            (
+                str(row.get("circuit")),
+                str(row.get("behavior_stratum")),
+                int(row["probe_budget"]),
+                int(row["target_budget"]),
+            )
+        ].append(row)
+    output = []
+    for (circuit, stratum, probe_budget, target_budget), rows in sorted(
+        grouped.items()
+    ):
+        output.append(
+            {
+                "circuit": circuit,
+                "behavior_stratum": stratum,
+                "probe_budget": probe_budget,
+                "target_budget": target_budget,
+                "states": len(rows),
+                "additional_success_rate": mean(
+                    row["additional_improvement_max"] > 0 for row in rows
+                ),
+                "additional_improvement_mean": mean(
+                    row["additional_improvement_mean"] for row in rows
+                ),
+                "additional_improvement_max": max(
+                    row["additional_improvement_max"] for row in rows
+                ),
+                "additional_improvement_per_1000_attempts_mean": mean(
+                    row["additional_improvement_per_1000_attempts"]
+                    for row in rows
+                ),
+                "additional_search_seconds_mean": mean(
+                    row["additional_search_seconds_mean"] for row in rows
+                ),
+                "delayed_gain_rate": mean(row["delayed_gain_rate"] for row in rows),
+                "continued_gain_rate": mean(
+                    row["continued_gain_rate"] for row in rows
+                ),
+                "saturated_after_probe_rate": mean(
+                    row["saturated_after_probe_rate"] for row in rows
+                ),
+                "no_gain_rate": mean(row["no_gain_rate"] for row in rows),
+                "observed_frontier_peak_increase_mean": mean(
+                    row["observed_frontier_peak_increase_mean"] for row in rows
+                ),
+            }
+        )
+    return output
+
+
+def marginal_ranking_evaluations(
+    budget_aggregates: list[dict],
+    transitions: list[dict],
+    top_fractions=(0.1, 0.25, 0.5),
+) -> list[dict]:
+    """Evaluate probe signals against *additional*, not cumulative, gain."""
+
+    probe_rows = {
+        (row["state_id"], int(row["budget"])): row
+        for row in budget_aggregates
+    }
+    score_fields = (
+        "improvement_mean",
+        "unique_accept_rate_mean",
+        "attempted_actions_mean",
+    )
+    scopes = [("all", "all", transitions)]
+    for circuit in sorted({str(row.get("circuit")) for row in transitions}):
+        scopes.append(
+            (
+                "circuit",
+                circuit,
+                [row for row in transitions if str(row.get("circuit")) == circuit],
+            )
+        )
+    for kind in sorted({str(row.get("kind")) for row in transitions}):
+        scopes.append(
+            (
+                "kind",
+                kind,
+                [row for row in transitions if str(row.get("kind")) == kind],
+            )
+        )
+
+    output = []
+    for scope_type, scope_value, scoped_rows in scopes:
+        grouped: dict[tuple[int, int], list[dict]] = defaultdict(list)
+        for row in scoped_rows:
+            grouped[(int(row["probe_budget"]), int(row["target_budget"]))].append(row)
+        for (probe_budget, target_budget), rows in sorted(grouped.items()):
+            target_successes = sum(
+                row["additional_improvement_max"] > 0 for row in rows
+            )
+            prevalence = target_successes / len(rows)
+            for score_field in score_fields:
+                ranked = sorted(
+                    rows,
+                    key=lambda row: (
+                        probe_rows[(row["state_id"], probe_budget)][score_field],
+                        -probe_rows[(row["state_id"], probe_budget)][
+                            "duplicate_rate_mean"
+                        ],
+                        row["state_id"],
+                    ),
+                    reverse=True,
+                )
+                for fraction in top_fractions:
+                    selected_count = max(1, round(len(ranked) * fraction))
+                    selected = ranked[:selected_count]
+                    selected_successes = sum(
+                        row["additional_improvement_max"] > 0 for row in selected
+                    )
+                    precision = selected_successes / selected_count
+                    output.append(
+                        {
+                            "scope_type": scope_type,
+                            "scope_value": scope_value,
+                            "probe_budget": probe_budget,
+                            "target_budget": target_budget,
+                            "score": score_field,
+                            "top_fraction": fraction,
+                            "states": len(rows),
+                            "selected": selected_count,
+                            "target_successes": target_successes,
+                            "selected_successes": selected_successes,
+                            "target_success_prevalence": prevalence,
+                            "precision": precision,
+                            "recall": selected_successes / max(1, target_successes),
+                            "lift_over_random": (
+                                precision / prevalence if prevalence else None
+                            ),
+                            "additional_improvement_mean": mean(
+                                row["additional_improvement_mean"]
+                                for row in selected
+                            ),
+                            "additional_improvement_per_1000_attempts_mean": mean(
+                                row["additional_improvement_per_1000_attempts"]
+                                for row in selected
+                            ),
+                        }
+                    )
     return output
 
 
@@ -545,7 +909,11 @@ def write_csv(path: Path, rows: list[dict]) -> None:
     if not rows:
         path.write_text("", encoding="utf-8")
         return
-    fields = [key for key in rows[0] if key != "teacher_future"]
+    fields = [
+        key
+        for key, value in rows[0].items()
+        if key != "teacher_future" and not isinstance(value, (dict, list))
+    ]
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
@@ -753,9 +1121,12 @@ def main() -> None:
     runs.sort(key=lambda row: (row["state_id"], row["budget"], row["seed"]))
     aggregates = aggregate_runs(runs)
     grouped_aggregates = group_budget_aggregates(aggregates)
-    rankings = ranking_evaluations(aggregates)
+    cumulative_rankings = ranking_evaluations(aggregates)
+    transitions = continuation_transition_aggregates(runs)
+    grouped_transitions = group_transition_aggregates(transitions)
+    marginal_rankings = marginal_ranking_evaluations(aggregates, transitions)
     summary = {
-        "format": "continuation-value-summary-v1",
+        "format": "continuation-value-summary-v2",
         "created_at": utc_now(),
         "metadata": metadata,
         "completed_physical_jobs": sum(
@@ -769,12 +1140,21 @@ def main() -> None:
         "runs": runs,
         "state_budget_aggregates": aggregates,
         "group_budget_aggregates": grouped_aggregates,
-        "probe_ranking_evaluations": rankings,
+        "continuation_transition_aggregates": transitions,
+        "group_transition_aggregates": grouped_transitions,
+        "marginal_ranking_evaluations": marginal_rankings,
+        "legacy_cumulative_probe_ranking_evaluations": cumulative_rankings,
     }
     atomic_json(output_root / "summary.json", summary)
     write_csv(output_root / "state_budget_aggregates.csv", aggregates)
     write_csv(output_root / "group_budget_aggregates.csv", grouped_aggregates)
-    write_csv(output_root / "probe_ranking_evaluations.csv", rankings)
+    write_csv(output_root / "continuation_transition_aggregates.csv", transitions)
+    write_csv(output_root / "group_transition_aggregates.csv", grouped_transitions)
+    write_csv(output_root / "marginal_ranking_evaluations.csv", marginal_rankings)
+    write_csv(
+        output_root / "legacy_cumulative_probe_ranking_evaluations.csv",
+        cumulative_rankings,
+    )
     print(
         json.dumps(
             {

@@ -360,6 +360,11 @@ the historical gate-ranking default. See
 constraints. The first logged pilot and its artifact digests are recorded in
 `CONTINUATION_VALUE_PILOT_20260908.md`.
 
+The v2 harness additionally measures only marginal value between adjacent
+budgets (`4 -> 16`, `16 -> 64`), classifies delayed/saturated/no-gain outcomes,
+handles right-censored trajectory suffixes, and builds diversity-constrained
+corpora across many trajectory directories.
+
 ## Legacy copied documentation
 
 This directory is an independent implementation of the corrected task:

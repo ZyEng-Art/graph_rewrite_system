@@ -13,6 +13,11 @@ The benchmark deliberately separates three concerns:
 3. The summary compares short-probe signals with longer-budget outcomes and
    reports their precision, recall, and lift over random state selection.
 
+Summary format v2 makes the target an added-budget marginal value. A depth-4
+probe that already removes four gates but gains nothing by depth 16 has zero
+`4 -> 16` continuation value; its earlier four-gate gain is not reused as a
+positive continuation label.
+
 No teacher action is supplied to the continuation search. Teacher-future rows
 are offline labels only.
 
@@ -42,6 +47,41 @@ Each state records:
   requested horizon.
 
 The terminal sentinel is never selected because it has no continuation action.
+
+### Cross-trajectory difficult-state corpus
+
+`build_continuation_corpus_manifest.py` recursively discovers normalized
+trajectory directories and samples across trajectories rather than taking many
+adjacent states from one long trace:
+
+```bash
+python build_continuation_corpus_manifest.py \
+  --trajectory-tree 'hardbar|barenco_tof_3|quarl_hard_path|/data/barenco' \
+  --trajectory-tree 'hardgf|gf2_6_mult|quarl_hard_path|/data/gf' \
+  --horizons 4,16,64 \
+  --probe-horizon 4 \
+  --target-horizon 64 \
+  --states-per-stratum 16 \
+  --max-per-source-stratum 2 \
+  --min-step-gap 8 \
+  --output benchmark_results/continuation_corpus/manifest.json
+```
+
+The corpus builder:
+
+- groups by circuit, teacher behavior, and whether the saved path contains an
+  observed increase before its first reduction;
+- maximizes distinct source trajectories before taking a second state from any
+  source;
+- enforces a minimum within-source step distance;
+- removes byte-identical QASM states before sampling;
+- retains every observed teacher-behavior variant when the same QASM occurs in
+  several trajectories;
+- separates right-censored terminal suffixes from fully observed `no_gain` and
+  `saturated_after_probe` labels.
+
+Teacher behavior is used for coverage-oriented sampling only. It is not passed
+to the search process and is not treated as the model search outcome.
 
 ## Runner configuration
 
@@ -95,7 +135,10 @@ events.jsonl
 summary.json
 state_budget_aggregates.csv
 group_budget_aggregates.csv
-probe_ranking_evaluations.csv
+legacy_cumulative_probe_ranking_evaluations.csv
+continuation_transition_aggregates.csv
+group_transition_aggregates.csv
+marginal_ranking_evaluations.csv
 jobs/<state>/budget-<depth>/seed-<seed>/
   job.json
   runner.log
@@ -133,6 +176,23 @@ observable probe scores:
 - short-budget improvement;
 - unique accepted successor rate;
 - attempted action count.
+
+The authoritative v2 continuation tables pair the same state and seed at
+adjacent nested budgets. They report:
+
+- added improvement, such as `best_at_4 - best_at_16`;
+- added search time, exact applies, accepted successors, duplicates, and
+  invalid actions;
+- added improvement per 1,000 attempted exact applies;
+- first-passage steps until the next improvement;
+- delayed gain, continued gain, saturation-after-probe, and no-gain rates;
+- the observed peak of the best frontier state before the next global-best
+  improvement.
+
+The last quantity describes the observed beam trace; it is not a proof that
+the increase was causally required. The legacy cumulative ranking table remains
+in the summary under an explicitly named legacy field for comparison, but it
+must not be used as continuation-value evidence.
 
 For the top 10%, 25%, and 50% of states under each score, the report includes:
 

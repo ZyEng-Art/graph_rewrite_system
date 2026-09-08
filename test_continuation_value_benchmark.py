@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 import json
 from pathlib import Path
 import tempfile
@@ -10,13 +11,21 @@ from build_continuation_manifest import (
     build_manifest,
     future_labels,
     read_trajectory,
+    trajectory_behavior,
     uniform_indices,
+)
+from build_continuation_corpus_manifest import (
+    deduplicate_candidates,
+    sample_candidates,
 )
 from continuation_value_benchmark import (
     Job,
     aggregate_runs,
+    continuation_transition_aggregates,
     group_budget_aggregates,
+    group_transition_aggregates,
     job_directory,
+    marginal_ranking_evaluations,
     normalize_result,
     ranking_evaluations,
     truncate_result_payload,
@@ -65,6 +74,93 @@ class ContinuationManifestTest(unittest.TestCase):
         self.assertEqual(len(validated), 3)
         self.assertEqual([row["trajectory_step"] for row in validated], [0, 1, 2])
         self.assertTrue(all(len(row["qasm_sha256"]) == 64 for row in validated))
+
+    def test_behavior_labels_separate_delayed_and_saturated_gain(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            states = read_trajectory(
+                self.make_trajectory(Path(temporary), costs=(10, 11, 10, 9, 9))
+            )
+            delayed = trajectory_behavior(states, 0, 2, 4)
+            saturated = trajectory_behavior(states, 2, 1, 2)
+            censored = trajectory_behavior(states, 3, 1, 4)
+        self.assertEqual(delayed["class"], "delayed_gain")
+        self.assertEqual(delayed["additional_improvement"], 1)
+        self.assertEqual(delayed["observed_peak_increase_before_improvement"], 1)
+        self.assertTrue(delayed["observed_increase_then_gain"])
+        self.assertEqual(saturated["class"], "saturated_after_probe")
+        self.assertEqual(censored["class"], "censored_no_gain")
+        self.assertTrue(censored["right_censored"])
+
+    def test_stratified_manifest_records_available_and_selected_counts(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            trajectory = self.make_trajectory(
+                Path(temporary), costs=(10, 11, 10, 9, 9, 8)
+            )
+            payload = build_manifest(
+                [TrajectorySpec("source", "circuit", "mixed", trajectory)],
+                states_per_trajectory=1,
+                horizons=[2, 4],
+                selection_method="behavior_stratified",
+                probe_horizon=1,
+                target_horizon=4,
+                states_per_stratum=1,
+            )
+        counts = payload["selection"]["source_counts"][0]
+        self.assertEqual(payload["selection"]["method"], "teacher_behavior_stratified")
+        self.assertEqual(
+            sum(counts["selected_behavior_counts"].values()),
+            len(payload["states"]),
+        )
+        self.assertTrue(all("teacher_behavior" in row for row in payload["states"]))
+
+    def test_corpus_sampling_deduplicates_and_maximizes_source_diversity(self) -> None:
+        candidates = []
+        for source in ("a", "b", "c"):
+            for step in (0, 2, 20):
+                candidates.append(
+                    {
+                        "id": f"{source}-{step}",
+                        "circuit": "demo",
+                        "behavior_stratum": "delayed_gain:detour",
+                        "source_id": source,
+                        "trajectory_step": step,
+                        "qasm_sha256": f"{source}-{step}",
+                    }
+                )
+        candidates.append({**candidates[0], "id": "duplicate"})
+        candidates.append(
+            {
+                **candidates[0],
+                "id": "same-state-different-path",
+                "behavior_stratum": "no_gain:flat",
+            }
+        )
+        unique, removed = deduplicate_candidates(candidates)
+        selected, statistics = sample_candidates(
+            unique,
+            states_per_stratum=5,
+            max_per_source_stratum=2,
+            min_step_gap=8,
+        )
+        self.assertEqual(removed, 2)
+        merged = next(row for row in unique if row["qasm_sha256"] == "a-0")
+        self.assertTrue(merged["teacher_behavior_variants"]["ambiguous"])
+        self.assertEqual(merged["behavior_stratum"], "delayed_gain:detour")
+        self.assertEqual(len(selected), 5)
+        self.assertEqual(len({row["source_id"] for row in selected}), 3)
+        self.assertLessEqual(
+            max(Counter(row["source_id"] for row in selected).values()), 2
+        )
+        for source in {row["source_id"] for row in selected}:
+            steps = sorted(
+                row["trajectory_step"]
+                for row in selected
+                if row["source_id"] == source
+            )
+            self.assertTrue(
+                all(right - left >= 8 for left, right in zip(steps, steps[1:]))
+            )
+        self.assertEqual(statistics[0]["selected_states"], 5)
 
 
 class ContinuationRunnerTest(unittest.TestCase):
@@ -215,6 +311,80 @@ class ContinuationRunnerTest(unittest.TestCase):
         normalized = normalize_result(job, prefix, wall_seconds=70.0)
         self.assertEqual(normalized["improvement"], 1)
         self.assertEqual(normalized["attempted_actions"], 30)
+        self.assertEqual(normalized["global_best_gate_count_by_depth"], [10, 9])
+        self.assertEqual(normalized["frontier_best_gate_count_by_depth"], [10, 9])
+        self.assertEqual(normalized["first_improvement_depth"], 2)
+
+    def test_transition_value_excludes_improvement_already_found_by_probe(self) -> None:
+        runs = []
+        cases = {
+            "saturated": ((2, 8), (2, 8)),
+            "delayed": ((0, 10), (3, 7)),
+            "continued": ((1, 9), (4, 6)),
+            "none": ((0, 10), (0, 10)),
+        }
+        for state_id, ((probe_gain, probe_best), (target_gain, target_best)) in cases.items():
+            for budget, improvement, best, history in (
+                (4, probe_gain, probe_best, [10, 10, probe_best, probe_best]),
+                (
+                    16,
+                    target_gain,
+                    target_best,
+                    [10, 10, probe_best, probe_best, 9, 9, target_best]
+                    + [target_best] * 9,
+                ),
+            ):
+                runs.append(
+                    {
+                        "status": "completed",
+                        "state_id": state_id,
+                        "circuit": "demo",
+                        "kind": "mixed",
+                        "source_id": "source",
+                        "trajectory_step": 0,
+                        "budget": budget,
+                        "seed": 73,
+                        "initial_gate_count": 10,
+                        "best_gate_count": best,
+                        "improvement": improvement,
+                        "search_seconds": float(budget),
+                        "wall_seconds": float(budget),
+                        "predicted_actions": budget * 20,
+                        "attempted_actions": budget * 10,
+                        "accepted_actions": budget * 5,
+                        "invalid_actions": budget,
+                        "speculative_duplicates": budget * 2,
+                        "exact_refresh_duplicates": 0,
+                        "unique_accept_rate": 0.5,
+                        "invalid_rate": 0.1,
+                        "duplicate_rate": 0.2,
+                        "global_best_gate_count_by_depth": history,
+                        "frontier_best_gate_count_by_depth": history,
+                    }
+                )
+        transitions = continuation_transition_aggregates(runs)
+        by_state = {row["state_id"]: row for row in transitions}
+        self.assertEqual(by_state["saturated"]["additional_improvement_mean"], 0)
+        self.assertEqual(
+            by_state["saturated"]["dominant_class"], "saturated_after_probe"
+        )
+        self.assertEqual(by_state["delayed"]["additional_improvement_mean"], 3)
+        self.assertEqual(by_state["delayed"]["dominant_class"], "delayed_gain")
+        self.assertEqual(by_state["continued"]["dominant_class"], "continued_gain")
+        self.assertEqual(by_state["none"]["dominant_class"], "no_gain")
+        grouped = group_transition_aggregates(transitions)
+        self.assertEqual(grouped[0]["states"], 4)
+        self.assertEqual(grouped[0]["additional_success_rate"], 0.5)
+
+        aggregates = aggregate_runs(runs)
+        rankings = marginal_ranking_evaluations(
+            aggregates, transitions, top_fractions=(0.5,)
+        )
+        overall = [row for row in rankings if row["scope_type"] == "all"]
+        self.assertTrue(overall)
+        self.assertTrue(
+            all("additional_improvement_mean" in row for row in overall)
+        )
 
     def test_aggregation_and_probe_ranking_report_lift(self) -> None:
         runs = []
