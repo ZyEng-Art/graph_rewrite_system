@@ -2163,6 +2163,7 @@ def main() -> None:
                             * args.widening_max_expansions
                         ),
                         ranked_pool_output=ranked_pool_output,
+                        ranked_pool_only=True,
                     )
                     proposal_seconds += time.perf_counter() - proposal_started
                     if len(ranked_pool_output) != 1:

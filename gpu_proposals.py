@@ -280,6 +280,7 @@ def build_gpu_proposals(
     profile_stages: bool = False,
     ranked_pool_cap: int = 0,
     ranked_pool_output: list[SelectedProposalTensors] | None = None,
+    ranked_pool_only: bool = False,
 ) -> tuple[
     list[Proposal] | None,
     dict[str, float | int],
@@ -327,6 +328,8 @@ def build_gpu_proposals(
         raise ValueError("ranked pool output is required when its cap is positive")
     if ranked_pool_cap and ranking_mode != "gate":
         raise ValueError("ranked pool capture currently requires gate ranking")
+    if ranked_pool_only and not ranked_pool_cap:
+        raise ValueError("ranked-pool-only mode requires ranked pool capture")
     if parent_diversity_actions < 1:
         raise ValueError("parent diversity actions must be positive")
     if parent_diversity_parent_cap < 0:
@@ -521,6 +524,17 @@ def build_gpu_proposals(
                 parent_ranks=rank_by_materialized_row[pool_rows],
             )
         )
+        if ranked_pool_only:
+            finish_timing("gpu_per_parent_rank_seconds", stage_started)
+            return (
+                None,
+                {
+                    "predicted_actions": predicted_actions,
+                    "eligible_actions": expanded_count,
+                },
+                timing,
+                None,
+            )
     if bool(rank_offsets.any().item()):
         lower_ranks = rank_offsets[ordered_parents]
         parent_order = parent_order[

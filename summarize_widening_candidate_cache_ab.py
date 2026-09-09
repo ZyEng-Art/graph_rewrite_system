@@ -20,6 +20,7 @@ TIMING_KEYS = {
 }
 EXPECTED_CACHE_DIFFERENCES = {
     "state_only_collation",
+    "widening_action_cache",
     "widening_candidate_cache",
 }
 
@@ -43,7 +44,7 @@ def _structural_projection(value: Any) -> Any:
     return value
 
 
-def _variant(path: Path) -> dict[str, Any]:
+def _variant(path: Path, cache_key: str) -> dict[str, Any]:
     payload = json.loads(path.read_text())
     wall_path = path.with_suffix(".wall_seconds")
     quartz_apply_seconds = _sum_steps(payload, "quartz_apply_seconds")
@@ -65,7 +66,7 @@ def _variant(path: Path) -> dict[str, Any]:
             "model_match_seconds": _sum_steps(payload, "model_match_seconds"),
             "proposal_seconds": _sum_steps(payload, "proposal_seconds"),
             "quartz_apply_seconds": quartz_apply_seconds,
-            "candidate_cache": payload["widening_candidate_cache"],
+            "cache": payload[cache_key],
         },
     }
 
@@ -82,11 +83,20 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--cache-key",
+        choices=("widening_candidate_cache", "widening_action_cache"),
+        default="widening_candidate_cache",
+    )
     args = parser.parse_args()
 
-    cache_off_before = _variant(args.input_dir / "cache_off_before.json")
-    cache_on = _variant(args.input_dir / "cache_on.json")
-    cache_off_after = _variant(args.input_dir / "cache_off_after.json")
+    cache_off_before = _variant(
+        args.input_dir / "cache_off_before.json", args.cache_key
+    )
+    cache_on = _variant(args.input_dir / "cache_on.json", args.cache_key)
+    cache_off_after = _variant(
+        args.input_dir / "cache_off_after.json", args.cache_key
+    )
     off_before_summary = cache_off_before["summary"]
     on_summary = cache_on["summary"]
     off_after_summary = cache_off_after["summary"]
