@@ -88,6 +88,23 @@ class WideningCandidateCacheTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exactly for cache misses"):
             cache.resolve([State(object())], miss_indices=[0], fresh_candidates=None)
 
+    def test_parent_with_no_candidates_round_trips_through_cache(self) -> None:
+        graphs = [object(), object()]
+        states = [State(graph) for graph in graphs]
+        cache = WideningCandidateCache(enabled=True)
+        combined, split, _ = cache.resolve(
+            states, miss_indices=[0, 1], fresh_candidates=candidates([1, 1])
+        )
+        self.assertEqual(combined.batch_ids.tolist(), [1, 1])
+        self.assertEqual(split[0].sources.numel(), 0)
+        cache.retain(states, split, [0])
+
+        reused, _, metrics = cache.resolve(
+            [State(graphs[0])], miss_indices=[], fresh_candidates=None
+        )
+        self.assertEqual(reused.sources.numel(), 0)
+        self.assertEqual(metrics["parent_hits"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
