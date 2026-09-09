@@ -79,6 +79,7 @@ class SiblingContinuationRanker(nn.Module):
         if self.prefix_width:
             if prefix_xfers is None or prefix_lengths is None:
                 raise ValueError("enabled prefix encoder requires tokens and lengths")
+            prefix_xfers = prefix_xfers.clamp_max(self.num_xfers)
             embedded = self.prefix_embedding(prefix_xfers)
             encoded, _ = self.prefix_encoder(embedded)
             positions = (prefix_lengths - 1).clamp_min(0)

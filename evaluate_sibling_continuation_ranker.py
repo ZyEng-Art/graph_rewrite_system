@@ -31,8 +31,6 @@ def main() -> None:
     )
     if corpus["input_width"] != int(checkpoint["input_width"]):
         raise ValueError("evaluation input width differs from checkpoint")
-    if corpus["num_xfers"] > int(checkpoint["num_xfers"]):
-        raise ValueError("evaluation audit contains an unseen rewrite id")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = SiblingContinuationRanker(
         int(checkpoint["input_width"]),

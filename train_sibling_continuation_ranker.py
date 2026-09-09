@@ -133,7 +133,7 @@ def load_corpus(manifest_path: Path, *, prefix_max_length: int = 0) -> dict:
         "prefix_xfers": torch.cat(prefixes) if prefixes else None,
         "prefix_lengths": torch.cat(prefix_lengths) if prefix_lengths else None,
         "num_xfers": (
-            int(max(int(tokens.max()) for tokens in prefixes))
+            int(max(int(tokens.max()) for tokens in prefixes)) + 1
             if prefixes
             else 0
         ),

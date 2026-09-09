@@ -33,6 +33,9 @@ class SiblingContinuationRankerTest(unittest.TestCase):
         self.assertTrue(
             torch.allclose(model(inputs), torch.logit(payload["probabilities"]))
         )
+        unseen = tokens.clone()
+        unseen[0, 0] = 999
+        self.assertEqual(model(inputs, unseen, lengths).shape, (3,))
 
     def test_tie_aware_accuracy(self) -> None:
         self.assertAlmostEqual(
