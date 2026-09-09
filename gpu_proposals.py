@@ -84,6 +84,18 @@ class SelectedProposalTensors:
     parent_ranks: torch.Tensor
 
 
+def select_proposal_tensor_rows(
+    tensors: SelectedProposalTensors, indices: torch.Tensor
+) -> SelectedProposalTensors:
+    indices = indices.to(device=tensors.parent_ids.device, dtype=torch.long)
+    return SelectedProposalTensors(
+        **{
+            name: getattr(tensors, name).index_select(0, indices)
+            for name in SelectedProposalTensors.__dataclass_fields__
+        }
+    )
+
+
 def materialize_selected_proposals(
     tensors: SelectedProposalTensors,
     indices: torch.Tensor | None = None,

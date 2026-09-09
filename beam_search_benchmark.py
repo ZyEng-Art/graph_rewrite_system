@@ -36,7 +36,12 @@ from dataset import (
     compact_live_slots,
     RuleMetadata,
 )
-from gpu_proposals import GpuRuleIndex, build_gpu_proposals
+from continuation_rerank import bounded_continuation_order
+from gpu_proposals import (
+    GpuRuleIndex,
+    build_gpu_proposals,
+    select_proposal_tensor_rows,
+)
 from incremental_graph import parse_pattern
 from model_factory import build_model
 from search_types import BeamState, Proposal
@@ -1634,12 +1639,24 @@ def main() -> None:
     )
     parser.add_argument(
         "--continuation-ranker-mode",
-        choices=("off", "shadow"),
+        choices=("off", "shadow", "bounded"),
         default="off",
-        help="shadow records scores and overhead without changing search order",
+        help=(
+            "shadow records scores without changing search; bounded may swap "
+            "near-tied same-parent, same-gate actions"
+        ),
     )
     parser.add_argument(
         "--continuation-ranker-batch-size", type=int, default=8192
+    )
+    parser.add_argument(
+        "--continuation-rerank-max-matcher-logit-gap", type=float, default=0.25
+    )
+    parser.add_argument(
+        "--continuation-rerank-min-score-margin", type=float, default=0.5
+    )
+    parser.add_argument(
+        "--continuation-rerank-max-promotions-per-parent", type=int, default=1
     )
     parser.add_argument(
         "--reference-data",
@@ -1806,16 +1823,22 @@ def main() -> None:
         or args.model_pipeline != "state_only_gpu"
     ):
         parser.error(
-            "continuation shadow requires --continuation-ranker-checkpoint "
+            "continuation scoring requires --continuation-ranker-checkpoint "
             "and model state_only_gpu mode"
         )
     if (
         args.continuation_ranker_checkpoint is not None
         and args.continuation_ranker_mode == "off"
     ):
-        parser.error("continuation ranker checkpoint requires shadow mode")
+        parser.error("continuation ranker checkpoint requires shadow or bounded mode")
     if args.continuation_ranker_batch_size < 1:
         parser.error("--continuation-ranker-batch-size must be positive")
+    if args.continuation_rerank_max_matcher_logit_gap < 0:
+        parser.error("continuation matcher logit gap must be nonnegative")
+    if args.continuation_rerank_min_score_margin < 0:
+        parser.error("continuation score margin must be nonnegative")
+    if args.continuation_rerank_max_promotions_per_parent < 1:
+        parser.error("continuation max promotions per parent must be positive")
     if (
         args.continuation_ranker_mode != "off"
         and args.neural_prefilter_mode == "defer"
@@ -2264,6 +2287,11 @@ def main() -> None:
     continuation_ranker_totals = {
         "candidates": 0,
         "scored_seconds": 0.0,
+        "eligible_groups": 0,
+        "eligible_candidates": 0,
+        "promotions": 0,
+        "moved_rows": 0,
+        "parents_promoted": 0,
     }
     apply_profile_totals = Counter()
     step_rows = []
@@ -2633,6 +2661,11 @@ def main() -> None:
             "mode": args.continuation_ranker_mode,
             "candidates": 0,
             "scored_seconds": 0.0,
+            "eligible_groups": 0,
+            "eligible_candidates": 0,
+            "promotions": 0,
+            "moved_rows": 0,
+            "parents_promoted": 0,
         }
         continuation_shadow_scores = None
         if args.continuation_ranker_mode != "off":
@@ -2658,6 +2691,45 @@ def main() -> None:
             )
             continuation_ranker_totals["candidates"] += len(proposals)
             continuation_ranker_totals["scored_seconds"] += continuation_seconds
+            if args.continuation_ranker_mode == "bounded":
+                order, rerank_metrics = bounded_continuation_order(
+                    proposals,
+                    continuation_shadow_scores,
+                    max_matcher_logit_gap=(
+                        args.continuation_rerank_max_matcher_logit_gap
+                    ),
+                    min_continuation_score_margin=(
+                        args.continuation_rerank_min_score_margin
+                    ),
+                    max_promotions_per_parent=(
+                        args.continuation_rerank_max_promotions_per_parent
+                    ),
+                )
+                order_tensor = torch.tensor(
+                    order,
+                    dtype=torch.long,
+                    device=proposal_feature_rows.device,
+                )
+                proposals = [proposals[index] for index in order]
+                proposal_is_deferred = [proposal_is_deferred[index] for index in order]
+                proposal_feature_rows = proposal_feature_rows.index_select(
+                    0, order_tensor
+                )
+                selected_proposal_tensors = select_proposal_tensor_rows(
+                    selected_proposal_tensors, order_tensor
+                )
+                continuation_shadow_scores = continuation_shadow_scores.index_select(
+                    0, order_tensor
+                )
+                continuation_ranker_step.update(rerank_metrics)
+                for name in (
+                    "eligible_groups",
+                    "eligible_candidates",
+                    "promotions",
+                    "moved_rows",
+                    "parents_promoted",
+                ):
+                    continuation_ranker_totals[name] += int(rerank_metrics[name])
 
         fingerprint_before = fingerprint_audit.stats()
         fingerprint_profiles = {}
@@ -4043,6 +4115,15 @@ def main() -> None:
                 str(args.continuation_ranker_checkpoint)
                 if args.continuation_ranker_checkpoint is not None
                 else None
+            ),
+            "max_matcher_logit_gap": (
+                args.continuation_rerank_max_matcher_logit_gap
+            ),
+            "min_continuation_score_margin": (
+                args.continuation_rerank_min_score_margin
+            ),
+            "max_promotions_per_parent": (
+                args.continuation_rerank_max_promotions_per_parent
             ),
             **continuation_ranker_totals,
         },
