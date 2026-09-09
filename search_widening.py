@@ -115,10 +115,16 @@ def select_widening_revisits(
         "round_robin",
         "feedback",
         "feedback_balanced",
+        "feedback_marginal",
         "feedback_ucb",
     }:
         raise ValueError("unknown widening policy")
-    if policy in {"feedback", "feedback_balanced", "feedback_ucb"} and feedback is None:
+    if policy in {
+        "feedback",
+        "feedback_balanced",
+        "feedback_marginal",
+        "feedback_ucb",
+    } and feedback is None:
         raise ValueError("feedback policy requires node statistics")
     eligible = [
         index
@@ -149,6 +155,15 @@ def select_widening_revisits(
             feedback=feedback or {},
             step=step,
             confidence_yield=True,
+        )
+    if policy == "feedback_marginal":
+        return _select_feedback_revisits(
+            states,
+            eligible=eligible,
+            slots=slots,
+            feedback=feedback or {},
+            step=step,
+            marginal_gain=True,
         )
 
     by_round: dict[int, list[int]] = defaultdict(list)
@@ -312,13 +327,18 @@ def _select_feedback_revisits(
     feedback: dict[int, SearchNodeStats],
     step: int,
     confidence_yield: bool = False,
+    marginal_gain: bool = False,
 ) -> WideningSelection:
     """Allocate four deterministic lanes using observed exact-search outcomes."""
     if not eligible or slots == 0:
         return WideningSelection(
             indices=[],
             metrics={
-                "policy": "feedback_ucb" if confidence_yield else "feedback",
+                "policy": (
+                    "feedback_ucb"
+                    if confidence_yield
+                    else "feedback_marginal" if marginal_gain else "feedback"
+                ),
                 "eligible_parents": len(eligible),
                 "target_revisits": slots,
                 "selected_revisits": 0,
@@ -335,7 +355,7 @@ def _select_feedback_revisits(
     def improvement_key(index: int) -> tuple:
         state, stats = _feedback_row(states, index, feedback)
         return (
-            -stats.descendant_gain,
+            stats.descendant_gain if marginal_gain else -stats.descendant_gain,
             int(state.gate_count),
             int(state.expansion_round),
             _deterministic_key(state, stats),
@@ -438,7 +458,11 @@ def _select_feedback_revisits(
     return WideningSelection(
         indices=selected,
         metrics={
-            "policy": "feedback_ucb" if confidence_yield else "feedback",
+            "policy": (
+                "feedback_ucb"
+                if confidence_yield
+                else "feedback_marginal" if marginal_gain else "feedback"
+            ),
             "eligible_parents": len(eligible),
             "target_revisits": slots,
             "selected_revisits": len(selected),

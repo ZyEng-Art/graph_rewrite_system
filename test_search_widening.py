@@ -202,6 +202,25 @@ class ProgressiveWideningSelectionTest(unittest.TestCase):
         self.assertEqual(result.metrics["lane_counts"]["useful_yield_ucb"], 1)
         self.assertEqual(result.indices[1], 0)
 
+    def test_feedback_marginal_prefers_unspent_descendant_headroom(self) -> None:
+        rows = [
+            State("spent", 10, 0, search_node_id=0),
+            State("headroom", 10, 0, search_node_id=1),
+        ]
+        feedback = {
+            0: SearchNodeStats(0, "a", 10, 1, best_descendant_gate=6),
+            1: SearchNodeStats(1, "b", 10, 1, best_descendant_gate=10),
+        }
+        result = select_widening_revisits(
+            rows,
+            slots=1,
+            max_expansions=3,
+            policy="feedback_marginal",
+            feedback=feedback,
+        )
+        self.assertEqual(result.indices, [1])
+        self.assertEqual(result.metrics["policy"], "feedback_marginal")
+
     def test_balanced_feedback_round_robins_sibling_cohorts(self) -> None:
         rows = [
             State(str(index), 10, 0, search_node_id=index)
