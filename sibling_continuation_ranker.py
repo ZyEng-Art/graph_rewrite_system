@@ -16,10 +16,16 @@ class SiblingContinuationRanker(nn.Module):
         input_width: int,
         hidden_width: int = 256,
         dropout: float = 0.05,
+        base_probability_index: int | None = None,
     ) -> None:
         super().__init__()
         self.input_width = int(input_width)
         self.hidden_width = int(hidden_width)
+        self.base_probability_index = (
+            int(base_probability_index)
+            if base_probability_index is not None
+            else input_width - 8
+        )
         self.input_norm = nn.LayerNorm(input_width)
         self.network = nn.Sequential(
             nn.Linear(input_width, hidden_width),
@@ -30,8 +36,16 @@ class SiblingContinuationRanker(nn.Module):
             nn.Dropout(dropout),
             nn.Linear(hidden_width, 1),
         )
+        nn.init.zeros_(self.network[-1].weight)
+        nn.init.zeros_(self.network[-1].bias)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        probability = inputs[:, self.base_probability_index].float().clamp(
+            1e-6, 1 - 1e-6
+        )
+        return torch.logit(probability) + self.residual(inputs)
+
+    def residual(self, inputs: torch.Tensor) -> torch.Tensor:
         return self.network(self.input_norm(inputs)).squeeze(-1)
 
 

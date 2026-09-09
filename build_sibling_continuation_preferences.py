@@ -19,7 +19,11 @@ def file_sha256(path: Path) -> str:
 
 
 def validate_audit(payload: dict[str, Any]) -> int:
-    if payload.get("format") != "frozen_candidate_successor_descendant_v2":
+    audit_format = payload.get("format")
+    if audit_format not in {
+        "frozen_candidate_successor_descendant_v2",
+        "frozen_candidate_successor_descendant_v3",
+    }:
         raise ValueError("audit does not contain descendant sibling labels")
     required = (
         "features",
@@ -39,6 +43,15 @@ def validate_audit(payload: dict[str, Any]) -> int:
     labels = payload.get("descendant_labels")
     if not isinstance(labels, dict):
         raise ValueError("audit is missing descendant_labels")
+    if audit_format == "frozen_candidate_successor_descendant_v2":
+        # V2 predates exposure accounting. It remains usable with the default
+        # zero minimum, but cannot satisfy a positive expansion filter.
+        labels.setdefault(
+            "child_observed_expansions", torch.zeros(rows, dtype=torch.int16)
+        )
+        labels.setdefault(
+            "child_attempted_actions", torch.zeros(rows, dtype=torch.int32)
+        )
     for key in (
         "best_descendant_gate_counts",
         "continuation_gains",
@@ -46,6 +59,8 @@ def validate_audit(payload: dict[str, Any]) -> int:
         "time_to_observed_best_descendant",
         "right_censored",
         "remaining_search_steps",
+        "child_observed_expansions",
+        "child_attempted_actions",
     ):
         if labels[key].ndim != 1 or labels[key].numel() != rows:
             raise ValueError(f"unaligned descendant label field: {key}")
@@ -57,12 +72,17 @@ def collect_sibling_pairs(
     *,
     min_remaining_steps: int,
     max_rejected_per_group: int,
+    min_child_expansions: int = 0,
+    max_child_expansion_gap: int | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, int]]:
     rows = validate_audit(payload)
     groups: dict[int, list[int]] = defaultdict(list)
     child_ids = payload["child_node_ids"].tolist()
     outcomes = payload["outcomes"].tolist()
     remaining = payload["descendant_labels"]["remaining_search_steps"].tolist()
+    expansions = payload["descendant_labels"][
+        "child_observed_expansions"
+    ].tolist()
     for row, (group, child_id, horizon) in enumerate(
         zip(payload["sibling_group_ids"].tolist(), child_ids, remaining)
     ):
@@ -73,6 +93,7 @@ def collect_sibling_pairs(
             int(outcomes[row]) == 2
             and int(child_id) >= 0
             and int(horizon) >= min_remaining_steps
+            and int(expansions[row]) >= min_child_expansions
         ):
             groups[int(group)].append(row)
 
@@ -119,6 +140,11 @@ def collect_sibling_pairs(
                 row
                 for row in candidates
                 if int(best_gates[row]) > int(best_gates[preferred])
+                and (
+                    max_child_expansion_gap is None
+                    or abs(int(expansions[row]) - int(expansions[preferred]))
+                    <= max_child_expansion_gap
+                )
             ),
             key=lambda row: (
                 -int(best_gates[row]),
@@ -147,6 +173,8 @@ def collect_sibling_pairs(
                     "rejected_parent_rank": int(ranks[rejected_row]),
                     "preferred_remaining_steps": int(remaining[preferred]),
                     "rejected_remaining_steps": int(remaining[rejected_row]),
+                    "preferred_child_expansions": int(expansions[preferred]),
+                    "rejected_child_expansions": int(expansions[rejected_row]),
                 }
             )
     return pairs, {
@@ -168,11 +196,17 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--min-remaining-steps", type=int, default=16)
     parser.add_argument("--max-rejected-per-group", type=int, default=8)
+    parser.add_argument("--min-child-expansions", type=int, default=0)
+    parser.add_argument("--max-child-expansion-gap", type=int)
     args = parser.parse_args()
     if args.min_remaining_steps < 1:
         parser.error("--min-remaining-steps must be positive")
     if args.max_rejected_per_group < 1:
         parser.error("--max-rejected-per-group must be positive")
+    if args.min_child_expansions < 0:
+        parser.error("--min-child-expansions must be nonnegative")
+    if args.max_child_expansion_gap is not None and args.max_child_expansion_gap < 0:
+        parser.error("--max-child-expansion-gap must be nonnegative")
     validation = {path.resolve() for path in args.validation_audits}
     paths = []
     seen = set()
@@ -191,6 +225,8 @@ def main() -> None:
             payload,
             min_remaining_steps=args.min_remaining_steps,
             max_rejected_per_group=args.max_rejected_per_group,
+            min_child_expansions=args.min_child_expansions,
+            max_child_expansion_gap=args.max_child_expansion_gap,
         )
         for pair in pairs:
             pair["source_id"] = source_id
@@ -213,6 +249,8 @@ def main() -> None:
         "metadata": {
             "min_remaining_steps": args.min_remaining_steps,
             "max_rejected_per_group": args.max_rejected_per_group,
+            "min_child_expansions": args.min_child_expansions,
+            "max_child_expansion_gap": args.max_child_expansion_gap,
             "train_pairs": len(train_pairs),
             "test_pairs": len(test_pairs),
             "pair_objective": "lower observed best descendant gate within sibling group",

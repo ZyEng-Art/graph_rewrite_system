@@ -184,7 +184,10 @@ def train(args) -> tuple[SiblingContinuationRanker, dict]:
     if not train_pairs["preferred"].numel():
         raise ValueError("manifest contains no training pairs")
     model = SiblingContinuationRanker(
-        corpus["input_width"], args.hidden_width, args.dropout
+        corpus["input_width"],
+        args.hidden_width,
+        args.dropout,
+        base_probability_index=corpus["input_width"] - 8,
     ).to(device)
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
@@ -208,10 +211,17 @@ def train(args) -> tuple[SiblingContinuationRanker, dict]:
                 dtype=torch.bfloat16,
                 enabled=device.type == "cuda",
             ):
-                margin = model(inputs[preferred].to(device)) - model(
-                    inputs[rejected].to(device)
+                preferred_inputs = inputs[preferred].to(device)
+                rejected_inputs = inputs[rejected].to(device)
+                preferred_score = model(preferred_inputs)
+                rejected_score = model(rejected_inputs)
+                margin = preferred_score - rejected_score
+                ranking_loss = (F.softplus(-margin) * weights).mean()
+                residual_loss = 0.5 * (
+                    model.residual(preferred_inputs).square().mean()
+                    + model.residual(rejected_inputs).square().mean()
                 )
-                loss = (F.softplus(-margin) * weights).mean()
+                loss = ranking_loss + args.residual_penalty * residual_loss
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
             optimizer.step()
@@ -250,14 +260,23 @@ def main() -> None:
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument("--grad-clip", type=float, default=1.0)
+    parser.add_argument(
+        "--residual-penalty",
+        type=float,
+        default=0.01,
+        help="L2 penalty on deviations from the frozen matcher logit baseline",
+    )
     parser.add_argument("--seed", type=int, default=907)
     args = parser.parse_args()
+    if args.residual_penalty < 0:
+        parser.error("--residual-penalty must be nonnegative")
     model, metrics = train(args)
     checkpoint = {
-        "format": "sibling_continuation_ranker_v1",
+        "format": "sibling_continuation_ranker_v2",
         "args": vars(args),
         "input_width": model.input_width,
         "hidden_width": model.hidden_width,
+        "base_probability_index": model.base_probability_index,
         "model": model.state_dict(),
         "metrics": metrics,
         "feature_spec": (

@@ -15,7 +15,7 @@ class SiblingContinuationRankerTest(unittest.TestCase):
     def test_inputs_exclude_post_search_labels(self) -> None:
         payload = {
             "features": torch.ones(3, 5),
-            "probabilities": torch.ones(3),
+            "probabilities": torch.tensor([0.2, 0.5, 0.8]),
             "gate_deltas": torch.zeros(3),
             "parent_gate_counts": torch.full((3,), 20),
             "steps": torch.arange(3),
@@ -29,6 +29,9 @@ class SiblingContinuationRankerTest(unittest.TestCase):
         self.assertEqual(inputs.shape, (3, 13))
         model = SiblingContinuationRanker(13, hidden_width=8, dropout=0.0)
         self.assertEqual(model(inputs).shape, (3,))
+        self.assertTrue(
+            torch.allclose(model(inputs), torch.logit(payload["probabilities"]))
+        )
 
     def test_tie_aware_accuracy(self) -> None:
         self.assertAlmostEqual(

@@ -3586,7 +3586,7 @@ def main() -> None:
             raise RuntimeError("neural audit collection produced no rows")
         audit_payload = {
             "format": (
-                "frozen_candidate_successor_descendant_v2"
+                "frozen_candidate_successor_descendant_v3"
                 if collect_descendant_labels
                 else "frozen_candidate_successor_v1"
             ),
@@ -3657,6 +3657,13 @@ def main() -> None:
                         "time_to_observed_best_descendant": (
                             "search steps from child edge to the strict update that "
                             "established its final observed best descendant"
+                        ),
+                        "child_observed_expansions": (
+                            "number of times the exact child itself received an "
+                            "action band during this search"
+                        ),
+                        "child_attempted_actions": (
+                            "exact actions attempted directly from the child"
                         ),
                     },
                 }

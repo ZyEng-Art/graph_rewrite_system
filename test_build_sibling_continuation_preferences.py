@@ -27,6 +27,8 @@ class BuildSiblingContinuationPreferencesTest(unittest.TestCase):
                 "time_to_observed_best_descendant": torch.tensor([2, 4, 4, -1, -1]),
                 "right_censored": torch.tensor([False, False, False, True, False]),
                 "remaining_search_steps": torch.tensor([20, 20, 20, 20, 20]),
+                "child_observed_expansions": torch.tensor([2, 3, 3, 4, 0]),
+                "child_attempted_actions": torch.tensor([32, 48, 48, 64, 0]),
             },
         }
         pairs, stats = collect_sibling_pairs(
@@ -41,6 +43,40 @@ class BuildSiblingContinuationPreferencesTest(unittest.TestCase):
         self.assertEqual(
             {row["advantage"] for row in pairs}, {2, 3}
         )
+
+    def test_exposure_filter_rejects_unexplored_and_unbalanced_pairs(self) -> None:
+        payload = {
+            "format": "frozen_candidate_successor_descendant_v2",
+            "features": torch.zeros(3, 2),
+            "outcomes": torch.full((3,), 2, dtype=torch.int8),
+            "sibling_group_ids": torch.tensor([4, 4, 4]),
+            "parent_node_ids": torch.tensor([4, 4, 4]),
+            "child_node_ids": torch.tensor([10, 11, 12]),
+            "action_parent_ranks": torch.tensor([0, 1, 2]),
+            "parent_expansion_rounds": torch.zeros(3),
+            "parent_stagnation_steps": torch.zeros(3),
+            "parent_action_depths": torch.zeros(3),
+            "descendant_labels": {
+                "best_descendant_gate_counts": torch.tensor([10, 12, 13]),
+                "continuation_gains": torch.tensor([3, 1, 0]),
+                "parent_total_gains": torch.tensor([3, 1, 0]),
+                "time_to_observed_best_descendant": torch.tensor([2, 2, -1]),
+                "right_censored": torch.tensor([False, False, True]),
+                "remaining_search_steps": torch.tensor([20, 20, 20]),
+                "child_observed_expansions": torch.tensor([2, 3, 0]),
+                "child_attempted_actions": torch.tensor([32, 48, 0]),
+            },
+        }
+        pairs, stats = collect_sibling_pairs(
+            payload,
+            min_remaining_steps=1,
+            max_rejected_per_group=8,
+            min_child_expansions=1,
+            max_child_expansion_gap=1,
+        )
+        self.assertEqual(stats["pairs"], 1)
+        self.assertEqual(pairs[0]["preferred_row"], 0)
+        self.assertEqual(pairs[0]["rejected_row"], 1)
 
 
 if __name__ == "__main__":

@@ -34,6 +34,8 @@ class SiblingContinuationLabelsTest(unittest.TestCase):
         )
         self.assertEqual(labels["right_censored"].tolist(), [False, False, True])
         self.assertEqual(labels["remaining_search_steps"].tolist(), [7, 7, 7])
+        self.assertEqual(labels["child_observed_expansions"].tolist(), [0, 0, 0])
+        self.assertEqual(labels["child_attempted_actions"].tolist(), [0, 0, 0])
 
 
 if __name__ == "__main__":

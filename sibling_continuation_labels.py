@@ -33,6 +33,8 @@ def descendant_label_tensors(
     time_to_best = []
     right_censored = []
     remaining_steps = []
+    child_observed_expansions = []
+    child_attempted_actions = []
     for child_id, parent_gate, edge_step in zip(
         child_node_ids.tolist(),
         parent_gate_counts.tolist(),
@@ -46,6 +48,8 @@ def descendant_label_tensors(
             parent_total_gains.append(0)
             time_to_best.append(-1)
             right_censored.append(False)
+            child_observed_expansions.append(0)
+            child_attempted_actions.append(0)
             continue
         node = registry.nodes[int(child_id)]
         best = (
@@ -64,6 +68,8 @@ def descendant_label_tensors(
             else -1
         )
         right_censored.append(continuation_gain == 0)
+        child_observed_expansions.append(int(node.observed_expansions))
+        child_attempted_actions.append(int(node.attempted_actions))
     return {
         "child_gate_counts": torch.tensor(child_gates, dtype=torch.int32),
         "best_descendant_gate_counts": torch.tensor(
@@ -76,4 +82,10 @@ def descendant_label_tensors(
         ),
         "right_censored": torch.tensor(right_censored, dtype=torch.bool),
         "remaining_search_steps": torch.tensor(remaining_steps, dtype=torch.int32),
+        "child_observed_expansions": torch.tensor(
+            child_observed_expansions, dtype=torch.int16
+        ),
+        "child_attempted_actions": torch.tensor(
+            child_attempted_actions, dtype=torch.int32
+        ),
     }
