@@ -1,0 +1,82 @@
+{
+  "branch": "deterministic-feedback-widening-20260909",
+  "date": "2026-09-09",
+  "decision": "shadow_only",
+  "implementation_head": "f96f4a2",
+  "balanced_collection_raw58_20000": {
+    "natural": {
+      "unique_children": 7562,
+      "expanded_unique_children": 5631,
+      "children_expanded_at_least_twice": 861,
+      "exposure_1_pairs": 234,
+      "expansion_gap_1_pairs": 179
+    },
+    "balanced": {
+      "unique_children": 8822,
+      "expanded_unique_children": 6556,
+      "children_expanded_at_least_twice": 1825,
+      "exposure_1_pairs": 308,
+      "expansion_gap_1_pairs": 282
+    }
+  },
+  "v4_frozen_evaluation": {
+    "train_circuits": 8,
+    "train_pairs": 553,
+    "train_sibling_groups": 445,
+    "validation_circuits": 7,
+    "validation_pairs": 308,
+    "validation_sibling_groups": 245,
+    "matcher_group_macro_accuracy": 0.7843537330627441,
+    "no_prefix": {
+      "pair_accuracy": 0.8441558480262756,
+      "group_macro_accuracy": 0.8353741765022278,
+      "group_macro_delta": 0.051020409911870956,
+      "group_cluster_bootstrap_95pct": [
+        0.019387755542993546,
+        0.08061224222183228
+      ]
+    },
+    "row_aligned_gru_prefix": {
+      "pair_accuracy": 0.8441558480262756,
+      "group_macro_accuracy": 0.8353741765022278,
+      "group_macro_delta": 0.051020409911870956,
+      "group_cluster_bootstrap_95pct": [
+        0.02140306867659092,
+        0.08061224222183228
+      ]
+    }
+  },
+  "independent_raw58_no_prefix": {
+    "model_group_macro_accuracy": 0.3538,
+    "matcher_group_macro_accuracy": 0.4347,
+    "group_macro_delta": -0.0809,
+    "group_cluster_bootstrap_95pct": [
+      -0.1312,
+      -0.0289
+    ]
+  },
+  "v4_shadow_validation115": {
+    "proposals_scored": 59238,
+    "audit_rows": 20000,
+    "structural_differences": [],
+    "exact_score_matches": 19938,
+    "maximum_absolute_score_error": 0.00390625,
+    "scores_within_0_01": true,
+    "pair_count": 62,
+    "online_pair_accuracy": 0.8387096524238586,
+    "offline_pair_accuracy": 0.8387096524238586,
+    "pair_order_disagreements": 0,
+    "minimum_absolute_online_margin": 0.013671875,
+    "scorer_seconds": 0.26760075450874865,
+    "shadow_off_search_seconds": 3.2898714730981737,
+    "shadow_on_search_seconds": 3.627043894957751,
+    "shadow_off_wall_seconds": 76.21170432,
+    "shadow_on_wall_seconds": 76.689776896,
+    "passed": true
+  },
+  "regression_tests": {
+    "count": 25,
+    "passed": 25
+  },
+  "artifact_root": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/experiment/sibling_continuation_audit_v3_20260909"
+}
