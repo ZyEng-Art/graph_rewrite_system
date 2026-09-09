@@ -1,0 +1,9 @@
+# Precommitted corpus membership. Keep 0_58_0_8_121 out for evaluation.
+101_38_0_12_3840.qasm
+102_38_0_9_120.qasm
+103_38_0_9_38.qasm
+104_38_-1_10_3434.qasm
+105_39_-2_11_42.qasm
+107_40_1_12_3430.qasm
+108_39_0_11_44.qasm
+109_39_0_11_4406.qasm
