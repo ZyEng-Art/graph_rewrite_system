@@ -278,6 +278,8 @@ def build_gpu_proposals(
     return_selected_tensors: bool = False,
     materialize_python_proposals: bool = True,
     profile_stages: bool = False,
+    ranked_pool_cap: int = 0,
+    ranked_pool_output: list[SelectedProposalTensors] | None = None,
 ) -> tuple[
     list[Proposal] | None,
     dict[str, float | int],
@@ -319,6 +321,12 @@ def build_gpu_proposals(
         raise ValueError("value exploration is only valid for value ranking")
     if not materialize_python_proposals and not return_selected_tensors:
         raise ValueError("deferred proposals require selected GPU tensors")
+    if ranked_pool_cap < 0:
+        raise ValueError("ranked pool cap must be nonnegative")
+    if ranked_pool_cap and ranked_pool_output is None:
+        raise ValueError("ranked pool output is required when its cap is positive")
+    if ranked_pool_cap and ranking_mode != "gate":
+        raise ValueError("ranked pool capture currently requires gate ranking")
     if parent_diversity_actions < 1:
         raise ValueError("parent diversity actions must be positive")
     if parent_diversity_parent_cap < 0:
@@ -357,6 +365,22 @@ def build_gpu_proposals(
         rule_index.all_xfer_counts[candidates.sources].sum().item()
     )
     if not expanded_count:
+        if ranked_pool_cap:
+            empty = candidates.sources[:0]
+            ranked_pool_output.append(
+                SelectedProposalTensors(
+                    parent_ids=candidates.batch_ids[:0],
+                    xfer_ids=empty,
+                    source_ids=empty,
+                    anchor_slots=candidates.anchors[:0],
+                    bindings=candidates.bindings[:0],
+                    probabilities=candidates.probabilities[:0],
+                    gate_deltas=empty,
+                    next_gate_counts=empty,
+                    value_scores=candidates.probabilities[:0],
+                    parent_ranks=empty,
+                )
+            )
         finish_timing("gpu_action_expansion_seconds", stage_started)
         return (
             [] if materialize_python_proposals else None,
@@ -477,6 +501,26 @@ def build_gpu_proposals(
     parent_rank = positions - group_start_positions
     rank_by_materialized_row = torch.empty_like(parent_rank)
     rank_by_materialized_row[parent_order] = parent_rank
+    if ranked_pool_cap:
+        pool_rows = parent_order[parent_rank < ranked_pool_cap]
+        ranked_pool_output.append(
+            SelectedProposalTensors(
+                parent_ids=parents[pool_rows],
+                xfer_ids=xfer_ids[pool_rows],
+                source_ids=source_ids[pool_rows],
+                anchor_slots=anchors[pool_rows],
+                bindings=bindings[pool_rows],
+                probabilities=probabilities[pool_rows],
+                gate_deltas=rule_index.gate_deltas[xfer_ids[pool_rows]],
+                next_gate_counts=next_gate_counts[pool_rows],
+                value_scores=torch.zeros(
+                    pool_rows.numel(),
+                    dtype=probabilities.dtype,
+                    device=device,
+                ),
+                parent_ranks=rank_by_materialized_row[pool_rows],
+            )
+        )
     if bool(rank_offsets.any().item()):
         lower_ranks = rank_offsets[ordered_parents]
         parent_order = parent_order[

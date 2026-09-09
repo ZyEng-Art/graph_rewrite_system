@@ -43,6 +43,11 @@ from search_types import BeamState, Proposal
 from search_survivor import gate_priority, path_best_gate_count, select_survivors
 from search_feedback import SearchFeedbackRegistry
 from search_widening import select_widening_revisits
+from widening_action_cache import (
+    WideningActionCache,
+    build_ranked_parent_entries,
+    select_rank_bands,
+)
 from widening_candidate_cache import WideningCandidateCache
 from successor_fingerprint import (
     FingerprintAudit,
@@ -1409,6 +1414,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--widening-action-cache",
+        choices=("off", "on"),
+        default="off",
+        help=(
+            "cache each exact parent's stable local action order and directly "
+            "slice later progressive-widening rank bands"
+        ),
+    )
+    parser.add_argument(
         "--widening-min-actions-per-parent",
         type=int,
         default=4,
@@ -1711,6 +1725,18 @@ def main() -> None:
         parser.error(
             "widening candidate cache does not yet support neural candidate features"
         )
+    if args.widening_action_cache == "on" and args.progressive_widening != "on":
+        parser.error("widening action cache requires progressive widening")
+    if args.widening_action_cache == "on" and args.proposal_ranking != "gate":
+        parser.error("widening action cache currently requires gate ranking")
+    if args.widening_action_cache == "on" and args.widening_candidate_cache == "on":
+        parser.error("widening action and candidate caches are mutually exclusive")
+    if args.widening_action_cache == "on" and (
+        args.neural_audit_output is not None or args.neural_prefilter_mode != "off"
+    ):
+        parser.error(
+            "widening action cache does not yet support neural candidate features"
+        )
     if args.apply_profile == "detailed" and args.dedup_identity != "exact":
         parser.error("detailed apply profiling requires exact graph identity")
     if args.transactional_apply == "on" and args.dedup_identity != "exact":
@@ -1987,10 +2013,17 @@ def main() -> None:
     widening_candidate_cache = WideningCandidateCache(
         enabled=args.widening_candidate_cache == "on"
     )
+    widening_action_cache = WideningActionCache(
+        enabled=args.widening_action_cache == "on"
+    )
     widening_cache_totals = Counter()
     widening_cache_peak_parents = 0
     widening_cache_peak_rows = 0
     widening_cache_peak_bytes = 0
+    widening_action_cache_totals = Counter()
+    widening_action_cache_peak_parents = 0
+    widening_action_cache_peak_rows = 0
+    widening_action_cache_peak_bytes = 0
     neural_feature_chunks = []
     neural_outcome_chunks = []
     neural_group_chunks = []
@@ -2081,11 +2114,99 @@ def main() -> None:
         proposal_feature_rows = None
         selected_proposal_tensors = None
         parent_candidate_rows = None
+        parent_action_entries = None
         widening_cache_step: dict[str, Any] = {
             "enabled": widening_candidate_cache.enabled
         }
+        widening_action_cache_step: dict[str, Any] = {
+            "enabled": widening_action_cache.enabled
+        }
         if args.mode == "model" and args.model_pipeline == "state_only_gpu":
-            if widening_candidate_cache.enabled:
+            if widening_action_cache.enabled:
+                miss_indices = widening_action_cache.miss_indices(beam)
+                fresh_entries = []
+                proposal_seconds = 0.0
+                if miss_indices:
+                    fresh_states = [beam[index] for index in miss_indices]
+                    fresh_candidates, model_seconds, collation_metrics = (
+                        state_only_candidate_tensors(
+                            fresh_states,
+                            model,
+                            device,
+                            threshold_config,
+                            source_vectors,
+                            args.microbatch,
+                            args.max_source_matches,
+                        )
+                    )
+                    ranked_pool_output = []
+                    proposal_started = time.perf_counter()
+                    build_gpu_proposals(
+                        fresh_candidates,
+                        fresh_states,
+                        gpu_rule_index,
+                        per_parent_cap=args.max_actions_per_parent,
+                        global_cap=(
+                            len(fresh_states) * args.max_actions_per_parent
+                        ),
+                        ranking_mode="gate",
+                        parent_rank_offsets=[
+                            int(state.expansion_round)
+                            * args.max_actions_per_parent
+                            for state in fresh_states
+                        ],
+                        preserve_parent_best=False,
+                        return_selected_tensors=True,
+                        materialize_python_proposals=False,
+                        ranked_pool_cap=(
+                            args.max_actions_per_parent
+                            * args.widening_max_expansions
+                        ),
+                        ranked_pool_output=ranked_pool_output,
+                    )
+                    proposal_seconds += time.perf_counter() - proposal_started
+                    if len(ranked_pool_output) != 1:
+                        raise RuntimeError("ranked action pool capture failed")
+                    fresh_entries = build_ranked_parent_entries(
+                        fresh_states,
+                        fresh_candidates,
+                        ranked_pool_output[0],
+                        gpu_rule_index,
+                    )
+                else:
+                    collation_metrics = {
+                        "live_nodes": 0,
+                        "padded_dense_slots": 0,
+                        "padded_persistent_slots": 0,
+                        "max_dense_slots": 0,
+                        "max_persistent_slots": 0,
+                    }
+                parent_action_entries, widening_action_cache_step = (
+                    widening_action_cache.resolve_entries(
+                        beam, miss_indices, fresh_entries
+                    )
+                )
+                proposal_started = time.perf_counter()
+                proposals, proposal_metrics, selected_proposal_tensors = (
+                    select_rank_bands(
+                        beam,
+                        parent_action_entries,
+                        per_parent_cap=args.max_actions_per_parent,
+                        global_cap=args.beam_size * args.proposal_factor,
+                        parent_diversity_actions=(
+                            args.widening_min_actions_per_parent
+                        ),
+                    )
+                )
+                proposal_seconds += time.perf_counter() - proposal_started
+                source_binding_candidates = sum(
+                    entry.source_binding_candidates
+                    for entry in parent_action_entries
+                )
+                total_action_candidates = int(proposal_metrics["eligible_actions"])
+                matched_action_count = int(proposal_metrics["predicted_actions"])
+                encoded_context = None
+            elif widening_candidate_cache.enabled:
                 miss_indices = widening_candidate_cache.miss_indices(beam)
                 fresh_candidates = None
                 if miss_indices:
@@ -2137,70 +2258,71 @@ def main() -> None:
                 else:
                     candidates, model_seconds, collation_metrics = candidate_result
                     encoded_context = None
-            source_binding_candidates = int(candidates.sources.numel())
-            effective_parent_cap = (
-                args.max_actions_per_parent
-                if args.progressive_widening == "on"
-                else max(
-                    args.max_actions_per_parent,
-                    math.ceil(args.beam_size / max(1, len(beam))) * 2,
-                )
-            )
-            parent_rank_offsets = (
-                [
-                    int(state.expansion_round) * args.max_actions_per_parent
-                    for state in beam
-                ]
-                if args.progressive_widening == "on"
-                else None
-            )
-            proposal_started = time.perf_counter()
-            (
-                proposals,
-                proposal_metrics,
-                _,
-                selected_proposal_tensors,
-            ) = build_gpu_proposals(
-                candidates,
-                beam,
-                gpu_rule_index,
-                per_parent_cap=effective_parent_cap,
-                global_cap=args.beam_size * args.proposal_factor,
-                ranking_mode=args.proposal_ranking,
-                ranking_seed=args.proposal_ranking_seed + step,
-                locality_action_reserve=min(
-                    args.locality_action_reserve, effective_parent_cap
-                ),
-                parent_rank_offsets=parent_rank_offsets,
-                preserve_parent_best=args.progressive_widening == "on",
-                parent_diversity_actions=(
-                    args.widening_min_actions_per_parent
+            if not widening_action_cache.enabled:
+                source_binding_candidates = int(candidates.sources.numel())
+                effective_parent_cap = (
+                    args.max_actions_per_parent
                     if args.progressive_widening == "on"
-                    else 1
-                ),
-                return_selected_tensors=need_candidate_features,
-            )
-            proposal_seconds = time.perf_counter() - proposal_started
-            if proposals is None:
-                raise RuntimeError("state-only GPU proposal materialization failed")
-            if need_candidate_features:
-                if selected_proposal_tensors is None or encoded_context is None:
-                    raise RuntimeError("neural candidate feature context is missing")
-                encoded_states, encoded_live = encoded_context
-                with torch.no_grad(), autocast_context(device):
-                    proposal_feature_rows = frozen_candidate_features(
-                        model,
-                        encoded_states,
-                        encoded_live,
-                        selected_proposal_tensors,
-                        candidate_source_states,
+                    else max(
+                        args.max_actions_per_parent,
+                        math.ceil(args.beam_size / max(1, len(beam))) * 2,
                     )
-                if collect_neural_audit:
-                    proposal_feature_rows = (
-                        proposal_feature_rows.to(torch.float16).cpu()
-                    )
-            total_action_candidates = int(proposal_metrics["eligible_actions"])
-            matched_action_count = int(proposal_metrics["predicted_actions"])
+                )
+                parent_rank_offsets = (
+                    [
+                        int(state.expansion_round) * args.max_actions_per_parent
+                        for state in beam
+                    ]
+                    if args.progressive_widening == "on"
+                    else None
+                )
+                proposal_started = time.perf_counter()
+                (
+                    proposals,
+                    proposal_metrics,
+                    _,
+                    selected_proposal_tensors,
+                ) = build_gpu_proposals(
+                    candidates,
+                    beam,
+                    gpu_rule_index,
+                    per_parent_cap=effective_parent_cap,
+                    global_cap=args.beam_size * args.proposal_factor,
+                    ranking_mode=args.proposal_ranking,
+                    ranking_seed=args.proposal_ranking_seed + step,
+                    locality_action_reserve=min(
+                        args.locality_action_reserve, effective_parent_cap
+                    ),
+                    parent_rank_offsets=parent_rank_offsets,
+                    preserve_parent_best=args.progressive_widening == "on",
+                    parent_diversity_actions=(
+                        args.widening_min_actions_per_parent
+                        if args.progressive_widening == "on"
+                        else 1
+                    ),
+                    return_selected_tensors=need_candidate_features,
+                )
+                proposal_seconds = time.perf_counter() - proposal_started
+                if proposals is None:
+                    raise RuntimeError("state-only GPU proposal materialization failed")
+                if need_candidate_features:
+                    if selected_proposal_tensors is None or encoded_context is None:
+                        raise RuntimeError("neural candidate feature context is missing")
+                    encoded_states, encoded_live = encoded_context
+                    with torch.no_grad(), autocast_context(device):
+                        proposal_feature_rows = frozen_candidate_features(
+                            model,
+                            encoded_states,
+                            encoded_live,
+                            selected_proposal_tensors,
+                            candidate_source_states,
+                        )
+                    if collect_neural_audit:
+                        proposal_feature_rows = (
+                            proposal_feature_rows.to(torch.float16).cpu()
+                        )
+                total_action_candidates = int(proposal_metrics["eligible_actions"])
+                matched_action_count = int(proposal_metrics["predicted_actions"])
         elif args.mode == "model":
             predicted, model_seconds = model_matches(
                 beam,
@@ -2931,6 +3053,37 @@ def main() -> None:
                     widening_cache_peak_bytes,
                     int(widening_cache_step["resident_bytes_after"]),
                 )
+            if widening_action_cache.enabled:
+                if parent_action_entries is None:
+                    raise RuntimeError("widening cache is missing ranked parent actions")
+                widening_action_cache_step.update(
+                    widening_action_cache.retain(
+                        input_beam,
+                        parent_action_entries,
+                        widening_selection.indices,
+                    )
+                )
+                for name in (
+                    "parent_hits",
+                    "parent_misses",
+                    "ranked_action_rows_reused",
+                    "ranked_action_rows_generated",
+                ):
+                    widening_action_cache_totals[name] += int(
+                        widening_action_cache_step[name]
+                    )
+                widening_action_cache_peak_parents = max(
+                    widening_action_cache_peak_parents,
+                    int(widening_action_cache_step["resident_parents_after"]),
+                )
+                widening_action_cache_peak_rows = max(
+                    widening_action_cache_peak_rows,
+                    int(widening_action_cache_step["resident_rows_after"]),
+                )
+                widening_action_cache_peak_bytes = max(
+                    widening_action_cache_peak_bytes,
+                    int(widening_action_cache_step["resident_bytes_after"]),
+                )
         else:
             widening_revisits = []
             widening_selection = select_widening_revisits(
@@ -3214,6 +3367,7 @@ def main() -> None:
             "survivor_selection": survivor_selection.metrics,
             "progressive_widening": widening_selection.metrics,
             "widening_candidate_cache": widening_cache_step,
+            "widening_action_cache": widening_action_cache_step,
             "search_feedback": {
                 "parents_scanned": sum(
                     counters["scanned"] > 0
@@ -3454,6 +3608,20 @@ def main() -> None:
             "peak_resident_parents": widening_cache_peak_parents,
             "peak_resident_rows": widening_cache_peak_rows,
             "peak_resident_bytes": widening_cache_peak_bytes,
+        },
+        "widening_action_cache": {
+            "enabled": widening_action_cache.enabled,
+            "parent_hits": int(widening_action_cache_totals["parent_hits"]),
+            "parent_misses": int(widening_action_cache_totals["parent_misses"]),
+            "ranked_action_rows_reused": int(
+                widening_action_cache_totals["ranked_action_rows_reused"]
+            ),
+            "ranked_action_rows_generated": int(
+                widening_action_cache_totals["ranked_action_rows_generated"]
+            ),
+            "peak_resident_parents": widening_action_cache_peak_parents,
+            "peak_resident_rows": widening_action_cache_peak_rows,
+            "peak_resident_bytes": widening_action_cache_peak_bytes,
         },
         "deterministic_search": args.deterministic_search,
         "search_feedback": (
