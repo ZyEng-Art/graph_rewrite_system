@@ -27,6 +27,7 @@ class HierarchicalRolloutTest(unittest.TestCase):
             gate_deltas=torch.zeros(3, dtype=torch.long),
             next_gate_counts=torch.full((3,), 10),
             value_scores=torch.zeros(3),
+            parent_ranks=torch.tensor([0, 1, 0]),
         )
         candidate_indices = torch.tensor([[0, 1], [2, 0]])
         candidate_mask = torch.tensor([[True, True], [True, False]])
@@ -60,6 +61,7 @@ class HierarchicalRolloutTest(unittest.TestCase):
             gate_deltas=torch.tensor([0, 1, -1]),
             next_gate_counts=torch.tensor([10, 11, 9]),
             value_scores=torch.zeros(3),
+            parent_ranks=torch.tensor([0, 1, 0]),
         )
         positions = proposal_node_positions(
             proposals,
