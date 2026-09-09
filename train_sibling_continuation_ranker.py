@@ -96,6 +96,14 @@ def load_corpus(manifest_path: Path, *, prefix_max_length: int = 0) -> dict:
         advantages = torch.tensor(
             [int(row["advantage"]) for row in rows], dtype=torch.float32
         )
+        group_ids = torch.tensor(
+            [
+                (int(row["source_id"]) << 32)
+                | int(row["sibling_group_id"])
+                for row in rows
+            ],
+            dtype=torch.long,
+        )
         source_ids = torch.tensor(
             [int(row["source_id"]) for row in rows], dtype=torch.long
         )
@@ -109,6 +117,7 @@ def load_corpus(manifest_path: Path, *, prefix_max_length: int = 0) -> dict:
             "preferred": preferred,
             "rejected": rejected,
             "advantages": advantages,
+            "group_ids": group_ids,
             "source_ids": source_ids,
             "preferred_local": preferred_local,
             "rejected_local": rejected_local,
@@ -191,6 +200,20 @@ def evaluate(
     advantages = pairs["advantages"]
     weights = advantages.sqrt()
     correct = margins.gt(0).float() + 0.5 * margins.eq(0)
+    group_accuracies = torch.stack(
+        [
+            correct[pairs["group_ids"].eq(group)].mean()
+            for group in pairs["group_ids"].unique()
+        ]
+    )
+    generator = torch.Generator().manual_seed(907)
+    bootstrap = group_accuracies[
+        torch.randint(
+            group_accuracies.numel(),
+            (10000, group_accuracies.numel()),
+            generator=generator,
+        )
+    ].mean(1)
 
     preferred_rank = []
     rejected_rank = []
@@ -213,6 +236,12 @@ def evaluate(
     result = {
         "pairs": count,
         "accuracy": float(correct.mean()),
+        "sibling_groups": int(group_accuracies.numel()),
+        "group_macro_accuracy": float(group_accuracies.mean()),
+        "group_bootstrap_95pct": [
+            float(torch.quantile(bootstrap, 0.025)),
+            float(torch.quantile(bootstrap, 0.975)),
+        ],
         "advantage_weighted_accuracy": float((correct * weights).sum() / weights.sum()),
         "mean_margin": float(margins.mean()),
         "positive_margin_p10": float(torch.quantile(margins, 0.1)),
