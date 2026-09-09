@@ -68,12 +68,18 @@ fi
 run_one() {
     local name=$1
     shift
-    /usr/bin/time -f '%e' -o "$output_dir/$name.wall_seconds" \
-        "$python_bin" beam_search_benchmark.py \
+    local started_ns
+    local finished_ns
+    started_ns=$(date +%s%N)
+    "$python_bin" beam_search_benchmark.py \
         "${common[@]}" "$@" \
         --output "$output_dir/$name.json" \
         --best-qasm "$output_dir/$name.best.qasm" \
         >"$output_dir/$name.log" 2>&1
+    finished_ns=$(date +%s%N)
+    awk -v start="$started_ns" -v finish="$finished_ns" \
+        'BEGIN { printf "%.9f\n", (finish - start) / 1000000000 }' \
+        >"$output_dir/$name.wall_seconds"
 }
 
 run_one fixed_top128 --progressive-widening off
