@@ -42,6 +42,7 @@ from model_factory import build_model
 from search_types import BeamState, Proposal
 from search_survivor import gate_priority, path_best_gate_count, select_survivors
 from search_feedback import SearchFeedbackRegistry
+from sibling_continuation_labels import descendant_label_tensors
 from search_widening import select_widening_revisits
 from widening_action_cache import (
     WideningActionCache,
@@ -1498,6 +1499,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--neural-descendant-labels",
+        choices=("off", "on"),
+        default="off",
+        help=(
+            "augment neural audit rows after search with observed sibling "
+            "continuation gain, censoring, action rank, and prefix metadata"
+        ),
+    )
+    parser.add_argument(
         "--neural-prefilter-checkpoint",
         type=Path,
         help=(
@@ -1747,6 +1757,16 @@ def main() -> None:
     ):
         parser.error(
             "neural audit collection and neural prefiltering cannot be combined"
+        )
+    if args.neural_descendant_labels == "on" and args.neural_audit_output is None:
+        parser.error("neural descendant labels require --neural-audit-output")
+    if args.neural_descendant_labels == "on" and not (
+        args.progressive_widening == "on"
+        and args.widening_policy == "feedback"
+        and args.deterministic_search
+    ):
+        parser.error(
+            "neural descendant labels require deterministic feedback widening"
         )
     if (
         args.mode == "model"
@@ -2007,6 +2027,7 @@ def main() -> None:
         )
     best_state = beam[0]
     collect_neural_audit = args.neural_audit_output is not None
+    collect_descendant_labels = args.neural_descendant_labels == "on"
     need_candidate_features = (
         collect_neural_audit or args.neural_prefilter_mode != "off"
     )
@@ -2033,6 +2054,13 @@ def main() -> None:
     neural_gate_delta_chunks = []
     neural_parent_gate_chunks = []
     neural_step_chunks = []
+    neural_parent_node_chunks = []
+    neural_child_node_chunks = []
+    neural_parent_rank_chunks = []
+    neural_parent_expansion_chunks = []
+    neural_parent_stagnation_chunks = []
+    neural_parent_depth_chunks = []
+    neural_parent_histories: dict[int, list[list[int]]] = {}
     if collect_neural_audit:
         successor_groups = {exact_graph_key(graph): 0}
         next_successor_group = 1
@@ -2477,6 +2505,7 @@ def main() -> None:
         direct_inverse_skipped_positions = set()
         neural_step_outcomes = []
         neural_step_groups = []
+        neural_step_child_nodes = []
         apply_profile_step = Counter()
         detailed_profile = (
             apply_profile_step if args.apply_profile == "detailed" else None
@@ -2791,6 +2820,8 @@ def main() -> None:
                 if collect_neural_audit:
                     neural_step_outcomes.append(0)
                     neural_step_groups.append(-1)
+                    if collect_descendant_labels:
+                        neural_step_child_nodes.append(-1)
                 fingerprint_audit.observe_invalid(fingerprint)
                 if direct_inverse and args.preapply_direct_inverse == "shadow":
                     direct_inverse_step["shadow_invalid"] += 1
@@ -2862,15 +2893,18 @@ def main() -> None:
                 duplicates += 1
                 parent_feedback_step[proposal.parent]["valid"] += 1
                 parent_feedback_step[proposal.parent]["duplicate"] += 1
+                duplicate_node_id = -1
                 if (
                     search_feedback is not None
                     and search_feedback.has_identity(exact_identity)
                 ):
-                    search_feedback.add_parent_edge(
+                    duplicate_node_id = search_feedback.add_parent_edge(
                         exact_identity,
                         beam[proposal.parent].search_node_id,
                         step=step + 1,
                     )
+                if collect_descendant_labels:
+                    neural_step_child_nodes.append(duplicate_node_id)
                 if neural_deferred:
                     neural_prefilter_step["deferred_duplicates"] += 1
                     neural_prefilter_totals["deferred_duplicates"] += 1
@@ -2896,6 +2930,8 @@ def main() -> None:
                 child.search_identity_order = search_feedback.nodes[
                     child.search_node_id
                 ].identity_order
+            if collect_descendant_labels:
+                neural_step_child_nodes.append(child.search_node_id)
             parent_feedback_step[proposal.parent]["valid"] += 1
             parent_feedback_step[proposal.parent]["unique"] += 1
             if child.gate_count < beam[proposal.parent].gate_count:
@@ -2929,6 +2965,12 @@ def main() -> None:
             if len(neural_step_outcomes) != proposals_scanned:
                 raise RuntimeError(
                     "neural audit labels do not align with scanned proposals"
+                )
+            if collect_descendant_labels and (
+                len(neural_step_child_nodes) != proposals_scanned
+            ):
+                raise RuntimeError(
+                    "descendant node labels do not align with scanned proposals"
                 )
             selected_rows = slice(0, proposals_scanned)
             neural_feature_chunks.append(proposal_feature_rows[selected_rows])
@@ -2968,6 +3010,43 @@ def main() -> None:
                     (proposals_scanned,), step + 1, dtype=torch.int16
                 )
             )
+            if collect_descendant_labels:
+                parent_node_ids = torch.tensor(
+                    [state.search_node_id for state in input_beam],
+                    dtype=torch.long,
+                ).index_select(0, parent_rows)
+                neural_parent_node_chunks.append(parent_node_ids)
+                neural_child_node_chunks.append(
+                    torch.tensor(neural_step_child_nodes, dtype=torch.long)
+                )
+                neural_parent_rank_chunks.append(
+                    selected_proposal_tensors.parent_ranks[selected_rows]
+                    .to(torch.int32)
+                    .cpu()
+                )
+                neural_parent_expansion_chunks.append(
+                    torch.tensor(
+                        [state.expansion_round for state in input_beam],
+                        dtype=torch.int16,
+                    ).index_select(0, parent_rows)
+                )
+                neural_parent_stagnation_chunks.append(
+                    torch.tensor(
+                        [state.stagnation_steps for state in input_beam],
+                        dtype=torch.int32,
+                    ).index_select(0, parent_rows)
+                )
+                neural_parent_depth_chunks.append(
+                    torch.tensor(
+                        [state.depth for state in input_beam], dtype=torch.int32
+                    ).index_select(0, parent_rows)
+                )
+                for parent_index in parent_rows.unique().tolist():
+                    state = input_beam[int(parent_index)]
+                    neural_parent_histories.setdefault(
+                        int(state.search_node_id),
+                        [list(map(int, action)) for action in state.history],
+                    )
         fingerprint_after = fingerprint_audit.stats()
         fingerprint_step = {
             key: fingerprint_after[key] - fingerprint_before[key]
@@ -3506,7 +3585,11 @@ def main() -> None:
         if not neural_audit_rows:
             raise RuntimeError("neural audit collection produced no rows")
         audit_payload = {
-            "format": "frozen_candidate_successor_v1",
+            "format": (
+                "frozen_candidate_successor_descendant_v2"
+                if collect_descendant_labels
+                else "frozen_candidate_successor_v1"
+            ),
             "qasm": str(args.qasm),
             "checkpoint": str(args.checkpoint),
             "feature_width": int(neural_feature_chunks[0].shape[1]),
@@ -3526,6 +3609,58 @@ def main() -> None:
             "parent_gate_counts": torch.cat(neural_parent_gate_chunks),
             "steps": torch.cat(neural_step_chunks),
         }
+        if collect_descendant_labels:
+            if search_feedback is None:
+                raise RuntimeError("descendant labels require search feedback")
+            parent_node_ids = torch.cat(neural_parent_node_chunks)
+            child_node_ids = torch.cat(neural_child_node_chunks)
+            edge_steps = torch.cat(neural_step_chunks).to(torch.int32)
+            parent_gate_counts = torch.cat(neural_parent_gate_chunks).to(torch.int32)
+            audit_payload.update(
+                {
+                    "sibling_group_ids": parent_node_ids,
+                    "parent_node_ids": parent_node_ids,
+                    "child_node_ids": child_node_ids,
+                    "action_parent_ranks": torch.cat(neural_parent_rank_chunks),
+                    "parent_expansion_rounds": torch.cat(
+                        neural_parent_expansion_chunks
+                    ),
+                    "parent_stagnation_steps": torch.cat(
+                        neural_parent_stagnation_chunks
+                    ),
+                    "parent_action_depths": torch.cat(neural_parent_depth_chunks),
+                    "parent_histories": [
+                        {
+                            "node_id": node_id,
+                            "history": neural_parent_histories[node_id],
+                        }
+                        for node_id in sorted(neural_parent_histories)
+                    ],
+                    "descendant_labels": descendant_label_tensors(
+                        search_feedback,
+                        child_node_ids,
+                        parent_gate_counts,
+                        edge_steps,
+                        observation_end_step=len(step_rows),
+                    ),
+                    "descendant_label_semantics": {
+                        "continuation_gain": (
+                            "child_gate_count - best observed descendant gate count"
+                        ),
+                        "parent_total_gain": (
+                            "parent_gate_count - best observed descendant gate count"
+                        ),
+                        "right_censored": (
+                            "valid child with no observed continuation gain before "
+                            "the search ended"
+                        ),
+                        "time_to_observed_best_descendant": (
+                            "search steps from child edge to the strict update that "
+                            "established its final observed best descendant"
+                        ),
+                    },
+                }
+            )
         args.neural_audit_output.parent.mkdir(parents=True, exist_ok=True)
         torch.save(audit_payload, args.neural_audit_output)
     result = {
