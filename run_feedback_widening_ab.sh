@@ -6,8 +6,9 @@ if [[ $# -lt 3 || $# -gt 6 ]]; then
     exit 2
 fi
 
-qasm=$1
-output_dir=$2
+qasm=$(realpath "$1")
+mkdir -p "$2"
+output_dir=$(realpath "$2")
 gpu=$3
 target_gate=${4:-0}
 depth=${5:-512}
@@ -25,7 +26,6 @@ if [[ ! -f "$qasm" ]]; then
     exit 4
 fi
 
-mkdir -p "$output_dir"
 cd "$root/experiment/refresh_consistency_model_20260906"
 export CUDA_VISIBLE_DEVICES=$gpu
 export LD_LIBRARY_PATH=./quartz_exact_key/build
