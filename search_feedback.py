@@ -19,6 +19,7 @@ class SearchNodeStats:
     gate_count: int
     depth: int
     origin_parent_id: int | None = None
+    origin_continuation_score: float | None = None
     parent_ids: set[int] = field(default_factory=set)
     attempted_actions: int = 0
     valid_actions: int = 0
@@ -70,6 +71,7 @@ class SearchFeedbackRegistry:
         gate_count: int,
         depth: int,
         parent_id: int | None = None,
+        origin_continuation_score: float | None = None,
         step: int = 0,
     ) -> int:
         node_id = self._next_node_id
@@ -84,6 +86,11 @@ class SearchFeedbackRegistry:
             depth=int(depth),
             origin_parent_id=(
                 int(parent_id) if parent_id is not None else None
+            ),
+            origin_continuation_score=(
+                float(origin_continuation_score)
+                if origin_continuation_score is not None
+                else None
             ),
             best_descendant_gate=int(gate_count),
         )

@@ -3,7 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 import unittest
 
-from search_widening import select_widening_revisits
+from search_widening import (
+    continuation_revisit_shadow_rows,
+    select_widening_revisits,
+)
 from search_feedback import SearchNodeStats
 
 
@@ -20,6 +23,7 @@ class State:
     path_best_gate_count: int = 10
     search_node_id: int = -1
     search_identity_order: str = ""
+    origin_continuation_score: float | None = None
 
 
 class ProgressiveWideningSelectionTest(unittest.TestCase):
@@ -193,6 +197,51 @@ class ProgressiveWideningSelectionTest(unittest.TestCase):
         self.assertEqual(set(result.indices), {1, 2, 4, 5})
         self.assertEqual(result.metrics["lane_counts"], {"balanced_sibling": 4})
         self.assertEqual(result.metrics["eligible_sibling_groups"], 2)
+
+    def test_continuation_revisit_shadow_does_not_change_feedback_selection(self) -> None:
+        rows = [
+            State(
+                str(index),
+                10,
+                0,
+                search_node_id=index,
+                origin_continuation_score=float(index),
+            )
+            for index in range(4)
+        ]
+        feedback = {
+            index: SearchNodeStats(
+                index,
+                f"id-{index}",
+                10,
+                1,
+                observed_expansions=index,
+                best_descendant_gate=10,
+            )
+            for index in range(4)
+        }
+        actual = select_widening_revisits(
+            rows,
+            slots=2,
+            max_expansions=4,
+            policy="feedback",
+            feedback=feedback,
+        )
+        before = list(actual.indices)
+        shadow = continuation_revisit_shadow_rows(
+            rows,
+            max_expansions=4,
+            slots=2,
+            step=3,
+            feedback=feedback,
+            actually_selected=actual.indices,
+        )
+        self.assertEqual(actual.indices, before)
+        self.assertEqual(
+            [row["node_id"] for row in shadow if row["shadow_selected"]],
+            [3, 2],
+        )
+        self.assertTrue(all(row["selection_step"] == 3 for row in shadow))
 
 
 if __name__ == "__main__":

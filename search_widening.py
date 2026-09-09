@@ -15,6 +15,65 @@ class WideningSelection:
     metrics: dict[str, Any]
 
 
+def continuation_revisit_shadow_rows(
+    states: list[Any],
+    *,
+    max_expansions: int,
+    slots: int,
+    step: int,
+    feedback: dict[int, SearchNodeStats],
+    actually_selected: list[int],
+) -> list[dict[str, Any]]:
+    """Rank eligible scored branches without changing the widening selection."""
+
+    if slots < 1:
+        return []
+    eligible = [
+        index
+        for index, state in enumerate(states)
+        if int(getattr(state, "expansion_round", 0)) + 1 < max_expansions
+        and getattr(state, "origin_continuation_score", None) is not None
+    ]
+    eligible.sort(
+        key=lambda index: (
+            -float(states[index].origin_continuation_score),
+            int(states[index].gate_count),
+            int(states[index].expansion_round),
+            _deterministic_key(*_feedback_row(states, index, feedback)),
+        )
+    )
+    actual = set(actually_selected)
+    rows = []
+    for rank, index in enumerate(eligible):
+        state, stats = _feedback_row(states, index, feedback)
+        best_before = (
+            stats.gate_count
+            if stats.best_descendant_gate is None
+            else int(stats.best_descendant_gate)
+        )
+        rows.append(
+            {
+                "selection_step": int(step),
+                "beam_index": int(index),
+                "node_id": int(stats.node_id),
+                "continuation_score": float(state.origin_continuation_score),
+                "shadow_rank": int(rank),
+                "shadow_selected": bool(rank < slots),
+                "feedback_selected": bool(index in actual),
+                "gate_count": int(state.gate_count),
+                "action_depth": int(getattr(state, "depth", len(state.history))),
+                "expansion_round_before": int(state.expansion_round),
+                "observed_expansions_before": int(stats.observed_expansions),
+                "attempted_actions_before": int(stats.attempted_actions),
+                "best_descendant_gate_before": best_before,
+                "descendant_gain_before": int(stats.descendant_gain),
+                "novel_yield_before": float(stats.novel_yield),
+                "valid_yield_before": float(stats.valid_yield),
+            }
+        )
+    return rows
+
+
 def _stable_tiebreak(state: Any, *, seed: int, step: int) -> int:
     payload = (
         seed,

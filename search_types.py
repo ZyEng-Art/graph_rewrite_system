@@ -35,6 +35,7 @@ class BeamState:
     widened_action_trace: tuple[tuple[int, int, int, int], ...] = ()
     search_node_id: int = -1
     search_identity_order: str = ""
+    origin_continuation_score: float | None = None
 
 
 @dataclass(frozen=True)

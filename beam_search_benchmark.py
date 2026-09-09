@@ -52,7 +52,10 @@ from sibling_continuation_ranker import (
     SiblingContinuationRanker,
     continuation_ranker_inputs,
 )
-from search_widening import select_widening_revisits
+from search_widening import (
+    continuation_revisit_shadow_rows,
+    select_widening_revisits,
+)
 from widening_action_cache import (
     WideningActionCache,
     build_ranked_parent_entries,
@@ -1659,6 +1662,15 @@ def main() -> None:
         "--continuation-rerank-max-promotions-per-parent", type=int, default=1
     )
     parser.add_argument(
+        "--continuation-revisit-shadow-slots",
+        type=int,
+        default=0,
+        help=(
+            "audit the top scored materialized branches at each widening "
+            "decision without changing feedback selection"
+        ),
+    )
+    parser.add_argument(
         "--reference-data",
         type=Path,
         help=(
@@ -1839,6 +1851,19 @@ def main() -> None:
         parser.error("continuation score margin must be nonnegative")
     if args.continuation_rerank_max_promotions_per_parent < 1:
         parser.error("continuation max promotions per parent must be positive")
+    if args.continuation_revisit_shadow_slots < 0:
+        parser.error("continuation revisit shadow slots must be nonnegative")
+    if args.continuation_revisit_shadow_slots and not (
+        args.continuation_ranker_mode == "shadow"
+        and args.neural_audit_output is not None
+        and args.neural_descendant_labels == "on"
+        and args.progressive_widening == "on"
+        and args.widening_policy in {"feedback", "feedback_balanced"}
+    ):
+        parser.error(
+            "continuation revisit shadow requires shadow scoring, descendant "
+            "audit, and deterministic feedback widening"
+        )
     if (
         args.continuation_ranker_mode != "off"
         and args.neural_prefilter_mode == "defer"
@@ -2233,6 +2258,7 @@ def main() -> None:
     neural_parent_histories: dict[int, list[list[int]]] = {}
     neural_parent_history_xfer_ids: list[list[int]] = []
     neural_continuation_score_chunks = []
+    continuation_revisit_rows: list[dict[str, Any]] = []
     if collect_neural_audit:
         successor_groups = {exact_graph_key(graph): 0}
         next_successor_group = 1
@@ -2668,6 +2694,7 @@ def main() -> None:
             "parents_promoted": 0,
         }
         continuation_shadow_scores = None
+        continuation_branch_scores = None
         if args.continuation_ranker_mode != "off":
             if proposal_feature_rows is None or selected_proposal_tensors is None:
                 raise RuntimeError("continuation shadow proposal features are missing")
@@ -2691,6 +2718,10 @@ def main() -> None:
             )
             continuation_ranker_totals["candidates"] += len(proposals)
             continuation_ranker_totals["scored_seconds"] += continuation_seconds
+            if args.continuation_revisit_shadow_slots:
+                continuation_branch_scores = (
+                    continuation_shadow_scores.detach().float().cpu().tolist()
+                )
             if args.continuation_ranker_mode == "bounded":
                 order, rerank_metrics = bounded_continuation_order(
                     proposals,
@@ -3170,12 +3201,17 @@ def main() -> None:
                 eliminate_rotation=args.eliminate_rotation,
                 profile=detailed_profile,
             )
+            if continuation_branch_scores is not None:
+                child.origin_continuation_score = float(
+                    continuation_branch_scores[proposal_position]
+                )
             if search_feedback is not None:
                 child.search_node_id = search_feedback.add_node(
                     exact_identity,
                     gate_count=child.gate_count,
                     depth=child.depth,
                     parent_id=beam[proposal.parent].search_node_id,
+                    origin_continuation_score=child.origin_continuation_score,
                     step=step + 1,
                 )
                 child.search_identity_order = search_feedback.nodes[
@@ -3359,6 +3395,27 @@ def main() -> None:
                     else None
                 ),
             )
+            if args.continuation_revisit_shadow_slots:
+                shadow_rows = continuation_revisit_shadow_rows(
+                    input_beam,
+                    max_expansions=args.widening_max_expansions,
+                    slots=args.continuation_revisit_shadow_slots,
+                    step=step + 1,
+                    feedback=search_feedback.nodes,
+                    actually_selected=widening_selection.indices,
+                )
+                continuation_revisit_rows.extend(shadow_rows)
+                widening_selection.metrics["continuation_shadow"] = {
+                    "slots": args.continuation_revisit_shadow_slots,
+                    "eligible_scored_branches": len(shadow_rows),
+                    "selected_branches": sum(
+                        row["shadow_selected"] for row in shadow_rows
+                    ),
+                    "feedback_overlap": sum(
+                        row["shadow_selected"] and row["feedback_selected"]
+                        for row in shadow_rows
+                    ),
+                }
             widening_revisits = [
                 replace(
                     input_beam[index],
@@ -3942,6 +3999,51 @@ def main() -> None:
                     },
                 }
             )
+            if continuation_revisit_rows:
+                rendered_revisit_rows = []
+                for row in continuation_revisit_rows:
+                    stats = search_feedback.nodes[int(row["node_id"])]
+                    best_final = (
+                        stats.gate_count
+                        if stats.best_descendant_gate is None
+                        else int(stats.best_descendant_gate)
+                    )
+                    rendered_revisit_rows.append(
+                        {
+                            **row,
+                            "observed_expansions_final": int(
+                                stats.observed_expansions
+                            ),
+                            "additional_observed_expansions": int(
+                                stats.observed_expansions
+                                - row["observed_expansions_before"]
+                            ),
+                            "attempted_actions_final": int(stats.attempted_actions),
+                            "best_descendant_gate_final": best_final,
+                            "future_descendant_gain": max(
+                                0,
+                                int(row["best_descendant_gate_before"])
+                                - best_final,
+                            ),
+                        }
+                    )
+                audit_payload["continuation_revisit_shadow"] = {
+                    "slots": args.continuation_revisit_shadow_slots,
+                    "rows": rendered_revisit_rows,
+                    "semantics": {
+                        "future_descendant_gain": (
+                            "best descendant gate before this selection "
+                            "opportunity minus the final observed best"
+                        ),
+                        "additional_observed_expansions": (
+                            "final direct expansions minus expansions observed "
+                            "before this selection opportunity"
+                        ),
+                        "shadow_selected": (
+                            "top continuation-score branch; never changes search"
+                        ),
+                    },
+                }
         args.neural_audit_output.parent.mkdir(parents=True, exist_ok=True)
         torch.save(audit_payload, args.neural_audit_output)
     result = {
@@ -4126,6 +4228,13 @@ def main() -> None:
                 args.continuation_rerank_max_promotions_per_parent
             ),
             **continuation_ranker_totals,
+        },
+        "continuation_revisit_shadow": {
+            "slots": args.continuation_revisit_shadow_slots,
+            "rows": len(continuation_revisit_rows),
+            "selection_opportunities": len(
+                {row["selection_step"] for row in continuation_revisit_rows}
+            ),
         },
         "apply_profile": {
             "mode": args.apply_profile,
