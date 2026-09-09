@@ -24,6 +24,10 @@ class ContinuationRevisitRankerTest(unittest.TestCase):
             "future_descendant_gain": 99,
         }
         self.assertEqual(feature_row(row), [1.0, 0.5, 0.5, 0.5, 0.75, 0.5])
+        self.assertEqual(
+            feature_row(row, ("action_depth", "novel_yield_before")),
+            [0.5, 0.75],
+        )
 
     def test_group_weighting_equalizes_opportunities(self) -> None:
         base = {

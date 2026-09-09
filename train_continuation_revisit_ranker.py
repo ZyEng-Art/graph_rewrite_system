@@ -24,15 +24,18 @@ FEATURE_NAMES = (
 )
 
 
-def feature_row(row: dict) -> list[float]:
-    return [
-        float(row["continuation_score"]) / 8.0,
-        float(row["action_depth"]) / 64.0,
-        float(row["attempted_actions_before"]) / 1024.0,
-        float(row["descendant_gain_before"]) / 8.0,
-        float(row["novel_yield_before"]),
-        float(row["valid_yield_before"]),
-    ]
+def feature_row(
+    row: dict, feature_names: tuple[str, ...] = FEATURE_NAMES
+) -> list[float]:
+    values = {
+        "origin_continuation_score": float(row["continuation_score"]) / 8.0,
+        "action_depth": float(row["action_depth"]) / 64.0,
+        "attempted_actions_before": float(row["attempted_actions_before"]) / 1024.0,
+        "descendant_gain_before": float(row["descendant_gain_before"]) / 8.0,
+        "novel_yield_before": float(row["novel_yield_before"]),
+        "valid_yield_before": float(row["valid_yield_before"]),
+    }
+    return [values[name] for name in feature_names]
 
 
 def load_rows(patterns: list[str]) -> tuple[list[dict], list[dict]]:
@@ -202,6 +205,13 @@ def main() -> None:
     parser.add_argument("--learning-rate", type=float, default=0.03)
     parser.add_argument("--weight-decay", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=73)
+    parser.add_argument(
+        "--exclude-features",
+        nargs="*",
+        choices=FEATURE_NAMES,
+        default=(),
+        help="Selection-time features to omit for a predeclared ablation.",
+    )
     args = parser.parse_args()
     torch.manual_seed(args.seed)
     random.seed(args.seed)
@@ -217,13 +227,23 @@ def main() -> None:
     if not train_pairs["preferred"].numel():
         raise ValueError("training audits contain no comparable revisit pairs")
 
-    train_inputs = torch.tensor([feature_row(row) for row in train_rows])
-    validation_inputs = torch.tensor([feature_row(row) for row in validation_rows])
+    excluded_features = set(args.exclude_features)
+    feature_names = tuple(
+        name for name in FEATURE_NAMES if name not in excluded_features
+    )
+    if not feature_names:
+        raise ValueError("at least one feature must remain")
+    train_inputs = torch.tensor(
+        [feature_row(row, feature_names) for row in train_rows]
+    )
+    validation_inputs = torch.tensor(
+        [feature_row(row, feature_names) for row in validation_rows]
+    )
     mean = train_inputs.mean(dim=0)
     scale = train_inputs.std(dim=0).clamp_min(1e-6)
     train_inputs = (train_inputs - mean) / scale
     validation_inputs = (validation_inputs - mean) / scale
-    model = nn.Linear(len(FEATURE_NAMES), 1, bias=False)
+    model = nn.Linear(len(feature_names), 1, bias=False)
     nn.init.zeros_(model.weight)
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
@@ -271,7 +291,7 @@ def main() -> None:
     weights = model.weight.detach().squeeze(0) / scale
     checkpoint = {
         "format": "continuation_revisit_linear_ranker_v1",
-        "feature_names": FEATURE_NAMES,
+        "feature_names": feature_names,
         "feature_mean": mean,
         "feature_scale": scale,
         "model": model.state_dict(),
@@ -283,7 +303,7 @@ def main() -> None:
         "validation_sources": validation_sources,
         "history": history,
         "effective_raw_feature_weights": {
-            name: float(value) for name, value in zip(FEATURE_NAMES, weights)
+            name: float(value) for name, value in zip(feature_names, weights)
         },
         "train": evaluate_split(train_rows, train_pairs, train_scores),
         "validation": evaluate_split(
