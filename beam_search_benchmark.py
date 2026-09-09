@@ -2494,10 +2494,6 @@ def main() -> None:
                             selected_proposal_tensors,
                             candidate_source_states,
                         )
-                    if collect_neural_audit:
-                        proposal_feature_rows = (
-                            proposal_feature_rows.to(torch.float16).cpu()
-                        )
                 total_action_candidates = int(proposal_metrics["eligible_actions"])
                 matched_action_count = int(proposal_metrics["predicted_actions"])
         elif args.mode == "model":
@@ -3151,7 +3147,9 @@ def main() -> None:
                     "descendant node labels do not align with scanned proposals"
                 )
             selected_rows = slice(0, proposals_scanned)
-            neural_feature_chunks.append(proposal_feature_rows[selected_rows])
+            neural_feature_chunks.append(
+                proposal_feature_rows[selected_rows].to(torch.float16).cpu()
+            )
             if continuation_shadow_scores is not None:
                 neural_continuation_score_chunks.append(
                     continuation_shadow_scores[selected_rows].float().cpu()
