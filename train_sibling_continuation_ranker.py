@@ -144,6 +144,8 @@ def evaluate(
     pairs: dict[str, torch.Tensor],
     device: torch.device,
     batch_size: int,
+    *,
+    include_sources: bool = True,
 ) -> dict:
     count = int(pairs["preferred"].numel())
     if not count:
@@ -208,7 +210,7 @@ def evaluate(
         rejected_gate.append(row["gate_delta"][right])
         preferred_probability.append(row["probability"][left])
         rejected_probability.append(row["probability"][right])
-    return {
+    result = {
         "pairs": count,
         "accuracy": float(correct.mean()),
         "advantage_weighted_accuracy": float((correct * weights).sum() / weights.sum()),
@@ -226,6 +228,29 @@ def evaluate(
             ),
         },
     }
+    if include_sources:
+        result["sources"] = []
+        for source_id in pairs["source_ids"].unique(sorted=True).tolist():
+            mask = pairs["source_ids"].eq(int(source_id))
+            selected_pairs = {
+                key: value[mask] for key, value in pairs.items()
+            }
+            source = corpus["manifest"]["sources"][int(source_id)]
+            result["sources"].append(
+                {
+                    "source_id": int(source_id),
+                    "path": source["path"],
+                    **evaluate(
+                        model,
+                        corpus,
+                        selected_pairs,
+                        device,
+                        batch_size,
+                        include_sources=False,
+                    ),
+                }
+            )
+    return result
 
 
 def train(args) -> tuple[SiblingContinuationRanker, dict]:
