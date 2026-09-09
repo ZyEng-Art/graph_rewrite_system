@@ -35,10 +35,15 @@ def is_exploration_candidate(
     )
 
 
-def gate_priority(state: Any) -> tuple[int, int]:
+def gate_priority(state: Any) -> tuple[int, int, str]:
+    # Feedback-search states carry a digest of their exact Quartz identity.
+    # Using it only as a final ordering key makes equal-cost survivor cuts
+    # independent of CUDA candidate materialization order.  Historical states
+    # have an empty key, preserving their former stable-input ordering.
     return (
         int(state.gate_count),
         len(state.history),
+        str(getattr(state, "search_identity_order", "")),
     )
 
 

@@ -157,60 +157,39 @@ def _preselect_match_rows(
     parents = candidates.batch_ids[candidate_rows]
     sources = candidates.sources[candidate_rows]
     probabilities = candidates.probabilities[candidate_rows]
-    counts = torch.bincount(parents, minlength=parent_gate_counts.numel())
-    max_matches = int(counts.max().item())
-    positions = torch.arange(parents.numel(), device=parents.device)
-    new_parent = torch.ones(parents.numel(), dtype=torch.bool, device=parents.device)
-    new_parent[1:] = parents[1:] != parents[:-1]
+    best_next_gate_counts = (
+        parent_gate_counts[parents] + rule_index.best_gate_deltas[sources]
+    )
+    best_xfer_ids = rule_index.best_xfer_ids[sources]
+    if ranking_mode in {"gate", "ppo"}:
+        rank_keys = [(best_next_gate_counts, False), (probabilities, True)]
+    else:
+        rank_keys = [(probabilities, True), (best_next_gate_counts, False)]
+
+    # CUDA compaction does not promise a stable order for equal matcher rows.
+    # A local-index tie-break therefore makes the selected match set vary even
+    # when logits and aggregate counts are identical.  Sort by the complete
+    # structural match description instead: anchor followed by every binding
+    # slot.  These are ordering keys only; Quartz still validates each action.
+    structural_keys: list[tuple[torch.Tensor, bool]] = [
+        (candidates.anchors[candidate_rows], False),
+    ]
+    selected_bindings = candidates.bindings[candidate_rows]
+    structural_keys.extend(
+        (selected_bindings[:, column], False)
+        for column in range(selected_bindings.shape[1])
+    )
+    order = _stable_lexsort(
+        [(parents, False), *rank_keys, (best_xfer_ids, False), *structural_keys]
+    )
+    ordered_parents = parents[order]
+    positions = torch.arange(order.numel(), device=order.device)
+    new_parent = torch.ones(order.numel(), dtype=torch.bool, device=order.device)
+    new_parent[1:] = ordered_parents[1:] != ordered_parents[:-1]
     group_starts = torch.where(new_parent, positions, 0)
     group_starts = torch.cummax(group_starts, dim=0).values
-    offsets = positions - group_starts
-    padded_rows = torch.full(
-        (parent_gate_counts.numel(), max_matches),
-        -1,
-        dtype=torch.long,
-        device=parents.device,
-    )
-    padded_rows[parents, offsets] = candidate_rows
-    valid = padded_rows.ge(0)
-    safe_rows = padded_rows.clamp_min(0)
-    padded_sources = candidates.sources[safe_rows]
-    best_next_gate_counts = (
-        parent_gate_counts.unsqueeze(1)
-        + rule_index.best_gate_deltas[padded_sources]
-    )
-    best_xfer_ids = rule_index.best_xfer_ids[padded_sources]
-    padded_probabilities = candidates.probabilities[safe_rows]
-    probability_rank = (
-        padded_probabilities.float().contiguous().view(torch.int32).to(torch.int64)
-    )
-    delta_rank = rule_index.max_gate_delta - (
-        best_next_gate_counts - parent_gate_counts.unsqueeze(1)
-    )
-    xfer_rank = rule_index.num_xfers - 1 - best_xfer_ids
-    local_rank = max_matches - 1 - torch.arange(
-        max_matches, device=parents.device
-    ).unsqueeze(0)
-    probability_bits = 31
-    delta_bits = max(
-        1, (rule_index.max_gate_delta - rule_index.min_gate_delta).bit_length()
-    )
-    xfer_bits = max(1, (rule_index.num_xfers - 1).bit_length())
-    local_bits = max(1, (max_matches - 1).bit_length())
-    required_bits = probability_bits + delta_bits + xfer_bits + local_bits
-    if required_bits > 62:
-        raise RuntimeError("packed match ranking exceeds signed int64 capacity")
-    if ranking_mode in {"gate", "ppo"}:
-        rank_score = (delta_rank << probability_bits) | probability_rank
-    else:
-        rank_score = (probability_rank << delta_bits) | delta_rank
-    rank_score = (rank_score << xfer_bits) | xfer_rank
-    rank_score = (rank_score << local_bits) | local_rank
-    rank_score = rank_score.masked_fill(~valid, -1)
-    count = min(per_parent_cap, max_matches)
-    _, order = rank_score.topk(count, dim=1, largest=True, sorted=True)
-    selected = padded_rows.gather(1, order)
-    return selected[selected.ge(0)]
+    parent_rank = positions - group_starts
+    return candidate_rows[order[parent_rank < per_parent_cap]]
 
 
 def _match_set_policy_logits(
@@ -477,8 +456,17 @@ def build_gpu_proposals(
         rank_keys = [(probabilities, True), (next_gate_counts, False)]
     else:
         rank_keys = [(random_priorities, True), (next_gate_counts, False)]
+    structural_action_keys = [
+        (anchors, False),
+        *((bindings[:, column], False) for column in range(bindings.shape[1])),
+    ]
     parent_order = _stable_lexsort(
-        [(parents, False), *rank_keys, (xfer_ids, False)]
+        [
+            (parents, False),
+            *rank_keys,
+            (xfer_ids, False),
+            *structural_action_keys,
+        ]
     )
     ordered_parents = parents[parent_order]
     positions = torch.arange(materialized_count, device=device)
@@ -508,6 +496,9 @@ def build_gpu_proposals(
                         (parents[local_rows], False),
                         *local_rank_keys,
                         (xfer_ids[local_rows], False),
+                        (anchors[local_rows], False),
+                        *((bindings[local_rows, column], False)
+                          for column in range(bindings.shape[1])),
                     ]
                 )
             ]
@@ -577,6 +568,9 @@ def build_gpu_proposals(
                         (probabilities[increasing_rows], True),
                         (next_gate_counts[increasing_rows], False),
                         (xfer_ids[increasing_rows], False),
+                        (anchors[increasing_rows], False),
+                        *((bindings[increasing_rows, column], False)
+                          for column in range(bindings.shape[1])),
                     ]
                 )
             ]
@@ -662,6 +656,11 @@ def build_gpu_proposals(
         [
             *global_rank_keys,
             (parent_gate_counts[parents[parent_order]], False),
+            (parents[parent_order], False),
+            (xfer_ids[parent_order], False),
+            (anchors[parent_order], False),
+            *((bindings[parent_order, column], False)
+              for column in range(bindings.shape[1])),
         ]
     )
     parent_diverse_count = 0
@@ -832,6 +831,11 @@ def build_gpu_proposals(
                 (next_gate_counts[selected], False),
                 (policy_scores, True),
                 (probabilities[selected], True),
+                (parents[selected], False),
+                (xfer_ids[selected], False),
+                (anchors[selected], False),
+                *((bindings[selected, column], False)
+                  for column in range(bindings.shape[1])),
             ]
         )
         selected = selected[ppo_order]
