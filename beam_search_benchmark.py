@@ -11,12 +11,17 @@ import heapq
 import importlib.util
 import json
 import math
+import os
 from pathlib import Path
 import random
 import sys
 import time
 import types
 from typing import Any
+
+# Required by CUDA deterministic-algorithm mode before the first cuBLAS handle
+# is created.  It has no effect unless deterministic algorithms are enabled.
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 
 _libgomp = ctypes.util.find_library("gomp")
 if _libgomp:
@@ -1404,6 +1409,14 @@ def main() -> None:
     )
     parser.add_argument("--widening-seed", type=int, default=73)
     parser.add_argument(
+        "--deterministic-search",
+        action="store_true",
+        help=(
+            "require deterministic CUDA kernels so repeated feedback search "
+            "does not diverge from atomic GNN aggregation roundoff"
+        ),
+    )
+    parser.add_argument(
         "--widening-policy",
         choices=("round_robin", "feedback"),
         default="round_robin",
@@ -1599,6 +1612,9 @@ def main() -> None:
         ),
     )
     args = parser.parse_args()
+    if args.deterministic_search:
+        torch.use_deterministic_algorithms(True)
+        torch.backends.cudnn.benchmark = False
     if args.mode == "model" and (args.checkpoint is None or args.calibration is None):
         parser.error("model mode requires --checkpoint and --calibration")
     if args.neural_audit_output is not None and (
@@ -3334,6 +3350,7 @@ def main() -> None:
         ),
         "widening_seed": args.widening_seed,
         "widening_policy": args.widening_policy,
+        "deterministic_search": args.deterministic_search,
         "search_feedback": (
             search_feedback.rendered_summary()
             if search_feedback is not None

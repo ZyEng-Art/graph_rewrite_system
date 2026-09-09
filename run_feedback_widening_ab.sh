@@ -88,9 +88,11 @@ run_one round_robin_s73 \
 run_one round_robin_s170 \
     --progressive-widening on --widening-policy round_robin --widening-seed 170
 run_one feedback_s73 \
-    --progressive-widening on --widening-policy feedback --widening-seed 73
+    --progressive-widening on --widening-policy feedback --widening-seed 73 \
+    --deterministic-search
 run_one feedback_s170 \
-    --progressive-widening on --widening-policy feedback --widening-seed 170
+    --progressive-widening on --widening-policy feedback --widening-seed 170 \
+    --deterministic-search
 
 "$python_bin" summarize_feedback_widening_ab.py \
     --input-dir "$output_dir" --output "$output_dir/summary.json"
