@@ -30,6 +30,42 @@ def load_run(root: Path, name: str) -> dict[str, Any]:
     result_path = root / f"{name}.json"
     payload = json.loads(result_path.read_text())
     wall_path = root / f"{name}.wall_seconds"
+    improvement_structure = [
+        {key: value for key, value in row.items() if key != "seconds"}
+        for row in payload["improvement_trace"]
+    ]
+    decision_trace = []
+    for row in payload.get("steps", []):
+        widening = row.get("progressive_widening", {})
+        decision_trace.append(
+            {
+                "step": row["step"],
+                "best_gate_count": row["best_gate_count"],
+                "global_best_gate_count": row["global_best_gate_count"],
+                "input_max_action_depth": row["input_max_action_depth"],
+                "output_max_action_depth": row["output_max_action_depth"],
+                "proposals_scanned": row["proposals_scanned"],
+                "attempted_actions": row["attempted_actions"],
+                "accepted_actions": row["accepted_actions"],
+                "feedback": row.get("search_feedback"),
+                "widening_lane_counts": widening.get("lane_counts"),
+                "widening_selected": [
+                    {
+                        "identity_order": selected["identity_order"],
+                        "gate_count": selected["gate_count"],
+                        "action_depth": selected["action_depth"],
+                        "current_round": selected["current_round"],
+                        "next_round": selected["next_round"],
+                    }
+                    for selected in widening.get("selected", [])
+                ],
+            }
+        )
+    decision_trace_sha256 = hashlib.sha256(
+        json.dumps(
+            decision_trace, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+    ).hexdigest()
     return {
         "name": name,
         "initial_gate_count": payload["initial_gate_count"],
@@ -45,6 +81,8 @@ def load_run(root: Path, name: str) -> dict[str, Any]:
         "best_history": payload["best_history"],
         "best_widened_action_trace": payload["best_widened_action_trace"],
         "improvement_trace": payload["improvement_trace"],
+        "improvement_trace_structure": improvement_structure,
+        "decision_trace_sha256": decision_trace_sha256,
         "best_qasm_sha256": sha256(root / f"{name}.best.qasm"),
         "wall_seconds": (
             float(wall_path.read_text().strip())
@@ -72,7 +110,8 @@ def main() -> None:
         "maximum_action_depth",
         "best_history",
         "best_widened_action_trace",
-        "improvement_trace",
+        "improvement_trace_structure",
+        "decision_trace_sha256",
         "best_qasm_sha256",
     )
     comparison = {
