@@ -9,6 +9,7 @@ from sibling_continuation_ranker import (
     continuation_ranker_inputs,
 )
 from train_sibling_continuation_ranker import tie_aware_accuracy
+from train_sibling_continuation_ranker import prefix_tensors
 
 
 class SiblingContinuationRankerTest(unittest.TestCase):
@@ -40,6 +41,33 @@ class SiblingContinuationRankerTest(unittest.TestCase):
                 torch.tensor([1.0, 1.0, 2.0]),
             ),
             0.5,
+        )
+
+    def test_prefix_encoder_is_zero_residual_at_initialization(self) -> None:
+        payload = {
+            "parent_node_ids": torch.tensor([3, 4, 3]),
+            "parent_histories": [
+                {"node_id": 3, "history": [[1, 8], [2, 9], [3, 10]]},
+                {"node_id": 4, "history": []},
+            ],
+        }
+        tokens, lengths = prefix_tensors(payload, 2)
+        self.assertEqual(tokens.tolist(), [[3, 4], [0, 0], [3, 4]])
+        self.assertEqual(lengths.tolist(), [2, 0, 2])
+        inputs = torch.zeros(3, 10)
+        inputs[:, 2] = torch.tensor([0.2, 0.5, 0.8])
+        model = SiblingContinuationRanker(
+            10,
+            hidden_width=8,
+            dropout=0.0,
+            base_probability_index=2,
+            num_xfers=4,
+            prefix_width=4,
+        )
+        self.assertTrue(
+            torch.allclose(
+                model(inputs, tokens, lengths), torch.logit(inputs[:, 2])
+            )
         )
 
 

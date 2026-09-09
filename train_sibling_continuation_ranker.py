@@ -25,7 +25,23 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def load_corpus(manifest_path: Path) -> dict:
+def prefix_tensors(payload: dict, max_length: int) -> tuple[torch.Tensor, torch.Tensor]:
+    histories = {
+        int(row["node_id"]): [int(action[0]) + 1 for action in row["history"]]
+        for row in payload["parent_histories"]
+    }
+    parent_ids = payload["parent_node_ids"].tolist()
+    tokens = torch.zeros((len(parent_ids), max_length), dtype=torch.long)
+    lengths = torch.zeros(len(parent_ids), dtype=torch.long)
+    for row, parent_id in enumerate(parent_ids):
+        history = histories[int(parent_id)][-max_length:]
+        if history:
+            tokens[row, : len(history)] = torch.tensor(history)
+            lengths[row] = len(history)
+    return tokens, lengths
+
+
+def load_corpus(manifest_path: Path, *, prefix_max_length: int = 0) -> dict:
     manifest = torch.load(manifest_path, map_location="cpu", weights_only=False)
     if manifest.get("format") != "frozen-sibling-continuation-preference-manifest-v1":
         raise ValueError("unsupported sibling preference manifest")
@@ -35,6 +51,8 @@ def load_corpus(manifest_path: Path) -> dict:
     inputs = []
     offsets = []
     metadata = []
+    prefixes = []
+    prefix_lengths = []
     offset = 0
     width = None
     for source in sources:
@@ -51,6 +69,12 @@ def load_corpus(manifest_path: Path) -> dict:
         offsets.append(offset)
         offset += int(rows.shape[0])
         inputs.append(rows)
+        if prefix_max_length:
+            source_prefixes, source_lengths = prefix_tensors(
+                payload, prefix_max_length
+            )
+            prefixes.append(source_prefixes)
+            prefix_lengths.append(source_lengths)
         metadata.append(
             {
                 "rank": payload["action_parent_ranks"].long(),
@@ -97,6 +121,13 @@ def load_corpus(manifest_path: Path) -> dict:
         "train": render_pairs("train_pairs"),
         "test": render_pairs("test_pairs"),
         "input_width": int(width or 0),
+        "prefix_xfers": torch.cat(prefixes) if prefixes else None,
+        "prefix_lengths": torch.cat(prefix_lengths) if prefix_lengths else None,
+        "num_xfers": (
+            int(max(int(tokens.max()) for tokens in prefixes))
+            if prefixes
+            else 0
+        ),
     }
 
 
@@ -120,6 +151,8 @@ def evaluate(
     model.eval()
     margins = []
     inputs = corpus["inputs"]
+    prefix_xfers = corpus["prefix_xfers"]
+    prefix_lengths = corpus["prefix_lengths"]
     for begin in range(0, count, batch_size):
         chosen = pairs["preferred"][begin : begin + batch_size]
         rejected = pairs["rejected"][begin : begin + batch_size]
@@ -128,8 +161,28 @@ def evaluate(
             dtype=torch.bfloat16,
             enabled=device.type == "cuda",
         ):
-            margin = model(inputs[chosen].to(device)) - model(
-                inputs[rejected].to(device)
+            chosen_prefix = (
+                prefix_xfers[chosen].to(device) if prefix_xfers is not None else None
+            )
+            rejected_prefix = (
+                prefix_xfers[rejected].to(device)
+                if prefix_xfers is not None
+                else None
+            )
+            chosen_lengths = (
+                prefix_lengths[chosen].to(device)
+                if prefix_lengths is not None
+                else None
+            )
+            rejected_lengths = (
+                prefix_lengths[rejected].to(device)
+                if prefix_lengths is not None
+                else None
+            )
+            margin = model(
+                inputs[chosen].to(device), chosen_prefix, chosen_lengths
+            ) - model(
+                inputs[rejected].to(device), rejected_prefix, rejected_lengths
             )
         margins.append(margin.float().cpu())
     margins = torch.cat(margins)
@@ -179,7 +232,9 @@ def train(args) -> tuple[SiblingContinuationRanker, dict]:
     torch.manual_seed(args.seed)
     random.seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    corpus = load_corpus(args.manifest)
+    corpus = load_corpus(
+        args.manifest, prefix_max_length=args.prefix_max_length
+    )
     train_pairs = corpus["train"]
     if not train_pairs["preferred"].numel():
         raise ValueError("manifest contains no training pairs")
@@ -188,11 +243,15 @@ def train(args) -> tuple[SiblingContinuationRanker, dict]:
         args.hidden_width,
         args.dropout,
         base_probability_index=corpus["input_width"] - 8,
+        num_xfers=corpus["num_xfers"],
+        prefix_width=args.prefix_width if args.prefix_max_length else 0,
     ).to(device)
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
     )
     inputs = corpus["inputs"]
+    prefix_xfers = corpus["prefix_xfers"]
+    prefix_lengths = corpus["prefix_lengths"]
     history = []
     for epoch in range(args.epochs):
         model.train()
@@ -213,13 +272,41 @@ def train(args) -> tuple[SiblingContinuationRanker, dict]:
             ):
                 preferred_inputs = inputs[preferred].to(device)
                 rejected_inputs = inputs[rejected].to(device)
-                preferred_score = model(preferred_inputs)
-                rejected_score = model(rejected_inputs)
+                preferred_prefix = (
+                    prefix_xfers[preferred].to(device)
+                    if prefix_xfers is not None
+                    else None
+                )
+                rejected_prefix = (
+                    prefix_xfers[rejected].to(device)
+                    if prefix_xfers is not None
+                    else None
+                )
+                preferred_lengths = (
+                    prefix_lengths[preferred].to(device)
+                    if prefix_lengths is not None
+                    else None
+                )
+                rejected_lengths = (
+                    prefix_lengths[rejected].to(device)
+                    if prefix_lengths is not None
+                    else None
+                )
+                preferred_score = model(
+                    preferred_inputs, preferred_prefix, preferred_lengths
+                )
+                rejected_score = model(
+                    rejected_inputs, rejected_prefix, rejected_lengths
+                )
                 margin = preferred_score - rejected_score
                 ranking_loss = (F.softplus(-margin) * weights).mean()
                 residual_loss = 0.5 * (
-                    model.residual(preferred_inputs).square().mean()
-                    + model.residual(rejected_inputs).square().mean()
+                    model.residual(
+                        preferred_inputs, preferred_prefix, preferred_lengths
+                    ).square().mean()
+                    + model.residual(
+                        rejected_inputs, rejected_prefix, rejected_lengths
+                    ).square().mean()
                 )
                 loss = ranking_loss + args.residual_penalty * residual_loss
             loss.backward()
@@ -256,6 +343,8 @@ def main() -> None:
     parser.add_argument("--batch-size", type=int, default=4096)
     parser.add_argument("--eval-batch-size", type=int, default=8192)
     parser.add_argument("--hidden-width", type=int, default=256)
+    parser.add_argument("--prefix-width", type=int, default=32)
+    parser.add_argument("--prefix-max-length", type=int, default=32)
     parser.add_argument("--dropout", type=float, default=0.05)
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
@@ -270,13 +359,17 @@ def main() -> None:
     args = parser.parse_args()
     if args.residual_penalty < 0:
         parser.error("--residual-penalty must be nonnegative")
+    if args.prefix_width < 1 or args.prefix_max_length < 0:
+        parser.error("prefix width must be positive and max length nonnegative")
     model, metrics = train(args)
     checkpoint = {
-        "format": "sibling_continuation_ranker_v2",
+        "format": "sibling_continuation_ranker_v3",
         "args": vars(args),
         "input_width": model.input_width,
         "hidden_width": model.hidden_width,
         "base_probability_index": model.base_probability_index,
+        "num_xfers": model.num_xfers,
+        "prefix_width": model.prefix_width,
         "model": model.state_dict(),
         "metrics": metrics,
         "feature_spec": (
