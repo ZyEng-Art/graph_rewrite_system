@@ -1,0 +1,58 @@
+{
+  "experiment_commits": ["9d18a41", "dfa8b1c"],
+  "configuration": {
+    "apply_budget": 100000,
+    "beam_size": 256,
+    "deterministic_search": true,
+    "max_actions_per_parent": 128,
+    "ranked_pool_cap": 1024,
+    "widening_max_expansions": 8,
+    "widening_policy": "feedback",
+    "widening_revisit_fraction": 0.25
+  },
+  "barenco_raw58": {
+    "structural_equal": true,
+    "best_gate_count": 38,
+    "best_action_depth": 69,
+    "completed_depth": 95,
+    "cache_off_before": {
+      "wall_seconds": 105.437,
+      "search_seconds": 25.2746,
+      "non_apply_search_seconds": 6.90023,
+      "model_match_seconds": 3.78278,
+      "proposal_seconds": 1.75044,
+      "quartz_apply_seconds": 18.37439
+    },
+    "cache_on_optimized": {
+      "wall_seconds": 99.259421184,
+      "search_seconds": 24.0525995491,
+      "non_apply_search_seconds": 7.2968454189,
+      "model_match_seconds": 3.2240454841,
+      "proposal_seconds": 2.4044363033,
+      "quartz_apply_seconds": 16.7557541302,
+      "parent_hits": 5923,
+      "parent_misses": 17920,
+      "peak_resident_bytes": 2800560,
+      "peak_resident_parents": 64,
+      "peak_resident_rows": 25005,
+      "ranked_action_rows_generated": 5699109,
+      "ranked_action_rows_reused": 1892007
+    },
+    "cache_off_after": {
+      "wall_seconds": 95.466,
+      "search_seconds": 22.7991,
+      "non_apply_search_seconds": 6.40146,
+      "model_match_seconds": 3.49377,
+      "proposal_seconds": 1.66130,
+      "quartz_apply_seconds": 16.39761
+    },
+    "cache_on_reduction_vs_off_mean": {
+      "wall_seconds": 0.011865,
+      "search_seconds": -0.000655,
+      "non_apply_search_seconds": -0.097130,
+      "model_match_seconds": 0.113853,
+      "proposal_seconds": -0.409506
+    }
+  },
+  "decision": "experimental_default_off"
+}
