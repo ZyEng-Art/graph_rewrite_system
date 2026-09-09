@@ -1,0 +1,7 @@
+# Frozen before fitting on the five 58-gate diagnostic circuits.
+# These circuits must remain evaluation-only for revisit-ranker selection.
+0_58_0_8_121.qasm
+6_58_2_24_3320.qasm
+7_56_0_16_44.qasm
+8_56_0_27_1593.qasm
+9_56_0_9_121.qasm
