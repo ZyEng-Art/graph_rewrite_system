@@ -43,6 +43,10 @@ from search_types import BeamState, Proposal
 from search_survivor import gate_priority, path_best_gate_count, select_survivors
 from search_feedback import SearchFeedbackRegistry
 from sibling_continuation_labels import descendant_label_tensors
+from sibling_continuation_ranker import (
+    SiblingContinuationRanker,
+    continuation_ranker_inputs,
+)
 from search_widening import select_widening_revisits
 from widening_action_cache import (
     WideningActionCache,
@@ -676,6 +680,96 @@ def neural_prefilter_scores(
         valid_scores.append(valid.float().sigmoid())
         duplicate_scores.append(duplicate.float().sigmoid())
     return torch.cat(valid_scores), torch.cat(duplicate_scores)
+
+
+def load_continuation_ranker(path: Path, device: torch.device):
+    checkpoint = torch.load(path, map_location="cpu", weights_only=False)
+    if checkpoint.get("format") != "sibling_continuation_ranker_v3":
+        raise ValueError(f"unsupported continuation ranker checkpoint: {path}")
+    train_args = checkpoint.get("args", {})
+    ranker = SiblingContinuationRanker(
+        int(checkpoint["input_width"]),
+        int(checkpoint["hidden_width"]),
+        float(train_args.get("dropout", 0.0)),
+        base_probability_index=int(checkpoint["base_probability_index"]),
+        num_xfers=int(checkpoint["num_xfers"]),
+        prefix_width=int(checkpoint["prefix_width"]),
+    ).to(device)
+    ranker.load_state_dict(checkpoint["model"])
+    ranker.eval()
+    return ranker, int(train_args.get("prefix_max_length", 0))
+
+
+@torch.no_grad()
+def continuation_ranker_scores(
+    ranker: SiblingContinuationRanker,
+    frozen_features: torch.Tensor,
+    proposal_tensors,
+    beam: list[BeamState],
+    step: int,
+    device: torch.device,
+    batch_size: int,
+    prefix_max_length: int,
+) -> torch.Tensor:
+    parent_ids = proposal_tensors.parent_ids
+    parent_gate_counts = torch.tensor(
+        [state.gate_count for state in beam], device=device
+    ).index_select(0, parent_ids)
+    inputs = continuation_ranker_inputs(
+        {
+            "features": frozen_features,
+            "probabilities": proposal_tensors.probabilities,
+            "gate_deltas": proposal_tensors.gate_deltas,
+            "parent_gate_counts": parent_gate_counts,
+            "steps": torch.full_like(parent_gate_counts, step + 1),
+            "action_parent_ranks": proposal_tensors.parent_ranks,
+            "parent_expansion_rounds": torch.tensor(
+                [state.expansion_round for state in beam], device=device
+            ).index_select(0, parent_ids),
+            "parent_stagnation_steps": torch.tensor(
+                [state.stagnation_steps for state in beam], device=device
+            ).index_select(0, parent_ids),
+            "parent_action_depths": torch.tensor(
+                [state.depth for state in beam], device=device
+            ).index_select(0, parent_ids),
+        }
+    )
+    prefix_xfers = prefix_lengths = None
+    if ranker.prefix_width:
+        parent_prefixes = torch.zeros(
+            (len(beam), prefix_max_length), dtype=torch.long
+        )
+        parent_lengths = torch.zeros(len(beam), dtype=torch.long)
+        for parent, state in enumerate(beam):
+            history = state.history[-prefix_max_length:]
+            if history:
+                parent_prefixes[parent, : len(history)] = torch.tensor(
+                    [int(action[0]) + 1 for action in history]
+                )
+                parent_lengths[parent] = len(history)
+        prefix_xfers = parent_prefixes.to(device).index_select(0, parent_ids)
+        prefix_lengths = parent_lengths.to(device).index_select(0, parent_ids)
+    scores = []
+    for begin in range(0, inputs.shape[0], batch_size):
+        selected_prefixes = (
+            prefix_xfers[begin : begin + batch_size]
+            if prefix_xfers is not None
+            else None
+        )
+        selected_lengths = (
+            prefix_lengths[begin : begin + batch_size]
+            if prefix_lengths is not None
+            else None
+        )
+        with autocast_context(device):
+            scores.append(
+                ranker(
+                    inputs[begin : begin + batch_size],
+                    selected_prefixes,
+                    selected_lengths,
+                ).float()
+            )
+    return torch.cat(scores)
 
 
 def exact_actions(
@@ -1530,6 +1624,20 @@ def main() -> None:
         default=8192,
     )
     parser.add_argument(
+        "--continuation-ranker-checkpoint",
+        type=Path,
+        help="frozen sibling-continuation ranker used for shadow scoring",
+    )
+    parser.add_argument(
+        "--continuation-ranker-mode",
+        choices=("off", "shadow"),
+        default="off",
+        help="shadow records scores and overhead without changing search order",
+    )
+    parser.add_argument(
+        "--continuation-ranker-batch-size", type=int, default=8192
+    )
+    parser.add_argument(
         "--reference-data",
         type=Path,
         help=(
@@ -1688,6 +1796,27 @@ def main() -> None:
         )
     if args.neural_prefilter_batch_size < 1:
         parser.error("--neural-prefilter-batch-size must be positive")
+    if args.continuation_ranker_mode != "off" and (
+        args.continuation_ranker_checkpoint is None
+        or args.mode != "model"
+        or args.model_pipeline != "state_only_gpu"
+    ):
+        parser.error(
+            "continuation shadow requires --continuation-ranker-checkpoint "
+            "and model state_only_gpu mode"
+        )
+    if (
+        args.continuation_ranker_checkpoint is not None
+        and args.continuation_ranker_mode == "off"
+    ):
+        parser.error("continuation ranker checkpoint requires shadow mode")
+    if args.continuation_ranker_batch_size < 1:
+        parser.error("--continuation-ranker-batch-size must be positive")
+    if (
+        args.continuation_ranker_mode != "off"
+        and args.neural_prefilter_mode == "defer"
+    ):
+        parser.error("continuation shadow cannot be combined with prefilter defer")
     if not 0.0 <= args.exploration_fraction < 1.0:
         parser.error("--exploration-fraction must be in [0, 1)")
     if args.exploration_max_stagnation < 1:
@@ -1730,7 +1859,9 @@ def main() -> None:
     if args.widening_candidate_cache == "on" and args.progressive_widening != "on":
         parser.error("widening candidate cache requires progressive widening")
     if args.widening_candidate_cache == "on" and (
-        args.neural_audit_output is not None or args.neural_prefilter_mode != "off"
+        args.neural_audit_output is not None
+        or args.neural_prefilter_mode != "off"
+        or args.continuation_ranker_mode != "off"
     ):
         parser.error(
             "widening candidate cache does not yet support neural candidate features"
@@ -1742,7 +1873,9 @@ def main() -> None:
     if args.widening_action_cache == "on" and args.widening_candidate_cache == "on":
         parser.error("widening action and candidate caches are mutually exclusive")
     if args.widening_action_cache == "on" and (
-        args.neural_audit_output is not None or args.neural_prefilter_mode != "off"
+        args.neural_audit_output is not None
+        or args.neural_prefilter_mode != "off"
+        or args.continuation_ranker_mode != "off"
     ):
         parser.error(
             "widening action cache does not yet support neural candidate features"
@@ -1867,6 +2000,8 @@ def main() -> None:
     gpu_rule_index = None
     neural_prefilter = None
     neural_prefilter_thresholds = None
+    continuation_ranker = None
+    continuation_prefix_max_length = 0
     if args.mode == "model":
         checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
         train_args = checkpoint["args"]
@@ -1895,6 +2030,12 @@ def main() -> None:
         neural_prefilter, neural_prefilter_thresholds = (
             load_neural_successor_prefilter(
                 args.neural_prefilter_checkpoint, device
+            )
+        )
+    if args.continuation_ranker_mode != "off":
+        continuation_ranker, continuation_prefix_max_length = (
+            load_continuation_ranker(
+                args.continuation_ranker_checkpoint, device
             )
         )
 
@@ -2029,7 +2170,9 @@ def main() -> None:
     collect_neural_audit = args.neural_audit_output is not None
     collect_descendant_labels = args.neural_descendant_labels == "on"
     need_candidate_features = (
-        collect_neural_audit or args.neural_prefilter_mode != "off"
+        collect_neural_audit
+        or args.neural_prefilter_mode != "off"
+        or args.continuation_ranker_mode != "off"
     )
     widening_candidate_cache = WideningCandidateCache(
         enabled=args.widening_candidate_cache == "on"
@@ -2061,6 +2204,7 @@ def main() -> None:
     neural_parent_stagnation_chunks = []
     neural_parent_depth_chunks = []
     neural_parent_histories: dict[int, list[list[int]]] = {}
+    neural_continuation_score_chunks = []
     if collect_neural_audit:
         successor_groups = {exact_graph_key(graph): 0}
         next_successor_group = 1
@@ -2111,6 +2255,10 @@ def main() -> None:
         "deferred_invalid": 0,
         "deferred_duplicates": 0,
         "deferred_novel": 0,
+    }
+    continuation_ranker_totals = {
+        "candidates": 0,
+        "scored_seconds": 0.0,
     }
     apply_profile_totals = Counter()
     step_rows = []
@@ -2479,6 +2627,36 @@ def main() -> None:
                 ]
                 proposals = [proposals[index] for index in order]
                 proposal_is_deferred = [mask_rows[index] for index in order]
+
+        continuation_ranker_step = {
+            "mode": args.continuation_ranker_mode,
+            "candidates": 0,
+            "scored_seconds": 0.0,
+        }
+        continuation_shadow_scores = None
+        if args.continuation_ranker_mode != "off":
+            if proposal_feature_rows is None or selected_proposal_tensors is None:
+                raise RuntimeError("continuation shadow proposal features are missing")
+            continuation_started = time.perf_counter()
+            continuation_shadow_scores = continuation_ranker_scores(
+                continuation_ranker,
+                proposal_feature_rows,
+                selected_proposal_tensors,
+                beam,
+                step,
+                device,
+                args.continuation_ranker_batch_size,
+                continuation_prefix_max_length,
+            )
+            continuation_seconds = time.perf_counter() - continuation_started
+            continuation_ranker_step.update(
+                {
+                    "candidates": len(proposals),
+                    "scored_seconds": continuation_seconds,
+                }
+            )
+            continuation_ranker_totals["candidates"] += len(proposals)
+            continuation_ranker_totals["scored_seconds"] += continuation_seconds
 
         fingerprint_before = fingerprint_audit.stats()
         fingerprint_profiles = {}
@@ -2974,6 +3152,10 @@ def main() -> None:
                 )
             selected_rows = slice(0, proposals_scanned)
             neural_feature_chunks.append(proposal_feature_rows[selected_rows])
+            if continuation_shadow_scores is not None:
+                neural_continuation_score_chunks.append(
+                    continuation_shadow_scores[selected_rows].float().cpu()
+                )
             neural_outcome_chunks.append(
                 torch.tensor(neural_step_outcomes, dtype=torch.int8)
             )
@@ -3525,6 +3707,7 @@ def main() -> None:
                 **direct_inverse_step,
             },
             "neural_prefilter": neural_prefilter_step,
+            "continuation_ranker": continuation_ranker_step,
             "apply_profile": (
                 rendered_apply_profile(apply_profile_step)
                 if detailed_profile is not None
@@ -3609,6 +3792,13 @@ def main() -> None:
             "parent_gate_counts": torch.cat(neural_parent_gate_chunks),
             "steps": torch.cat(neural_step_chunks),
         }
+        if neural_continuation_score_chunks:
+            audit_payload["continuation_shadow_scores"] = torch.cat(
+                neural_continuation_score_chunks
+            )
+            audit_payload["continuation_ranker_checkpoint"] = str(
+                args.continuation_ranker_checkpoint
+            )
         if collect_descendant_labels:
             if search_feedback is None:
                 raise RuntimeError("descendant labels require search feedback")
@@ -3834,6 +4024,15 @@ def main() -> None:
                 else None
             ),
             **neural_prefilter_totals,
+        },
+        "continuation_ranker": {
+            "mode": args.continuation_ranker_mode,
+            "checkpoint": (
+                str(args.continuation_ranker_checkpoint)
+                if args.continuation_ranker_checkpoint is not None
+                else None
+            ),
+            **continuation_ranker_totals,
         },
         "apply_profile": {
             "mode": args.apply_profile,
