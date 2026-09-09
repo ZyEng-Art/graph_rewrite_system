@@ -98,8 +98,9 @@ run_one() {
         --format=csv,noheader | sed -n "$((gpu + 1))p"
 } >"$output_dir/environment.txt"
 
-run_one cache_off off
+run_one cache_off_before off
 run_one cache_on on
+run_one cache_off_after off
 
 "$python_bin" summarize_widening_candidate_cache_ab.py \
     --input-dir "$output_dir" --output "$output_dir/summary.json"

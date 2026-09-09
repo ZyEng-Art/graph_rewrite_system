@@ -46,6 +46,7 @@ def _structural_projection(value: Any) -> Any:
 def _variant(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text())
     wall_path = path.with_suffix(".wall_seconds")
+    quartz_apply_seconds = _sum_steps(payload, "quartz_apply_seconds")
     return {
         "payload": payload,
         "summary": {
@@ -57,10 +58,13 @@ def _variant(path: Path) -> dict[str, Any]:
                 "final_beam_exact_identity_digest"
             ],
             "search_seconds": float(payload["total_seconds"]),
+            "non_apply_search_seconds": (
+                float(payload["total_seconds"]) - quartz_apply_seconds
+            ),
             "wall_seconds": float(wall_path.read_text().strip()),
             "model_match_seconds": _sum_steps(payload, "model_match_seconds"),
             "proposal_seconds": _sum_steps(payload, "proposal_seconds"),
-            "quartz_apply_seconds": _sum_steps(payload, "quartz_apply_seconds"),
+            "quartz_apply_seconds": quartz_apply_seconds,
             "candidate_cache": payload["widening_candidate_cache"],
         },
     }
@@ -70,32 +74,57 @@ def _relative_reduction(before: float, after: float) -> float:
     return (before - after) / before if before else 0.0
 
 
+def _mean(left: float, right: float) -> float:
+    return (left + right) / 2.0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
-    cache_off = _variant(args.input_dir / "cache_off.json")
+    cache_off_before = _variant(args.input_dir / "cache_off_before.json")
     cache_on = _variant(args.input_dir / "cache_on.json")
-    off_summary = cache_off["summary"]
+    cache_off_after = _variant(args.input_dir / "cache_off_after.json")
+    off_before_summary = cache_off_before["summary"]
     on_summary = cache_on["summary"]
-    structural_equal = _structural_projection(
-        cache_off["payload"]
-    ) == _structural_projection(cache_on["payload"])
+    off_after_summary = cache_off_after["summary"]
+    structural = [
+        _structural_projection(variant["payload"])
+        for variant in (cache_off_before, cache_on, cache_off_after)
+    ]
+    structural_equal = structural[0] == structural[1] == structural[2]
+    off_mean = {
+        key: _mean(off_before_summary[key], off_after_summary[key])
+        for key in (
+            "model_match_seconds",
+            "non_apply_search_seconds",
+            "proposal_seconds",
+            "quartz_apply_seconds",
+            "search_seconds",
+            "wall_seconds",
+        )
+    }
     result = {
         "structural_equal_excluding_timing_cache_and_collation": structural_equal,
-        "cache_off": off_summary,
+        "cache_off_before": off_before_summary,
         "cache_on": on_summary,
+        "cache_off_after": off_after_summary,
+        "cache_off_timing_mean": off_mean,
         "relative_reduction": {
             "model_match_seconds": _relative_reduction(
-                off_summary["model_match_seconds"], on_summary["model_match_seconds"]
+                off_mean["model_match_seconds"], on_summary["model_match_seconds"]
+            ),
+            "non_apply_search_seconds": _relative_reduction(
+                off_mean["non_apply_search_seconds"],
+                on_summary["non_apply_search_seconds"],
             ),
             "search_seconds": _relative_reduction(
-                off_summary["search_seconds"], on_summary["search_seconds"]
+                off_mean["search_seconds"], on_summary["search_seconds"]
             ),
             "wall_seconds": _relative_reduction(
-                off_summary["wall_seconds"], on_summary["wall_seconds"]
+                off_mean["wall_seconds"], on_summary["wall_seconds"]
             ),
         },
     }
