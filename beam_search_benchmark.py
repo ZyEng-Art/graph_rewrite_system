@@ -43,6 +43,7 @@ from search_types import BeamState, Proposal
 from search_survivor import gate_priority, path_best_gate_count, select_survivors
 from search_feedback import SearchFeedbackRegistry
 from search_widening import select_widening_revisits
+from widening_candidate_cache import WideningCandidateCache
 from successor_fingerprint import (
     FingerprintAudit,
     build_wire_trace_profile,
@@ -1399,6 +1400,15 @@ def main() -> None:
     parser.add_argument("--widening-revisit-fraction", type=float, default=0.25)
     parser.add_argument("--widening-max-expansions", type=int, default=4)
     parser.add_argument(
+        "--widening-candidate-cache",
+        choices=("off", "on"),
+        default="off",
+        help=(
+            "reuse state-only matcher and structural-decode candidates when an "
+            "exact parent is revisited for a later action-rank band"
+        ),
+    )
+    parser.add_argument(
         "--widening-min-actions-per-parent",
         type=int,
         default=4,
@@ -1693,6 +1703,14 @@ def main() -> None:
             "reference trajectory layers assume one action per search layer; "
             "use candidate audit rather than --reference-data with widening"
         )
+    if args.widening_candidate_cache == "on" and args.progressive_widening != "on":
+        parser.error("widening candidate cache requires progressive widening")
+    if args.widening_candidate_cache == "on" and (
+        args.neural_audit_output is not None or args.neural_prefilter_mode != "off"
+    ):
+        parser.error(
+            "widening candidate cache does not yet support neural candidate features"
+        )
     if args.apply_profile == "detailed" and args.dedup_identity != "exact":
         parser.error("detailed apply profiling requires exact graph identity")
     if args.transactional_apply == "on" and args.dedup_identity != "exact":
@@ -1966,6 +1984,13 @@ def main() -> None:
     need_candidate_features = (
         collect_neural_audit or args.neural_prefilter_mode != "off"
     )
+    widening_candidate_cache = WideningCandidateCache(
+        enabled=args.widening_candidate_cache == "on"
+    )
+    widening_cache_totals = Counter()
+    widening_cache_peak_parents = 0
+    widening_cache_peak_rows = 0
+    widening_cache_peak_bytes = 0
     neural_feature_chunks = []
     neural_outcome_chunks = []
     neural_group_chunks = []
@@ -2055,27 +2080,63 @@ def main() -> None:
         collation_metrics = {}
         proposal_feature_rows = None
         selected_proposal_tensors = None
+        parent_candidate_rows = None
+        widening_cache_step: dict[str, Any] = {
+            "enabled": widening_candidate_cache.enabled
+        }
         if args.mode == "model" and args.model_pipeline == "state_only_gpu":
-            candidate_result = state_only_candidate_tensors(
-                beam,
-                model,
-                device,
-                threshold_config,
-                source_vectors,
-                args.microbatch,
-                args.max_source_matches,
-                return_encoded_states=need_candidate_features,
-            )
-            if need_candidate_features:
-                (
-                    candidates,
-                    model_seconds,
-                    collation_metrics,
-                    encoded_context,
-                ) = candidate_result
-            else:
-                candidates, model_seconds, collation_metrics = candidate_result
+            if widening_candidate_cache.enabled:
+                miss_indices = widening_candidate_cache.miss_indices(beam)
+                fresh_candidates = None
+                if miss_indices:
+                    fresh_candidates, model_seconds, collation_metrics = (
+                        state_only_candidate_tensors(
+                            [beam[index] for index in miss_indices],
+                            model,
+                            device,
+                            threshold_config,
+                            source_vectors,
+                            args.microbatch,
+                            args.max_source_matches,
+                        )
+                    )
+                else:
+                    collation_metrics = {
+                        "live_nodes": 0,
+                        "padded_dense_slots": 0,
+                        "padded_persistent_slots": 0,
+                        "max_dense_slots": 0,
+                        "max_persistent_slots": 0,
+                    }
+                candidates, parent_candidate_rows, widening_cache_step = (
+                    widening_candidate_cache.resolve(
+                        beam,
+                        miss_indices=miss_indices,
+                        fresh_candidates=fresh_candidates,
+                    )
+                )
                 encoded_context = None
+            else:
+                candidate_result = state_only_candidate_tensors(
+                    beam,
+                    model,
+                    device,
+                    threshold_config,
+                    source_vectors,
+                    args.microbatch,
+                    args.max_source_matches,
+                    return_encoded_states=need_candidate_features,
+                )
+                if need_candidate_features:
+                    (
+                        candidates,
+                        model_seconds,
+                        collation_metrics,
+                        encoded_context,
+                    ) = candidate_result
+                else:
+                    candidates, model_seconds, collation_metrics = candidate_result
+                    encoded_context = None
             source_binding_candidates = int(candidates.sources.numel())
             effective_parent_cap = (
                 args.max_actions_per_parent
@@ -2841,6 +2902,35 @@ def main() -> None:
                 )
                 for index in widening_selection.indices
             ]
+            if widening_candidate_cache.enabled:
+                if parent_candidate_rows is None:
+                    raise RuntimeError("widening cache is missing per-parent candidates")
+                widening_cache_step.update(
+                    widening_candidate_cache.retain(
+                        input_beam,
+                        parent_candidate_rows,
+                        widening_selection.indices,
+                    )
+                )
+                for name in (
+                    "parent_hits",
+                    "parent_misses",
+                    "candidate_rows_reused",
+                    "candidate_rows_generated",
+                ):
+                    widening_cache_totals[name] += int(widening_cache_step[name])
+                widening_cache_peak_parents = max(
+                    widening_cache_peak_parents,
+                    int(widening_cache_step["resident_parents_after"]),
+                )
+                widening_cache_peak_rows = max(
+                    widening_cache_peak_rows,
+                    int(widening_cache_step["resident_rows_after"]),
+                )
+                widening_cache_peak_bytes = max(
+                    widening_cache_peak_bytes,
+                    int(widening_cache_step["resident_bytes_after"]),
+                )
         else:
             widening_revisits = []
             widening_selection = select_widening_revisits(
@@ -3123,6 +3213,7 @@ def main() -> None:
             "accepted_actions": len(selected_children),
             "survivor_selection": survivor_selection.metrics,
             "progressive_widening": widening_selection.metrics,
+            "widening_candidate_cache": widening_cache_step,
             "search_feedback": {
                 "parents_scanned": sum(
                     counters["scanned"] > 0
@@ -3350,6 +3441,20 @@ def main() -> None:
         ),
         "widening_seed": args.widening_seed,
         "widening_policy": args.widening_policy,
+        "widening_candidate_cache": {
+            "enabled": widening_candidate_cache.enabled,
+            "parent_hits": int(widening_cache_totals["parent_hits"]),
+            "parent_misses": int(widening_cache_totals["parent_misses"]),
+            "candidate_rows_reused": int(
+                widening_cache_totals["candidate_rows_reused"]
+            ),
+            "candidate_rows_generated": int(
+                widening_cache_totals["candidate_rows_generated"]
+            ),
+            "peak_resident_parents": widening_cache_peak_parents,
+            "peak_resident_rows": widening_cache_peak_rows,
+            "peak_resident_bytes": widening_cache_peak_bytes,
+        },
         "deterministic_search": args.deterministic_search,
         "search_feedback": (
             search_feedback.rendered_summary()
