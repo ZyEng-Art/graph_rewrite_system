@@ -111,9 +111,14 @@ def select_widening_revisits(
         raise ValueError("widening slots must be nonnegative")
     if max_expansions < 1:
         raise ValueError("max expansions must be positive")
-    if policy not in {"round_robin", "feedback", "feedback_balanced"}:
+    if policy not in {
+        "round_robin",
+        "feedback",
+        "feedback_balanced",
+        "feedback_ucb",
+    }:
         raise ValueError("unknown widening policy")
-    if policy in {"feedback", "feedback_balanced"} and feedback is None:
+    if policy in {"feedback", "feedback_balanced", "feedback_ucb"} and feedback is None:
         raise ValueError("feedback policy requires node statistics")
     eligible = [
         index
@@ -135,6 +140,15 @@ def select_widening_revisits(
             slots=slots,
             feedback=feedback or {},
             step=step,
+        )
+    if policy == "feedback_ucb":
+        return _select_feedback_revisits(
+            states,
+            eligible=eligible,
+            slots=slots,
+            feedback=feedback or {},
+            step=step,
+            confidence_yield=True,
         )
 
     by_round: dict[int, list[int]] = defaultdict(list)
@@ -297,13 +311,14 @@ def _select_feedback_revisits(
     slots: int,
     feedback: dict[int, SearchNodeStats],
     step: int,
+    confidence_yield: bool = False,
 ) -> WideningSelection:
     """Allocate four deterministic lanes using observed exact-search outcomes."""
     if not eligible or slots == 0:
         return WideningSelection(
             indices=[],
             metrics={
-                "policy": "feedback",
+                "policy": "feedback_ucb" if confidence_yield else "feedback",
                 "eligible_parents": len(eligible),
                 "target_revisits": slots,
                 "selected_revisits": 0,
@@ -328,8 +343,14 @@ def _select_feedback_revisits(
 
     def novelty_key(index: int) -> tuple:
         state, stats = _feedback_row(states, index, feedback)
+        if confidence_yield:
+            yield_score = _wilson_upper_bound(
+                stats.unique_children, stats.attempted_actions
+            )
+        else:
+            yield_score = stats.novel_yield
         return (
-            -stats.novel_yield,
+            -yield_score,
             -stats.valid_yield,
             int(state.gate_count),
             int(state.expansion_round),
@@ -366,7 +387,7 @@ def _select_feedback_revisits(
 
     lanes = (
         ("improvement", improvement_key),
-        ("novelty", novelty_key),
+        ("useful_yield_ucb" if confidence_yield else "novelty", novelty_key),
         ("exploration", exploration_key),
         ("detour_depth", detour_key),
     )
@@ -417,7 +438,7 @@ def _select_feedback_revisits(
     return WideningSelection(
         indices=selected,
         metrics={
-            "policy": "feedback",
+            "policy": "feedback_ucb" if confidence_yield else "feedback",
             "eligible_parents": len(eligible),
             "target_revisits": slots,
             "selected_revisits": len(selected),
@@ -432,3 +453,20 @@ def _select_feedback_revisits(
             "step": int(step),
         },
     )
+
+
+def _wilson_upper_bound(successes: int, trials: int, *, z: float = 1.96) -> float:
+    """95% Wilson upper bound for a bounded useful-child yield."""
+    trials = int(trials)
+    if trials <= 0:
+        return 1.0
+    successes = min(max(0, int(successes)), trials)
+    probability = successes / trials
+    z_squared = z * z
+    denominator = 1.0 + z_squared / trials
+    center = probability + z_squared / (2.0 * trials)
+    radius = z * math.sqrt(
+        probability * (1.0 - probability) / trials
+        + z_squared / (4.0 * trials * trials)
+    )
+    return (center + radius) / denominator

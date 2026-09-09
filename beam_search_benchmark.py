@@ -1549,7 +1549,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--widening-policy",
-        choices=("round_robin", "feedback", "feedback_balanced"),
+        choices=("round_robin", "feedback", "feedback_balanced", "feedback_ucb"),
         default="round_robin",
         help=(
             "choose revisit parents with the historical seeded round-robin "
@@ -1858,7 +1858,7 @@ def main() -> None:
         and args.neural_audit_output is not None
         and args.neural_descendant_labels == "on"
         and args.progressive_widening == "on"
-        and args.widening_policy in {"feedback", "feedback_balanced"}
+        and args.widening_policy in {"feedback", "feedback_balanced", "feedback_ucb"}
     ):
         parser.error(
             "continuation revisit shadow requires shadow scoring, descendant "
@@ -1947,7 +1947,7 @@ def main() -> None:
         parser.error("neural descendant labels require --neural-audit-output")
     if args.neural_descendant_labels == "on" and not (
         args.progressive_widening == "on"
-        and args.widening_policy in {"feedback", "feedback_balanced"}
+        and args.widening_policy in {"feedback", "feedback_balanced", "feedback_ucb"}
         and args.deterministic_search
     ):
         parser.error(
@@ -2145,7 +2145,7 @@ def main() -> None:
     initial_snapshot = snapshot(graph, guid_to_slot)
     use_search_feedback = (
         args.progressive_widening == "on"
-        and args.widening_policy in {"feedback", "feedback_balanced"}
+        and args.widening_policy in {"feedback", "feedback_balanced", "feedback_ucb"}
     )
     search_feedback = (
         SearchFeedbackRegistry(exact_graph_key(graph), int(graph.gate_count))

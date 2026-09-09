@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import unittest
 
 from search_widening import (
+    _wilson_upper_bound,
     continuation_revisit_shadow_rows,
     select_widening_revisits,
 )
@@ -27,6 +28,11 @@ class State:
 
 
 class ProgressiveWideningSelectionTest(unittest.TestCase):
+    def test_wilson_upper_bound_rewards_uncertain_useful_yield(self) -> None:
+        self.assertEqual(_wilson_upper_bound(0, 0), 1.0)
+        self.assertGreater(_wilson_upper_bound(8, 10), _wilson_upper_bound(80, 100))
+        self.assertGreater(_wilson_upper_bound(9, 10), _wilson_upper_bound(8, 10))
+
     def test_prefers_lower_expansion_round_before_gate_count(self) -> None:
         rows = [
             State("third-visit-low-gate", 5, 2),
@@ -169,6 +175,32 @@ class ProgressiveWideningSelectionTest(unittest.TestCase):
                 "detour_depth": 1,
             },
         )
+
+    def test_feedback_ucb_uses_useful_child_confidence_lane(self) -> None:
+        rows = [
+            State("small-sample", 10, 0, search_node_id=0),
+            State("large-sample", 10, 0, search_node_id=1),
+            State("known-gain", 10, 0, search_node_id=2),
+        ]
+        feedback = {
+            0: SearchNodeStats(
+                0, "a", 10, 1, attempted_actions=10, unique_children=8
+            ),
+            1: SearchNodeStats(
+                1, "b", 10, 1, attempted_actions=100, unique_children=80
+            ),
+            2: SearchNodeStats(2, "c", 10, 1, best_descendant_gate=9),
+        }
+        result = select_widening_revisits(
+            rows,
+            slots=2,
+            max_expansions=3,
+            policy="feedback_ucb",
+            feedback=feedback,
+        )
+        self.assertEqual(result.metrics["policy"], "feedback_ucb")
+        self.assertEqual(result.metrics["lane_counts"]["useful_yield_ucb"], 1)
+        self.assertEqual(result.indices[1], 0)
 
     def test_balanced_feedback_round_robins_sibling_cohorts(self) -> None:
         rows = [

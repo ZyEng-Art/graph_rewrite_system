@@ -15,8 +15,8 @@ depth=${5:-256}
 policy=${6:-feedback}
 continuation_checkpoint=${CONTINUATION_RANKER_CHECKPOINT:-}
 continuation_revisit_slots=${CONTINUATION_REVISIT_SHADOW_SLOTS:-0}
-if [[ "$policy" != "feedback" && "$policy" != "feedback_balanced" ]]; then
-    echo "policy must be feedback or feedback_balanced" >&2
+if [[ "$policy" != "feedback" && "$policy" != "feedback_balanced" && "$policy" != "feedback_ucb" ]]; then
+    echo "policy must be feedback, feedback_balanced, or feedback_ucb" >&2
     exit 6
 fi
 if [[ ! "$continuation_revisit_slots" =~ ^[0-9]+$ ]]; then
