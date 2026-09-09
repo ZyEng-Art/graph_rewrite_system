@@ -31,7 +31,7 @@ class BoundedContinuationRerankTest(unittest.TestCase):
         ]
         order, metrics = bounded_continuation_order(
             proposals,
-            torch.tensor([0.0, 0.0, 2.0, 0.0, 3.0]),
+            torch.tensor([0.0, 0.0, 2.0, 0.0, 0.1]),
             max_matcher_logit_gap=0.25,
             min_continuation_score_margin=0.5,
             max_promotions_per_parent=1,
