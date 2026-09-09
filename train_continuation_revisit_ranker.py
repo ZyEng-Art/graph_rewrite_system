@@ -38,6 +38,43 @@ def feature_row(
     return [values[name] for name in feature_names]
 
 
+def feature_rows(
+    rows: list[dict],
+    feature_names: tuple[str, ...] = FEATURE_NAMES,
+    *,
+    transform: str = "raw",
+) -> list[list[float]]:
+    values = [feature_row(row, feature_names) for row in rows]
+    if transform == "raw":
+        return values
+    if transform != "selection_rank":
+        raise ValueError(f"unsupported feature transform: {transform}")
+
+    groups: dict[tuple[int, int], list[int]] = defaultdict(list)
+    for index, row in enumerate(rows):
+        groups[(int(row["source_id"]), int(row["selection_step"]))].append(index)
+    transformed = [[0.5] * len(feature_names) for _ in rows]
+    for indices in groups.values():
+        if len(indices) == 1:
+            continue
+        for column in range(len(feature_names)):
+            ordered = sorted(indices, key=lambda index: values[index][column])
+            begin = 0
+            while begin < len(ordered):
+                end = begin + 1
+                while (
+                    end < len(ordered)
+                    and values[ordered[end]][column]
+                    == values[ordered[begin]][column]
+                ):
+                    end += 1
+                percentile = (begin + end - 1) / (2 * (len(ordered) - 1))
+                for position in range(begin, end):
+                    transformed[ordered[position]][column] = percentile
+                begin = end
+    return transformed
+
+
 def load_rows(patterns: list[str]) -> tuple[list[dict], list[dict]]:
     paths = sorted({Path(path) for pattern in patterns for path in glob.glob(pattern)})
     if not paths:
@@ -212,6 +249,12 @@ def main() -> None:
         default=(),
         help="Selection-time features to omit for a predeclared ablation.",
     )
+    parser.add_argument(
+        "--feature-transform",
+        choices=("raw", "selection_rank"),
+        default="raw",
+        help="Use raw values or tie-aware within-selection percentiles.",
+    )
     args = parser.parse_args()
     torch.manual_seed(args.seed)
     random.seed(args.seed)
@@ -234,10 +277,14 @@ def main() -> None:
     if not feature_names:
         raise ValueError("at least one feature must remain")
     train_inputs = torch.tensor(
-        [feature_row(row, feature_names) for row in train_rows]
+        feature_rows(
+            train_rows, feature_names, transform=args.feature_transform
+        )
     )
     validation_inputs = torch.tensor(
-        [feature_row(row, feature_names) for row in validation_rows]
+        feature_rows(
+            validation_rows, feature_names, transform=args.feature_transform
+        )
     )
     mean = train_inputs.mean(dim=0)
     scale = train_inputs.std(dim=0).clamp_min(1e-6)
@@ -292,6 +339,7 @@ def main() -> None:
     checkpoint = {
         "format": "continuation_revisit_linear_ranker_v1",
         "feature_names": feature_names,
+        "feature_transform": args.feature_transform,
         "feature_mean": mean,
         "feature_scale": scale,
         "model": model.state_dict(),

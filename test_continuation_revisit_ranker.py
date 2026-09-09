@@ -7,6 +7,7 @@ import torch
 from train_continuation_revisit_ranker import (
     build_pair_tensors,
     feature_row,
+    feature_rows,
     pair_metrics,
     paired_group_bootstrap_delta,
 )
@@ -46,6 +47,27 @@ class ContinuationRevisitRankerTest(unittest.TestCase):
         pairs = build_pair_tensors(rows, min_additional_expansions=1)
         self.assertEqual(len(pairs["preferred"]), 3)
         self.assertAlmostEqual(float(pairs["weights"].mean()), 1.0)
+
+    def test_selection_rank_is_tie_aware_and_local_to_step(self) -> None:
+        def row(step: int, depth: int) -> dict:
+            return {
+                "source_id": 0,
+                "selection_step": step,
+                "continuation_score": 0,
+                "action_depth": depth,
+                "attempted_actions_before": 0,
+                "descendant_gain_before": 0,
+                "novel_yield_before": 0,
+                "valid_yield_before": 0,
+            }
+
+        rows = [row(1, 4), row(1, 8), row(1, 8), row(2, 99)]
+        self.assertEqual(
+            feature_rows(
+                rows, ("action_depth",), transform="selection_rank"
+            ),
+            [[0.0], [0.75], [0.75], [0.5]],
+        )
 
     def test_pair_metrics_are_tie_aware(self) -> None:
         pairs = {

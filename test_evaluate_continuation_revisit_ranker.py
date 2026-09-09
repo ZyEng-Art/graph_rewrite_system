@@ -14,6 +14,7 @@ class EvaluateContinuationRevisitRankerTest(unittest.TestCase):
             "feature_mean": torch.tensor([0.25, 0.5]),
             "feature_scale": torch.tensor([0.25, 0.25]),
             "model": {"weight": torch.tensor([[2.0, -1.0]])},
+            "feature_transform": "raw",
         }
         row = {
             "continuation_score": 0.0,

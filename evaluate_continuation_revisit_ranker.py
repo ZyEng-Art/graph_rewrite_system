@@ -11,6 +11,7 @@ from train_continuation_revisit_ranker import (
     baseline_scores,
     build_pair_tensors,
     feature_row,
+    feature_rows,
     load_rows,
     pair_metrics,
     paired_group_bootstrap_delta,
@@ -28,7 +29,12 @@ BASELINE_FIELDS = (
 def score_rows(checkpoint: dict, rows: list[dict]) -> torch.Tensor:
     feature_names = tuple(checkpoint["feature_names"])
     inputs = torch.tensor(
-        [feature_row(row, feature_names) for row in rows], dtype=torch.float32
+        feature_rows(
+            rows,
+            feature_names,
+            transform=checkpoint.get("feature_transform", "raw"),
+        ),
+        dtype=torch.float32,
     )
     inputs = (inputs - checkpoint["feature_mean"]) / checkpoint["feature_scale"]
     model = nn.Linear(len(feature_names), 1, bias=False)
