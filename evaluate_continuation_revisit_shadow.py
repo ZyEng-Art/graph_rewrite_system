@@ -75,9 +75,18 @@ def tie_aware_pair_metrics(
     }
 
 
-def selection_outcomes(rows: list[dict[str, Any]], field: str) -> dict[str, float | int]:
+def selection_outcomes(
+    rows: list[dict[str, Any]],
+    field: str,
+    *,
+    min_additional_expansions: int,
+) -> dict[str, float | int]:
     selected = [row for row in rows if row[field]]
-    exposed = [row for row in selected if row["additional_observed_expansions"] > 0]
+    exposed = [
+        row
+        for row in selected
+        if row["additional_observed_expansions"] >= min_additional_expansions
+    ]
     improved = [row for row in exposed if row["future_descendant_gain"] > 0]
     return {
         "selected_rows": len(selected),
@@ -127,8 +136,16 @@ def evaluate_rows(
             rows, pairs, "shadow_selected"
         ),
         "selection_outcomes": {
-            "feedback": selection_outcomes(rows, "feedback_selected"),
-            "continuation_shadow": selection_outcomes(rows, "shadow_selected"),
+            "feedback": selection_outcomes(
+                rows,
+                "feedback_selected",
+                min_additional_expansions=min_additional_expansions,
+            ),
+            "continuation_shadow": selection_outcomes(
+                rows,
+                "shadow_selected",
+                min_additional_expansions=min_additional_expansions,
+            ),
         },
     }
 
