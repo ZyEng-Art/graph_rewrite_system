@@ -15,9 +15,13 @@ depth=${5:-256}
 policy=${6:-feedback}
 continuation_checkpoint=${CONTINUATION_RANKER_CHECKPOINT:-}
 continuation_revisit_slots=${CONTINUATION_REVISIT_SHADOW_SLOTS:-0}
-if [[ "$policy" != "feedback" && "$policy" != "feedback_balanced" && "$policy" != "feedback_marginal" && "$policy" != "feedback_ucb" ]]; then
-    echo "policy must be feedback, feedback_balanced, feedback_marginal, or feedback_ucb" >&2
+if [[ "$policy" != "round_robin" && "$policy" != "feedback" && "$policy" != "feedback_balanced" && "$policy" != "feedback_marginal" && "$policy" != "feedback_ucb" ]]; then
+    echo "unknown widening policy: $policy" >&2
     exit 6
+fi
+neural_descendant_labels=on
+if [[ "$policy" == "round_robin" ]]; then
+    neural_descendant_labels=off
 fi
 if [[ ! "$continuation_revisit_slots" =~ ^[0-9]+$ ]]; then
     echo "CONTINUATION_REVISIT_SHADOW_SLOTS must be a nonnegative integer" >&2
@@ -79,7 +83,7 @@ common=(
     --apply-profile off
     --widening-candidate-cache off
     --widening-action-cache off
-    --neural-descendant-labels on
+    --neural-descendant-labels "$neural_descendant_labels"
 )
 if [[ "$continuation_revisit_slots" -gt 0 ]]; then
     common+=(
@@ -100,6 +104,7 @@ fi
     printf 'depth=%s\n' "$depth"
     printf 'apply_budget=%s\n' "$apply_budget"
     printf 'widening_policy=%s\n' "$policy"
+    printf 'neural_descendant_labels=%s\n' "$neural_descendant_labels"
     printf 'continuation_ranker_checkpoint=%s\n' "$continuation_checkpoint"
     printf 'continuation_revisit_shadow_slots=%s\n' "$continuation_revisit_slots"
     nvidia-smi --query-gpu=index,name,driver_version \
