@@ -233,6 +233,26 @@ def evaluate(
         rejected_gate.append(row["gate_delta"][right])
         preferred_probability.append(row["probability"][left])
         rejected_probability.append(row["probability"][right])
+    preferred_probability_tensor = torch.stack(preferred_probability)
+    rejected_probability_tensor = torch.stack(rejected_probability)
+    matcher_correct = (
+        preferred_probability_tensor.gt(rejected_probability_tensor).float()
+        + 0.5 * preferred_probability_tensor.eq(rejected_probability_tensor)
+    )
+    matcher_group_accuracies = torch.stack(
+        [
+            matcher_correct[pairs["group_ids"].eq(group)].mean()
+            for group in pairs["group_ids"].unique()
+        ]
+    )
+    group_delta = group_accuracies - matcher_group_accuracies
+    delta_bootstrap = group_delta[
+        torch.randint(
+            group_delta.numel(),
+            (10000, group_delta.numel()),
+            generator=torch.Generator().manual_seed(908),
+        )
+    ].mean(1)
     result = {
         "pairs": count,
         "accuracy": float(correct.mean()),
@@ -241,6 +261,14 @@ def evaluate(
         "group_bootstrap_95pct": [
             float(torch.quantile(bootstrap, 0.025)),
             float(torch.quantile(bootstrap, 0.975)),
+        ],
+        "matcher_group_macro_accuracy": float(
+            matcher_group_accuracies.mean()
+        ),
+        "model_minus_matcher_group_macro": float(group_delta.mean()),
+        "model_minus_matcher_group_bootstrap_95pct": [
+            float(torch.quantile(delta_bootstrap, 0.025)),
+            float(torch.quantile(delta_bootstrap, 0.975)),
         ],
         "advantage_weighted_accuracy": float((correct * weights).sum() / weights.sum()),
         "mean_margin": float(margins.mean()),
@@ -253,7 +281,7 @@ def evaluate(
                 -torch.stack(preferred_gate), -torch.stack(rejected_gate)
             ),
             "higher_match_probability_accuracy": tie_aware_accuracy(
-                torch.stack(preferred_probability), torch.stack(rejected_probability)
+                preferred_probability_tensor, rejected_probability_tensor
             ),
         },
     }
