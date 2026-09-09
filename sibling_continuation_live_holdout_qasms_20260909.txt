@@ -1,0 +1,7 @@
+# Frozen before bounded live-rerank results were observed.
+# Same 58-gate scale as raw58; none participated in continuation training or calibration.
+1_58_0_21_4409.qasm
+2_58_0_28_120.qasm
+3_58_0_29_336.qasm
+4_58_0_23_45.qasm
+5_58_0_12_38.qasm
