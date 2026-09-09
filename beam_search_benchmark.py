@@ -36,6 +36,7 @@ from incremental_graph import parse_pattern
 from model_factory import build_model
 from search_types import BeamState, Proposal
 from search_survivor import gate_priority, path_best_gate_count, select_survivors
+from search_feedback import SearchFeedbackRegistry
 from search_widening import select_widening_revisits
 from successor_fingerprint import (
     FingerprintAudit,
@@ -1403,6 +1404,15 @@ def main() -> None:
     )
     parser.add_argument("--widening-seed", type=int, default=73)
     parser.add_argument(
+        "--widening-policy",
+        choices=("round_robin", "feedback"),
+        default="round_robin",
+        help=(
+            "choose revisit parents with the historical seeded round-robin "
+            "policy or deterministic online exact-search feedback"
+        ),
+    )
+    parser.add_argument(
         "--proposal-ranking",
         choices=("gate", "probability", "stochastic"),
         default="gate",
@@ -1860,6 +1870,15 @@ def main() -> None:
     guid_to_slot: dict[int, int] = {}
     next_slot = update_slots(graph, guid_to_slot, 0)
     initial_snapshot = snapshot(graph, guid_to_slot)
+    use_search_feedback = (
+        args.progressive_widening == "on"
+        and args.widening_policy == "feedback"
+    )
+    search_feedback = (
+        SearchFeedbackRegistry(exact_graph_key(graph), int(graph.gate_count))
+        if use_search_feedback
+        else None
+    )
     beam = [
         BeamState(
             graph=graph,
@@ -1878,6 +1897,14 @@ def main() -> None:
             survivor_lane="root",
             exploration_ancestor=False,
             recovered_after_exploration=False,
+            search_node_id=(
+                search_feedback.root_id if search_feedback is not None else -1
+            ),
+            search_identity_order=(
+                search_feedback.nodes[search_feedback.root_id].identity_order
+                if search_feedback is not None
+                else ""
+            ),
         )
     ]
     if args.mode == "model" and args.model_pipeline == "compat_host":
@@ -2003,6 +2030,8 @@ def main() -> None:
                 reference_hashes[step + 1] in diagnostic_seen_hashes
             )
         model_seconds = exact_seconds = proposal_seconds = 0.0
+        parent_feedback_step = [Counter() for _ in input_beam]
+        parent_best_child_gate: list[int | None] = [None] * len(input_beam)
         exact_refresh_actions_added = 0
         action_rows = None
         source_binding_candidates = 0
@@ -2312,6 +2341,7 @@ def main() -> None:
             ):
                 break
             proposals_scanned += 1
+            parent_feedback_step[proposal.parent]["scanned"] += 1
             if proposal.parent_rank >= 0:
                 scanned_parent_ranks.append(proposal.parent_rank)
             if beam[proposal.parent].expansion_round > 0:
@@ -2534,6 +2564,7 @@ def main() -> None:
                         continue
             attempted += 1
             total_attempted_actions += 1
+            parent_feedback_step[proposal.parent]["attempted"] += 1
             if proposal.parent_rank >= 0:
                 attempted_parent_ranks.append(proposal.parent_rank)
             if beam[proposal.parent].expansion_round > 0:
@@ -2553,6 +2584,7 @@ def main() -> None:
             )
             if applied is None:
                 invalid += 1
+                parent_feedback_step[proposal.parent]["invalid"] += 1
                 if neural_deferred:
                     neural_prefilter_step["deferred_invalid"] += 1
                     neural_prefilter_totals["deferred_invalid"] += 1
@@ -2577,6 +2609,7 @@ def main() -> None:
                 exact_identity = (
                     exact_graph_key(applied.graph)
                     if collect_neural_audit
+                    or use_search_feedback
                     or (
                         args.preapply_fingerprint == "shadow"
                         and fingerprint is not None
@@ -2627,6 +2660,17 @@ def main() -> None:
                 direct_inverse_totals[inverse_result] += 1
             if not is_new_successor:
                 duplicates += 1
+                parent_feedback_step[proposal.parent]["valid"] += 1
+                parent_feedback_step[proposal.parent]["duplicate"] += 1
+                if (
+                    search_feedback is not None
+                    and search_feedback.has_identity(exact_identity)
+                ):
+                    search_feedback.add_parent_edge(
+                        exact_identity,
+                        beam[proposal.parent].search_node_id,
+                        step=step + 1,
+                    )
                 if neural_deferred:
                     neural_prefilter_step["deferred_duplicates"] += 1
                     neural_prefilter_totals["deferred_duplicates"] += 1
@@ -2641,8 +2685,42 @@ def main() -> None:
                 eliminate_rotation=args.eliminate_rotation,
                 profile=detailed_profile,
             )
+            if search_feedback is not None:
+                child.search_node_id = search_feedback.add_node(
+                    exact_identity,
+                    gate_count=child.gate_count,
+                    depth=child.depth,
+                    parent_id=beam[proposal.parent].search_node_id,
+                    step=step + 1,
+                )
+                child.search_identity_order = search_feedback.nodes[
+                    child.search_node_id
+                ].identity_order
+            parent_feedback_step[proposal.parent]["valid"] += 1
+            parent_feedback_step[proposal.parent]["unique"] += 1
+            if child.gate_count < beam[proposal.parent].gate_count:
+                parent_feedback_step[proposal.parent]["improving"] += 1
+            previous_best = parent_best_child_gate[proposal.parent]
+            if previous_best is None or child.gate_count < previous_best:
+                parent_best_child_gate[proposal.parent] = child.gate_count
             children.append(child)
         apply_seconds = time.perf_counter() - apply_started
+        if search_feedback is not None:
+            for parent_index, state in enumerate(input_beam):
+                counters = parent_feedback_step[parent_index]
+                if not counters["scanned"]:
+                    continue
+                search_feedback.observe_expansion(
+                    state.search_node_id,
+                    attempted=counters["attempted"],
+                    valid=counters["valid"],
+                    unique=counters["unique"],
+                    duplicate=counters["duplicate"],
+                    invalid=counters["invalid"],
+                    improving=counters["improving"],
+                    best_child_gate=parent_best_child_gate[parent_index],
+                    step=step + 1,
+                )
         if detailed_profile is not None:
             apply_profile_totals.update(apply_profile_step)
         if collect_neural_audit:
@@ -2732,6 +2810,12 @@ def main() -> None:
                 max_expansions=args.widening_max_expansions,
                 seed=args.widening_seed,
                 step=step + 1,
+                policy=args.widening_policy,
+                feedback=(
+                    search_feedback.nodes
+                    if search_feedback is not None
+                    else None
+                ),
             )
             widening_revisits = [
                 replace(
@@ -3023,6 +3107,46 @@ def main() -> None:
             "accepted_actions": len(selected_children),
             "survivor_selection": survivor_selection.metrics,
             "progressive_widening": widening_selection.metrics,
+            "search_feedback": {
+                "parents_scanned": sum(
+                    counters["scanned"] > 0
+                    for counters in parent_feedback_step
+                ),
+                "scanned_actions": sum(
+                    counters["scanned"] for counters in parent_feedback_step
+                ),
+                "attempted_actions": sum(
+                    counters["attempted"] for counters in parent_feedback_step
+                ),
+                "valid_actions": sum(
+                    counters["valid"] for counters in parent_feedback_step
+                ),
+                "unique_children": sum(
+                    counters["unique"] for counters in parent_feedback_step
+                ),
+                "duplicate_children": sum(
+                    counters["duplicate"] for counters in parent_feedback_step
+                ),
+                "invalid_actions": sum(
+                    counters["invalid"] for counters in parent_feedback_step
+                ),
+                "improving_children": sum(
+                    counters["improving"] for counters in parent_feedback_step
+                ),
+                "registry_nodes": (
+                    len(search_feedback.nodes)
+                    if search_feedback is not None
+                    else 0
+                ),
+                "registry_nodes_with_descendant_gain": sum(
+                    stats.descendant_gain > 0
+                    for stats in (
+                        search_feedback.nodes.values()
+                        if search_feedback is not None
+                        else ()
+                    )
+                ),
+            },
             "widening_action_usage": {
                 "scanned_widened_actions": scanned_widened_actions,
                 "attempted_widened_actions": attempted_widened_actions,
@@ -3209,6 +3333,12 @@ def main() -> None:
             else 0
         ),
         "widening_seed": args.widening_seed,
+        "widening_policy": args.widening_policy,
+        "search_feedback": (
+            search_feedback.rendered_summary()
+            if search_feedback is not None
+            else None
+        ),
         "max_gate_increase": args.max_gate_increase,
         "requested_depth": args.depth,
         "completed_depth": len(step_rows),

@@ -33,6 +33,8 @@ class BeamState:
     last_action_parent_rank: int = -1
     widening_ancestor: bool = False
     widened_action_trace: tuple[tuple[int, int, int, int], ...] = ()
+    search_node_id: int = -1
+    search_identity_order: str = ""
 
 
 @dataclass(frozen=True)
