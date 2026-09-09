@@ -16,6 +16,7 @@ apply_budget=${6:-100000}
 root=${QUARL_MATCHFORMER_ROOT:-/SharedData/dengzy/quarl_matchformer_fresh_20260902}
 python_bin=${QUARL_PYTHON:-/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/bin/python}
 host=$(hostname)
+workdir=$(cd "$(dirname "$0")" && pwd)
 
 if [[ "$host" =~ (^|[-_])h?100[-_]?15$ || "$host" == "h100-15" ]]; then
     echo "refusing to run on excluded host h100-15" >&2
@@ -26,7 +27,7 @@ if [[ ! -f "$qasm" ]]; then
     exit 4
 fi
 
-cd "$root/experiment/refresh_consistency_model_20260906"
+cd "$workdir"
 export CUDA_VISIBLE_DEVICES=$gpu
 export LD_LIBRARY_PATH=./quartz_exact_key/build
 export OMP_NUM_THREADS=16
