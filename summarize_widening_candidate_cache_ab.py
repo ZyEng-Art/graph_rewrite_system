@@ -7,6 +7,7 @@ from typing import Any
 
 
 TIMING_KEYS = {
+    "seconds",
     "accepted_actions_per_second",
     "cumulative_seconds",
     "match_states_per_second",

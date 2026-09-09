@@ -40,6 +40,23 @@ def _select_rows(candidates: CandidateTensors, rows: torch.Tensor) -> CandidateT
     )
 
 
+def _slice_rows(
+    candidates: CandidateTensors, start: int, stop: int
+) -> CandidateTensors:
+    return CandidateTensors(
+        **{
+            name: getattr(candidates, name)[start:stop]
+            for name in (
+                "batch_ids",
+                "sources",
+                "anchors",
+                "bindings",
+                "probabilities",
+            )
+        }
+    )
+
+
 def split_candidate_tensors(
     candidates: CandidateTensors, num_parents: int
 ) -> list[CandidateTensors]:
@@ -72,24 +89,6 @@ def remap_parent_candidates(
 ) -> CandidateTensors:
     return CandidateTensors(
         batch_ids=torch.full_like(candidates.batch_ids, parent),
-        sources=candidates.sources,
-        anchors=candidates.anchors,
-        bindings=candidates.bindings,
-        probabilities=candidates.probabilities,
-    )
-
-
-def remap_compact_batch_ids(
-    candidates: CandidateTensors, parent_indices: list[int]
-) -> CandidateTensors:
-    """Map a compact miss-only matcher batch back to the complete beam."""
-    lookup = torch.tensor(
-        parent_indices,
-        dtype=candidates.batch_ids.dtype,
-        device=candidates.batch_ids.device,
-    )
-    return CandidateTensors(
-        batch_ids=lookup.index_select(0, candidates.batch_ids),
         sources=candidates.sources,
         anchors=candidates.anchors,
         bindings=candidates.bindings,
@@ -149,30 +148,53 @@ class WideningCandidateCache:
 
         miss_set = set(miss_indices)
         hit_rows = 0
-        cached_chunks = []
-        for index, state in enumerate(states):
-            if index not in miss_set:
+        fresh_counts = (
+            torch.bincount(
+                fresh_candidates.batch_ids, minlength=len(miss_indices)
+            ).cpu().tolist()
+            if fresh_candidates is not None
+            else []
+        )
+        fresh_offsets = [0]
+        for count in fresh_counts:
+            fresh_offsets.append(fresh_offsets[-1] + int(count))
+
+        chunks = []
+        miss_cursor = 0
+        index = 0
+        while index < len(states):
+            if index in miss_set:
+                run_start = index
+                compact_start = miss_cursor
+                while index < len(states) and index in miss_set:
+                    index += 1
+                    miss_cursor += 1
+                compact_stop = miss_cursor
+                rows = _slice_rows(
+                    fresh_candidates,
+                    fresh_offsets[compact_start],
+                    fresh_offsets[compact_stop],
+                )
+                offset = run_start - compact_start
+                chunks.append(
+                    CandidateTensors(
+                        batch_ids=rows.batch_ids + offset,
+                        sources=rows.sources,
+                        anchors=rows.anchors,
+                        bindings=rows.bindings,
+                        probabilities=rows.probabilities,
+                    )
+                )
+            else:
+                state = states[index]
                 entry = self._entries.get(self._key(state))
                 if entry is None or entry.graph is not state.graph:
                     raise RuntimeError("widening candidate cache changed during resolution")
-                cached_chunks.append(remap_parent_candidates(entry.candidates, index))
+                chunks.append(remap_parent_candidates(entry.candidates, index))
                 hit_rows += int(entry.candidates.sources.numel())
+                index += 1
 
-        fresh = (
-            remap_compact_batch_ids(fresh_candidates, miss_indices)
-            if fresh_candidates is not None
-            else None
-        )
-        if fresh is None:
-            combined = CandidateTensors.cat(cached_chunks)
-        elif not cached_chunks:
-            combined = fresh
-        else:
-            combined = CandidateTensors.cat([fresh, *cached_chunks])
-            # Fresh misses are one compact batch and cache hits are separate chunks.
-            # Restore beam-parent order so stable downstream tie breaking is unchanged.
-            order = torch.argsort(combined.batch_ids, stable=True)
-            combined = _select_rows(combined, order)
+        combined = CandidateTensors.cat(chunks)
         hits = len(states) - len(miss_indices)
         return combined, combined, {
             "enabled": True,
@@ -203,23 +225,26 @@ class WideningCandidateCache:
                 "resident_rows_after": 0,
                 "resident_bytes_after": 0,
             }
+        counts = torch.bincount(
+            candidates.batch_ids, minlength=len(states)
+        ).cpu().tolist()
+        offsets = [0]
+        for count in counts:
+            offsets.append(offsets[-1] + int(count))
         entries: dict[int, CachedParentCandidates] = {}
         for index in selected_indices:
             if index < 0 or index >= len(states):
                 raise ValueError("selected cache index is outside the state batch")
             state = states[index]
-            rows = torch.nonzero(
-                candidates.batch_ids.eq(index), as_tuple=False
-            ).flatten()
-            selected = _select_rows(candidates, rows)
+            selected = _slice_rows(candidates, offsets[index], offsets[index + 1])
             entries[self._key(state)] = CachedParentCandidates(
                 graph=state.graph,
                 candidates=CandidateTensors(
                     batch_ids=torch.zeros_like(selected.batch_ids),
-                    sources=selected.sources,
-                    anchors=selected.anchors,
-                    bindings=selected.bindings,
-                    probabilities=selected.probabilities,
+                    sources=selected.sources.clone(),
+                    anchors=selected.anchors.clone(),
+                    bindings=selected.bindings.clone(),
+                    probabilities=selected.probabilities.clone(),
                 ),
             )
         self._entries = entries
