@@ -1,0 +1,8 @@
+# Frozen after the corpus11 model was trained; evaluation-only circuits.
+110_39_1_0_817.qasm
+111_38_0_9_3289.qasm
+112_38_1_12_943.qasm
+113_37_0_10_45.qasm
+114_37_-1_9_1492.qasm
+115_38_2_11_37.qasm
+116_36_0_0_0.qasm
