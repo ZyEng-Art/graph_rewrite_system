@@ -104,11 +104,15 @@ def pair_metrics(
     decisions = margins.gt(0).float() + 0.5 * margins.eq(0).float()
     grouped: dict[tuple[int, int], list[float]] = defaultdict(list)
     per_source: dict[int, list[float]] = defaultdict(list)
+    per_source_groups: dict[int, dict[int, list[float]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
     for value, source, step in zip(
         decisions.tolist(), pairs["source_ids"].tolist(), pairs["steps"].tolist()
     ):
         grouped[(int(source), int(step))].append(float(value))
         per_source[int(source)].append(float(value))
+        per_source_groups[int(source)][int(step)].append(float(value))
     return {
         "pairs": int(decisions.numel()),
         "accuracy": float(decisions.mean()),
@@ -124,9 +128,60 @@ def pair_metrics(
             str(source): {
                 "pairs": len(values),
                 "accuracy": sum(values) / len(values),
+                "group_macro_accuracy": sum(
+                    sum(group) / len(group)
+                    for group in per_source_groups[source].values()
+                )
+                / len(per_source_groups[source]),
             }
             for source, values in sorted(per_source.items())
         },
+    }
+
+
+def paired_group_bootstrap_delta(
+    model_scores: torch.Tensor,
+    baseline_scores: torch.Tensor,
+    pairs: dict[str, torch.Tensor],
+    *,
+    iterations: int = 4000,
+    seed: int = 73,
+) -> dict[str, float | list[float] | int]:
+    groups: dict[tuple[int, int], list[int]] = defaultdict(list)
+    for index, (source, step) in enumerate(
+        zip(pairs["source_ids"].tolist(), pairs["steps"].tolist())
+    ):
+        groups[(int(source), int(step))].append(index)
+    if not groups:
+        return {"groups": 0, "delta": float("nan"), "bootstrap_95pct": []}
+
+    preferred = pairs["preferred"]
+    rejected = pairs["rejected"]
+
+    def decisions(scores: torch.Tensor) -> torch.Tensor:
+        margins = scores[preferred] - scores[rejected]
+        return margins.gt(0).float() + 0.5 * margins.eq(0).float()
+
+    model_decisions = decisions(model_scores)
+    baseline_decisions = decisions(baseline_scores)
+    group_deltas = torch.tensor(
+        [
+            float(model_decisions[indices].mean() - baseline_decisions[indices].mean())
+            for indices in groups.values()
+        ]
+    )
+    generator = torch.Generator().manual_seed(seed)
+    samples = []
+    for _ in range(iterations):
+        chosen = torch.randint(
+            len(group_deltas), (len(group_deltas),), generator=generator
+        )
+        samples.append(float(group_deltas[chosen].mean()))
+    interval = torch.tensor(samples).quantile(torch.tensor([0.025, 0.975]))
+    return {
+        "groups": len(group_deltas),
+        "delta": float(group_deltas.mean()),
+        "bootstrap_95pct": [float(interval[0]), float(interval[1])],
     }
 
 
@@ -191,21 +246,25 @@ def main() -> None:
         validation_scores = model(validation_inputs).squeeze(1)
 
     def evaluate_split(rows, pairs, scores):
+        baselines = {
+            "continuation_score": baseline_scores(rows, "continuation_score"),
+            "descendant_gain_before": baseline_scores(
+                rows, "descendant_gain_before"
+            ),
+            "novel_yield_before": baseline_scores(rows, "novel_yield_before"),
+            "valid_yield_before": baseline_scores(rows, "valid_yield_before"),
+        }
         return {
             "model": pair_metrics(scores, pairs),
             "baselines": {
-                "continuation_score": pair_metrics(
-                    baseline_scores(rows, "continuation_score"), pairs
-                ),
-                "descendant_gain_before": pair_metrics(
-                    baseline_scores(rows, "descendant_gain_before"), pairs
-                ),
-                "novel_yield_before": pair_metrics(
-                    baseline_scores(rows, "novel_yield_before"), pairs
-                ),
-                "valid_yield_before": pair_metrics(
-                    baseline_scores(rows, "valid_yield_before"), pairs
-                ),
+                name: pair_metrics(values, pairs)
+                for name, values in baselines.items()
+            },
+            "model_minus_baseline_group_bootstrap": {
+                name: paired_group_bootstrap_delta(
+                    scores, values, pairs, seed=args.seed
+                )
+                for name, values in baselines.items()
             },
         }
 

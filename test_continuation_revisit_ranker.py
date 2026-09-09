@@ -8,6 +8,7 @@ from train_continuation_revisit_ranker import (
     build_pair_tensors,
     feature_row,
     pair_metrics,
+    paired_group_bootstrap_delta,
 )
 
 
@@ -52,6 +53,23 @@ class ContinuationRevisitRankerTest(unittest.TestCase):
         metrics = pair_metrics(torch.tensor([2.0, 1.0, 0.0, 0.0]), pairs)
         self.assertEqual(metrics["accuracy"], 0.75)
         self.assertEqual(metrics["group_macro_accuracy"], 0.75)
+
+    def test_paired_bootstrap_reports_group_delta(self) -> None:
+        pairs = {
+            "preferred": torch.tensor([0, 2]),
+            "rejected": torch.tensor([1, 3]),
+            "source_ids": torch.tensor([0, 0]),
+            "steps": torch.tensor([1, 2]),
+        }
+        result = paired_group_bootstrap_delta(
+            torch.tensor([2.0, 1.0, 2.0, 1.0]),
+            torch.tensor([1.0, 2.0, 1.0, 2.0]),
+            pairs,
+            iterations=20,
+        )
+        self.assertEqual(result["groups"], 2)
+        self.assertEqual(result["delta"], 1.0)
+        self.assertEqual(result["bootstrap_95pct"], [1.0, 1.0])
 
 
 if __name__ == "__main__":
