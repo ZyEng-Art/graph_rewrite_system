@@ -54,7 +54,10 @@ class ContinuationRankerShadowTest(unittest.TestCase):
         )
         self.assertTrue(
             torch.allclose(
-                scores.cpu(), torch.logit(proposals.probabilities).cpu()
+                scores.cpu(),
+                torch.logit(
+                    proposals.probabilities.to(torch.float16).float()
+                ).cpu(),
             )
         )
 

@@ -737,7 +737,7 @@ def continuation_ranker_scores(
                 [state.depth for state in beam], device=device
             ).index_select(0, parent_ids),
         }
-    )
+    ).to(torch.float16).float()
     prefix_xfers = prefix_lengths = None
     if ranker.prefix_width:
         parent_prefixes = torch.zeros(
