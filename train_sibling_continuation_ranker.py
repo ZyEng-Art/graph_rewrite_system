@@ -26,15 +26,30 @@ def sha256(path: Path) -> str:
 
 
 def prefix_tensors(payload: dict, max_length: int) -> tuple[torch.Tensor, torch.Tensor]:
-    histories = {
-        int(row["node_id"]): [int(action[0]) + 1 for action in row["history"]]
-        for row in payload["parent_histories"]
-    }
-    parent_ids = payload["parent_node_ids"].tolist()
-    tokens = torch.zeros((len(parent_ids), max_length), dtype=torch.long)
-    lengths = torch.zeros(len(parent_ids), dtype=torch.long)
-    for row, parent_id in enumerate(parent_ids):
-        history = histories[int(parent_id)][-max_length:]
+    aligned = payload.get("parent_history_xfer_ids")
+    if aligned is not None:
+        if len(aligned) != int(payload["parent_node_ids"].numel()):
+            raise ValueError("row-aligned parent histories have the wrong length")
+        histories_by_row = [
+            [int(xfer_id) + 1 for xfer_id in history] for history in aligned
+        ]
+    else:
+        # Compatibility for v2/v3 audits. This is exact only when every search
+        # node is represented by one rewrite history; v4 stores row alignment.
+        history_by_node = {
+            int(row["node_id"]): [
+                int(action[0]) + 1 for action in row["history"]
+            ]
+            for row in payload["parent_histories"]
+        }
+        histories_by_row = [
+            history_by_node[int(parent_id)]
+            for parent_id in payload["parent_node_ids"].tolist()
+        ]
+    tokens = torch.zeros((len(histories_by_row), max_length), dtype=torch.long)
+    lengths = torch.zeros(len(histories_by_row), dtype=torch.long)
+    for row, full_history in enumerate(histories_by_row):
+        history = full_history[-max_length:]
         if history:
             tokens[row, : len(history)] = torch.tensor(history)
             lengths[row] = len(history)
@@ -70,6 +85,10 @@ def load_corpus(manifest_path: Path, *, prefix_max_length: int = 0) -> dict:
         offset += int(rows.shape[0])
         inputs.append(rows)
         if prefix_max_length:
+            if "parent_history_xfer_ids" not in payload:
+                raise ValueError(
+                    f"sequence training requires row-aligned v4 audit: {path}"
+                )
             source_prefixes, source_lengths = prefix_tensors(
                 payload, prefix_max_length
             )
@@ -452,6 +471,7 @@ def main() -> None:
         "base_probability_index": model.base_probability_index,
         "num_xfers": model.num_xfers,
         "prefix_width": model.prefix_width,
+        "prefix_alignment": "row" if model.prefix_width else "disabled",
         "model": model.state_dict(),
         "metrics": metrics,
         "feature_spec": (

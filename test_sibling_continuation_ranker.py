@@ -73,6 +73,18 @@ class SiblingContinuationRankerTest(unittest.TestCase):
         unseen[0, 0] = 999
         self.assertEqual(model(inputs, unseen, lengths).shape, (3,))
 
+    def test_row_aligned_prefixes_override_node_history(self) -> None:
+        payload = {
+            "parent_node_ids": torch.tensor([3, 3]),
+            "parent_histories": [
+                {"node_id": 3, "history": [[1, 8]]},
+            ],
+            "parent_history_xfer_ids": [[4, 5], [6]],
+        }
+        tokens, lengths = prefix_tensors(payload, 2)
+        self.assertEqual(tokens.tolist(), [[5, 6], [7, 0]])
+        self.assertEqual(lengths.tolist(), [2, 1])
+
 
 if __name__ == "__main__":
     unittest.main()

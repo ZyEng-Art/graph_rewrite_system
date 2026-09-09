@@ -630,6 +630,10 @@ def load_neural_successor_prefilter(path: Path, device: torch.device):
     if checkpoint.get("format") != "neural_successor_prefilter_v1":
         raise ValueError(f"unsupported neural prefilter checkpoint: {path}")
     train_args = checkpoint.get("args", {})
+    if int(checkpoint["prefix_width"]) and checkpoint.get(
+        "prefix_alignment"
+    ) != "row":
+        raise ValueError("continuation prefix checkpoint is not row-aligned")
     model = NeuralSuccessorPrefilter(
         int(checkpoint["input_width"]),
         int(checkpoint["hidden_width"]),
@@ -2204,6 +2208,7 @@ def main() -> None:
     neural_parent_stagnation_chunks = []
     neural_parent_depth_chunks = []
     neural_parent_histories: dict[int, list[list[int]]] = {}
+    neural_parent_history_xfer_ids: list[list[int]] = []
     neural_continuation_score_chunks = []
     if collect_neural_audit:
         successor_groups = {exact_graph_key(graph): 0}
@@ -3227,6 +3232,12 @@ def main() -> None:
                         int(state.search_node_id),
                         [list(map(int, action)) for action in state.history],
                     )
+                neural_parent_history_xfer_ids.extend(
+                    [
+                        [int(action[0]) for action in input_beam[int(parent)].history]
+                        for parent in parent_rows.tolist()
+                    ]
+                )
         fingerprint_after = fingerprint_audit.stats()
         fingerprint_step = {
             key: fingerprint_after[key] - fingerprint_before[key]
@@ -3767,7 +3778,7 @@ def main() -> None:
             raise RuntimeError("neural audit collection produced no rows")
         audit_payload = {
             "format": (
-                "frozen_candidate_successor_descendant_v3"
+                "frozen_candidate_successor_descendant_v4"
                 if collect_descendant_labels
                 else "frozen_candidate_successor_v1"
             ),
@@ -3800,6 +3811,8 @@ def main() -> None:
         if collect_descendant_labels:
             if search_feedback is None:
                 raise RuntimeError("descendant labels require search feedback")
+            if len(neural_parent_history_xfer_ids) != neural_audit_rows:
+                raise RuntimeError("row-aligned parent histories do not match audit")
             parent_node_ids = torch.cat(neural_parent_node_chunks)
             child_node_ids = torch.cat(neural_child_node_chunks)
             edge_steps = torch.cat(neural_step_chunks).to(torch.int32)
@@ -3824,6 +3837,7 @@ def main() -> None:
                         }
                         for node_id in sorted(neural_parent_histories)
                     ],
+                    "parent_history_xfer_ids": neural_parent_history_xfer_ids,
                     "descendant_labels": descendant_label_tensors(
                         search_feedback,
                         child_node_ids,

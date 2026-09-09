@@ -25,6 +25,10 @@ def main() -> None:
     if checkpoint.get("format") != "sibling_continuation_ranker_v3":
         raise ValueError("evaluator requires a v3 continuation ranker")
     train_args = checkpoint["args"]
+    if int(checkpoint["prefix_width"]) and checkpoint.get(
+        "prefix_alignment"
+    ) != "row":
+        raise ValueError("continuation prefix checkpoint is not row-aligned")
     prefix_max_length = int(train_args.get("prefix_max_length", 0))
     corpus = load_corpus(
         args.manifest, prefix_max_length=prefix_max_length

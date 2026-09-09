@@ -23,6 +23,7 @@ def validate_audit(payload: dict[str, Any]) -> int:
     if audit_format not in {
         "frozen_candidate_successor_descendant_v2",
         "frozen_candidate_successor_descendant_v3",
+        "frozen_candidate_successor_descendant_v4",
     }:
         raise ValueError("audit does not contain descendant sibling labels")
     required = (
