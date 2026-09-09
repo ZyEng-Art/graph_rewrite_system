@@ -1,0 +1,40 @@
+{
+  "branch": "deterministic-feedback-widening-20260909",
+  "budget": 100000,
+  "candidate_policy": "round_robin",
+  "baseline_policy": "feedback",
+  "holdout_frozen_commit": "da4e85a",
+  "circuits": 5,
+  "gate_count_wins_ties_losses": {"wins": 1, "ties": 4, "losses": 0},
+  "means": {
+    "best_gate_count": {"baseline": 38.6, "candidate": 38.2, "delta": -0.4},
+    "best_first_seen_step": {"baseline": 66.4, "candidate": 57.8, "delta": -8.6, "relative_delta_percent": -12.9518072289},
+    "best_first_seen_seconds": {"baseline": 15.1813566728, "candidate": 10.6205358251, "delta": -4.5608208477, "relative_delta_percent": -30.0422481729},
+    "best_action_depth": {"baseline": 60.0, "candidate": 50.6, "delta": -9.4, "relative_delta_percent": -15.6666666667},
+    "unique_graphs_seen": {"baseline": 23764.2, "candidate": 20860.2, "delta": -2904.0, "relative_delta_percent": -12.2200621102},
+    "total_seconds": {"baseline": 22.0793518373, "candidate": 16.2522890741, "delta": -5.8270627632, "relative_delta_percent": -26.3914575309}
+  },
+  "rows": [
+    {"circuit": "0_58_0_8_121", "baseline_gate": 38, "candidate_gate": 38, "baseline_step": 77, "candidate_step": 68, "baseline_seconds": 22.2976398820, "candidate_seconds": 17.2128515369, "baseline_unique": 24086, "candidate_unique": 23831, "best_digest_same": false},
+    {"circuit": "6_58_2_24_3320", "baseline_gate": 38, "candidate_gate": 38, "baseline_step": 79, "candidate_step": 46, "baseline_seconds": 22.8233372888, "candidate_seconds": 15.5715908241, "baseline_unique": 24338, "candidate_unique": 19202, "best_digest_same": true},
+    {"circuit": "7_56_0_16_44", "baseline_gate": 40, "candidate_gate": 38, "baseline_step": 73, "candidate_step": 44, "baseline_seconds": 22.3219010509, "candidate_seconds": 14.7837621830, "baseline_unique": 23701, "candidate_unique": 17947, "best_digest_same": false},
+    {"circuit": "8_56_0_27_1593", "baseline_gate": 38, "candidate_gate": 38, "baseline_step": 44, "candidate_step": 48, "baseline_seconds": 21.3861561168, "candidate_seconds": 16.0755681552, "baseline_unique": 23536, "candidate_unique": 21467, "best_digest_same": false},
+    {"circuit": "9_56_0_9_121", "baseline_gate": 39, "candidate_gate": 39, "baseline_step": 59, "candidate_step": 83, "baseline_seconds": 21.5677248479, "candidate_seconds": 17.6176726711, "baseline_unique": 23160, "candidate_unique": 21854, "best_digest_same": false}
+  ],
+  "determinism_repeat": {
+    "circuit": "7_56_0_16_44",
+    "exact_equal_fields": ["best_gate_count", "best_first_seen_step", "best_action_depth", "best_graph_exact_identity_digest", "final_beam_exact_identity_digest", "best_history", "total_attempted_actions", "unique_graphs_seen", "accepted_actions"],
+    "best_gate_count": 38,
+    "best_first_seen_step": 44,
+    "best_action_depth": 38,
+    "unique_graphs_seen": 17947,
+    "accepted_actions": 13503,
+    "original_seconds": 14.7837621830,
+    "repeat_seconds": 15.4406005011
+  },
+  "remote_artifacts": {
+    "baseline": "$AUDIT_ROOT/v10_feedback_frozen_scale_holdout_100k",
+    "candidate": "$AUDIT_ROOT/v10_roundrobin_frozen_scale_holdout_100k",
+    "repeat": "$AUDIT_ROOT/v10_roundrobin_determinism_repeat_100k"
+  }
+}
