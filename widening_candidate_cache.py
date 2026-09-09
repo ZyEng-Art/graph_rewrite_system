@@ -79,6 +79,24 @@ def remap_parent_candidates(
     )
 
 
+def remap_compact_batch_ids(
+    candidates: CandidateTensors, parent_indices: list[int]
+) -> CandidateTensors:
+    """Map a compact miss-only matcher batch back to the complete beam."""
+    lookup = torch.tensor(
+        parent_indices,
+        dtype=candidates.batch_ids.dtype,
+        device=candidates.batch_ids.device,
+    )
+    return CandidateTensors(
+        batch_ids=lookup.index_select(0, candidates.batch_ids),
+        sources=candidates.sources,
+        anchors=candidates.anchors,
+        bindings=candidates.bindings,
+        probabilities=candidates.probabilities,
+    )
+
+
 @dataclass(frozen=True)
 class CachedParentCandidates:
     graph: Any
@@ -118,7 +136,7 @@ class WideningCandidateCache:
         *,
         miss_indices: list[int],
         fresh_candidates: CandidateTensors | None,
-    ) -> tuple[CandidateTensors, list[CandidateTensors], dict[str, int | float | bool]]:
+    ) -> tuple[CandidateTensors, CandidateTensors, dict[str, int | float | bool]]:
         """Combine cached rows and a compact batch generated for cache misses."""
         if not self.enabled:
             raise ValueError("cannot resolve candidates with a disabled cache")
@@ -129,42 +147,44 @@ class WideningCandidateCache:
         if bool(miss_indices) != (fresh_candidates is not None):
             raise ValueError("fresh candidates must be supplied exactly for cache misses")
 
-        fresh_by_parent = (
-            split_candidate_tensors(fresh_candidates, len(miss_indices))
-            if fresh_candidates is not None
-            else []
-        )
-        fresh_lookup = {
-            parent_index: fresh_by_parent[compact_index]
-            for compact_index, parent_index in enumerate(miss_indices)
-        }
         miss_set = set(miss_indices)
-        per_parent = []
         hit_rows = 0
-        miss_rows = 0
+        cached_chunks = []
         for index, state in enumerate(states):
-            if index in miss_set:
-                rows = fresh_lookup[index]
-                miss_rows += int(rows.sources.numel())
-            else:
+            if index not in miss_set:
                 entry = self._entries.get(self._key(state))
                 if entry is None or entry.graph is not state.graph:
                     raise RuntimeError("widening candidate cache changed during resolution")
-                rows = entry.candidates
-                hit_rows += int(rows.sources.numel())
-            per_parent.append(rows)
+                cached_chunks.append(remap_parent_candidates(entry.candidates, index))
+                hit_rows += int(entry.candidates.sources.numel())
 
-        combined = CandidateTensors.cat(
-            [remap_parent_candidates(rows, index) for index, rows in enumerate(per_parent)]
+        fresh = (
+            remap_compact_batch_ids(fresh_candidates, miss_indices)
+            if fresh_candidates is not None
+            else None
         )
+        if fresh is None:
+            combined = CandidateTensors.cat(cached_chunks)
+        elif not cached_chunks:
+            combined = fresh
+        else:
+            combined = CandidateTensors.cat([fresh, *cached_chunks])
+            # Fresh misses are one compact batch and cache hits are separate chunks.
+            # Restore beam-parent order so stable downstream tie breaking is unchanged.
+            order = torch.argsort(combined.batch_ids, stable=True)
+            combined = _select_rows(combined, order)
         hits = len(states) - len(miss_indices)
-        return combined, per_parent, {
+        return combined, combined, {
             "enabled": True,
             "parent_hits": hits,
             "parent_misses": len(miss_indices),
             "parent_hit_rate": hits / max(1, len(states)),
             "candidate_rows_reused": hit_rows,
-            "candidate_rows_generated": miss_rows,
+            "candidate_rows_generated": (
+                int(fresh_candidates.sources.numel())
+                if fresh_candidates is not None
+                else 0
+            ),
             "resident_parents_before": len(self._entries),
             "resident_rows_before": self.resident_rows,
             "resident_bytes_before": self.resident_bytes,
@@ -173,7 +193,7 @@ class WideningCandidateCache:
     def retain(
         self,
         states: list[Any],
-        per_parent: list[CandidateTensors],
+        candidates: CandidateTensors,
         selected_indices: list[int],
     ) -> dict[str, int]:
         """Retain only parents explicitly scheduled for a later rank band."""
@@ -183,15 +203,24 @@ class WideningCandidateCache:
                 "resident_rows_after": 0,
                 "resident_bytes_after": 0,
             }
-        if len(states) != len(per_parent):
-            raise ValueError("candidate rows must align with states")
         entries: dict[int, CachedParentCandidates] = {}
         for index in selected_indices:
             if index < 0 or index >= len(states):
                 raise ValueError("selected cache index is outside the state batch")
             state = states[index]
+            rows = torch.nonzero(
+                candidates.batch_ids.eq(index), as_tuple=False
+            ).flatten()
+            selected = _select_rows(candidates, rows)
             entries[self._key(state)] = CachedParentCandidates(
-                graph=state.graph, candidates=per_parent[index]
+                graph=state.graph,
+                candidates=CandidateTensors(
+                    batch_ids=torch.zeros_like(selected.batch_ids),
+                    sources=selected.sources,
+                    anchors=selected.anchors,
+                    bindings=selected.bindings,
+                    probabilities=selected.probabilities,
+                ),
             )
         self._entries = entries
         return {

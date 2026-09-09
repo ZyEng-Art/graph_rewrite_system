@@ -43,20 +43,20 @@ class WideningCandidateCacheTest(unittest.TestCase):
         graphs = [object(), object(), object()]
         initial = [State(graph) for graph in graphs]
         cache = WideningCandidateCache(enabled=True)
-        first, first_by_parent, first_metrics = cache.resolve(
+        first, retained_candidates, first_metrics = cache.resolve(
             initial,
             miss_indices=[0, 1, 2],
             fresh_candidates=candidates([0, 0, 1, 2, 2]),
         )
         self.assertEqual(first.batch_ids.tolist(), [0, 0, 1, 2, 2])
         self.assertEqual(first_metrics["parent_hits"], 0)
-        retained = cache.retain(initial, first_by_parent, [0, 2])
+        retained = cache.retain(initial, retained_candidates, [0, 2])
         self.assertEqual(retained["resident_parents_after"], 2)
 
         child_graph = object()
         next_states = [State(graphs[2]), State(child_graph), State(graphs[0])]
         self.assertEqual(cache.miss_indices(next_states), [1])
-        combined, per_parent, metrics = cache.resolve(
+        combined, retained_candidates, metrics = cache.resolve(
             next_states,
             miss_indices=[1],
             fresh_candidates=candidates([0, 0]),
@@ -67,20 +67,20 @@ class WideningCandidateCacheTest(unittest.TestCase):
         self.assertEqual(metrics["candidate_rows_reused"], 4)
         self.assertEqual(metrics["candidate_rows_generated"], 2)
 
-        cache.retain(next_states, per_parent, [1])
+        cache.retain(next_states, retained_candidates, [1])
         self.assertEqual(cache.miss_indices([State(graphs[0]), State(child_graph)]), [0])
 
     def test_entry_owns_graph_and_reports_tensor_bytes(self) -> None:
         graph = object()
         cache = WideningCandidateCache(enabled=True)
         rows = candidates([0, 0])
-        _, split, _ = cache.resolve(
+        _, retained_candidates, _ = cache.resolve(
             [State(graph)], miss_indices=[0], fresh_candidates=rows
         )
-        metrics = cache.retain([State(graph)], split, [0])
+        metrics = cache.retain([State(graph)], retained_candidates, [0])
         self.assertEqual(metrics["resident_rows_after"], 2)
         self.assertEqual(
-            metrics["resident_bytes_after"], candidate_tensor_bytes(split[0])
+            metrics["resident_bytes_after"], candidate_tensor_bytes(rows)
         )
 
     def test_rejects_inconsistent_fresh_batch(self) -> None:
@@ -92,12 +92,11 @@ class WideningCandidateCacheTest(unittest.TestCase):
         graphs = [object(), object()]
         states = [State(graph) for graph in graphs]
         cache = WideningCandidateCache(enabled=True)
-        combined, split, _ = cache.resolve(
+        combined, retained_candidates, _ = cache.resolve(
             states, miss_indices=[0, 1], fresh_candidates=candidates([1, 1])
         )
         self.assertEqual(combined.batch_ids.tolist(), [1, 1])
-        self.assertEqual(split[0].sources.numel(), 0)
-        cache.retain(states, split, [0])
+        cache.retain(states, retained_candidates, [0])
 
         reused, _, metrics = cache.resolve(
             [State(graphs[0])], miss_indices=[], fresh_candidates=None

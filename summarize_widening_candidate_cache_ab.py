@@ -32,7 +32,10 @@ def _structural_projection(value: Any) -> Any:
         return {
             key: _structural_projection(child)
             for key, child in value.items()
-            if key not in TIMING_KEYS and key not in EXPECTED_CACHE_DIFFERENCES
+            if key not in TIMING_KEYS
+            and not key.endswith("_seconds")
+            and not key.endswith("_per_second")
+            and key not in EXPECTED_CACHE_DIFFERENCES
         }
     if isinstance(value, list):
         return [_structural_projection(child) for child in value]
