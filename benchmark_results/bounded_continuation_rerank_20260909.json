@@ -1,0 +1,137 @@
+{
+  "branch": "deterministic-feedback-widening-20260909",
+  "date": "2026-09-09",
+  "decision": "experimental_off_by_default",
+  "implementation_head": "cdf5801",
+  "policy": {
+    "mode": "bounded",
+    "max_matcher_logit_gap": 0.05,
+    "min_continuation_score_margin": 0.1,
+    "max_promotions_per_parent_per_layer": 1,
+    "same_parent_required": true,
+    "same_immediate_gate_count_required": true,
+    "preserves_global_bucket_positions": true
+  },
+  "calibration": {
+    "selection_data": "train_pairs_only",
+    "train": {
+      "pairs": 553,
+      "interventions": 40,
+      "corrected": 40,
+      "harmed": 0,
+      "precision_wilson_lower_95pct": 0.9123754607496077
+    },
+    "frozen_validation": {
+      "pairs": 308,
+      "interventions": 37,
+      "corrected": 37,
+      "harmed": 0,
+      "precision_wilson_lower_95pct": 0.9059390425448562
+    }
+  },
+  "frozen_validation_20k": {
+    "circuits": 7,
+    "best_gate_equal": 7,
+    "best_first_seen_step_equal": 7,
+    "total_promotions": 1999,
+    "minimum_promotions": 255,
+    "maximum_promotions": 337
+  },
+  "raw58_100k": {
+    "off": {
+      "best_gate_count": 38,
+      "best_first_seen_step": 77,
+      "best_first_seen_seconds": 16.683301525190473,
+      "best_action_depth": 69,
+      "maximum_action_depth": 86,
+      "accepted_actions": 18111,
+      "unique_graphs_seen": 24086,
+      "search_seconds": 21.386538540013134
+    },
+    "bounded": {
+      "best_gate_count": 38,
+      "best_first_seen_step": 66,
+      "best_first_seen_seconds": 14.072341874008998,
+      "best_action_depth": 56,
+      "maximum_action_depth": 90,
+      "accepted_actions": 19239,
+      "unique_graphs_seen": 25546,
+      "search_seconds": 22.83566856989637,
+      "promotions": 1804,
+      "scorer_seconds": 0.37264120182953775
+    },
+    "deterministic_repeat": {
+      "best_graph_digest_equal": true,
+      "final_beam_digest_equal": true,
+      "best_history_equal": true,
+      "improvement_trace_without_time_equal": true,
+      "promotions_equal": true
+    }
+  },
+  "prospective_holdout5_100k": {
+    "frozen_list": "sibling_continuation_live_holdout_qasms_20260909.txt",
+    "wins_ties_losses_by_best_gate": [0, 5, 0],
+    "mean_best_step_delta": -0.6,
+    "mean_best_seconds_delta": 0.34067318667657676,
+    "mean_unique_graph_delta": -514.6,
+    "mean_search_seconds_delta": 0.5534190923906863,
+    "mean_promotions": 1869.4,
+    "circuits": [
+      {
+        "circuit": "1_58_0_21_4409",
+        "off_best_gate": 38,
+        "bounded_best_gate": 38,
+        "off_best_step": 54,
+        "bounded_best_step": 59,
+        "best_seconds_delta": 1.6843370671849698,
+        "unique_graph_delta": -2338,
+        "promotions": 1987
+      },
+      {
+        "circuit": "2_58_0_28_120",
+        "off_best_gate": 38,
+        "bounded_best_gate": 38,
+        "off_best_step": 51,
+        "bounded_best_step": 51,
+        "best_seconds_delta": -0.24707850394770503,
+        "unique_graph_delta": 1000,
+        "promotions": 1840
+      },
+      {
+        "circuit": "3_58_0_29_336",
+        "off_best_gate": 38,
+        "bounded_best_gate": 38,
+        "off_best_step": 60,
+        "bounded_best_step": 52,
+        "best_seconds_delta": -1.249843857018277,
+        "unique_graph_delta": 1116,
+        "promotions": 1933
+      },
+      {
+        "circuit": "4_58_0_23_45",
+        "off_best_gate": 38,
+        "bounded_best_gate": 38,
+        "off_best_step": 43,
+        "bounded_best_step": 42,
+        "best_seconds_delta": 0.5903724762611091,
+        "unique_graph_delta": -1703,
+        "promotions": 1915
+      },
+      {
+        "circuit": "5_58_0_12_38",
+        "off_best_gate": 38,
+        "bounded_best_gate": 38,
+        "off_best_step": 62,
+        "bounded_best_step": 63,
+        "best_seconds_delta": 0.9255787509027869,
+        "unique_graph_delta": -648,
+        "promotions": 1672
+      }
+    ]
+  },
+  "regression_tests": {
+    "passed": 32,
+    "total": 32
+  },
+  "artifact_root": "/SharedData/dengzy/quarl_matchformer_fresh_20260902/experiment/sibling_continuation_audit_v3_20260909"
+}
