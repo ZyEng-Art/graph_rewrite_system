@@ -1443,7 +1443,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--widening-policy",
-        choices=("round_robin", "feedback"),
+        choices=("round_robin", "feedback", "feedback_balanced"),
         default="round_robin",
         help=(
             "choose revisit parents with the historical seeded round-robin "
@@ -1762,7 +1762,7 @@ def main() -> None:
         parser.error("neural descendant labels require --neural-audit-output")
     if args.neural_descendant_labels == "on" and not (
         args.progressive_widening == "on"
-        and args.widening_policy == "feedback"
+        and args.widening_policy in {"feedback", "feedback_balanced"}
         and args.deterministic_search
     ):
         parser.error(
@@ -1952,7 +1952,7 @@ def main() -> None:
     initial_snapshot = snapshot(graph, guid_to_slot)
     use_search_feedback = (
         args.progressive_widening == "on"
-        and args.widening_policy == "feedback"
+        and args.widening_policy in {"feedback", "feedback_balanced"}
     )
     search_feedback = (
         SearchFeedbackRegistry(exact_graph_key(graph), int(graph.gate_count))

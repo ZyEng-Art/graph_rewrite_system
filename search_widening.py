@@ -52,15 +52,23 @@ def select_widening_revisits(
         raise ValueError("widening slots must be nonnegative")
     if max_expansions < 1:
         raise ValueError("max expansions must be positive")
-    if policy not in {"round_robin", "feedback"}:
+    if policy not in {"round_robin", "feedback", "feedback_balanced"}:
         raise ValueError("unknown widening policy")
-    if policy == "feedback" and feedback is None:
+    if policy in {"feedback", "feedback_balanced"} and feedback is None:
         raise ValueError("feedback policy requires node statistics")
     eligible = [
         index
         for index, state in enumerate(states)
         if int(getattr(state, "expansion_round", 0)) + 1 < max_expansions
     ]
+    if policy == "feedback_balanced":
+        return _select_balanced_feedback_revisits(
+            states,
+            eligible=eligible,
+            slots=slots,
+            feedback=feedback or {},
+            step=step,
+        )
     if policy == "feedback":
         return _select_feedback_revisits(
             states,
@@ -110,6 +118,96 @@ def select_widening_revisits(
                 int(getattr(states[index], "expansion_round", 0)) + 1
                 for index in selected
             ],
+        },
+    )
+
+
+def _select_balanced_feedback_revisits(
+    states: list[Any],
+    *,
+    eligible: list[int],
+    slots: int,
+    feedback: dict[int, SearchNodeStats],
+    step: int,
+) -> WideningSelection:
+    """Round-robin surviving siblings before filling normal feedback lanes.
+
+    This policy is intended for continuation-label collection. It gives sibling
+    children created from the same exact parent comparable direct expansion
+    exposure, while retaining the normal feedback policy as a deterministic
+    fallback when sibling cohorts cannot fill the revisit budget.
+    """
+
+    cohorts: dict[int, list[int]] = defaultdict(list)
+    for index in eligible:
+        _, stats = _feedback_row(states, index, feedback)
+        if stats.origin_parent_id is not None:
+            cohorts[int(stats.origin_parent_id)].append(index)
+    queues = []
+    for parent_id, indices in cohorts.items():
+        if len(indices) < 2:
+            continue
+        indices.sort(
+            key=lambda index: (
+                _feedback_row(states, index, feedback)[1].observed_expansions,
+                int(states[index].expansion_round),
+                _deterministic_key(
+                    *_feedback_row(states, index, feedback)
+                ),
+            )
+        )
+        queues.append((parent_id, deque(indices)))
+    queues.sort(
+        key=lambda row: (
+            min(
+                _feedback_row(states, index, feedback)[1].observed_expansions
+                for index in row[1]
+            ),
+            row[0],
+        )
+    )
+    selected = []
+    while queues and len(selected) < min(slots, len(eligible)):
+        next_round = []
+        for parent_id, queue in queues:
+            selected.append(queue.popleft())
+            if queue:
+                next_round.append((parent_id, queue))
+            if len(selected) == min(slots, len(eligible)):
+                break
+        queues = next_round
+
+    selected_set = set(selected)
+    remaining = [index for index in eligible if index not in selected_set]
+    fallback = _select_feedback_revisits(
+        states,
+        eligible=remaining,
+        slots=max(0, slots - len(selected)),
+        feedback=feedback,
+        step=step,
+    )
+    selected.extend(fallback.indices)
+    lane_counts = {"balanced_sibling": len(selected_set)}
+    for name, count in fallback.metrics.get("lane_counts", {}).items():
+        lane_counts[name] = int(count)
+    return WideningSelection(
+        indices=selected,
+        metrics={
+            "policy": "feedback_balanced",
+            "eligible_parents": len(eligible),
+            "eligible_sibling_groups": sum(
+                len(indices) >= 2 for indices in cohorts.values()
+            ),
+            "target_revisits": slots,
+            "selected_revisits": len(selected),
+            "lane_counts": lane_counts,
+            "selected_current_rounds": [
+                int(states[index].expansion_round) for index in selected
+            ],
+            "selected_next_rounds": [
+                int(states[index].expansion_round) + 1 for index in selected
+            ],
+            "step": int(step),
         },
     )
 

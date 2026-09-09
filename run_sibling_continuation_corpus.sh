@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -lt 3 || $# -gt 5 ]]; then
-    echo "usage: $0 QASM_LIST OUTPUT_DIR GPU [APPLY_BUDGET] [DEPTH]" >&2
+if [[ $# -lt 3 || $# -gt 6 ]]; then
+    echo "usage: $0 QASM_LIST OUTPUT_DIR GPU [APPLY_BUDGET] [DEPTH] [POLICY]" >&2
     exit 2
 fi
 
@@ -12,6 +12,11 @@ output_dir=$(realpath "$2")
 gpu=$3
 apply_budget=${4:-20000}
 depth=${5:-256}
+policy=${6:-feedback}
+if [[ "$policy" != "feedback" && "$policy" != "feedback_balanced" ]]; then
+    echo "policy must be feedback or feedback_balanced" >&2
+    exit 6
+fi
 python_bin=${QUARL_PYTHON:-/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/bin/python}
 qasm_root=${QASM_ROOT:-/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward}
 host=$(hostname)
@@ -53,7 +58,7 @@ common=(
     --eliminate-rotation
     --survivor-policy gate
     --progressive-widening on
-    --widening-policy feedback
+    --widening-policy "$policy"
     --widening-revisit-fraction 0.25
     --widening-max-expansions 8
     --widening-min-actions-per-parent 16
@@ -76,6 +81,7 @@ common=(
     printf 'qasm_root=%s\n' "$qasm_root"
     printf 'depth=%s\n' "$depth"
     printf 'apply_budget=%s\n' "$apply_budget"
+    printf 'widening_policy=%s\n' "$policy"
     nvidia-smi --query-gpu=index,name,driver_version \
         --format=csv,noheader | sed -n "$((gpu + 1))p"
 } >"$output_dir/environment.txt"

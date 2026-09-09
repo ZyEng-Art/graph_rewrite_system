@@ -18,6 +18,7 @@ class SearchNodeStats:
     identity_order: str
     gate_count: int
     depth: int
+    origin_parent_id: int | None = None
     parent_ids: set[int] = field(default_factory=set)
     attempted_actions: int = 0
     valid_actions: int = 0
@@ -81,6 +82,9 @@ class SearchFeedbackRegistry:
             identity_order=order_key,
             gate_count=int(gate_count),
             depth=int(depth),
+            origin_parent_id=(
+                int(parent_id) if parent_id is not None else None
+            ),
             best_descendant_gate=int(gate_count),
         )
         if parent_id is not None:

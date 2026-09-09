@@ -166,6 +166,34 @@ class ProgressiveWideningSelectionTest(unittest.TestCase):
             },
         )
 
+    def test_balanced_feedback_round_robins_sibling_cohorts(self) -> None:
+        rows = [
+            State(str(index), 10, 0, search_node_id=index)
+            for index in range(6)
+        ]
+        feedback = {
+            index: SearchNodeStats(
+                index,
+                f"id-{index}",
+                10,
+                1,
+                origin_parent_id=0 if index < 3 else 1,
+                observed_expansions=(2 if index in {0, 3} else 0),
+                best_descendant_gate=10,
+            )
+            for index in range(6)
+        }
+        result = select_widening_revisits(
+            rows,
+            slots=4,
+            max_expansions=3,
+            policy="feedback_balanced",
+            feedback=feedback,
+        )
+        self.assertEqual(set(result.indices), {1, 2, 4, 5})
+        self.assertEqual(result.metrics["lane_counts"], {"balanced_sibling": 4})
+        self.assertEqual(result.metrics["eligible_sibling_groups"], 2)
+
 
 if __name__ == "__main__":
     unittest.main()
