@@ -36,6 +36,7 @@ class BeamState:
     search_node_id: int = -1
     search_identity_order: str = ""
     origin_continuation_score: float | None = None
+    probe_level: int = 0
 
 
 @dataclass(frozen=True)

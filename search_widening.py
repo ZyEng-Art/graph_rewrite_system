@@ -13,6 +13,7 @@ from search_feedback import SearchNodeStats
 class WideningSelection:
     indices: list[int]
     metrics: dict[str, Any]
+    probe_promoted_indices: tuple[int, ...] = ()
 
 
 def continuation_revisit_shadow_rows(
@@ -353,7 +354,7 @@ def _select_probe_halving_revisits(
             },
         )
 
-    safety_slots = (target + 1) // 2
+    safety_slots = (3 * target + 3) // 4
     safety = select_widening_revisits(
         states,
         slots=safety_slots,
@@ -393,8 +394,18 @@ def _select_probe_halving_revisits(
     for parent_id, indices in cohorts.items():
         if len(indices) < 2:
             continue
+        maximum_level = max(
+            int(getattr(states[index], "probe_level", 0)) for index in indices
+        )
+        active = [
+            index
+            for index in indices
+            if int(getattr(states[index], "probe_level", 0)) == maximum_level
+        ]
+        if not active:
+            continue
         ordered = sorted(
-            indices,
+            active,
             key=lambda index: (
                 tuple(-value for value in recent_probe_key(index)),
                 _deterministic_key(*_feedback_row(states, index, feedback)),
@@ -472,6 +483,9 @@ def _select_probe_halving_revisits(
             ],
             "step": int(step),
         },
+        probe_promoted_indices=tuple(
+            index for index in selected if index not in set(safety)
+        )[:promoted_count],
     )
 
 

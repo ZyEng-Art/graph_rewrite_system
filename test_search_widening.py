@@ -25,6 +25,7 @@ class State:
     search_node_id: int = -1
     search_identity_order: str = ""
     origin_continuation_score: float | None = None
+    probe_level: int = 0
 
 
 class ProgressiveWideningSelectionTest(unittest.TestCase):
@@ -249,9 +250,36 @@ class ProgressiveWideningSelectionTest(unittest.TestCase):
             feedback=feedback,
         )
         self.assertEqual(result.metrics["policy"], "probe_halving")
-        self.assertEqual(result.metrics["lane_counts"]["round_robin_safety"], 2)
-        self.assertEqual(result.metrics["lane_counts"]["probe_promoted"], 2)
-        self.assertTrue({3, 7}.issubset(result.indices))
+        self.assertEqual(result.metrics["lane_counts"]["round_robin_safety"], 3)
+        self.assertEqual(result.metrics["lane_counts"]["probe_promoted"], 1)
+        self.assertEqual(result.probe_promoted_indices, (3,))
+        self.assertIn(3, result.indices)
+
+    def test_probe_halving_only_races_the_highest_persistent_level(self) -> None:
+        rows = [
+            State(str(index), 10, 0, search_node_id=index, probe_level=index // 2)
+            for index in range(4)
+        ]
+        feedback = {
+            index: SearchNodeStats(
+                index,
+                f"id-{index}",
+                10,
+                1,
+                origin_parent_id=9,
+                last_attempted_actions=16,
+                last_unique_children=15 if index == 3 else 1,
+            )
+            for index in range(4)
+        }
+        result = select_widening_revisits(
+            rows,
+            slots=4,
+            max_expansions=3,
+            policy="probe_halving",
+            feedback=feedback,
+        )
+        self.assertEqual(result.probe_promoted_indices, (3,))
 
     def test_balanced_feedback_round_robins_sibling_cohorts(self) -> None:
         rows = [

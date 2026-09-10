@@ -3445,6 +3445,10 @@ def main() -> None:
                 replace(
                     input_beam[index],
                     expansion_round=input_beam[index].expansion_round + 1,
+                    probe_level=(
+                        input_beam[index].probe_level
+                        + (index in widening_selection.probe_promoted_indices)
+                    ),
                     survivor_lane="widening",
                 )
                 for index in widening_selection.indices
