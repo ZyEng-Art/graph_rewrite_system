@@ -1554,6 +1554,7 @@ def main() -> None:
             "feedback",
             "feedback_balanced",
             "feedback_marginal",
+            "probe_halving",
             "feedback_ucb",
         ),
         default="round_robin",
@@ -1865,7 +1866,11 @@ def main() -> None:
         and args.neural_descendant_labels == "on"
         and args.progressive_widening == "on"
         and args.widening_policy in {
-            "feedback", "feedback_balanced", "feedback_marginal", "feedback_ucb"
+            "feedback",
+            "feedback_balanced",
+            "feedback_marginal",
+            "probe_halving",
+            "feedback_ucb",
         }
     ):
         parser.error(
@@ -1956,7 +1961,11 @@ def main() -> None:
     if args.neural_descendant_labels == "on" and not (
         args.progressive_widening == "on"
         and args.widening_policy in {
-            "feedback", "feedback_balanced", "feedback_marginal", "feedback_ucb"
+            "feedback",
+            "feedback_balanced",
+            "feedback_marginal",
+            "probe_halving",
+            "feedback_ucb",
         }
         and args.deterministic_search
     ):
@@ -2156,7 +2165,11 @@ def main() -> None:
     use_search_feedback = (
         args.progressive_widening == "on"
         and args.widening_policy in {
-            "feedback", "feedback_balanced", "feedback_marginal", "feedback_ucb"
+            "feedback",
+            "feedback_balanced",
+            "feedback_marginal",
+            "probe_halving",
+            "feedback_ucb",
         }
     )
     search_feedback = (

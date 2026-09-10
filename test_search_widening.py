@@ -221,6 +221,38 @@ class ProgressiveWideningSelectionTest(unittest.TestCase):
         self.assertEqual(result.indices, [1])
         self.assertEqual(result.metrics["policy"], "feedback_marginal")
 
+    def test_probe_halving_keeps_safety_and_promotes_recent_sibling_winners(self) -> None:
+        rows = [
+            State(str(index), 10, 0, search_node_id=index)
+            for index in range(8)
+        ]
+        feedback = {}
+        for index in range(8):
+            feedback[index] = SearchNodeStats(
+                index,
+                f"id-{index}",
+                10,
+                1,
+                origin_parent_id=0 if index < 4 else 1,
+                observed_expansions=1,
+                last_attempted_actions=16,
+                last_valid_actions=16,
+                last_unique_children=15 if index in {3, 7} else index % 4,
+                last_improving_children=1 if index in {3, 7} else 0,
+                last_best_child_gate=9 if index in {3, 7} else 10,
+            )
+        result = select_widening_revisits(
+            rows,
+            slots=4,
+            max_expansions=3,
+            policy="probe_halving",
+            feedback=feedback,
+        )
+        self.assertEqual(result.metrics["policy"], "probe_halving")
+        self.assertEqual(result.metrics["lane_counts"]["round_robin_safety"], 2)
+        self.assertEqual(result.metrics["lane_counts"]["probe_promoted"], 2)
+        self.assertTrue({3, 7}.issubset(result.indices))
+
     def test_balanced_feedback_round_robins_sibling_cohorts(self) -> None:
         rows = [
             State(str(index), 10, 0, search_node_id=index)

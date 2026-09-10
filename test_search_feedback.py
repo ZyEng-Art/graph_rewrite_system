@@ -59,6 +59,11 @@ class SearchFeedbackRegistryTest(unittest.TestCase):
         self.assertEqual(row.observed_expansions, 1)
         self.assertAlmostEqual(row.novel_yield, 3 / 8)
         self.assertAlmostEqual(row.valid_yield, 0.8)
+        self.assertAlmostEqual(row.last_unique_yield, 0.3)
+        self.assertAlmostEqual(row.last_valid_yield, 0.8)
+        self.assertAlmostEqual(row.last_improving_yield, 0.1)
+        self.assertEqual(row.last_best_child_gate, 9)
+        self.assertEqual(row.last_expansion_step, 1)
         self.assertEqual(row.best_descendant_gate, 9)
 
 

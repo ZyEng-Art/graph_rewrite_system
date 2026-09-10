@@ -15,7 +15,7 @@ depth=${5:-256}
 policy=${6:-feedback}
 continuation_checkpoint=${CONTINUATION_RANKER_CHECKPOINT:-}
 continuation_revisit_slots=${CONTINUATION_REVISIT_SHADOW_SLOTS:-0}
-if [[ "$policy" != "round_robin" && "$policy" != "feedback" && "$policy" != "feedback_balanced" && "$policy" != "feedback_marginal" && "$policy" != "feedback_ucb" ]]; then
+if [[ "$policy" != "round_robin" && "$policy" != "feedback" && "$policy" != "feedback_balanced" && "$policy" != "feedback_marginal" && "$policy" != "probe_halving" && "$policy" != "feedback_ucb" ]]; then
     echo "unknown widening policy: $policy" >&2
     exit 6
 fi

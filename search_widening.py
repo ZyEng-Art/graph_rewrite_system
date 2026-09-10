@@ -69,6 +69,13 @@ def continuation_revisit_shadow_rows(
                 "descendant_gain_before": int(stats.descendant_gain),
                 "novel_yield_before": float(stats.novel_yield),
                 "valid_yield_before": float(stats.valid_yield),
+                "last_attempted_actions_before": int(stats.last_attempted_actions),
+                "last_improving_children_before": int(stats.last_improving_children),
+                "last_improving_yield_before": float(stats.last_improving_yield),
+                "last_unique_yield_before": float(stats.last_unique_yield),
+                "last_valid_yield_before": float(stats.last_valid_yield),
+                "last_best_child_gate_before": stats.last_best_child_gate,
+                "last_expansion_step_before": int(stats.last_expansion_step),
             }
         )
     return rows
@@ -116,6 +123,7 @@ def select_widening_revisits(
         "feedback",
         "feedback_balanced",
         "feedback_marginal",
+        "probe_halving",
         "feedback_ucb",
     }:
         raise ValueError("unknown widening policy")
@@ -123,6 +131,7 @@ def select_widening_revisits(
         "feedback",
         "feedback_balanced",
         "feedback_marginal",
+        "probe_halving",
         "feedback_ucb",
     } and feedback is None:
         raise ValueError("feedback policy requires node statistics")
@@ -164,6 +173,16 @@ def select_widening_revisits(
             feedback=feedback or {},
             step=step,
             marginal_gain=True,
+        )
+    if policy == "probe_halving":
+        return _select_probe_halving_revisits(
+            states,
+            eligible=eligible,
+            slots=slots,
+            max_expansions=max_expansions,
+            seed=seed,
+            step=step,
+            feedback=feedback or {},
         )
 
     by_round: dict[int, list[int]] = defaultdict(list)
@@ -308,6 +327,152 @@ def _feedback_row(
     if node_id not in feedback:
         raise ValueError(f"missing feedback for search node {node_id}")
     return state, feedback[node_id]
+
+
+def _select_probe_halving_revisits(
+    states: list[Any],
+    *,
+    eligible: list[int],
+    slots: int,
+    max_expansions: int,
+    seed: int,
+    step: int,
+    feedback: dict[int, SearchNodeStats],
+) -> WideningSelection:
+    """Keep a round-robin safety lane and race the top half of sibling probes."""
+    target = min(slots, len(eligible))
+    if target == 0:
+        return WideningSelection(
+            indices=[],
+            metrics={
+                "policy": "probe_halving",
+                "eligible_parents": len(eligible),
+                "target_revisits": slots,
+                "selected_revisits": 0,
+                "lane_counts": {},
+            },
+        )
+
+    safety_slots = (target + 1) // 2
+    safety = select_widening_revisits(
+        states,
+        slots=safety_slots,
+        max_expansions=max_expansions,
+        seed=seed,
+        step=step,
+        policy="round_robin",
+    ).indices
+    selected = list(safety)
+    selected_set = set(selected)
+
+    def recent_probe_key(index: int) -> tuple:
+        state, stats = _feedback_row(states, index, feedback)
+        best_delta = (
+            0
+            if stats.last_best_child_gate is None
+            else max(0, int(state.gate_count) - stats.last_best_child_gate)
+        )
+        return (
+            0 if stats.last_attempted_actions > 0 else 1,
+            stats.last_improving_children,
+            stats.last_improving_yield,
+            best_delta,
+            stats.last_unique_yield,
+            stats.last_valid_yield,
+            -stats.observed_expansions,
+            -int(state.gate_count),
+        )
+
+    cohorts: dict[int, list[int]] = defaultdict(list)
+    for index in eligible:
+        _, stats = _feedback_row(states, index, feedback)
+        if stats.origin_parent_id is not None:
+            cohorts[int(stats.origin_parent_id)].append(index)
+
+    promoted_queues = []
+    for parent_id, indices in cohorts.items():
+        if len(indices) < 2:
+            continue
+        ordered = sorted(
+            indices,
+            key=lambda index: (
+                tuple(-value for value in recent_probe_key(index)),
+                _deterministic_key(*_feedback_row(states, index, feedback)),
+            ),
+        )
+        promoted = [
+            index
+            for index in ordered[: (len(ordered) + 1) // 2]
+            if index not in selected_set
+        ]
+        if promoted:
+            minimum_exposure = min(
+                _feedback_row(states, index, feedback)[1].observed_expansions
+                for index in promoted
+            )
+            promoted_queues.append(
+                (minimum_exposure, parent_id, deque(promoted))
+            )
+    promoted_queues.sort(key=lambda row: (row[0], row[1]))
+
+    promoted_count = 0
+    while promoted_queues and len(selected) < target:
+        next_queues = []
+        for exposure, parent_id, queue in promoted_queues:
+            index = queue.popleft()
+            if index not in selected_set:
+                selected.append(index)
+                selected_set.add(index)
+                promoted_count += 1
+            if queue:
+                next_queues.append((exposure, parent_id, queue))
+            if len(selected) == target:
+                break
+        promoted_queues = next_queues
+
+    fallback_count = 0
+    if len(selected) < target:
+        fallback = select_widening_revisits(
+            states,
+            slots=len(eligible),
+            max_expansions=max_expansions,
+            seed=seed,
+            step=step,
+            policy="round_robin",
+        ).indices
+        for index in fallback:
+            if index in selected_set:
+                continue
+            selected.append(index)
+            selected_set.add(index)
+            fallback_count += 1
+            if len(selected) == target:
+                break
+
+    return WideningSelection(
+        indices=selected,
+        metrics={
+            "policy": "probe_halving",
+            "eligible_parents": len(eligible),
+            "eligible_sibling_cohorts": sum(
+                len(indices) >= 2 for indices in cohorts.values()
+            ),
+            "target_revisits": slots,
+            "selected_revisits": len(selected),
+            "lane_counts": {
+                "round_robin_safety": len(safety),
+                "probe_promoted": promoted_count,
+                "round_robin_fallback": fallback_count,
+            },
+            "selected_current_rounds": [
+                int(states[index].expansion_round) for index in selected
+            ],
+            "selected_next_rounds": [
+                int(states[index].expansion_round) + 1 for index in selected
+            ],
+            "step": int(step),
+        },
+    )
 
 
 def _deterministic_key(state: Any, stats: SearchNodeStats) -> tuple:

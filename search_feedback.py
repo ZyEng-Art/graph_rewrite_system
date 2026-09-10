@@ -28,6 +28,14 @@ class SearchNodeStats:
     invalid_actions: int = 0
     improving_children: int = 0
     observed_expansions: int = 0
+    last_attempted_actions: int = 0
+    last_valid_actions: int = 0
+    last_unique_children: int = 0
+    last_duplicate_children: int = 0
+    last_invalid_actions: int = 0
+    last_improving_children: int = 0
+    last_best_child_gate: int | None = None
+    last_expansion_step: int = -1
     best_child_gate: int | None = None
     best_descendant_gate: int | None = None
     last_improvement_step: int = -1
@@ -39,6 +47,18 @@ class SearchNodeStats:
     @property
     def valid_yield(self) -> float:
         return self.valid_actions / max(1, self.attempted_actions)
+
+    @property
+    def last_unique_yield(self) -> float:
+        return self.last_unique_children / max(1, self.last_attempted_actions)
+
+    @property
+    def last_valid_yield(self) -> float:
+        return self.last_valid_actions / max(1, self.last_attempted_actions)
+
+    @property
+    def last_improving_yield(self) -> float:
+        return self.last_improving_children / max(1, self.last_attempted_actions)
 
     @property
     def descendant_gain(self) -> int:
@@ -134,6 +154,16 @@ class SearchFeedbackRegistry:
     ) -> None:
         row = self.nodes[node_id]
         row.observed_expansions += 1
+        row.last_attempted_actions = int(attempted)
+        row.last_valid_actions = int(valid)
+        row.last_unique_children = int(unique)
+        row.last_duplicate_children = int(duplicate)
+        row.last_invalid_actions = int(invalid)
+        row.last_improving_children = int(improving)
+        row.last_best_child_gate = (
+            int(best_child_gate) if best_child_gate is not None else None
+        )
+        row.last_expansion_step = int(step)
         row.attempted_actions += int(attempted)
         row.valid_actions += int(valid)
         row.unique_children += int(unique)
