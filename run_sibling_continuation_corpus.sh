@@ -15,12 +15,20 @@ depth=${5:-256}
 policy=${6:-feedback}
 continuation_checkpoint=${CONTINUATION_RANKER_CHECKPOINT:-}
 continuation_revisit_slots=${CONTINUATION_REVISIT_SHADOW_SLOTS:-0}
+collect_neural_audit=${COLLECT_NEURAL_AUDIT:-on}
 if [[ "$policy" != "round_robin" && "$policy" != "feedback" && "$policy" != "feedback_balanced" && "$policy" != "feedback_marginal" && "$policy" != "probe_halving" && "$policy" != "feedback_ucb" ]]; then
     echo "unknown widening policy: $policy" >&2
     exit 6
 fi
 neural_descendant_labels=on
 if [[ "$policy" == "round_robin" ]]; then
+    neural_descendant_labels=off
+fi
+if [[ "$collect_neural_audit" != "on" && "$collect_neural_audit" != "off" ]]; then
+    echo "COLLECT_NEURAL_AUDIT must be on or off" >&2
+    exit 9
+fi
+if [[ "$collect_neural_audit" == "off" ]]; then
     neural_descendant_labels=off
 fi
 if [[ ! "$continuation_revisit_slots" =~ ^[0-9]+$ ]]; then
@@ -30,6 +38,10 @@ fi
 if [[ "$continuation_revisit_slots" -gt 0 && ! -f "$continuation_checkpoint" ]]; then
     echo "revisit shadow slots require CONTINUATION_RANKER_CHECKPOINT" >&2
     exit 8
+fi
+if [[ "$collect_neural_audit" == "off" && "$continuation_revisit_slots" -gt 0 ]]; then
+    echo "continuation revisit shadow requires COLLECT_NEURAL_AUDIT=on" >&2
+    exit 10
 fi
 python_bin=${QUARL_PYTHON:-/SharedData/dengzy/quarl_barenco_tof3_20260816_001809/.venv_torch212/bin/python}
 qasm_root=${QASM_ROOT:-/SharedData/dengzy/quarl_matchformer_fresh_20260902/data/fullseq_36_0_forward}
@@ -104,6 +116,7 @@ fi
     printf 'depth=%s\n' "$depth"
     printf 'apply_budget=%s\n' "$apply_budget"
     printf 'widening_policy=%s\n' "$policy"
+    printf 'collect_neural_audit=%s\n' "$collect_neural_audit"
     printf 'neural_descendant_labels=%s\n' "$neural_descendant_labels"
     printf 'continuation_ranker_checkpoint=%s\n' "$continuation_checkpoint"
     printf 'continuation_revisit_shadow_slots=%s\n' "$continuation_revisit_slots"
@@ -126,16 +139,22 @@ while IFS= read -r entry || [[ -n "$entry" ]]; do
     fi
     stem=$(basename "$qasm" .qasm)
     audit="$output_dir/${stem}_apply${apply_budget}_audit.pt"
-    if [[ -f "$audit" ]]; then
+    result="$output_dir/${stem}_apply${apply_budget}.json"
+    if [[ "$collect_neural_audit" == "on" && -f "$audit" ]] || \
+       [[ "$collect_neural_audit" == "off" && -f "$result" ]]; then
         echo "SKIP existing $stem"
         continue
+    fi
+    audit_args=()
+    if [[ "$collect_neural_audit" == "on" ]]; then
+        audit_args+=(--neural-audit-output "$audit")
     fi
     started_ns=$(date +%s%N)
     "$python_bin" beam_search_benchmark.py \
         "${common[@]}" \
         --qasm "$qasm" \
-        --neural-audit-output "$audit" \
-        --output "$output_dir/${stem}_apply${apply_budget}.json" \
+        "${audit_args[@]}" \
+        --output "$result" \
         >"$output_dir/${stem}_apply${apply_budget}.log" 2>&1
     finished_ns=$(date +%s%N)
     awk -v start="$started_ns" -v finish="$finished_ns" \
