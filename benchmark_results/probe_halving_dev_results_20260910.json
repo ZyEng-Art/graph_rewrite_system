@@ -1,0 +1,57 @@
+{
+  "branch": "deterministic-feedback-widening-20260909",
+  "baseline_policy": "round_robin",
+  "candidate_policy": "probe_halving",
+  "budget": 20000,
+  "development_circuits": 5,
+  "promotion_features": [
+    "last_improving_children",
+    "last_improving_yield",
+    "last_best_child_gate_delta",
+    "last_unique_yield",
+    "last_valid_yield"
+  ],
+  "v1_recomputed_top_half": {
+    "commit": "a0cf825",
+    "round_robin_safety_fraction": 0.5,
+    "persistent_tournament_level": false,
+    "gate_count_wins_ties_losses": {"wins": 0, "ties": 3, "losses": 2},
+    "means": {
+      "best_gate_count": {"baseline": 46.4, "candidate": 47.0, "delta": 0.6},
+      "best_first_seen_step": {"baseline": 24.2, "candidate": 25.8, "delta": 1.6},
+      "unique_graphs_seen": {"baseline": 6821.2, "candidate": 7638.6, "delta": 817.4, "relative_delta_percent": 11.9832287574},
+      "total_seconds": {"baseline": 4.5944747484, "candidate": 5.8306957960, "delta": 1.2362210476, "relative_delta_percent": 26.9066893450}
+    },
+    "lane_totals": {"round_robin_safety": 4776, "probe_promoted": 4725, "round_robin_fallback": 41},
+    "decision": "rejected"
+  },
+  "v2_persistent_halving": {
+    "commit": "dae0e91",
+    "round_robin_safety_fraction": 0.75,
+    "persistent_tournament_level": true,
+    "gate_count_wins_ties_losses": {"wins": 1, "ties": 2, "losses": 2},
+    "means": {
+      "best_gate_count": {"baseline": 46.4, "candidate": 46.8, "delta": 0.4, "relative_delta_percent": 0.8620689655},
+      "best_first_seen_step": {"baseline": 24.2, "candidate": 24.8, "delta": 0.6, "relative_delta_percent": 2.4793388430},
+      "best_first_seen_seconds": {"baseline": 3.9759828082, "candidate": 4.7265783770, "delta": 0.7505955688, "relative_delta_percent": 18.8782397969},
+      "unique_graphs_seen": {"baseline": 6821.2, "candidate": 7342.0, "delta": 520.8, "relative_delta_percent": 7.6350202310},
+      "total_seconds": {"baseline": 4.5944747484, "candidate": 5.7305851828, "delta": 1.1361104344, "relative_delta_percent": 24.7277544577}
+    },
+    "lane_totals": {"round_robin_safety": 6824, "probe_promoted": 2255, "round_robin_fallback": 15},
+    "rows": [
+      {"circuit": "1_58_0_21_4409", "baseline_gate": 48, "candidate_gate": 46, "baseline_step": 21, "candidate_step": 31},
+      {"circuit": "2_58_0_28_120", "baseline_gate": 46, "candidate_gate": 48, "baseline_step": 28, "candidate_step": 25},
+      {"circuit": "3_58_0_29_336", "baseline_gate": 46, "candidate_gate": 48, "baseline_step": 29, "candidate_step": 25},
+      {"circuit": "4_58_0_23_45", "baseline_gate": 46, "candidate_gate": 46, "baseline_step": 22, "candidate_step": 20},
+      {"circuit": "5_58_0_12_38", "baseline_gate": 46, "candidate_gate": 46, "baseline_step": 21, "candidate_step": 23}
+    ],
+    "decision": "rejected_before_100k_or_external_holdout"
+  },
+  "remote_artifacts": {
+    "baseline": "$AUDIT_ROOT/v11_roundrobin_probe_dev5_20k_fast",
+    "v1": "$AUDIT_ROOT/v11_probe_halving_dev5_20k_fast",
+    "v1_analysis": "$AUDIT_ROOT/v11_probe_halving_dev5_20k_ab.json",
+    "v2": "$AUDIT_ROOT/v12_probe_halving_v2_dev5_20k",
+    "v2_analysis": "$AUDIT_ROOT/v12_probe_halving_v2_dev5_20k_ab.json"
+  }
+}
